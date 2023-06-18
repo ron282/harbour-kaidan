@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "OmemoDb.h"
+#if defined(SFOS)
+#include <QDebug>
+#define QSTRINGVIEW_EMULATE
+#include "../3rdparty/QEmuStringView/qemustringview.h"
+#endif
+
 #include "Globals.h"
 #include "QXmppFutureUtils_p.h"
 #include "SqlUtils.h"
@@ -11,7 +17,12 @@
 
 using namespace SqlUtils;
 
-constexpr std::initializer_list<QStringView> OMEMO_TABLES = {u"omemoDevicesOwn",
+#if defined (SFOS)
+std::initializer_list<QStringView> 
+#else
+constexpr std::initializer_list<QStringView> 
+#endif
+OMEMO_TABLES = {u"omemoDevicesOwn",
 	u"omemoDevices",
 	u"omemoPreKeyPairs",
 	u"omemoPreKeyPairsSigned"};
@@ -40,7 +51,11 @@ auto OmemoDb::resetAll() -> QXmppTask<void>
 	return runTask([this] {
 		auto query = createQuery();
 		for (auto table : OMEMO_TABLES) {
+#if defined(SFOS)
+			execQuery(query, QStringView(u"DELETE FROM ") + table + QStringView(u" WHERE account = ?"), {accountJid()});
+#else
 			execQuery(query, u"DELETE FROM " % table % u" WHERE account = ?", {accountJid()});
+#endif
 		}
 	});
 }

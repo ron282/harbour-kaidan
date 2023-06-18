@@ -28,10 +28,8 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import org.kde.kirigami 2.19 as Kirigami
-
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 import im.kaidan.kaidan 1.0
 
 import "elements"
@@ -41,58 +39,33 @@ import "elements"
  *
  * It is displayed if no account is available.
  */
-Kirigami.Page {
-	title: "Kaidan"
+Page {
+    PageHeader {
+        title: "Kaidan"
+    }
+    Column {
+        anchors.verticalCenter: parent.verticalCenter
+        width: parent.width
+        spacing: Theme.paddingLarge
 
-	ColumnLayout {
-		anchors.fill: parent
 
-		Image {
-			source: Utils.getResourcePath("images/kaidan.svg")
-			Layout.alignment: Qt.AlignCenter
-			Layout.fillWidth: true
-			Layout.fillHeight: true
-			fillMode: Image.PreserveAspectFit
-			mipmap: true
-			sourceSize.width: width
-			sourceSize.height: height
-			Layout.bottomMargin: Kirigami.Units.gridUnit * 1.5
-		}
+        HighlightImage {
+            source: "/usr/share/harbour-kaidan/qml/images/kaidan.svg" // Utils.getResourcePath("images/kaidan.svg")
+            fillMode: Image.PreserveAspectFit
+            sourceSize.width: width
+            sourceSize.height: width
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
 
-		CenteredAdaptiveText {
-			text: "Kaidan"
-			scaleFactor: 6
-		}
+        Button {
+            id: startButton
+            text: qsTr("Let's start")
+            onClicked: pageStack.push(qrCodeOnboardingPage)
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
+    }
 
-		CenteredAdaptiveText {
-			text: qsTr("Enjoy free communication on every device!")
-			scaleFactor: 2
-		}
-
-		// placeholder
-		Item {
-			Layout.fillHeight: true
-			Layout.minimumHeight: root.height * 0.08
-		}
-
-		ColumnLayout {
-			Layout.alignment: Qt.AlignHCenter
-			Layout.maximumWidth: largeButtonWidth
-
-			CenteredAdaptiveHighlightedButton {
-				id: startButton
-				text: qsTr("Let's start")
-				onClicked: pageStack.layers.push(qrCodeOnboardingPage)
-			}
-
-			// placeholder
-			Item {
-				height: startButton.height
-			}
-		}
-	}
-
-	Connections {
+    Connections {
 		target: Kaidan
 
 		function onConnectionErrorChanged() {

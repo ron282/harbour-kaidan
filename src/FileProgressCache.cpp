@@ -6,6 +6,17 @@
 
 #include <QCoreApplication>
 
+#if defined(SFOS)
+#include <QDebug>
+#define QSTRINGVIEW_EMULATE
+#include "../3rdparty/QEmuStringView/qemustringview.h"
+#endif
+
+#if defined(SFOS)
+#include <QTimer>
+#include <functional>
+#endif
+
 FileProgressWatcher::FileProgressWatcher(QObject *parent)
 	: QObject(parent)
 {
@@ -70,8 +81,23 @@ void FileProgressCache::reportProgress(qint64 fileId, std::optional<FileProgress
 	} else {
 		m_files.erase(fileId);
 	}
+
+#if defined(SFOS)
+    // any thread
+    QTimer* timer = new QTimer();
+    timer->moveToThread(QCoreApplication::instance()->thread());
+    timer->setSingleShot(true);
+    QObject::connect(timer, &QTimer::timeout, [timer, fileId, progress]()
+    {
+        // main thread
+		FileProgressNotifier::instance().notifyWatchers(fileId, progress);
+        timer->deleteLater();
+    });
+    QMetaObject::invokeMethod(timer, "start", Qt::QueuedConnection, Q_ARG(int, 0));
+#else
 	// watchers live on main thread
 	QMetaObject::invokeMethod(QCoreApplication::instance(), [fileId, progress] {
 		FileProgressNotifier::instance().notifyWatchers(fileId, progress);
 	});
+#endif
 }

@@ -157,7 +157,11 @@ QSqlRecord MessageDb::createUpdateRecord(const Message &oldMsg, const Message &n
 	if (oldMsg.stamp != newMsg.stamp)
 		rec.append(createSqlField(
 		        "timestamp",
-		        newMsg.stamp.toString(Qt::ISODateWithMs)
+#if defined(SFOS)
+		newMsg.stamp.toString(Qt::ISODate).insert(19, newMsg.stamp.toString(".zzz"))
+#else
+		newMsg.stamp.toString(Qt::ISODateWithMs)
+#endif
 		));
 	if (oldMsg.id != newMsg.id) {
 		rec.append(createSqlField("id", newMsg.id));
@@ -416,10 +420,17 @@ QFuture<QDateTime> MessageDb::messageTimestamp(const QString &senderJid, const Q
 		);
 
 		if (query.first()) {
+#if defined(SFOS)
+			return QDateTime::fromString(
+				query.value(0).toString().remove(19,4),
+				Qt::ISODate
+			).addMSecs(query.value(0).toString().mid(20,3).toULong());;	
+#else
 			return QDateTime::fromString(
 				query.value(0).toString(),
 				Qt::ISODateWithMs
 			);
+#endif
 		}
 
 		return QDateTime();
@@ -469,8 +480,11 @@ QFuture<int> MessageDb::messageCount(const QString &senderJid, const QString &re
 
 QFuture<void> MessageDb::addMessage(const Message &msg, MessageOrigin origin)
 {
+#if defined(SFOS)	
+	Q_ASSERT(msg.deliveryState != Enums::DeliveryState::Draft);
+#else
 	Q_ASSERT(msg.deliveryState != DeliveryState::Draft);
-
+#endif
 	return run([this, msg, origin]() {
 		// deduplication
 		switch (origin) {
@@ -516,7 +530,11 @@ QFuture<void> MessageDb::addMessage(const Message &msg, MessageOrigin origin)
 		bindValues(query, {
 			{ u":sender", msg.from },
 			{ u":recipient", msg.to },
+#if defined(SFOS)
+			{ u":timestamp", msg.stamp.toString(Qt::ISODate).insert(19, msg.stamp.toString(".zzz")) },
+#else
 			{ u":timestamp", msg.stamp.toString(Qt::ISODateWithMs) },
+#endif
 			{ u":message", msg.body },
 			{ u":id", msg.id.isEmpty() ? " " : msg.id },
 			{ u":encryption", msg.encryption },
@@ -580,11 +598,18 @@ QFuture<void> MessageDb::updateMessage(const QString &id,
 		// update loaded item
 		if (!msgs.isEmpty()) {
 			const auto &oldMessage = msgs.first();
+#if defined(SFOS)
+			Q_ASSERT(oldMessage.deliveryState != Enums::DeliveryState::Draft);
+#else
 			Q_ASSERT(oldMessage.deliveryState != DeliveryState::Draft);
+#endif
 			Message newMessage = oldMessage;
 			updateMsg(newMessage);
+#if defined(SFOS)
+			Q_ASSERT(newMessage.deliveryState != Enums::DeliveryState::Draft);
+#else
 			Q_ASSERT(newMessage.deliveryState != DeliveryState::Draft);
-
+#endif
 			// Replace the old message's values with the updated ones if the message has changed.
 			if (oldMessage != newMessage) {
 				const auto &oldReactions = oldMessage.reactions;
@@ -670,8 +695,11 @@ QFuture<void> MessageDb::updateMessage(const QString &id,
 
 QFuture<Message> MessageDb::addDraftMessage(const Message &msg)
 {
+#if defined(SFOS)
+	Q_ASSERT(msg.deliveryState == Enums::DeliveryState::Draft);
+#else
 	Q_ASSERT(msg.deliveryState == DeliveryState::Draft);
-
+#endif
 	auto copy = msg;
 
 	if (copy.id.isEmpty()) {
@@ -697,7 +725,11 @@ QFuture<Message> MessageDb::addDraftMessage(const Message &msg)
 		bindValues(query, {
 			{ u":sender", msg.from },
 			{ u":recipient", msg.to },
+#if defined(SFOS)
+			{ u":timestamp", msg.stamp.toString(Qt::ISODate).insert(19, msg.stamp.toString(".zzz")) },
+#else
 			{ u":timestamp", msg.stamp.toString(Qt::ISODateWithMs) },
+#endif
 			{ u":message", msg.body },
 			{ u":id", msg.id },
 			{ u":encryption", msg.encryption },
@@ -722,8 +754,11 @@ QFuture<Message> MessageDb::addDraftMessage(const Message &msg)
 
 QFuture<Message> MessageDb::updateDraftMessage(const Message &msg)
 {
+#if defined(SFOS)
+	Q_ASSERT(msg.deliveryState == Enums::DeliveryState::Draft);
+#else
 	Q_ASSERT(msg.deliveryState == DeliveryState::Draft);
-
+#endif
 	return run([this, msg]() {
 		// load current message item from db
 		auto query = createQuery();
@@ -1095,7 +1130,11 @@ bool MessageDb::_checkMessageExists(const Message &message)
 		return false;
 	}
 
+#if defined(SFOS)
+	const QString idConditionSql = idChecks.join(QStringView(u" OR "));
+#else
 	const QString idConditionSql = idChecks.join(u" OR ");
+#endif
 	const QString querySql =
 		QStringLiteral("SELECT COUNT(*) FROM " DB_VIEW_CHAT_MESSAGES " "
 		               "WHERE (sender = :from AND recipient = :to AND (") %

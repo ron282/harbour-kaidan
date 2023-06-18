@@ -28,15 +28,14 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import org.kde.kirigami 2.19 as Kirigami
-
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 import im.kaidan.kaidan 1.0
 
 /**
  * This is the base of a registration page.
  */
-Kirigami.Page {
+Page {
 	// This model contains all fields from the registration form of the requested provider.
 	property DataFormModel formModel
 
@@ -57,11 +56,6 @@ Kirigami.Page {
 
 	// password of the user to be registered
 	property string password
-
-	leftPadding: 0
-	topPadding: 0
-	rightPadding: 0
-	bottomPadding: 0
 
 	RegistrationDataFormFilterModel {
 		id: formFilterModel

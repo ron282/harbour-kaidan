@@ -63,7 +63,11 @@ AvatarFileStorage::AvatarFileStorage(QObject *parent) : QObject(parent)
 			QString line = stream.readLine();
 			while (!line.isNull()) {
 				// get hash and jid from line (seperated by a blank)
+#if SFOS
+				QStringList list = line.split(' ', QString::SkipEmptyParts);		
+#else
 				QStringList list = line.split(' ', Qt::SkipEmptyParts);
+#endif
 
 				// set the hash for the jid
 				m_jidAvatarMap[list.at(1)] = list.at(0);

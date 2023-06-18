@@ -34,9 +34,15 @@
 #include <QObject>
 #include <QUuid>
 
+#if defined(SFOS)
+#include <QVector>
+#include <QString>
+#include <QDateTime>
+#else
 class KNotification;
 class QDateTime;
 class QString;
+#endif
 
 class Notifications : public QObject
 {
@@ -52,7 +58,10 @@ public:
 		QString latestMessageId;
 		QVector<QString> messages;
 		bool isDeletionEnabled = true;
+#if defined(SFOS)
+#else
 		KNotification *notification = nullptr;
+#endif
 	};
 
 	static Notifications *instance();

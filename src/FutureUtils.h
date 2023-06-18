@@ -37,6 +37,11 @@
 #include <QXmppTask.h>
 #include <QXmppPromise.h>
 
+#if defined(SFOS)
+#include <QTimer>
+#include <functional>
+#endif
+
 template<typename ValueType>
 auto qFutureValueType(QFuture<ValueType>) -> ValueType;
 template<typename Future>
@@ -105,6 +110,25 @@ auto runAsync(QObject *targetObject, Function function)
 	using ValueType = std::invoke_result_t<Function>;
 
 	QFutureInterface<ValueType> interface;
+#if defined(SFOS)
+    QTimer* timer = new QTimer();
+    timer->moveToThread(targetObject->thread());
+    timer->setSingleShot(true);
+    QObject::connect(timer, &QTimer::timeout, [interface, function = std::move(function), timer]() mutable
+    {
+        // main thread
+		interface.reportStarted();
+		if constexpr (std::is_same_v<ValueType, void>) {
+			function();
+		}
+		if constexpr (!std::is_same_v<ValueType, void>) {
+			interface.reportResult(function());
+		}
+		interface.reportFinished();
+        timer->deleteLater();
+    });
+    QMetaObject::invokeMethod(timer, "start", Qt::QueuedConnection, Q_ARG(int, 0));
+#else
 	QMetaObject::invokeMethod(targetObject, [interface, function = std::move(function)]() mutable {
 		interface.reportStarted();
 		if constexpr (std::is_same_v<ValueType, void>) {
@@ -115,6 +139,7 @@ auto runAsync(QObject *targetObject, Function function)
 		}
 		interface.reportFinished();
 	});
+#endif
 	return interface.future();
 }
 
@@ -127,6 +152,33 @@ auto runAsyncTask(QObject *callerObject, QObject *targetObject, Function functio
 
 	QXmppPromise<ValueType> promise;
 	auto task = promise.task();
+
+#if defined(SFOS)
+    QTimer* timer = new QTimer();
+    timer->moveToThread(targetObject->thread());
+    timer->setSingleShot(true);
+    QObject::connect(timer, &QTimer::timeout, [callerObject, promise = std::move(promise), function = std::move(function), timer]() mutable {
+	    QTimer* timer2 = new QTimer();
+	    timer2->moveToThread(callerObject->thread());
+	    timer2->setSingleShot(true);
+		if constexpr (std::is_same_v<ValueType, void>) {
+			function();
+			QObject::connect(timer2,  &QTimer::timeout, [promise = std::move(promise), timer2]() mutable {
+				promise.finish();
+        		timer2->deleteLater();
+			});
+		} else {
+			auto value = function();
+			QObject::connect(timer2,  &QTimer::timeout, [promise = std::move(promise), value = std::move(value), timer2]() mutable {
+				promise.finish(std::move(value));
+        		timer2->deleteLater();
+			});
+		}
+    	QMetaObject::invokeMethod(timer2, "start", Qt::QueuedConnection, Q_ARG(int, 0));
+        timer->deleteLater();
+    });
+    QMetaObject::invokeMethod(timer, "start", Qt::QueuedConnection, Q_ARG(int, 0));
+#else
 	QMetaObject::invokeMethod(targetObject, [callerObject, promise = std::move(promise), function = std::move(function)]() mutable {
 		if constexpr (std::is_same_v<ValueType, void>) {
 			function();
@@ -140,6 +192,7 @@ auto runAsyncTask(QObject *callerObject, QObject *targetObject, Function functio
 			});
 		}
 	});
+#endif
 	return task;
 }
 
@@ -147,7 +200,21 @@ auto runAsyncTask(QObject *callerObject, QObject *targetObject, Function functio
 template<typename Function>
 auto runOnThread(QObject *targetObject, Function function)
 {
+#if defined(SFOS)
+    // any thread
+    QTimer* timer = new QTimer();
+    timer->moveToThread(targetObject->thread());
+    timer->setSingleShot(true);
+    QObject::connect(timer, &QTimer::timeout, [function, timer]() mutable
+    {
+        // main thread
+        function();
+        timer->deleteLater();
+    });
+    QMetaObject::invokeMethod(timer, "start", Qt::QueuedConnection, Q_ARG(int, 0));
+#else
 	QMetaObject::invokeMethod(targetObject, std::move(function));
+#endif
 }
 
 // Runs a function on an object's thread and runs a callback on the caller's thread.
@@ -155,7 +222,34 @@ template<typename Function, typename Handler>
 auto runOnThread(QObject *targetObject, Function function, QObject *caller, Handler handler)
 {
 	using ValueType = std::invoke_result_t<Function>;
+#if defined(SFOS)
+    // any thread
+    QTimer* timer = new QTimer();
+    timer->moveToThread(targetObject->thread());
+    timer->setSingleShot(true);
+    QObject::connect(timer, &QTimer::timeout, [timer, function = std::move(function), caller, handler = std::move(handler)]() mutable {
+		QTimer* timer2 = new QTimer();
+        timer->deleteLater();
+	    timer2->moveToThread(caller->thread());
+	    timer2->setSingleShot(true);
 
+    	if constexpr (std::is_same_v<ValueType, void>) {
+			function();
+		    QObject::connect(timer2, &QTimer::timeout, [timer2, handler = std::move(handler)]() mutable {
+				handler();
+				timer2->deleteLater();
+			});
+		} else {
+			auto result = function();
+		    QObject::connect(timer2, &QTimer::timeout, [result, timer2, handler = std::move(handler)]() mutable {
+		    	handler(std::move(result));
+				timer2->deleteLater();
+			});
+		}
+		QMetaObject::invokeMethod(timer2, "start", Qt::QueuedConnection, Q_ARG(int, 0));
+    });
+    QMetaObject::invokeMethod(timer, "start", Qt::QueuedConnection, Q_ARG(int, 0));
+#else
 	QMetaObject::invokeMethod(targetObject, [function = std::move(function), caller, handler = std::move(handler)]() mutable {
 		if constexpr (std::is_same_v<ValueType, void>) {
 			function();
@@ -173,6 +267,7 @@ auto runOnThread(QObject *targetObject, Function function, QObject *caller, Hand
 			});
 		}
 	});
+#endif
 }
 
 // Creates a future with the results from all given futures.

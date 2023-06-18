@@ -44,7 +44,7 @@
 
 class QMimeType;
 
-using namespace Enums;
+//using namespace Enums;
 
 struct FileHash
 {
@@ -54,7 +54,11 @@ struct FileHash
 
 	QXmppHash toQXmpp() const;
 
+#if defined(SFOS)
+	bool operator==(const FileHash &other) const;
+#else
 	bool operator==(const FileHash &other) const = default;
+#endif
 };
 
 struct HttpSource
@@ -64,7 +68,11 @@ struct HttpSource
 
 	QXmppHttpFileSource toQXmpp() const;
 
+#if defined(SFOS)
+	bool operator==(const HttpSource &other) const;
+#else
 	bool operator==(const HttpSource &other) const = default;
+#endif
 };
 
 struct EncryptedSource
@@ -79,7 +87,11 @@ struct EncryptedSource
 
 	QXmppEncryptedFileSource toQXmpp() const;
 
+#if defined(SFOS)
+	bool operator==(const EncryptedSource &other) const;
+#else
 	bool operator==(const EncryptedSource &other) const = default;
+#endif
 };
 
 struct File
@@ -118,7 +130,11 @@ public:
 
 	[[nodiscard]] QXmppFileShare toQXmpp() const;
 
+#if defined(SFOS)
+	bool operator==(const File &other) const;
+#else
 	bool operator==(const File &other) const = default;
+#endif
 
 private:
 	[[nodiscard]] QString _name() const { return name.value_or(QString()); }
@@ -140,7 +156,11 @@ struct MessageReaction
 	QDateTime latestTimestamp;
 	QVector<QString> emojis;
 
+#if defined(SFOS)
+	bool operator==(const MessageReaction &other) const;
+#else
 	bool operator==(const MessageReaction &other) const = default;
+#endif
 };
 
 /**
@@ -157,8 +177,13 @@ public:
 	 * Compares another @c Message with this. Only attributes that are saved in the
 	 * database are checked.
 	 */
+#if defined(SFOS)
+	bool operator==(const Message &m) const;
+	bool operator!=(const Message &m) const;
+#else
 	bool operator==(const Message &m) const = default;
 	bool operator!=(const Message &m) const = default;
+#endif
 
 	QString id;
 	QString to;
@@ -186,7 +211,11 @@ public:
 	// True if the orginal message was edited.
 	bool isEdited = false;
 	// Delivery state of the message, like if it was sent successfully or if it was already delivered
+#if defined(SFOS)
+	Enums::DeliveryState deliveryState = Enums::DeliveryState::Delivered;
+#else
 	DeliveryState deliveryState = DeliveryState::Delivered;
+#endif
 	// Text description of an error if it ever happened to the message
 	QString errorText;
 

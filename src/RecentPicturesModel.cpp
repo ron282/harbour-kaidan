@@ -28,6 +28,7 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
 #include "RecentPicturesModel.h"
 
 #include <KDirLister>
@@ -65,3 +66,4 @@ bool RecentPicturesModel::subSortLessThan(const QModelIndex &left, const QModelI
 
 	return leftFile.time(KFileItem::ModificationTime) > rightFile.time(KFileItem::ModificationTime);
 }
+*/

@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
+#if defined(SFOS)
+#endif
 
 #include <QAbstractListModel>
 

@@ -38,6 +38,10 @@
 #include "ClientWorker.h"
 #include "Globals.h"
 
+#if defined(SFOS)
+#include <QColor>
+#endif 
+
 /**
  * This class contains C++ utilities to be used in QML.
  */
@@ -79,7 +83,7 @@ public:
 	 */
 	static QString versionString()
 	{
-		return QStringLiteral(VERSION_STRING);
+		return "VERSION_STRING";
 	}
 
 	/**
@@ -87,7 +91,7 @@ public:
 	 */
 	static QString applicationDisplayName()
 	{
-		return QStringLiteral(APPLICATION_DISPLAY_NAME);
+		return "APPLICATION_DISPLAY_NAME";
 	}
 
 	/**
@@ -100,7 +104,7 @@ public:
 	 */
 	static QUrl applicationSourceCodeUrl()
 	{
-		return { QStringLiteral(APPLICATION_SOURCE_CODE_URL) };
+		return { "APPLICATION_SOURCE_CODE_URL" };
 	}
 
 	/**
@@ -123,7 +127,7 @@ public:
 	 */
 	Q_INVOKABLE static QUrl invitationUrl(const QString &jid)
 	{
-		return { QStringLiteral(INVITATION_URL) + jid };
+		return { "INVITATION_URL" + jid };
 	}
 
 	/**

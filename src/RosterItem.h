@@ -51,7 +51,11 @@ public:
 	Q_PROPERTY(bool chatStateSendingEnabled MEMBER chatStateSendingEnabled)
 	Q_PROPERTY(bool readMarkerSendingEnabled MEMBER readMarkerSendingEnabled)
 
+#if defined(SFOS)	
+	RosterItem() {} 
+#else
 	RosterItem() = default;
+#endif	
 	RosterItem(const QXmppRosterIq::Item &item, const QDateTime &dateTime = QDateTime::currentDateTimeUtc());
 
 	QString displayName() const;
@@ -59,8 +63,13 @@ public:
 	bool isSendingPresence() const;
 	bool isReceivingPresence() const;
 
+#if defined(SFOS)
+	bool operator==(const RosterItem &other) const;
+	bool operator!=(const RosterItem &other) const;
+#else
 	bool operator==(const RosterItem &other) const = default;
 	bool operator!=(const RosterItem &other) const = default;
+#endif
 
 	bool operator<(const RosterItem &other) const;
 	bool operator>(const RosterItem &other) const;

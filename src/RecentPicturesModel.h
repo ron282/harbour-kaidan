@@ -30,6 +30,8 @@
 
 #pragma once
 
+/*
+
 #include <KDirSortFilterProxyModel>
 
 class RecentPicturesModel : public KDirSortFilterProxyModel
@@ -49,4 +51,4 @@ public:
 
     bool subSortLessThan(const QModelIndex &left, const QModelIndex &right) const override;
 };
-
+*/

@@ -33,6 +33,11 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QUrl>
+#if defined(SFOS)
+#include <QLocale>
+#include <QMap>
+#include <QString>
+#endif
 // Kaidan
 #include "Algorithms.h"
 
@@ -47,25 +52,45 @@ struct LanguageMap
 
 		// Use the system-wide language chat support jid if available.
 		auto resultItr = values.find(languageCode);
+#if defined(SFOS)
+		if (resultItr != values.end() && !(++resultItr)->isEmpty()) {
+			return *resultItr;
+		}
+#else
 		if (resultItr != values.end() && !resultItr->second.isEmpty()) {
 			return resultItr->second;
 		}
+#endif
 
 		// Use the English chat support jid if no system-wide language chat support jid is available but English is.
 		resultItr = values.find(QStringLiteral("EN"));
+#if defined(SFOS)
+		if (resultItr != values.end() && !(++resultItr)->isEmpty()) {
+			return *resultItr;
+		}
+#else
 		if (resultItr != values.end() && !resultItr->second.isEmpty()) {
 			return resultItr->second;
 		}
+#endif
 
 		// Use the first chat support jid if also no English version is available but another one is.
 		if (!values.empty()) {
+#if defined(SFOS)
+			return *(++values.begin());
+#else
 			return values.begin()->second;
+#endif
 		}
 
 		return {};
 	}
 
+#if defined(SFOS)
+	QMap<QString, T> values;
+#else
 	std::unordered_map<QString, T> values;
+#endif
 };
 
 class ProviderListItemPrivate : public QSharedData
@@ -122,7 +147,11 @@ ProviderListItem ProviderListItem::fromJson(const QJsonObject &object)
 
 	const auto chatSupportLanguageAddresses = object.value(QLatin1String("chatSupport")).toObject();
 	for (auto itr = chatSupportLanguageAddresses.constBegin(); itr != chatSupportLanguageAddresses.constEnd(); ++itr) {
+#if defined(SFOS)
+		item.d->chatSupport.values.insert(
+#else
 		item.d->chatSupport.values.insert_or_assign(
+#endif
 			itr.key().toUpper(),
 			transform(itr.value().toArray(), [](auto item) { return item.toString(); })
 		);
@@ -130,7 +159,11 @@ ProviderListItem ProviderListItem::fromJson(const QJsonObject &object)
 
 	const auto groupChatSupportLanguageAddresses = object.value(QLatin1String("groupChatSupport")).toObject();
 	for (auto itr = groupChatSupportLanguageAddresses.constBegin(); itr != groupChatSupportLanguageAddresses.constEnd(); ++itr) {
+#if defined(SFOS)
+		item.d->groupChatSupport.values.insert(
+#else
 		item.d->groupChatSupport.values.insert_or_assign(
+#endif
 			itr.key().toUpper(),
 			transform(itr.value().toArray(), [](auto item) { return item.toString(); })
 		);
@@ -193,7 +226,18 @@ void ProviderListItem::setRegistrationWebPage(const QUrl &registrationWebPage)
 
 QVector<QString> ProviderListItem::languages() const
 {
+#if defined(SFOS)
+	QVector<QString> rv;
+
+	QMapIterator<QString, QUrl> i(d->websites);
+	while (i.hasNext()) {
+	    i.next();
+	    rv.append(i.key());
+	}
+	return rv;
+#else
 	return { d->websites.keyBegin(), d->websites.keyEnd() };
+#endif
 }
 
 QVector<QString> ProviderListItem::countries() const
@@ -299,7 +343,11 @@ QVector<QString> ProviderListItem::chatSupport() const
 	return d->chatSupport.pickBySystemLocale();
 }
 
+#if defined(SFOS)
+void ProviderListItem::setChatSupport(QMap<QString, QVector<QString>> &&chatSupport)
+#else
 void ProviderListItem::setChatSupport(std::unordered_map<QString, QVector<QString>> &&chatSupport)
+#endif
 {
 	d->chatSupport.values = std::move(chatSupport);
 }
@@ -309,7 +357,11 @@ QVector<QString> ProviderListItem::groupChatSupport() const
 	return d->groupChatSupport.pickBySystemLocale();
 }
 
+#if defined(SFOS)
+void ProviderListItem::setGroupChatSupport(QMap<QString, QVector<QString>> &&groupChatSupport)
+#else
 void ProviderListItem::setGroupChatSupport(std::unordered_map<QString, QVector<QString>> &&groupChatSupport)
+#endif
 {
 	d->groupChatSupport.values = std::move(groupChatSupport);
 }

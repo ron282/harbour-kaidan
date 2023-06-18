@@ -132,7 +132,11 @@ void RegistrationManager::handleRegistrationFormReceived(const QXmppRegisterIq &
 		// Most servers include a text with a link to the website.
 		const auto words = iq.instructions().split(u' ');
 		for (const auto &instructionPart : words) {
+#if defined(SFOS)
+			if (instructionPart.startsWith("https://")) {
+#else
 			if (instructionPart.startsWith(u"https://")) {
+#endif
 				emit Kaidan::instance()->registrationOutOfBandUrlReceived(instructionPart);
 				setRegisterOnConnectEnabled(false);
 				return;

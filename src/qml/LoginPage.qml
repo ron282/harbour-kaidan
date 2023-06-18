@@ -28,10 +28,8 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import QtQuick.Controls 2.14 as Controls
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
 
@@ -39,71 +37,68 @@ import "elements"
 import "elements/fields"
 import "settings"
 
-Kirigami.Page {
-	title: qsTr("Log in")
+/**
+ * This page is used for deciding between registration or login.
+ */
+Page {
+    PageHeader {
+        title: qsTr("Log in")
+    }
+    Column {
+        anchors.verticalCenter: parent.verticalCenter
+        width: parent.width
+        spacing: Theme.paddingLarge
 
-	ColumnLayout {
-		anchors.fill: parent
-
-		Kirigami.Heading {
+        Label {
 			text: qsTr("Log in to your XMPP account")
 			wrapMode: Text.WordWrap
-			Layout.fillWidth: true
-			horizontalAlignment: Qt.AlignHCenter
 		}
 
-		ColumnLayout {
-			width: parent.width
-			Layout.fillWidth: true
+        // JID field
+        JidField {
+            id: jidField
 
-			// For desktop or tablet devices
-			Layout.alignment: Qt.AlignCenter
-			Layout.maximumWidth: largeButtonWidth
+            EnterKey.onClicked: passwordField.focus()
 
-			// JID field
-			JidField {
-				id: jidField
+/*				inputField.rightActions: [
+                Kirigami.Action {
+                    icon.name: "preferences-system-symbolic"
+                    text: qsTr("Connection settings")
+                    onTriggered: {
+                        customConnectionSettings.visible = !customConnectionSettings.visible
 
-				// Simulate the pressing of the loginButton.
-				inputField {
-					onAccepted: loginButton.clicked()
-				}
+                        if (jidField.valid && customConnectionSettings.visible)
+                            customConnectionSettings.forceActiveFocus()
+                        else
+                            jidField.forceActiveFocus()
+                    }
+                }
+            ]
+*/
+          }
 
-				inputField.rightActions: [
-					Kirigami.Action {
-						icon.name: "preferences-system-symbolic"
-						text: qsTr("Connection settings")
-						onTriggered: {
-							customConnectionSettings.visible = !customConnectionSettings.visible
-
-							if (jidField.valid && customConnectionSettings.visible)
-								customConnectionSettings.forceActiveFocus()
-							else
-								jidField.forceActiveFocus()
-						}
-					}
-				]
-			}
-
-			CustomConnectionSettings {
-				id: customConnectionSettings
-				confirmationButton: loginButton
-				visible: false
-			}
+//			CustomConnectionSettings {
+//				id: customConnectionSettings
+//				confirmationButton: loginButton
+//				visible: false
+//			}
 
 			// password field
 			PasswordField {
 				id: passwordField
 
 				// Simulate the pressing of the loginButton.
-				inputField {
-					onAccepted: loginButton.clicked()
+                EnterKey.iconSource: "image://theme/icon-m-enter-accept"
+                EnterKey.onClicked: {
+                    if( acceptableInput)
+                        loginButton.clicked()
 				}
 			}
 
-			CenteredAdaptiveHighlightedButton {
+            Button {
 				id: loginButton
 				text: qsTr("Log in")
+                anchors.horizontalCenter: parent.horizontalCenter
 
 				state: Kaidan.connectionState !== Enums.StateDisconnected ? "connecting" : ""
 				states: [
@@ -136,18 +131,11 @@ Kirigami.Page {
 					}
 				}
 			}
-		}
-
-		// placeholder
-		Item {
-			Layout.preferredHeight: Kirigami.Units.gridUnit * 3
-		}
-	}
-
-	Component.onCompleted: {
-		AccountManager.resetCustomConnectionSettings()
-		jidField.forceActiveFocus()
-	}
+        Component.onCompleted: {
+            AccountManager.resetCustomConnectionSettings()
+            jidField.forceActiveFocus()
+        }
+    }
 
 	/*
 	 * Fills the JID field with "@" followed by a domain and moves the cursor to

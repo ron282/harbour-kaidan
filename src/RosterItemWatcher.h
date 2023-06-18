@@ -31,7 +31,11 @@
 #pragma once
 
 #include <optional>
+#if defined(SFOS)
+#include <QMultiMap>
+#else
 #include <unordered_map>
+#endif
 #include <QObject>
 
 #include "RosterItem.h"
@@ -50,7 +54,11 @@ public:
 private:
 	RosterItemNotifier() = default;
 
+#if defined(SFOS)
+	QMultiMap<QString, RosterItemWatcher *> m_itemWatchers;
+#else
 	std::unordered_multimap<QString, RosterItemWatcher *> m_itemWatchers;
+#endif
 };
 
 class RosterItemWatcher : public QObject

@@ -27,6 +27,9 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
+#if defined(SFOS)
+#include "../3rdparty/QEmuStringView/qemustringview.h"
+#endif
 
 #include "QmlUtils.h"
 // Qt
@@ -97,11 +100,17 @@ QString QmlUtils::connectionErrorMessage(ClientWorker::ConnectionError error)
 
 QString QmlUtils::getResourcePath(const QString &name)
 {
-	// We generally prefer to first search for files in application resources
-	if (QFile::exists(":/" + name))
-		return QString("qrc:/" + name);
-
-	// list of file paths where to search for the resource file
+#if defined(SFOS)
+    qDebug() << "getResourcePath " << name;
+#endif
+    // We generally prefer to first search for files in application resources
+    if (QFile::exists("/" + name))
+#if defined(SFOS)
+        return QString("/" + name);
+#else
+        return QString("qrc:/" + name);
+#endif
+    // list of file paths where to search foooooooor the resource file
 	QStringList pathList;
 	// add relative path from binary (only works if installed)
 	pathList << QCoreApplication::applicationDirPath() + QString("/../share/") + QString(APPLICATION_NAME);
@@ -220,7 +229,22 @@ QString QmlUtils::formattedDataSize(qint64 fileSize)
 		return tr("Unknown size");
 	}
 
+#if defined(SFOS)
+			QString s;
+			if( fileSize < 1000) {
+				s = QString::number(fileSize) + " B";
+            } else if( fileSize < (1000^2) ) {
+                s = QString::number(fileSize / (1000^2) ) + " kB";
+            } else if( fileSize < (1000^3) ) {
+                s = QString::number(fileSize / (1000^3) ) + " MB";
+			} else {
+                s = QString::number(fileSize / (1000^4) ) + " GB";
+			}
+
+			return s;
+#else
 	return QLocale::system().formattedDataSize(fileSize);
+#endif
 }
 
 QString QmlUtils::formatMessage(const QString &message)
@@ -243,8 +267,11 @@ QUrl QmlUtils::pasteImage()
 		return {};
 
 	// create absolute file path
+#if defined (SFOS)
+	const auto path = downloadPath(QString("image-") % timestampForFileName() % QString(".jpg"));
+#else
 	const auto path = downloadPath(u"image-" % timestampForFileName() % u".jpg");
-
+#endif
 	// encode JPEG image
 	if (!image.save(path, "JPG", JPEG_EXPORT_QUALITY))
 		return {};
@@ -272,7 +299,11 @@ QString QmlUtils::downloadPath(const QString &filename)
 	const auto nameSuffix = info.suffix();
 	for (uint i = 1; info.exists(); i++) {
 		// try to insert '-<i>' before the file extension
+#if defined(SFOS)
+		info = QFileInfo(directory, baseName % QString('-') % QString::number(i) % nameSuffix);
+#else
 		info = QFileInfo(directory, baseName % u'-' % QString::number(i) % nameSuffix);
+#endif
 	}
 	return info.absoluteFilePath();
 }
@@ -284,7 +315,11 @@ QString QmlUtils::timestampForFileName()
 
 QString QmlUtils::timestampForFileName(const QDateTime &dateTime)
 {
+#if defined(SFOS)
+	return dateTime.toString(QString("yyyyMMdd_hhmmss"));
+#else
 	return dateTime.toString(u"yyyyMMdd_hhmmss");
+#endif
 }
 
 QString QmlUtils::chatStateDescription(const QString &displayName, const QXmppMessage::State state)
@@ -326,5 +361,9 @@ QString QmlUtils::processMsgFormatting(const QStringList &list, bool isFirst)
 
 QString QmlUtils::osmUserAgent()
 {
+#if defined(SFOS)
+	return QString(APPLICATION_NAME) % QChar('/') % QString(VERSION_STRING);
+#else
 	return u"" APPLICATION_NAME % QChar(u'/') % u"" VERSION_STRING;
+#endif
 }

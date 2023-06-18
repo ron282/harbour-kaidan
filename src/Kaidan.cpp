@@ -27,7 +27,10 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+#if defined(SFOS)
+#include <QDebug>
+#include "../3rdparty/QEmuStringView/qemustringview.h"
+#endif
 #include "Kaidan.h"
 
 // Qt
@@ -57,7 +60,7 @@ Kaidan::Kaidan(bool enableLogging, QObject *parent)
 	: QObject(parent)
 {
 	Q_ASSERT(!s_instance);
-	s_instance = this;
+    s_instance = this;
 
 	m_notifications = new Notifications(this);
 
@@ -79,7 +82,7 @@ Kaidan::Kaidan(bool enableLogging, QObject *parent)
 	m_client = new ClientWorker(m_caches, m_database, enableLogging);
 	m_client->moveToThread(m_cltThrd);
 
-	connect(AccountManager::instance(), &AccountManager::credentialsNeeded, this, &Kaidan::credentialsNeeded);
+    connect(AccountManager::instance(), &AccountManager::credentialsNeeded, this, &Kaidan::credentialsNeeded);
 
 	connect(m_client, &ClientWorker::loggedInWithNewCredentials, this, &Kaidan::openChatViewRequested);
 	connect(m_client, &ClientWorker::connectionStateChanged, this, &Kaidan::setConnectionState);
@@ -93,7 +96,7 @@ Kaidan::Kaidan(bool enableLogging, QObject *parent)
 	// Log out of the server when the application window is closed.
 	connect(qGuiApp, &QGuiApplication::aboutToQuit, this, [this]() {
 		emit logOutRequested(true);
-	});
+    });
 }
 
 Kaidan::~Kaidan()
@@ -122,7 +125,11 @@ void Kaidan::setConnectionState(Enums::ConnectionState connectionState)
 
 		// Open the possibly cached URI when connected.
 		// This is needed because the XMPP URIs can't be opened when Kaidan is not connected.
+#if defined(SFOS)
+		if (m_connectionState == Enums::ConnectionState::StateConnected && !m_openUriCache.isEmpty()) {
+#else
 		if (m_connectionState == ConnectionState::StateConnected && !m_openUriCache.isEmpty()) {
+#endif
 			// delay is needed because sometimes the RosterPage needs to be loaded first
 			QTimer::singleShot(300, this, [this] {
 				emit xmppUriReceived(m_openUriCache);
@@ -156,8 +163,11 @@ void Kaidan::addOpenUri(const QString &uri)
 	// Do not open XMPP URIs for group chats (e.g., "xmpp:kaidan@muc.kaidan.im?join") as long as Kaidan does not support that.
 	if (!QXmppUri::isXmppUri(uri) || QXmppUri(uri).action() == QXmppUri::Join)
 		return;
-
+#if defined(SFOS)
+	if (m_connectionState == Enums::ConnectionState::StateConnected) {
+#else
 	if (m_connectionState == ConnectionState::StateConnected) {
+#endif		
 		emit xmppUriReceived(uri);
 	} else {
 		emit passiveNotificationRequested(tr("The link will be opened after you have connected."));
@@ -168,25 +178,41 @@ void Kaidan::addOpenUri(const QString &uri)
 quint8 Kaidan::logInByUri(const QString &uri)
 {
 	if (!QXmppUri::isXmppUri(uri)) {
+#if defined(SFOS)
+		return quint8(Enums::LoginByUriState::InvalidLoginUri);
+#else
 		return quint8(LoginByUriState::InvalidLoginUri);
+#endif
 	}
 
 	QXmppUri parsedUri(uri);
 
 	if (!CredentialsValidator::isAccountJidValid(parsedUri.jid())) {
+#if defined(SFOS)
+		return quint8(Enums::LoginByUriState::InvalidLoginUri);
+#else
 		return quint8(LoginByUriState::InvalidLoginUri);
+#endif
 	}
 
 	AccountManager::instance()->setJid(parsedUri.jid());
 
 	if (parsedUri.action() != QXmppUri::Login || !CredentialsValidator::isPasswordValid(parsedUri.password())) {
+#if defined(SFOS)
+		return quint8(Enums::LoginByUriState::PasswordNeeded);
+#else
 		return quint8(LoginByUriState::PasswordNeeded);
+#endif
 	}
 
 	// Connect with the extracted credentials.
 	AccountManager::instance()->setPassword(parsedUri.password());
 	logIn();
+#if defined(SFOS)
+	return quint8(Enums::LoginByUriState::Connecting);
+#else
 	return quint8(LoginByUriState::Connecting);
+#endif
 }
 
 Kaidan::TrustDecisionByUriResult Kaidan::makeTrustDecisionsByUri(const QString &uri, const QString &expectedJid)
@@ -238,7 +264,11 @@ QString databaseFilename()
 QString applicationProfileSuffix()
 {
 	static const auto profileSuffix = []() -> QString {
+#if defined(SFOS)
+		const auto profile = QString::fromLocal8Bit(qgetenv("KAIDAN_PROFILE"));
+#else
 		const auto profile = qEnvironmentVariable("KAIDAN_PROFILE");
+#endif
 		if (!profile.isEmpty()) {
 			return u'-' + profile;
 		}
@@ -249,16 +279,28 @@ QString applicationProfileSuffix()
 
 QString configFileBaseName()
 {
+#if defined(SFOS)
+	return QString::fromUtf16(u"") % APPLICATION_NAME % applicationProfileSuffix();
+#else
 	return u"" APPLICATION_NAME % applicationProfileSuffix();
+#endif
 }
 
 QStringList oldDatabaseFilenames()
 {
+#if defined(SFOS)
+	return {QString::fromUtf16(u"messages") % applicationProfileSuffix() % QString::fromUtf16(u".sqlite3")};
+#else
 	return {u"messages" % applicationProfileSuffix() % u".sqlite3"};
+#endif
 }
 
 QString databaseFilename()
 {
+#if defined(SFOS)
+	return QString::fromUtf16(u"") % DB_FILE_BASE_NAME % applicationProfileSuffix() % QString::fromUtf16(u".sqlite3");
+#else
 	return u"" DB_FILE_BASE_NAME % applicationProfileSuffix() % u".sqlite3";
+#endif
 }
 #endif

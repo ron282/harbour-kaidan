@@ -1503,7 +1503,13 @@ EmojiProxyModel::EmojiProxyModel(QObject *parent)
 {
 	Settings *settings = Kaidan::instance()->settings();
 	const QStringList list = settings->favoriteEmojis();
+#if defined(SFOS)
+	for (const auto &str : std::as_const(list)) {
+        m_favoriteEmojis += str;
+    }
+#else
 	m_favoriteEmojis = QSet<QString>(list.begin(), list.end());
+#endif
 }
 
 EmojiProxyModel::~EmojiProxyModel()

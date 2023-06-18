@@ -30,7 +30,11 @@
 
 #pragma once
 
+#ifdef SFOS
+#include "../3rdparty/QEmuStringView/qemustringview.h"
+#else
 #include <QStringView>
+#endif
 #include <QVariant>
 #include <optional>
 #include <vector>

@@ -61,8 +61,11 @@ QHash<int, QByteArray> UserDevicesModel::roleNames() const
 
 QVariant UserDevicesModel::data(const QModelIndex &index, int role) const
 {
+#if defined(SFOS)
+	Q_ASSERT(index.isValid() || index.parent().isValid());
+#else
 	Q_ASSERT(checkIndex(index, QAbstractItemModel::CheckIndexOption::IndexIsValid | QAbstractItemModel::CheckIndexOption::ParentIsInvalid));
-
+#endif
 	switch(role) {
 	case Resource:
 		return m_devices.at(index.row()).resource;

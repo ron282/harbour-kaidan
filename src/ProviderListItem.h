@@ -30,6 +30,13 @@
 
 #pragma once
 
+#if defined(SFOS)
+#include <QString>
+#include <QMap>
+#include <QVector>
+#include <QUrl>
+#endif
+
 // std
 #include <unordered_map>
 // Qt
@@ -90,11 +97,17 @@ public:
 	void setMessageStorageDuration(int messageStorageDuration);
 
 	QVector<QString> chatSupport() const;
+#if defined(SFOS)
+	void setChatSupport(QMap<QString, QVector<QString>> &&chatSupport);
+#else
 	void setChatSupport(std::unordered_map<QString, QVector<QString>> &&chatSupport);
-
+#endif
 	QVector<QString> groupChatSupport() const;
+#if defined(SFOS)
+	void setGroupChatSupport(QMap<QString, QVector<QString>> &&groupChatSupport);
+#else
 	void setGroupChatSupport(std::unordered_map<QString, QVector<QString>> &&groupChatSupport);
-
+#endif
 	bool operator<(const ProviderListItem &other) const;
 	bool operator>(const ProviderListItem &other) const;
 	bool operator<=(const ProviderListItem &other) const;

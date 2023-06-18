@@ -29,10 +29,11 @@
  */
 
 #pragma once
-
 #include <QObject>
+#if defined(SFOS)
+#else
 #include <QQuickStyle>
-
+#endif
 class GuiStyle : public QObject
 {
 	Q_OBJECT
@@ -47,9 +48,13 @@ public:
 	}
 
 	inline static QString name()
-	{
-		return QQuickStyle::name();
-	}
+    {
+#if defined(SFOS)
+        return "Material";
+#else
+        return QQuickStyle::name();
+#endif
+    }
 
 	inline static bool isMaterial()
 	{

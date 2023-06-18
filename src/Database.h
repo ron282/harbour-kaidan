@@ -38,6 +38,9 @@ class QSqlDatabase;
 class QThreadPool;
 struct DatabasePrivate;
 
+#if defined(SFOS)
+#include "../3rdparty/QEmuStringView/qemustringview.h"
+#endif
 /**
  * The Database class manages the SQL database. It opens the database and converts old
  * formats.

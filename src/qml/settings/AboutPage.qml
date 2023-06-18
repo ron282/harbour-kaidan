@@ -27,11 +27,13 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
-import QtQuick 2.14
-import QtQuick.Controls 2.14 as Controls
-import QtQuick.Layouts 1.14
-import org.kde.kirigami 2.19 as Kirigami
-import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
+import QtQuick 2.2
+import Sailfish.Silica 1.0
+//import QtQuick 2.14
+//import QtQuick.Controls 2.14 as Controls
+//import QtQuick.Layouts 1.14
+//import org.kde.kirigami 2.19 as Kirigami
+//import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
 
 import im.kaidan.kaidan 1.0
 

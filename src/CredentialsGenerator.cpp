@@ -29,7 +29,9 @@
  */
 
 // Qt
+#ifndef SFOS
 #include <QRandomGenerator>
+#endif
 // Kaidan
 #include "CredentialsGenerator.h"
 #include "Globals.h"
@@ -49,13 +51,25 @@ QString CredentialsGenerator::generatePronounceableName(unsigned int length)
 {
 	QString randomString;
 	randomString.reserve(length);
-	bool startWithVowel = QRandomGenerator::global()->generate() % 2;
+#if SFOS    
+	bool startWithVowel = abs(qrand()) % 2;
+#else
+    bool startWithVowel = QRandomGenerator::global()->generate() % 2;
+#endif
 	length += startWithVowel;
 	for (unsigned int i = startWithVowel; i < length; ++i) {
 		if (i % 2)
-			randomString.append(VOWELS.at(QRandomGenerator::global()->generate() % VOWELS_LENGTH));
+#if SFOS    
+			randomString.append(VOWELS.data()[abs(qrand()) % VOWELS_LENGTH]);
+#else
+            randomString.append(VOWELS.at(QRandomGenerator::global()->generate() % VOWELS_LENGTH));
+#endif
 		else
-			randomString.append(CONSONANTS.at(QRandomGenerator::global()->generate() % CONSONANTS_LENGTH));
+#if SFOS    
+			randomString.append(CONSONANTS.data()[abs(qrand()) % CONSONANTS_LENGTH]);
+#else
+            randomString.append(CONSONANTS.at(QRandomGenerator::global()->generate() % CONSONANTS_LENGTH));
+#endif
 	}
 	return randomString;
 }
@@ -67,7 +81,11 @@ QString CredentialsGenerator::generateUsername()
 
 QString CredentialsGenerator::generatePassword()
 {
-	return generatePassword(GENERATED_PASSWORD_LENGTH_LOWER_BOUND + QRandomGenerator::global()->generate() % (GENERATED_PASSWORD_LENGTH_UPPER_BOUND - GENERATED_PASSWORD_LENGTH_LOWER_BOUND + 1));
+#if SFOS    
+	return generatePassword(GENERATED_PASSWORD_LENGTH_LOWER_BOUND + abs(qrand()) % (GENERATED_PASSWORD_LENGTH_UPPER_BOUND - GENERATED_PASSWORD_LENGTH_LOWER_BOUND + 1));
+#else
+    return generatePassword(GENERATED_PASSWORD_LENGTH_LOWER_BOUND + QRandomGenerator::global()->generate() % (GENERATED_PASSWORD_LENGTH_UPPER_BOUND - GENERATED_PASSWORD_LENGTH_LOWER_BOUND + 1));
+#endif
 }
 
 QString CredentialsGenerator::generatePassword(unsigned int length)
@@ -76,7 +94,10 @@ QString CredentialsGenerator::generatePassword(unsigned int length)
 	password.reserve(length);
 
 	for (unsigned int i = 0; i < length; i++)
-		password.append(GENERATED_PASSWORD_ALPHABET.at(QRandomGenerator::global()->generate() % GENERATED_PASSWORD_ALPHABET_LENGTH));
-
+#if SFOS    
+		password.append(GENERATED_PASSWORD_ALPHABET.data()[abs(qrand()) % GENERATED_PASSWORD_ALPHABET_LENGTH]);
+#else
+        password.append(GENERATED_PASSWORD_ALPHABET.at(QRandomGenerator::global()->generate() % GENERATED_PASSWORD_ALPHABET_LENGTH));
+#endif
 	return password;
 }

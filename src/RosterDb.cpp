@@ -208,9 +208,19 @@ QFuture<void> RosterDb::replaceItems(const QHash<QString, RosterItem> &items)
 		transaction();
 
 		QList<QString> keys = items.keys();
+#if defined(SFOS)
+		QSet<QString> newJids;
+		for (auto it = keys.begin(); it != keys.end(); it++) {
+			newJids.insert(*it);
+		}
+#else
 		QSet<QString> newJids = QSet<QString>(keys.begin(), keys.end());
-
+#endif
+#if defined(SFOS)
+		for (const auto &oldItem : const_cast<const QVector<RosterItem>&>(currentItems)) {
+#else
 		for (const auto &oldItem : qAsConst(currentItems)) {
+#endif
 			// We will remove the already existing JIDs, so we get a set of JIDs that
 			// are completely new.
 			//

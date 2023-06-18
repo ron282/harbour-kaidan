@@ -1,4 +1,4 @@
-/*
+	/*
  *  Kaidan - A user-friendly XMPP client for every device!
  *
  *  Copyright (C) 2016-2023 Kaidan developers and contributors
@@ -27,6 +27,11 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
+#if defined(SFOS)
+#include <QDebug>
+#define QSTRINGVIEW_EMULATE
+#include "../../3rdparty/QEmuStringView/qemustringview.h"
+#endif
 
 #include "QXmppUri.h"
 
@@ -34,14 +39,25 @@
 
 #include <array>
 
+#if defined(SFOS)
+ QStringView SCHEME = u"xmpp";
+ QStringView PREFIX = u"xmpp:";
+constexpr QChar QUERY_ITEM_DELIMITER = ';';
+constexpr QChar QUERY_ITEM_KEY_DELIMITER = '=';
+#else
 constexpr QStringView SCHEME = u"xmpp";
 constexpr QStringView PREFIX = u"xmpp:";
 constexpr QChar QUERY_ITEM_DELIMITER = u';';
 constexpr QChar QUERY_ITEM_KEY_DELIMITER = u'=';
+#endif
 
 // Query types representing actions, e.g. "join" in
 // "xmpp:group@example.org?join" for joining a group chat
+#if defined(SFOS)
+std::array<QStringView, 18> QUERY_TYPES = {
+#else
 constexpr std::array<QStringView, 18> QUERY_TYPES = {
+#endif
 	QStringView(),
 	u"command",
 	u"disco",
@@ -63,7 +79,11 @@ constexpr std::array<QStringView, 18> QUERY_TYPES = {
 };
 
 // QXmppMessage types as strings
+#if defined(SFOS)
+std::array<QStringView, 5> MESSAGE_TYPES = {
+#else
 constexpr std::array<QStringView, 5> MESSAGE_TYPES = {
+#endif
 	u"error",
 	u"normal",
 	u"chat",

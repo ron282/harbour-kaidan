@@ -44,6 +44,93 @@
 #include <QXmppHttpFileSource.h>
 #include <QXmppEncryptedFileSource.h>
 
+#if defined (SFOS)
+
+bool FileHash::operator==(const FileHash &o) const
+{
+	return 
+		dataId == o.dataId &&
+		hashType == o.hashType &&
+		hashValue == o.hashValue;
+}
+
+bool HttpSource::operator==(const HttpSource &o) const
+{
+	return
+		fileId == o.fileId &&
+		url == o.url;
+}
+
+bool EncryptedSource::operator==(const EncryptedSource &o) const
+{
+	return 
+		fileId == o.fileId &&
+		url == o.url && 
+		cipher == o.cipher &&
+		key == o.key &&
+		iv == o.iv &&
+		encryptedDataId == o.encryptedDataId &&
+		encryptedHashes == o.encryptedHashes;
+}
+
+bool File::operator==(const File &o) const
+{
+	return 
+		id == o.id &&
+	 	fileGroupId == o.fileGroupId &&
+		name == o.name &&
+		description == o.description &&
+		mimeType == o.mimeType &&
+		size == o.size &&
+	 	lastModified == o.lastModified &&
+		disposition == o.disposition &&
+	 	localFilePath == o.localFilePath &&
+		hashes == o.hashes &&
+	 	thumbnail == o.thumbnail &&
+		httpSources == o.httpSources &&
+		encryptedSources == o.encryptedSources;
+}
+
+bool MessageReaction::operator==(const MessageReaction &o) const
+{
+	return latestTimestamp == o.latestTimestamp &&
+			emojis == o.emojis;
+}
+
+bool Message::operator==(const Message &m) const
+{
+	return 
+		id == m.id &&
+		to == m.to &&
+		from == m.from &&
+		body == m.body &&
+		stamp == m.stamp && 
+		isSpoiler == m.isSpoiler &&
+		spoilerHint == m.spoilerHint &&
+		marker == m.marker &&
+		markerId == m.markerId &&
+		replaceId == m.replaceId &&
+		originId == m.originId &&
+		stanzaId == m.stanzaId &&
+		fileGroupId == m.fileGroupId &&
+		files == m.files &&
+		receiptRequested == m.receiptRequested &&
+		reactions == m.reactions && 
+		encryption == m.encryption &&
+		senderKey == m.senderKey && 
+		isOwn == m.isOwn &&
+		isEdited == m.isEdited &&
+		deliveryState == m.deliveryState &&
+		errorText == m.errorText;
+}
+
+bool Message::operator!=(const Message &m) const
+{
+	return !(*this == m);
+}
+
+#endif
+
 QXmppHash FileHash::toQXmpp() const
 {
 	QXmppHash hash;
@@ -131,7 +218,11 @@ QUrl File::downloadUrl() const
 	return {};
 }
 
+#if defined(SFOS)
+Enums::MessageType File::type() const
+#else
 MessageType File::type() const
+#endif
 {
 	return MediaUtils::messageType(mimeType);
 }

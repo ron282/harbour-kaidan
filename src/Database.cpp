@@ -36,7 +36,9 @@
 
 #include <QDir>
 #include <QMutex>
+#if !defined(SFOS)
 #include <QRandomGenerator>
+#endif
 #include <QSqlDriver>
 #include <QSqlError>
 #include <QSqlField>
@@ -92,7 +94,11 @@ class DbConnection
 	Q_DISABLE_COPY(DbConnection)
 public:
 	DbConnection()
+#ifdef SFOS
+		: m_name(QString::number(abs(qrand()), 36))
+#else
 		: m_name(QString::number(QRandomGenerator::global()->generate(), 36))
+#endif
 	{
 		auto database = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), m_name);
 		if (!database.isValid()) {
@@ -206,16 +212,24 @@ void Database::createTables()
 
 void Database::startTransaction()
 {
+#if defined(SFOS)
+	QMetaObject::invokeMethod(d->dbWorker, "transaction");
+#else
 	QMetaObject::invokeMethod(d->dbWorker, [this] {
 		transaction();
 	});
+#endif
 }
 
 void Database::commitTransaction()
 {
+#if defined(SFOS)
+	QMetaObject::invokeMethod(d->dbWorker, "commit");
+#else
 	QMetaObject::invokeMethod(d->dbWorker, [this] {
 		commit();
 	});
+#endif
 }
 
 void Database::transaction()
@@ -661,7 +675,11 @@ void Database::convertDatabaseToV6()
 		u"mediaLocation " SQL_TEXT
 	};
 	for (auto column : newColumns) {
+#ifdef SFOS
+		execQuery(query, QStringView("ALTER TABLE Messages ADD ") + column);
+#else
 		execQuery(query, u"ALTER TABLE Messages ADD " % column);
+#endif
 	}
 	d->version = 6;
 }

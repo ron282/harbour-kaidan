@@ -14,6 +14,18 @@ namespace Json
 	template<typename T>
 	T value(const QJsonObject &object, QStringView key);
 
+#if !defined(SFOS)
+	template<typename T>
+	T value(const QJsonObject &object, QString key);	
+
+	template<>
+	QString value(const QJsonObject &object, QString key)
+	{
+		Q_ASSERT(!key.isEmpty());
+		return object.value(key);
+	}
+#endif
+
 	template<>
 	QString value(const QJsonObject &object, QStringView key)
 	{

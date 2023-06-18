@@ -27,7 +27,12 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+#if defined(SFOS)
+#include <QVector>
+#include <QString>
+#include <chrono>
+#include "../3rdparty/QEmuStringView/qemustringview.h"
+#endif
 #include "Notifications.h"
 
 // KNotifications
@@ -54,9 +59,10 @@
 using namespace std::chrono_literals;
 
 // Event IDs corresponding to the section entries in the "kaidan.notifyrc" configuration file
+#if defined(HAVE_KNOTIFICATIONS)
 constexpr QStringView NEW_MESSAGE_EVENT_ID = u"new-message";
 constexpr QStringView NEW_SUBSEQUENT_MESSAGE_EVENT_ID = u"new-subsequent-message";
-
+#endif
 constexpr auto SUBSEQUENT_MESSAGE_INTERVAL = 5s;
 constexpr int MAXIMUM_NOTIFICATION_TEXT_LINE_COUNT = 6;
 

@@ -56,7 +56,11 @@ VersionManager::VersionManager(QXmppClient *client, QObject *parent)
 void VersionManager::fetchVersions(const QString &bareJid, const QString &resource)
 {
 	const auto fetchVersion = [this, &bareJid](const QString &res) {
-		m_manager->requestVersion(bareJid % u'/' % res);
+#if defined(SFOS)
+		m_manager->requestVersion(bareJid % '/' % res);
+#else
+        m_manager->requestVersion(bareJid % u'/' % res);
+#endif
 	};
 
 	if (resource.isEmpty()) {

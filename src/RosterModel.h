@@ -39,6 +39,10 @@
 // Kaidan
 #include "RosterItem.h"
 
+#if defined(SFOS)
+#include <functional>
+#endif
+
 class Kaidan;
 class MessageModel;
 struct Message;

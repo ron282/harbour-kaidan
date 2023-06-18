@@ -34,6 +34,9 @@
 
 #include <ZXing/BitMatrix.h>
 
+#if defined(SFOS)
+#include <QImage>
+#endif
 class QImage;
 
 class QrCodeGenerator : public QObject

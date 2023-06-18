@@ -42,9 +42,10 @@
 #include <QPixmap>
 
 // KDE
+#if !defined(SFOS)
 #include <KIO/PreviewJob>
 #include <KFileItem>
-
+#endif
 static QList<QMimeType> mimeTypes(const QList<QMimeType> &mimeTypes, const QString &parent);
 
 const QMimeDatabase MediaUtils::s_mimeDB;
@@ -496,6 +497,12 @@ QByteArray MediaUtils::encodeImageThumbnail(const QImage &image)
 
 QFuture<std::shared_ptr<QXmppFileSharingManager::MetadataGeneratorResult>> MediaUtils::generateMetadata(std::unique_ptr<QIODevice> f)
 {
+#if defined(SFOS)
+#warning to be FIXED
+	using Result = QXmppFileSharingManager::MetadataGeneratorResult;
+
+	QFutureInterface<std::shared_ptr<Result>> interface;
+#else
 	using Result = QXmppFileSharingManager::MetadataGeneratorResult;
 	using Thumnbnail = QXmppFileSharingManager::MetadataThumbnail;
 
@@ -549,6 +556,6 @@ QFuture<std::shared_ptr<QXmppFileSharingManager::MetadataGeneratorResult>> Media
 		interface.reportResult(result);
 		interface.reportFinished();
 	});
-
+#endif
 	return interface.future();
 }

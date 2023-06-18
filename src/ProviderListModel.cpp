@@ -28,6 +28,12 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#if defined(SFOS)
+#include <QDebug>
+#define QSTRINGVIEW_EMULATE
+#include "../3rdparty/QEmuStringView/qemustringview.h"
+#endif
+
 #include "ProviderListModel.h"
 // std
 // Qt
@@ -35,15 +41,29 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+
+#if defined(SFOS)
+#include <QUrl>
+#endif
+
+#if defined(SFOS)
+#include "../3rdparty/QtCore/QRandomGenerator.h"
+#else
 #include <QRandomGenerator>
+#endif
 // QXmpp
 #include <QXmppUtils.h>
 // Kaidan
 #include "ProviderListItem.h"
 #include "Globals.h"
 
+#if defined(SFOS)
+const QStringView DEFAULT_LANGUAGE_CODE = u"EN";
+const QStringView DEFAULT_COUNTRY_CODE = u"US";
+#else
 constexpr QStringView DEFAULT_LANGUAGE_CODE = u"EN";
 constexpr QStringView DEFAULT_COUNTRY_CODE = u"US";
+#endif
 
 ProviderListModel::ProviderListModel(QObject *parent)
 	: QAbstractListModel(parent)
@@ -84,8 +104,11 @@ int ProviderListModel::rowCount(const QModelIndex &parent) const
 
 QVariant ProviderListModel::data(const QModelIndex &index, int role) const
 {
+#if defined(SFOS)
+	Q_ASSERT(index.isValid() == false | index.parent().isValid() == false);
+#else
 	Q_ASSERT(checkIndex(index, QAbstractItemModel::CheckIndexOption::IndexIsValid | QAbstractItemModel::CheckIndexOption::ParentIsInvalid));
-
+#endif
 	const ProviderListItem &item = m_items.at(index.row());
 
 	switch (role) {
@@ -119,7 +142,23 @@ QVariant ProviderListModel::data(const QModelIndex &index, int role) const
 			//: Unlimited file size for uploading
 			return tr("Unlimited");
 		default:
+#if defined(SFOS)
+			quint64 v = item.httpUploadSize() * 1000 * 1000;
+			QString s;
+			if( v < 1000) {
+				s = QString::number(v) + " B";
+			} else if( v < 1000^2 ) {
+				s = QString::number(v / 1000^2 ) + " kB";
+			} else if( v < 1000^3 ) {
+				s = QString::number(v / 1000^3 ) + " MB";
+			} else {
+				s = QString::number(v / 1000^4 ) + " GB";
+			}
+
+			return s;
+#else
 			return QLocale::system().formattedDataSize(item.httpUploadSize() * 1000 * 1000, 0, QLocale::DataSizeSIFormat);
+#endif
 		}
 	case MessageStorageDurationRole:
 		switch (item.messageStorageDuration()) {

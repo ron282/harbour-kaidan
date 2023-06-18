@@ -52,24 +52,49 @@ static void connectCamera(QCamera *camera, MediaRecorder *receiver) {
 	QObject::connect(camera, &QCamera::statusChanged, receiver, &MediaRecorder::readyChanged);
 }
 
+#if defined(SFOS)
+template<typename... Args> struct SELECT { 
+    template<typename C, typename R> 
+    static constexpr auto OVERLOAD_OF( R (C::*pmf)(Args...) ) -> decltype(pmf) { 
+        return pmf;
+    } 
+};
+#endif
+
 static void connectImageCapturer(CameraImageCapture *capturer, MediaRecorder *receiver) {
 	QObject::connect(capturer, &CameraImageCapture::availabilityChanged, receiver, &MediaRecorder::availabilityStatusChanged);
+#if defined(SFOS)
+	QObject::connect(capturer, SELECT<int, QCameraImageCapture::Error, const QString&>::OVERLOAD_OF(&CameraImageCapture::error), receiver, &MediaRecorder::errorChanged);
+#else
 	QObject::connect(capturer, QOverload<int, QCameraImageCapture::Error, const QString&>::of(&CameraImageCapture::error), receiver, &MediaRecorder::errorChanged);
+#endif	
 	QObject::connect(capturer, &CameraImageCapture::actualLocationChanged, receiver, &MediaRecorder::actualLocationChanged);
 	QObject::connect(capturer, &CameraImageCapture::readyForCaptureChanged, receiver, &MediaRecorder::readyChanged);
 }
 
 template <typename T>
 static void connectMediaRecorder(T *recorder, MediaRecorder *receiver) {
+#if defined(SFOS)
+	QObject::connect(recorder, SELECT<QMultimedia::AvailabilityStatus>::OVERLOAD_OF(&T::availabilityChanged), receiver, &MediaRecorder::availabilityStatusChanged);
+#else
 	QObject::connect(recorder, QOverload<QMultimedia::AvailabilityStatus>::of(&T::availabilityChanged), receiver, &MediaRecorder::availabilityStatusChanged);
+#endif
 	QObject::connect(recorder, &T::stateChanged, receiver, &MediaRecorder::stateChanged);
 	QObject::connect(recorder, &T::statusChanged, receiver, &MediaRecorder::statusChanged);
+#if defined(SFOS)
+	QObject::connect(recorder, SELECT<QMediaRecorder::Error>::OVERLOAD_OF(&T::error), receiver, &MediaRecorder::errorChanged);
+#else
 	QObject::connect(recorder, QOverload<QMediaRecorder::Error>::of(&T::error), receiver, &MediaRecorder::errorChanged);
+#endif
 	QObject::connect(recorder, &T::actualLocationChanged, receiver, &MediaRecorder::actualLocationChanged);
 	QObject::connect(recorder, &T::durationChanged, receiver, &MediaRecorder::durationChanged);
 	QObject::connect(recorder, &T::mutedChanged, receiver, &MediaRecorder::mutedChanged);
 	QObject::connect(recorder, &T::volumeChanged, receiver, &MediaRecorder::volumeChanged);
+#if defined(SFOS)
+	QObject::connect(recorder, SELECT<QMultimedia::AvailabilityStatus>::OVERLOAD_OF(&T::availabilityChanged), receiver, &MediaRecorder::readyChanged);
+#else
 	QObject::connect(recorder, QOverload<QMultimedia::AvailabilityStatus>::of(&T::availabilityChanged), receiver, &MediaRecorder::readyChanged);
+#endif
 	QObject::connect(recorder, &T::statusChanged, receiver, &MediaRecorder::readyChanged);
 }
 

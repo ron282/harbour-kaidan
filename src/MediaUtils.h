@@ -30,6 +30,10 @@
 
 #pragma once
 
+#if defined(SFOS)
+#include <QUrl>
+#endif
+
 #include <QGeoCoordinate>
 #include <QMimeDatabase>
 #include <QObject>

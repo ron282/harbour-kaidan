@@ -28,28 +28,39 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import org.kde.kirigami 2.19 as Kirigami
-
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 import im.kaidan.kaidan 1.0
-
-import "../elements"
 
 /**
  * This page is used for deciding between the automatic or manual registration.
  */
-BinaryDecisionPage {
-	title: qsTr("Register")
+Page {
+        Column {
+            anchors.top: parent.top
+            width: parent.width
+            spacing: Theme.paddingLarge
 
-	topImageSource: Utils.getResourcePath("images/onboarding/automatic-registration.svg")
-	bottomImageSource: Utils.getResourcePath("images/onboarding/manual-registration.svg")
+            PageHeader {
+                title: qsTr("Register")
+            }
 
-	topAction: Kirigami.Action {
-		text: qsTr("Generate an account automatically")
-		onTriggered: pageStack.layers.push(automaticRegistrationPage)
-	}
+        Button {
+            anchors.horizontalCenter: parent.horizontalCenter
+            icon: Image {
+                source: Utils.getResourcePath("images/onboarding/automatic-registration.svg")
+            }
+            text: qsTr("Generate an account automatically")
+            onClicked: pageStack.push(automaticRegistrationPage)
+        }
 
-	bottomAction: Kirigami.Action {
-		text: qsTr("Create an account manually")
-		onTriggered: pageStack.layers.push(manualRegistrationPage)
-	}
+        Button {
+            anchors.horizontalCenter: parent.horizontalCenter
+            icon: Image {
+                source: Utils.getResourcePath("images/onboarding/manual-registration.svg")
+            }
+            text: qsTr("Create an account manually")
+            onClicked: pageStack.push(manualRegistrationPage)
+        }
+    }
 }

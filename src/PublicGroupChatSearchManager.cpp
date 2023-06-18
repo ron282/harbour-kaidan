@@ -16,6 +16,10 @@
 #include <QTimer>
 #include <QUrlQuery>
 
+#if defined(SFOS)
+#define qUtf16Printable(x) reinterpret_cast<const ushort*>(x.utf16()) 
+#endif
+
 Q_LOGGING_CATEGORY(publicGroupChat_search, "public-group-chat.search", QtMsgType::QtWarningMsg)
 
 #define THROTTLER_TIMEOUT 1000 * 60
@@ -29,8 +33,11 @@ PublicGroupChatSearchManager::PublicGroupChatSearchManager(QNetworkAccessManager
 	Q_ASSERT(m_manager);
 
 	m_throttler->setSingleShot(true);
+#if defined(SFOS)
+	QObject::connect(m_throttler, &QTimer::timeout, m_throttler, [=] ()  { wakeUp(); });
+#else	
 	m_throttler->callOnTimeout(this, &PublicGroupChatSearchManager::wakeUp);
-
+#endif
 	connect(m_manager, &QNetworkAccessManager::finished, this, &PublicGroupChatSearchManager::replyFinished);
 }
 

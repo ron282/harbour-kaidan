@@ -28,28 +28,36 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
 
-import "elements"
 
 /**
  * This page is used for deciding between registration or login.
  */
-BinaryDecisionPage {
-	title: qsTr("Set up")
+Page {
+    PageHeader {
+        title : qsTr("Set up")
+    }
+    Column {
+        anchors.verticalCenter: parent.verticalCenter
+        width: parent.width
+        spacing: Theme.paddingLarge
 
-	topImageSource: Utils.getResourcePath("images/onboarding/registration.svg")
-	bottomImageSource: Utils.getResourcePath("images/onboarding/login.svg")
+        Button {
+            text: qsTr("Register a new account")
+            icon.source: Utils.getResourcePath("images/onboarding/registration.svg")
+            anchors.horizontalCenter: parent.horizontalCenter
+            onClicked: pageStack.push(registrationDecisionPage)
+        }
 
-	topAction: Kirigami.Action {
-		text: qsTr("Register a new account")
-		onTriggered: pageStack.layers.push(registrationDecisionPage)
-	}
-
-	bottomAction: Kirigami.Action {
-		text: qsTr("Use an existing account")
-		onTriggered: pageStack.layers.push(loginPage)
-	}
+        Button {
+            text: qsTr("Use an existing account")
+            icon.source: Utils.getResourcePath("images/onboarding/login.svg")
+            anchors.horizontalCenter: parent.horizontalCenter
+            onClicked: pageStack.push(loginPage)
+        }
+    }
 }

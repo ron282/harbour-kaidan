@@ -52,9 +52,15 @@ bool CameraImageCapture::setMediaObject(QMediaObject *mediaObject)
 	const bool result = QCameraImageCapture::setMediaObject(mediaObject);
 
 	if (previousAvailability != availability()) {
+#if SFOS
+        QMetaObject::invokeMethod(this, "availabilityChanged", 
+            Qt::QueuedConnection,
+            Q_ARG(QMultimedia::AvailabilityStatus, availability()));
+#else
 		QMetaObject::invokeMethod(this, [this]() {
 				emit availabilityChanged(availability());
 			}, Qt::QueuedConnection);
+#endif
 	}
 
 	return result;

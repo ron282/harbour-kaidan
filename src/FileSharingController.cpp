@@ -30,13 +30,23 @@
 
 #include "FileSharingController.h"
 
+#if defined(SFOS)
+#include "../3rdparty/QEmuStringView/qemustringview.h"
+#endif
+
 // std
 #include <array>
 
 #include <QDir>
 #include <QFile>
 #include <QMimeDatabase>
+#if !defined(SFOS)
 #include <QRandomGenerator>
+#else
+#include <iostream>
+#include <random>
+#include <cmath>
+#endif
 #include <QImage>
 #include <QStandardPaths>
 #include <QStringBuilder>
@@ -54,7 +64,9 @@
 #include <QXmppOutOfBandUrl.h>
 #include <QXmppUploadRequestManager.h>
 
+#if !defined(SFOS)
 #include <KFileUtils>
+#endif 
 
 #include "Kaidan.h"
 #include "FutureUtils.h"
@@ -78,8 +90,58 @@ auto find(T &container, Value value)
 
 static qint64 generateFileId()
 {
+#if defined(SFOS)
+    std::random_device rd;
+
+    std::mt19937_64 e2(rd());
+
+    std::uniform_int_distribution<long long int> dist(std::llround(std::pow(2,61)), std::llround(std::pow(2,62)));
+
+    return dist(e2);
+#else
 	return QRandomGenerator::system()->generate64();
+#endif
 }
+
+
+#if defined(SFOS)
+
+static QString addUniqueSuffix(const QString &fileName)
+{
+    // If the file doesn't exist return the same name.
+    if (!QFile::exists(fileName)) {
+        return fileName;
+    }
+
+    QFileInfo fileInfo(fileName);
+    QString ret;
+
+    // Split the file into 2 parts - dot+extension, and everything else. For
+    // example, "path/file.tar.gz" becomes "path/file"+".tar.gz", while
+    // "path/file" (note lack of extension) becomes "path/file"+"".
+    QString secondPart = fileInfo.completeSuffix();
+    QString firstPart;
+    if (!secondPart.isEmpty()) {
+        secondPart = "." + secondPart;
+        firstPart = fileName.left(fileName.size() - secondPart.size());
+    } else {
+        firstPart = fileName;
+    }
+
+    // Try with an ever-increasing number suffix, until we've reached a file
+    // that does not yet exist.
+    for (int ii = 1; ; ii++) {
+        // Construct the new file name by adding the unique number between the
+        // first and second part.
+        ret = QString("%1 (%2)%3").arg(firstPart).arg(ii).arg(secondPart);
+        // If no file exists with the new name, return it.
+        if (!QFile::exists(ret)) {
+            return ret;
+        }
+    }
+}
+
+#endif
 
 // ported from https://github.com/SergioBenitez/Rocket/blob/2cee4b459492136d616e5863c54754b135e41572/core/lib/src/fs/file_name.rs#L112
 ///
@@ -108,12 +170,17 @@ static std::optional<QString> sanitizeFilename(QStringView fileName) {
 #endif
 	};
 
+#if defined(SFOS)
+	constexpr std::initializer_list<char *> bad_names = {
+#else
 	constexpr std::initializer_list<QStringView> bad_names = {
+#endif
 #ifndef Q_OS_UNIX
 		u"CON", u"PRN", u"AUX", u"NUL", u"COM1", u"COM2", u"COM3", u"COM4",
 		u"COM5", u"COM6", u"COM7", u"COM8", u"COM9", u"LPT1", u"LPT2",
 		u"LPT3", u"LPT4", u"LPT5", u"LPT6", u"LPT7", u"LPT8", u"LPT9",
 #endif
+
 	};
 
 	constexpr auto isBadChar = [=](QChar c) {
@@ -174,8 +241,11 @@ void FileSharingController::sendMessage(Message &&message, bool encrypt)
 
 	message.id = QXmppUtils::generateStanzaUuid();
 	message.stamp = QDateTime::currentDateTimeUtc();
+#if defined(SFOS)
+	message.deliveryState = Enums::DeliveryState::Pending;
+#else
 	message.deliveryState = DeliveryState::Pending;
-
+#endif	
 	if (!message.fileGroupId) {
 		message.fileGroupId = generateFileId();
 	}
@@ -348,7 +418,11 @@ void FileSharingController::downloadFile(const QString &messageId, const File &f
 
 		// Check if the file name is already taken, and propose one that is unique
 		if (QFile::exists(filePath)) {
+#if defined(SFOS)
+			filename = addUniqueSuffix(filePath);
+#else
 			filename = KFileUtils::suggestName(QUrl::fromLocalFile(dirPath), filename);
+#endif
 			filePath = makeFileName();
 		}
 

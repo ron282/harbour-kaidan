@@ -28,140 +28,143 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Controls.Material 2.14 as Material
-import org.kde.kirigami 2.19 as Kirigami
-import StatusBar 0.1
-
+import QtQuick 2.2
+import Sailfish.Silica 1.0
+//import StatusBar 0.1
 import im.kaidan.kaidan 1.0
 
-import "elements"
-import "registration"
-import "settings"
 
-Kirigami.ApplicationWindow {
+//import "elements"
+//import "registration"
+//import "settings"
+
+
+ApplicationWindow {
 	id: root
 
-	minimumHeight: 300
-	minimumWidth: 280
+//	minimumHeight: 300
+//	minimumWidth: 280
 
-	readonly property ChatPage currentChatPage: {
-		for (let i = 0; i < pageStack.items.length; ++i) {
-			const page = pageStack.items[i];
+//	readonly property ChatPage currentChatPage: {
+//		return pageStack.find(function(p){
+//			p instanceof ChatPage
+//		});
+//		for (let i = 0; i < pageStack.items.length; ++i) {
+//			const page = pageStack.items[i];
+//
+//			if (page instanceof ChatPage) {
+//				return page;
+//			}
+//		}
+//
+//		return null;
+//	}
 
-			if (page instanceof ChatPage) {
-				return page;
-			}
-		}
-
-		return null;
-	}
-
+    /*
 	property bool currentDraftSaved: false
 
 	readonly property color primaryBackgroundColor: {
-		Kirigami.Theme.colorSet = Kirigami.Theme.View
-		return Kirigami.Theme.backgroundColor
+		return Theme.primaryColor
 	}
 
 	readonly property color secondaryBackgroundColor: {
-		Kirigami.Theme.colorSet = Kirigami.Theme.Window
-		return Kirigami.Theme.backgroundColor
+		return Theme.lightPrimaryColor
 	}
 
 	// radius for using rounded corners
-	readonly property int roundedCornersRadius: Kirigami.Units.smallSpacing * 1.5
+	readonly property int roundedCornersRadius: Theme.itemSizeSmall * 1.5
 
-	readonly property int largeButtonWidth: Kirigami.Units.gridUnit * 25
-	readonly property int smallButtonWidth: Kirigami.Theme.defaultFont.pixelSize * 2.9
+	readonly property int largeButtonWidth: Theme.buttonWidthLarge
+	readonly property int smallButtonWidth: Theme.buttonWidthSmall
+*/
 
 	// This is an alias for use in settings ONLY
 	// it is only used on mobile, on desktop another item overrides the id "stack"
-	property var stack: SettingsStack {}
+//	property var stack: SettingsStack {}
 
-	StatusBar {
-		color: Material.Material.color(Material.Material.Green, Material.Material.Shade700)
-	}
+//	StatusBar {
+//		color: Material.Material.color(Material.Material.Green, Material.Material.Shade700)
+//	}
 
 	// Global and Contextual Drawers
 	// It is initialized as invisible.
 	// That way, it does not pop up for a moment before the startPage is opened.
-	globalDrawer: GlobalDrawer {
-		enabled: false
-	}
+//	globalDrawer: GlobalDrawer {
+//		enabled: false
+//	}
 
-	contextDrawer: Kirigami.ContextDrawer {
-		id: contextDrawer
-	}
+//	contextDrawer: Kirigami.ContextDrawer {
+//		id: contextDrawer
+//	}
 
 
-	SubRequestAcceptSheet {
-		id: subReqAcceptSheet
-	}
+//	SubRequestAcceptSheet {
+//		id: subReqAcceptSheet
+//	}
 
-	// components for all main pages
+    // components for all main pages
 	Component {id: startPage; StartPage {}}
-	Component {id: registrationLoginDecisionPage; RegistrationLoginDecisionPage {}}
-	Component {id: registrationDecisionPage; RegistrationDecisionPage {}}
-	Component {id: automaticRegistrationPage; AutomaticRegistrationPage {}}
-	Component {id: manualRegistrationPage; ManualRegistrationPage {}}
-	Component {id: loginPage; LoginPage {}}
-	Component {id: rosterPage; RosterPage {}}
-	Component {id: chatPage; ChatPage {}}
-	Component {id: emptyChatPage; EmptyChatPage {}}
-	Component {id: settingsPage; SettingsPage {}}
-	Component {id: qrCodeOnboardingPage; QrCodeOnboardingPage {}}
+    Component {id: registrationLoginDecisionPage; RegistrationLoginDecisionPage {}}
+//    Component {id: registrationDecisionPage; RegistrationDecisionPage {}}
+//  Component {id: automaticRegistrationPage; AutomaticRegistrationPage {}}
+//	Component {id: manualRegistrationPage; ManualRegistrationPage {}}
+    Component {id: loginPage; LoginPage {}}
+//	Component {id: rosterPage; RosterPage {}}
+//	Component {id: chatPage; ChatPage {}}
+//	Component {id: emptyChatPage; EmptyChatPage {}}
+//	Component {id: settingsPage; SettingsPage {}}
+    Component {id: qrCodeOnboardingPage; QrCodeOnboardingPage {}}
 
-	onWideScreenChanged: showRosterPageForNarrowWindow()
+//	onWideScreenChanged: showRosterPageForNarrowWindow()
 
-	onClosing: {
-		if (currentChatPage) {
-			if (!currentDraftSaved) {
-				currentChatPage.saveDraft();
-
-				close.accepted = false;
-
-				Qt.callLater(function() {
-					root.currentDraftSaved = true;
-					root.close();
-				});
-			}
-		}
-	}
+//	onClosing: {
+//		if (currentChatPage) {
+//			if (!currentDraftSaved) {
+//				currentChatPage.saveDraft();
+//
+//				close.accepted = false;
+//
+//				Qt.callLater(function() {
+//					root.currentDraftSaved = true;
+//					root.close();
+//				});
+//			}
+//		}
+//	}
 
 	/**
 	 * Shows a passive notification for a long period.
 	 */
-	function passiveNotification(text) {
-		showPassiveNotification(text, "long")
-	}
+//	function passiveNotification(text) {
+//		showPassiveNotification(text, "long")
+//	}
 
 	function openStartPage() {
-		globalDrawer.enabled = false
+//		globalDrawer.enabled = false
 
-		popLayersAboveLowest()
-		popAllPages()
-		pageStack.push(startPage)
+//		popLayersAboveLowest()
+//		popAllPages()
+        pageStack.push(startPage)
 	}
 
 	/**
 	 * Opens the view with the roster and chat page.
 	 */
 	function openChatView() {
-		globalDrawer.enabled = true
+//		globalDrawer.enabled = true
 
-		popLayersAboveLowest()
-		popAllPages()
-		pageStack.push(rosterPage)
-		if (!Kirigami.Settings.isMobile)
-			pageStack.push(emptyChatPage)
-		showRosterPageForNarrowWindow()
+//		popLayersAboveLowest()
+//		popAllPages()
+//		pageStack.push(rosterPage)
+//		if (!Kirigami.Settings.isMobile)
+//			pageStack.push(emptyChatPage)
+//		showRosterPageForNarrowWindow()
 	}
 
 	// Show the rosterPage instead of the emptyChatPage if the window is narrow.
 	function showRosterPageForNarrowWindow() {
-		if (pageStack.layers.depth < 2 && pageStack.currentItem instanceof EmptyChatPage && !wideScreen)
-			pageStack.goBack()
+//		if (pageStack.layers.depth < 2 && pageStack.currentItem instanceof EmptyChatPage && !wideScreen)
+//			pageStack.goBack()
 	}
 
 	/**
@@ -170,27 +173,30 @@ Kirigami.ApplicationWindow {
 	 * @param countOfLayersToPop count of layers which are popped
 	 */
 	function popLayers(countOfLayersToPop) {
-		for (let i = 0; i < countOfLayersToPop; i++)
-			pageStack.layers.pop()
+//		for (let i = 0; i < countOfLayersToPop; i++)
+//			pageStack.pop()
+//			pageStack.layers.pop()
 	}
 
 	/**
 	 * Pops all layers except the layer with index 0 from the page stack.
 	 */
 	function popLayersAboveLowest() {
-		while (pageStack.layers.depth > 1)
-			pageStack.layers.pop()
+//		while (pageStack.depth > 1)
+//			pageStack.pop()
+//		while (pageStack.layers.depth > 1)
+//			pageStack.layers.pop()
 	}
 
 	/**
 	 * Pops all pages from the page stack.
 	 */
 	function popAllPages() {
-		while (pageStack.depth > 0)
-			pageStack.pop()
+//		while (pageStack.depth > 0)
+//			pageStack.pop()
 	}
 
-	Connections {
+    Connections {
 		target: Kaidan
 
 		function onRaiseWindowRequested() {
@@ -213,34 +219,37 @@ Kirigami.ApplicationWindow {
 		}
 	}
 
-	Connections {
+
+/*    Connections {
 		target: RosterModel
 
-		function onSubscriptionRequestReceived(from, msg) {
+        function onSubscriptionRequestReceived(from, msg) {
 			Kaidan.client.vCardManager.vCardRequested(from)
 
 			subReqAcceptSheet.from = from
 
 			subReqAcceptSheet.open()
 		}
-	}
+    }
+*/
+
 
 	Component.onCompleted: {
-		HostCompletionModel.rosterModel = RosterModel;
-		HostCompletionModel.aggregateKnownProviders();
+//		HostCompletionModel.rosterModel = RosterModel;
+//		HostCompletionModel.aggregateKnownProviders();
 
 		// Restore the latest application window state if it is stored.
-		if (!Kirigami.Settings.isMobile) {
-			const latestPosition = Kaidan.settings.windowPosition
-			root.x = latestPosition.x
-			root.y = latestPosition.y
-
-			const latestSize = Kaidan.settings.windowSize
-			if (latestSize.width > 0) {
-				root.width = latestSize.width
-				root.height = latestSize.height
-			}
-		}
+//		if (!Kirigami.Settings.isMobile) {
+//			const latestPosition = Kaidan.settings.windowPosition
+//			root.x = latestPosition.x
+//			root.y = latestPosition.y
+//
+//			const latestSize = Kaidan.settings.windowSize
+//			if (latestSize.width > 0) {
+//				root.width = latestSize.width
+//				root.height = latestSize.height
+//			}
+//		}
 
 		if (AccountManager.loadConnectionData()) {
 			openChatView()
@@ -249,13 +258,13 @@ Kirigami.ApplicationWindow {
 		} else {
 			openStartPage()
 		}
-	}
+    }
 
 	Component.onDestruction: {
 		// Store the application window state for restoring the latest state on the next start.
-		if (!Kirigami.Settings.isMobile) {
-			Kaidan.settings.windowPosition = Qt.point(x, y)
-			Kaidan.settings.windowSize = Qt.size(width, height)
-		}
+//		if (!Kirigami.Settings.isMobile) {
+//			Kaidan.settings.windowPosition = Qt.point(x, y)
+//			Kaidan.settings.windowSize = Qt.size(width, height)
+//		}
 	}
 }

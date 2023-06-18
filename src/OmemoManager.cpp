@@ -44,10 +44,16 @@
 #include "PresenceCache.h"
 #include "RosterModel.h"
 
+#if !defined(SFOS)
 using namespace std::chrono_literals;
+#endif
 
 // interval to enable session building for new devices
+#if defined(SFOS)
+constexpr auto SESSION_BUILDING_ENABLING_FOR_NEW_DEVICES_TIMER_INTERVAL = 500;
+#else
 constexpr auto SESSION_BUILDING_ENABLING_FOR_NEW_DEVICES_TIMER_INTERVAL = 500ms;
+#endif
 
 OmemoManager::OmemoManager(QXmppClient *client, Database *database, QObject *parent)
 	: QObject(parent),

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 set(CMAKE_CXX_STANDARD 20)
-set(QT_MIN_VERSION "5.15.0")
+set(QT_MIN_VERSION "5.6.0")
 set(KF5_MIN_VERSION "5.67.0")
 
 if(POLICY CMP0071)
@@ -73,7 +73,7 @@ include(FeatureSummary)
 kde_enable_exceptions()
 
 # Find packages
-find_package(Qt5 ${QT_MIN_VERSION} REQUIRED NO_MODULE COMPONENTS Core Concurrent Qml Quick Svg Sql QuickControls2 Xml Multimedia Positioning Location)
+find_package(Qt5 ${QT_MIN_VERSION} REQUIRED NO_MODULE COMPONENTS Core Concurrent Qml Quick Svg Sql Xml Multimedia Positioning Location)
 find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS KIO CoreAddons Kirigami2)
 find_package(KQuickImageEditor REQUIRED)
 find_package(KF5KirigamiAddons 0.7.0 REQUIRED)

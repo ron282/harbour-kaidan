@@ -32,6 +32,32 @@
 
 #include <QXmppUtils.h>
 
+#if defined(SFOS)
+bool RosterItem::operator==(const RosterItem &o) const
+{
+	return 
+		jid == o.jid && 
+		name == o.name &&
+		subscription == o.subscription &&
+		encryption == o.encryption &&
+		unreadMessages == o.unreadMessages &&
+		lastExchanged == o.lastExchanged &&
+		lastMessage == o.lastMessage &&
+		lastReadOwnMessageId == o.lastReadOwnMessageId &&
+		lastReadContactMessageId == o.lastReadContactMessageId &&
+		draftMessageId == o.draftMessageId &&
+		readMarkerPending == o.readMarkerPending &&
+		pinningPosition == o.pinningPosition &&
+		chatStateSendingEnabled == o.chatStateSendingEnabled &&
+		readMarkerSendingEnabled == o.readMarkerSendingEnabled;
+}
+
+bool RosterItem::operator!=(const RosterItem &o) const
+{
+	return !(*this == o);
+}
+
+#endif
 RosterItem::RosterItem(const QXmppRosterIq::Item &item, const QDateTime &lastExchanged)
 	: jid(item.bareJid()), name(item.name()), subscription(item.subscriptionType()), lastExchanged(lastExchanged)
 {

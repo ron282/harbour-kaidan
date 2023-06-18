@@ -28,17 +28,14 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Controls 2.14 as Controls
-import QtQuick.Layouts 1.14
-import org.kde.kirigami 2.19 as Kirigami
-
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 import ".."
 
 /**
  * This is a text field which can be focused and show a hint for invalid input.
  */
-ColumnLayout {
+Column {
 	// text of the label for the input field
 	property alias labelText: label.text
 
@@ -67,25 +64,24 @@ ColumnLayout {
 	property bool invalidHintMayBeShown: false
 
 	// underlying data source for the completion view
-	property alias completionModel: inputField.model
+    property alias completionModel: inputField.model
 
 	// completion model role name to query
-	property alias completionRole: inputField.role
+    property alias completionRole: inputField.role
 
 	// completed text
-	readonly property alias input: inputField.input
+    readonly property alias input: inputField.text
 
 	// label for the input field
-	Controls.Label {
+    Label {
 		id: label
 	}
 
-	RowLayout {
+    Row {
 		// input field
-		TextFieldCompleter {
+        TextField {
 			id: inputField
-			Layout.fillWidth: true
-			selectByMouse: true
+            width: parent.width
 
 			// Show a hint for the first time if the entered text is not valid as soon as the input field loses the focus.
 			onFocusChanged: {
@@ -97,24 +93,24 @@ ColumnLayout {
 		}
 
 		// icon for an invalid input
-		Kirigami.Icon {
+        Icon {
 			id: invalidIcon
 			visible: invalidHint.visible
 			source: "dialog-error-symbolic"
-			width: Kirigami.Units.iconSizes.smallMedium
+            width: Theme.iconSizeSmall
 			height: width
 		}
 	}
 
 	// hint for entering a valid input
-	Controls.Label {
+    Label {
 		id: invalidHint
 		visible: false
-		Layout.fillWidth: true
-		leftPadding: 5
-		rightPadding: 5
+        width: parent.width
+        anchors.leftMargin: 5
+        anchors.rightMargin: 5
 		wrapMode: Text.Wrap
-		color: Kirigami.Theme.neutralTextColor
+//		color: Kirigami.Theme.neutralTextColor
 	}
 
 	/**

@@ -72,6 +72,9 @@ private:
 	void handlePresencesCleared();
 
 	struct DeviceInfo {
+#if defined(SFOS)
+		DeviceInfo() {};
+#endif
 		DeviceInfo(const QString &resource);
 		DeviceInfo(const QXmppVersionIq &);
 

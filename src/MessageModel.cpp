@@ -51,10 +51,15 @@
 
 using namespace std::chrono_literals;
 
+#if defined(SFOS)
+constexpr auto PAUSED_TYPING_TIMEOUT = 10*1000;
+constexpr auto ACTIVE_TIMEOUT = 2*60*1000;
+constexpr auto TYPING_TIMEOUT = 2*1000;
+#else
 constexpr auto PAUSED_TYPING_TIMEOUT = 10s;
 constexpr auto ACTIVE_TIMEOUT = 2min;
 constexpr auto TYPING_TIMEOUT = 2s;
-
+#endif
 // defines that the message is suitable for correction only if it is among the N latest messages
 constexpr int MAX_CORRECTION_MESSAGE_COUNT_DEPTH = 20;
 // defines that the message is suitable for correction only if it has ben sent not earlier than N days ago
@@ -88,7 +93,11 @@ MessageModel::MessageModel(QObject *parent)
 	// Timer to set state to paused
 	m_composingTimer->setSingleShot(true);
 	m_composingTimer->setInterval(TYPING_TIMEOUT);
+#if defined(SFOS)
+	 QObject::connect(m_composingTimer, &QTimer::timeout, m_composingTimer, [this] () {
+#else
 	m_composingTimer->callOnTimeout(this, [this] {
+#endif
 		sendChatState(QXmppMessage::Paused);
 
 		// 10 seconds after user stopped typing, remove "paused" state
@@ -97,14 +106,22 @@ MessageModel::MessageModel(QObject *parent)
 
 	// Timer to reset typing-related notifications like paused and composing to active
 	m_stateTimeoutTimer->setSingleShot(true);
+#if defined(SFOS)
+	 QObject::connect(m_stateTimeoutTimer, &QTimer::timeout, m_stateTimeoutTimer, [this] () {
+#else
 	m_stateTimeoutTimer->callOnTimeout(this, [this] {
+#endif
 		sendChatState(QXmppMessage::Active);
 	});
 
 	// Timer to time out active state
 	m_inactiveTimer->setSingleShot(true);
 	m_inactiveTimer->setInterval(ACTIVE_TIMEOUT);
+#if defined(SFOS)
+	 QObject::connect(m_inactiveTimer, &QTimer::timeout, m_inactiveTimer, [this] () {
+#else
 	m_inactiveTimer->callOnTimeout(this, [this] {
+#endif
 		sendChatState(QXmppMessage::Inactive);
 	});
 
@@ -112,7 +129,11 @@ MessageModel::MessageModel(QObject *parent)
 	// if they lost connection while a state other then gone was active
 	m_chatPartnerChatStateTimeout->setSingleShot(true);
 	m_chatPartnerChatStateTimeout->setInterval(ACTIVE_TIMEOUT);
+#if defined(SFOS)
+	 QObject::connect(m_chatPartnerChatStateTimeout, &QTimer::timeout, m_chatPartnerChatStateTimeout, [this] () {
+#else
 	m_chatPartnerChatStateTimeout->callOnTimeout(this, [this] {
+#endif
 		m_chatPartnerChatState = QXmppMessage::Gone;
 		m_chatStateCache.insert(m_currentChatJid, QXmppMessage::Gone);
 		emit chatStateChanged();
@@ -229,6 +250,18 @@ QVariant MessageModel::data(const QModelIndex &index, int role) const
 		return msg.errorText;
 	case DeliveryStateIcon:
 		switch (msg.deliveryState) {
+#if defined(SFOS)
+		case Enums::DeliveryState::Pending:
+			return QmlUtils::getResourcePath("images/dots.svg");
+		case Enums::DeliveryState::Sent:
+			return QmlUtils::getResourcePath("images/check-mark-pale.svg");
+		case Enums::DeliveryState::Delivered:
+			return QmlUtils::getResourcePath("images/check-mark.svg");
+		case Enums::DeliveryState::Error:
+			return QmlUtils::getResourcePath("images/cross.svg");
+		case Enums::DeliveryState::Draft:
+			Q_UNREACHABLE();
+#else
 		case DeliveryState::Pending:
 			return QmlUtils::getResourcePath("images/dots.svg");
 		case DeliveryState::Sent:
@@ -239,10 +272,23 @@ QVariant MessageModel::data(const QModelIndex &index, int role) const
 			return QmlUtils::getResourcePath("images/cross.svg");
 		case DeliveryState::Draft:
 			Q_UNREACHABLE();
+#endif
 		}
 		return {};
 	case DeliveryStateName:
 		switch (msg.deliveryState) {
+#if defined(SFOS)
+		case Enums::DeliveryState::Pending:
+			return tr("Pending");
+		case Enums::DeliveryState::Sent:
+			return tr("Sent");
+		case Enums::DeliveryState::Delivered:
+			return tr("Delivered");
+		case Enums::DeliveryState::Error:
+			return tr("Error");
+		case Enums::DeliveryState::Draft:
+			Q_UNREACHABLE();
+#else
 		case DeliveryState::Pending:
 			return tr("Pending");
 		case DeliveryState::Sent:
@@ -253,6 +299,7 @@ QVariant MessageModel::data(const QModelIndex &index, int role) const
 			return tr("Error");
 		case DeliveryState::Draft:
 			Q_UNREACHABLE();
+#endif
 		}
 		return {};
 	case Files:
@@ -776,7 +823,11 @@ void MessageModel::addMessage(const Message &msg)
 {
 	// index where to add the new message
 	int i = 0;
+#if defined(SFOS)
+	for (const auto &message : const_cast<const QVector<Message>&>(m_messages)) {
+#else
 	for (const auto &message : qAsConst(m_messages)) {
+#endif
 		if (msg.stamp > message.stamp) {
 			insertMessage(i, msg);
 			return;
@@ -979,8 +1030,11 @@ void MessageModel::correctMessage(const QString &msgId, const QString &message)
 				msg.replaceId = msgId;
 			}
 			msg.deliveryState = Enums::DeliveryState::Pending;
-
+#if defined(SFOS)
+			if (Enums::ConnectionState(Kaidan::instance()->connectionState()) == Enums::ConnectionState::StateConnected) {
+#else
 			if (ConnectionState(Kaidan::instance()->connectionState()) == Enums::ConnectionState::StateConnected) {
+#endif
 				// the trick with the time is important for the servers
 				// this way they can tell which version of the message is the latest
 				Message copy = msg;

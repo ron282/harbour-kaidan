@@ -19,9 +19,10 @@
 #include <QFutureWatcher>
 #include <QMimeDatabase>
 
+#ifndef SFOS
 #include <KIO/PreviewJob>
 #include <KFileItem>
-
+#endif
 constexpr auto THUMBNAIL_SIZE = 200;
 
 MessageComposition::MessageComposition()
@@ -123,7 +124,11 @@ Message MessageComposition::draft() const
 {
 	Message msg;
 	msg.id = m_draftId;
+#if defined(SFOS)
+	msg.deliveryState = Enums::DeliveryState::Draft;
+#else
 	msg.deliveryState = DeliveryState::Draft;
+#endif
 	msg.from = m_account;
 	msg.to = m_to;
 	msg.isSpoiler = m_spoiler;
@@ -202,7 +207,11 @@ QVariant FileSelectionModel::data(const QModelIndex &index, int role) const
 		return file.mimeType.iconName();
 	case FileSize:
 		if (file.size) {
+#if defined(SFOS)
+			return QString::number(*file.size);
+#else
 			return QLocale::system().formattedDataSize(*file.size);
+#endif
 		}
 		return tr("Unknown size");
 	}
@@ -285,6 +294,9 @@ bool FileSelectionModel::setData(const QModelIndex &index, const QVariant &value
 
 void FileSelectionModel::generateThumbnail(const File &file)
 {
+#if defined(SFOS)
+#warning FIXE ME
+#else
 	static auto allPlugins = KIO::PreviewJob::availablePlugins();
 	KFileItemList items {
 		KFileItem {
@@ -310,6 +322,7 @@ void FileSelectionModel::generateThumbnail(const File &file)
 		qDebug() << "Could not generate a thumbnail for" << item.url();
 	});
 	job->start();
+#endif
 }
 
 const QVector<File> &FileSelectionModel::files() const

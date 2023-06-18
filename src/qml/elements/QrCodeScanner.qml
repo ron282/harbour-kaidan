@@ -28,10 +28,13 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import QtMultimedia 5.14
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+import Sailfish.Silica 1.0
+import QtMultimedia 5.6
+//import QtQuick 2.14
+//import QtQuick.Layouts 1.14
+//import QtMultimedia 5.14
+//import org.kde.kirigami 2.19 as Kirigami
 
 import im.kaidan.kaidan 1.0
 
@@ -67,7 +70,7 @@ Item {
 		id: filter
 
 		onUnsupportedFormatReceived: {
-			pageStack.layers.pop()
+            pageStack.pop()
 			passiveNotification(qsTr("The camera format '%1' is not supported.").arg(format))
 		}
 	}
@@ -82,6 +85,7 @@ Item {
 	}
 
 	// hint for camera issues
+/*
 	Kirigami.InlineMessage {
 		visible: cameraEnabled && text !== ""
 		icon.source: "camera-video-symbolic"
@@ -105,4 +109,5 @@ Item {
 			}
 		}
 	}
+*/
 }

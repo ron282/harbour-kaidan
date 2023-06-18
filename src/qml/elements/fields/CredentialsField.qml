@@ -28,19 +28,19 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
 
 /**
  * This is the base for fields which are used to enter credentials.
  */
-Field {
-	valid: false
-
+TextField {
+    property bool valid: false
 	property alias credentialsValidator: credentialsValidator
 
-	CredentialsValidator {
-		id: credentialsValidator
-	}
+    CredentialsValidator {
+        id: credentialsValidator
+    }
 }

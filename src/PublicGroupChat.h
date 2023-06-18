@@ -7,6 +7,10 @@
 #include <QJsonObject>
 #include <QObject>
 
+#if defined(SFOS)
+#include "../3rdparty/QEmuStringView/qemustringview.h"
+#include <QVector>
+#endif
 using PublicGroupChats = QVector<class PublicGroupChat>;
 
 class PublicGroupChat
@@ -22,17 +26,29 @@ class PublicGroupChat
 	Q_PROPERTY(QJsonObject json READ toJson)
 
 public:
+#if defined(SFOS)
+	static constexpr const char *Address = "address";
+	static constexpr const char *Users = "nusers";
+	static constexpr const char *IsOpen = "is_open";
+	static constexpr const char *Name = "name";
+	static constexpr const char *Description = "description";
+	static constexpr const char *Language = "language";
+#else
 	static constexpr const QStringView Address = u"address";
 	static constexpr const QStringView Users = u"nusers";
 	static constexpr const QStringView IsOpen = u"is_open";
 	static constexpr const QStringView Name = u"name";
 	static constexpr const QStringView Description = u"description";
 	static constexpr const QStringView Language = u"language";
+#endif
 
 	explicit PublicGroupChat(const QJsonObject &object);
 	PublicGroupChat(const PublicGroupChat &other);
+#if defined(SFOS)
+	PublicGroupChat() {}
+#else
 	PublicGroupChat() = default;
-
+#endif
 	const QString &address() const;
 	void setAddress(const QString &address);
 
@@ -52,9 +68,13 @@ public:
 	void setLanguages(const QStringList &languages);
 
 	PublicGroupChat &operator=(const PublicGroupChat &other);
+#if defined(SFOS)
+	bool operator==(const PublicGroupChat &other) const;
+	bool operator!=(const PublicGroupChat &other) const;
+#else
 	bool operator==(const PublicGroupChat &other) const = default;
 	bool operator!=(const PublicGroupChat &other) const = default;
-
+#endif
 	QJsonObject toJson() const;
 
 	static QStringList splitLanguages(const QString &languages);

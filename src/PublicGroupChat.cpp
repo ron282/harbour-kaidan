@@ -6,10 +6,32 @@
 #include "Algorithms.h"
 #include "JsonUtils.h"
 
+#if defined(SFOS)
+bool PublicGroupChat::operator==(const PublicGroupChat &o) const
+{
+	return
+		m_address == o.m_address &&
+		m_users == o.m_users &&
+		m_isOpen == o.m_isOpen &&
+		m_name == o.m_name && 
+		m_description == o.m_description &&
+		m_languages == o.m_languages;
+}
+
+bool PublicGroupChat::operator!=(const PublicGroupChat &o) const
+{
+	return !(*this == o);
+}
+#endif
+
 static QStringList splitString(const QString &string, QString seps)
 {
 	static const QString quotes = QStringLiteral("'\"");
+#if defined(SFOS)
+	const QStringList parts = string.split(seps[(seps.size() - 1)]);
+#else
 	const QStringList parts = string.split(seps.back());
+#endif
 	QStringList result;
 
 	seps.chop(1);

@@ -52,7 +52,11 @@ QString trustFlagsToString(TrustLevels levels)
 	std::transform(levelVec.begin(), levelVec.end(), std::back_inserter(levelStrings), [](auto level) {
 		return QString::number(int(level));
 	});
+#if defined(SFOS)
+	return levelStrings.join(", ");
+#else
 	return levelStrings.join(u", ");
+#endif
 }
 
 TrustDb::TrustDb(Database *database, QObject *xmppContext, QString accountJid, QObject *parent)
@@ -137,10 +141,17 @@ auto TrustDb::keys(const QString &encryption, TrustLevels trustLevels)
 			// causes possible sql injection, but the output from trustFlagsListString() is safe
 			// binding the value is not possible as it would be inserted as a string (we need a condition)
 			prepareQuery(query,
+#if defined(SFOS)
+				"SELECT keyId, ownerJid, trustLevel FROM trustKeys "
+				"WHERE account = :1 AND encryption = :2 "
+				"AND trustLevel IN (" %
+					trustFlagsToString(trustLevels) % ")");
+#else
 				u"SELECT keyId, ownerJid, trustLevel FROM trustKeys "
 				"WHERE account = :1 AND encryption = :2 "
 				"AND trustLevel IN (" %
 					trustFlagsToString(trustLevels) % u")");
+#endif
 		} else {
 			prepareQuery(query,
 				"SELECT keyId, ownerJid, trustLevel FROM trustKeys WHERE "
@@ -190,10 +201,17 @@ auto TrustDb::keys(const QString &encryption, const QList<QString> &keyOwnerJids
 			// binding the value is not possible as it would be inserted as a string (we need a condition)
 			const auto trustFlagsCondition = trustFlagsToString(trustLevels);
 			prepareQuery(query,
+#if defined(SFOS)
+				"SELECT keyId, trustLevel FROM trustKeys "
+				"WHERE account = :1 AND encryption = :2 AND ownerJid = :3 AND "
+				"trustLevel IN (" %
+					trustFlagsCondition % ")");
+#else
 				u"SELECT keyId, trustLevel FROM trustKeys "
 				"WHERE account = :1 AND encryption = :2 AND ownerJid = :3 AND "
 				"trustLevel IN (" %
 					trustFlagsCondition % u")");
+#endif
 		} else {
 			prepareQuery(query,
 				"SELECT keyId, trustLevel FROM trustKeys WHERE account = :1 AND "
@@ -287,10 +305,17 @@ auto TrustDb::hasKey(const QString &encryption, const QString &keyOwnerJid, Trus
 	return runTask([this, encryption, keyOwnerJid, trustLevels] {
 		auto query = createQuery();
 		execQuery(query,
+#if defined(SFOS)
+			"SELECT COUNT(*) FROM trustKeys "
+			"WHERE account = :1 AND encryption = :2 AND ownerJid = :3 AND "
+			"trustLevel IN (" %
+				trustFlagsToString(trustLevels) % ")",
+#else
 			u"SELECT COUNT(*) FROM trustKeys "
 			u"WHERE account = :1 AND encryption = :2 AND ownerJid = :3 AND "
 			u"trustLevel IN (" %
 				trustFlagsToString(trustLevels) % u")",
+#endif
 			{m_accountJid, encryption, keyOwnerJid});
 		if (query.next()) {
 			return query.value(0).toInt() > 0;

@@ -28,8 +28,8 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 import im.kaidan.kaidan 1.0
 
 import ".."
@@ -40,20 +40,20 @@ import ".."
 CredentialsField {
 	id: root
 
-	labelText: qsTr("Chat address")
-	placeholderText: qsTr("user@example.org")
-	inputMethodHints: Qt.ImhEmailCharactersOnly | Qt.ImhPreferLowercase | TextFieldCompleter.inputMethodHints
-	invalidHintText: qsTr("The chat address must have the form <b>username@server</b>")
+    label: qsTr("Chat address")
+    placeholderText: qsTr("user@example.org")
+    inputMethodHints: Qt.ImhEmailCharactersOnly // | Qt.ImhPreferLowercase | TextFieldCompleter.inputMethodHints
+//	invalidHintText: qsTr("The chat address must have the form <b>username@server</b>")
 	text: AccountManager.jid
-	completionRole: "display"
-	completionModel: HostCompletionProxyModel {
-		userInput: root.input
-		sourceModel: HostCompletionModel
-	}
+//	completionRole: "display"
+//	completionModel: HostCompletionProxyModel {
+//		userInput: root.input
+//		sourceModel: HostCompletionModel
+//	}
 
 	// Validate the entered JID and show a hint if it is not valid.
-	onTextChanged: {
-		valid = credentialsValidator.isAccountJidValid(text)
-		toggleHintForInvalidText()
-	}
+    onTextChanged: {
+        valid = credentialsValidator.isAccountJidValid(text)
+        toggleHintForInvalidText()
+    }
 }

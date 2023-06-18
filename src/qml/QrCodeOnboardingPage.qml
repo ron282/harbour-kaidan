@@ -28,80 +28,65 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import QtQuick.Controls 2.14 as Controls
-import org.kde.kirigami 2.19 as Kirigami
-
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 import im.kaidan.kaidan 1.0
-
 import "elements"
 
 /**
  * This page is used for logging in by scanning a QR code which contains an XMPP login URI.
  */
-ExplanationTogglePage {
+Page {
 	id: root
-	title: qsTr("Scan QR code")
-	useMarginsForContent: false
-	explanationToggleButton.text: explanationToggleButton.checked ? qsTr("Show explanation") : qsTr("Scan QR code")
 
-	explanationToggleButton.onClicked: {
-		if (!scanner.cameraEnabled) {
-			scanner.camera.start()
-			scanner.cameraEnabled = true
-		}
-	}
+    PageHeader {
+        title: "Kaidan"
+    }
 
-	secondaryButton.text: qsTr("Continue without QR code")
-	secondaryButton.onClicked: pageStack.layers.push(registrationLoginDecisionPage)
-	secondaryButton.flat: Style.isMaterial ? explanationArea.visible : false
+    Column {
+            id: column
 
-	explanation: ColumnLayout {
-		CenteredAdaptiveText {
-			text: qsTr("Scan the QR code from your existing device to transfer your account.")
-			Layout.topMargin: 10
-			scaleFactor: 1.5
-		}
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width
+            spacing: Theme.paddingLarge
 
-		Image {
-			source: Utils.getResourcePath("images/onboarding/account-transfer.svg")
-			sourceSize.height: root.height
-			fillMode: Image.PreserveAspectFit
-			Layout.fillHeight: true
-			Layout.fillWidth: true
-		}
-	}
+            Button {
+                text: qsTr("Scan QR code")
+                anchors.horizontalCenter: parent.horizontalCenter
+                onClicked: {
+                    if (!scanner.cameraEnabled) {
+                        scanner.camera.start()
+                        scanner.cameraEnabled = true
+                    }
+                }
+            }
+            Button {
+                text: qsTr("Continue without QR code")
+                anchors.horizontalCenter: parent.horizontalCenter
+                onClicked: {
+                    pageStack.push(registrationLoginDecisionPage)
+                }
+            }
+       }
 
-	content: QrCodeScanner {
+    QrCodeScanner {
 		id: scanner
 		anchors.fill: parent
 
 		Item {
 			anchors.centerIn: parent
 
-			// background of loadingArea
-			Rectangle {
-				anchors.fill: loadingArea
-				anchors.margins: -8
-				radius: roundedCornersRadius
-				color: Kirigami.Theme.backgroundColor
-				opacity: 0.9
-				visible: loadingArea.visible
-			}
-
-			ColumnLayout {
+            Column {
 				id: loadingArea
-				anchors.centerIn: parent
+                width: parent.width
 				visible: Kaidan.connectionState === Enums.StateConnecting
 
-				Controls.BusyIndicator {
-					Layout.alignment: Qt.AlignHCenter
-				}
+                BusyIndicator {
+                    anchors.centerIn: loadingArea
+                }
 
-				Controls.Label {
+                Label {
 					text: "<i>" + qsTr("Connecting…") + "</i>"
-					color: Kirigami.Theme.textColor
 				}
 			}
 		}
@@ -128,7 +113,7 @@ ExplanationTogglePage {
 		// timer to accept the result again after an invalid login URI was scanned
 		Timer {
 			id: resetAcceptResultTimer
-			interval: Kirigami.Units.veryLongDuration * 4
+            interval: 10 * 4
 			onTriggered: scanner.acceptResult = true
 		}
 	}

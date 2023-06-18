@@ -12,6 +12,10 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 #include <QLoggingCategory>
+#if defined(SFOS)
+#include <functional>
+#define qUtf16Printable(x) (wchar_t*)QString(x).utf16()
+#endif
 
 Q_LOGGING_CATEGORY(providers_completion, "providers.completion", QtMsgType::QtWarningMsg)
 

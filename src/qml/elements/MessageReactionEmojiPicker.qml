@@ -28,21 +28,31 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import Sailfish.Silica 1.0
 import QtQuick 2.2
-//import org.kde.kirigami 2.19 as Kirigami
+import Sailfish.Silica 1.0
+// import QtQuick.Controls 2.14 as Controls
+// import org.kde.kirigami 2.19 as Kirigami
 
 import im.kaidan.kaidan 1.0
 
 /**
- * This is a highlighted button.
- *
- * It is used for main actions.
+ * This is an emoji picker for adding emojis in reaction to a message.
  */
-CenteredAdaptiveButton {
-//    Theme.textColor: Style.buttonColoringEnabled ? Theme.highlightedTextColor : Theme.textColor
-//    Theme.backgroundColor: positive ? Theme.positiveTextColor : Theme.negativeTextColor
+EmojiPicker {
+	id: root
 
-	// Set the property to 'false' for a cancellation or a dangerous action.
-	property bool positive: true
+	property string messageId
+
+	parent: root.parent
+	anchors.centerIn: parent
+	textArea: TextArea {
+		visible: false
+		onTextChanged: {
+			// TODO: Refactor EmojiPicker to not append trailing whitespaces in this case
+			if (text.length) {
+				MessageModel.addMessageReaction(root.messageId, text.trim())
+			}
+			text = ""
+		}
+	}
 }

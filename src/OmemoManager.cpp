@@ -274,20 +274,20 @@ QFuture<void> OmemoManager::initializeChat(const QString &accountJid, const QStr
 				RosterModel::instance()->isPresenceSubscribedByItem(accountJid, chatJid),
 				PresenceCache::instance()->resourcesCount(chatJid)
 			};
-		}, this, [=, this](std::tuple<bool, int> result) mutable {
-			auto [isPresenceSubscribed, resourcesCount] = result;
-			if (isPresenceSubscribed) {
-				if (resourcesCount == 0) {
-					auto future = requestDeviceLists({ chatJid });
-					await(future, this, initializeSessionsKeysAndDevices);
-				} else {
-					initializeSessionsKeysAndDevices();
-				}
-			} else {
-				auto future = subscribeToDeviceLists({ chatJid });
-				await(future, this, initializeSessionsKeysAndDevices);
-			}
-		});
+        }, this, [=, this](std::tuple<bool, int> result) mutable {
+            auto [isPresenceSubscribed, resourcesCount] = result;
+            if (isPresenceSubscribed) {
+                if (resourcesCount == 0) {
+                    auto future = requestDeviceLists({ chatJid });
+                    await(future, this, initializeSessionsKeysAndDevices);
+                } else {
+                    initializeSessionsKeysAndDevices();
+                }
+            } else {
+                auto future = subscribeToDeviceLists({ chatJid });
+                await(future, this, initializeSessionsKeysAndDevices);
+            }
+        });
 	}
 
 	return interface.future();

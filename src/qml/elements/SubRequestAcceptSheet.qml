@@ -28,70 +28,43 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import org.kde.kirigami 2.19 as Kirigami
-
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 import im.kaidan.kaidan 1.0
 
-Kirigami.AbstractListItem {
-	id: root
+Dialog {
+	property string from;
 
-	default property alias __data: content.data
-	property alias avatar: avatar
+    Column {
+        spacing: Theme.paddingLarge
 
-	property string accountJid
-	property string jid
-	property string name
-	property bool isSelected: false
+        DialogHeader {
+            title: qsTr("Subscription Request")
+        }
 
-	topPadding: 0
-	leftPadding: 0
-	bottomPadding: 0
-	height: 65
-
-	onIsSelectedChanged: {
-		backgroundColorAnimation.restart()
-	}
-
-	RowLayout {
-		id: content
-		spacing: Kirigami.Units.gridUnit * 0.5
-
-		// fading background colors
-		ColorAnimation {
-			id: backgroundColorAnimation
-			targets: [root]
-			property: "backgroundColor"
-			to: root.isSelected ? Kirigami.Theme.backgroundColor : Kirigami.Theme.highlightColor
-			duration: Kirigami.Units.shortDuration
-			running: false
+        Label {
+			text: qsTr("You received a subscription request by <b>%1</b>. " +
+				"If you accept it, the account will have access to your " +
+				"presence status.").arg(from)
+			wrapMode: Text.WordWrap
+            width: parent.width
 		}
 
-		// left border: presence
-		Rectangle {
-			id: presenceIndicator
-			width: Kirigami.Units.gridUnit * 0.3
-			height: parent.height
-			color: userPresence.availabilityColor
-
-			UserPresenceWatcher {
-				id: userPresence
-				jid: root.jid
+        Row {
+			Button {
+				text: qsTr("Decline")
+				onClicked: {
+					Kaidan.client.rosterManager.answerSubscriptionRequestRequested(from, false)
+					close()
+				}
 			}
-		}
 
-		// left: avatar
-		Item {
-			Layout.preferredWidth: parent.height - Kirigami.Units.gridUnit * 0.8
-			Layout.preferredHeight: Layout.preferredWidth
-
-			Avatar {
-				id: avatar
-				anchors.fill: parent
-				jid: root.jid
-				name: root.name
-				width: height
+			Button {
+				text: qsTr("Accept")
+				onClicked: {
+					Kaidan.client.rosterManager.answerSubscriptionRequestRequested(from, true)
+					close()
+				}
 			}
 		}
 	}

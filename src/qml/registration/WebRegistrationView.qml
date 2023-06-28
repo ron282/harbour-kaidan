@@ -28,8 +28,8 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
 
@@ -42,7 +42,7 @@ View {
 	descriptionText: qsTr("The selected provider only provides web registration. After creating an account via the web page, you can log in via Kaidan.")
 	imageSource: "web-registration"
 
-	ColumnLayout {
+    Column {
 		parent: contentArea
 
 		CenteredAdaptiveHighlightedButton {
@@ -58,9 +58,9 @@ View {
 		CenteredAdaptiveHighlightedButton {
 			id: loginButton
 			text: qsTr("Log in with your new account")
-			Layout.topMargin: height
+            anchors.topMargin: height
 			onClicked: {
-				let page = pageStack.layers.push(loginPage)
+                page = pageStack.push(loginPage)
 				page.prefillJidDomain(serverView.text)
 			}
 		}

@@ -30,14 +30,63 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-//import QtQuick 2.14
-//import org.kde.kirigami 2.19 as Kirigami
 
 import im.kaidan.kaidan 1.0
 
-Image {
-	property string jid
-	source: jid ? Kaidan.avatarStorage.getAvatarUrl(jid) : ""
+/**
+ * This is a context menu with entries used for chat messages.
+ */
+ContextMenu {
+	id: root
 
-	color: Qt.lighter(Utils.getUserColor(jid ? jid : name))
+	property ChatMessage message: null
+	property var file: null
+
+    MenuItem {
+		text: qsTr("Copy message")
+		visible: root.message && root.message.bodyLabel.visible
+        onClicked: {
+			if (root.message && !root.message.isSpoiler || message && root.message.isShowingSpoiler)
+				Utils.copyToClipboard(root.message && root.message.messageBody)
+			else
+				Utils.copyToClipboard(root.message && root.message.spoilerHint)
+		}
+	}
+
+    MenuItem {
+		text: qsTr("Edit message")
+		enabled: MessageModel.canCorrectMessage(root.message && root.message.modelIndex)
+        onClicked: root.message.messageEditRequested(root.message.msgId, root.message.messageBody)
+	}
+
+    MenuItem {
+		text: qsTr("Copy download URL")
+		visible: root.file && root.file.downloadUrl
+        onClicked: Utils.copyToClipboard(root.file.downloadUrl)
+	}
+
+    MenuItem {
+		text: qsTr("Quote message")
+        onClicked: {
+			root.message.quoteRequested(root.message.messageBody)
+		}
+	}
+
+    MenuItem {
+		text: qsTr("Delete file")
+		visible: root.file && root.file.localFilePath
+        onClicked: {
+			Kaidan.fileSharingController.deleteFile(root.message.msgId, root.file)
+		}
+	}
+
+    MenuItem {
+		text: qsTr("Mark as first unread")
+		visible: root.message && !root.message.isOwn
+        onClicked: {
+			MessageModel.markMessageAsFirstUnread(message.modelIndex);
+			MessageModel.resetCurrentChat()
+			openChatView()
+		}
+	}
 }

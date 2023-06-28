@@ -40,7 +40,7 @@ import ".."
 CredentialsField {
 	id: root
 
-    label: qsTr("Chat address")
+    labelText: qsTr("Chat address")
     placeholderText: qsTr("user@example.org")
     inputMethodHints: Qt.ImhEmailCharactersOnly // | Qt.ImhPreferLowercase | TextFieldCompleter.inputMethodHints
 //	invalidHintText: qsTr("The chat address must have the form <b>username@server</b>")
@@ -54,6 +54,6 @@ CredentialsField {
 	// Validate the entered JID and show a hint if it is not valid.
     onTextChanged: {
         valid = credentialsValidator.isAccountJidValid(text)
-        toggleHintForInvalidText()
+//      toggleHintForInvalidText()
     }
 }

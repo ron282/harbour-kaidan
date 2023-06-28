@@ -28,28 +28,23 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Controls 2.14 as Controls
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
-import im.kaidan.kaidan 1.0
+Label {
+	property int count: 0
+	property bool muted: false
 
-/**
- * This is a context menu with entries used for roster item.
- */
-Controls.Menu {
-	id: root
+	text: count > 9999 ? "9999+" : count
+//    font.pixelSize: Theme.defaultFont.pixelSize * 0.9
+	visible: count
+//	leftPadding: font.pixelSize * 0.45
+//	rightPadding: leftPadding
+//	topPadding: leftPadding * 0.3
+//	bottomPadding: topPadding
 
-	property RosterListItem item: null
-
-	Controls.MenuItem {
-		text: root.item && root.item.pinned ? qsTr("Unpin") : qsTr("Pin")
-		visible: root.item
-		onTriggered: {
-			if (root.item.pinned) {
-				RosterModel.unpinItem(root.item.accountJid, root.item.jid)
-			} else {
-				RosterModel.pinItem(root.item.accountJid, root.item.jid)
-			}
-		}
+    Rectangle {
+		radius: parent.height * 0.5
+        color: parent.muted ? Theme.secondaryColor : Theme.highlightColor
 	}
 }

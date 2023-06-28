@@ -27,15 +27,15 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import QtQuick.Controls 2.14 as Controls
-import QtMultimedia 5.14 as Multimedia
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+import Sailfish.Silica 1.0
+// import QtQuick.Controls 2.14 as Controls
+import QtMultimedia 5.6 as Multimedia
+// import org.kde.kirigami 2.19 as Kirigami
 
 import im.kaidan.kaidan 1.0
 import MediaUtils 0.1
-import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
+// import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
 
 SettingsPageBase {
 	id: root
@@ -48,18 +48,18 @@ SettingsPageBase {
 		id: recorder
 	}
 
-	ColumnLayout {
+	Column {
 		id: layout
 
-		Layout.preferredWidth: 600
+		//FIXME Layout.preferredWidth: 600
 		anchors.fill: parent
 
-		MobileForm.FormCard {
-			Layout.fillWidth: true
-			contentItem: ColumnLayout {
+		SilicaFlickable {
+			width: parent.width
+			 Column {
 				spacing: 0
 
-				MobileForm.FormCardHeader {
+				SectionHeader {
 					title: qsTr("Select Sources")
 				}
 
@@ -78,8 +78,8 @@ SettingsPageBase {
 							onObjectAdded: camerasMenu.insertItem(index, object)
 							onObjectRemoved: camerasMenu.removeItem(object)
 							delegate: Controls.MenuItem {
-								required property string description
-								required property string camera
+								property string description
+								property string camera
 								text: description
 								onClicked: {
 									recorder.mediaSettings.camera = camera
@@ -89,7 +89,7 @@ SettingsPageBase {
 					}
 
 					displayText: camerasInstanciator.model.currentCamera.description
-					Layout.fillWidth: true
+					width: parent.width
 				}
 				MobileForm.FormComboBoxDelegate {
 					id: audioInputsComboBox
@@ -107,8 +107,8 @@ SettingsPageBase {
 							onObjectAdded: audioInputsMenu.insertItem(index, object)
 							onObjectRemoved: audioInputsMenu.removeItem(object)
 							delegate: Controls.MenuItem {
-								required property string description
-								required property int index
+								property string description
+								property int index
 								text: description
 								onClicked: {
 									recorder.audioDeviceModel.currentIndex = index
@@ -118,22 +118,22 @@ SettingsPageBase {
 					}
 
 					displayText: audioInputsInstanciator.model.currentAudioDevice.description
-					Layout.fillWidth: true
+					width: parent.width
 				}
 			}
 		}
-		MobileForm.FormCard {
-			Layout.fillWidth: true
-			contentItem: ColumnLayout {
+		SilicaFlickable {
+			width: parent.width
+			 Column {
 				spacing: 0
 
-				MobileForm.FormCardHeader {
+				SectionHeader {
 					title: qsTr("Video Output")
 				}
 				Controls.ItemDelegate {
 					id: item
-					Layout.fillWidth: true
-					Layout.fillHeight: true
+					width: parent.width
+					//FIXME Layout.fillHeight: true
 
 					padding: 1
 
@@ -142,7 +142,7 @@ SettingsPageBase {
 						control: item
 					}
 
-					contentItem: Multimedia.VideoOutput {
+					 Multimedia.VideoOutput {
 						id: output
 						source: recorder
 
@@ -159,25 +159,25 @@ SettingsPageBase {
 			}
 		}
 		Item {
-			Layout.fillHeight: true
+			//FIXME Layout.fillHeight: true
 		}
 
-		MobileForm.FormCard {
+		SilicaFlickable {
 			id: card
-			Layout.fillWidth: true
+			width: parent.width
 
-			contentItem: RowLayout {
+			 Row {
 				spacing: 0
-				MobileForm.AbstractFormDelegate {
-					Layout.fillWidth: true
+				BackgroundItem {
+					width: parent.width
 					implicitWidth: (card.width / 3) - 1
 					onClicked: recorder.resetSettingsToDefaults()
-					contentItem: RowLayout {
-						Kirigami.Icon {
+					 Row {
+						Icon {
 							source: "kt-restore-defaults"
 						}
-						Controls.Label {
-							Layout.fillWidth: true
+						Label {
+							width: parent.width
 							text: qsTr("Reset to defaults")
 							wrapMode: Text.Wrap
 						}
@@ -185,39 +185,39 @@ SettingsPageBase {
 				}
 
 				Kirigami.Separator {
-					Layout.fillHeight: true
+					//FIXME Layout.fillHeight: true
 				}
-				MobileForm.AbstractFormDelegate {
-					Layout.fillWidth: true
+				BackgroundItem {
+					width: parent.width
 					implicitWidth: (card.width / 3) - 1
 					onClicked: resetUserSettings()
-					contentItem: RowLayout {
-						Kirigami.Icon {
+					 Row {
+						Icon {
 							source: "edit-reset"
 						}
-						Controls.Label {
-							Layout.fillWidth: true
+						Label {
+							width: parent.width
 							text: qsTr("Reset User Settings")
 							wrapMode: Text.Wrap
 						}
 					}
 				}
 				Kirigami.Separator {
-					Layout.fillHeight: true
+					//FIXME Layout.fillHeight: true
 				}
-				MobileForm.AbstractFormDelegate {
-					Layout.fillWidth: true
+				BackgroundItem {
+					width: parent.width
 					implicitWidth: (card.width / 3) - 1
 					onClicked: {
 						stack.pop()
 						recorder.saveUserSettings()
 					}
-					contentItem: RowLayout {
-						Kirigami.Icon {
+					 Row {
+						Icon {
 							source: "document-save"
 						}
-						Controls.Label {
-							Layout.fillWidth: true
+						Label {
+							width: parent.width
 							text: qsTr("Save")
 							wrapMode: Text.Wrap
 						}

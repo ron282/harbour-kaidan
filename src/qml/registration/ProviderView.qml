@@ -28,10 +28,8 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import QtQuick.Controls 2.14 as Controls
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
 
@@ -56,37 +54,33 @@ FieldView {
 
 	property alias customConnectionSettings: customConnectionSettings
 
-	ColumnLayout {
+	Column {
 		parent: contentArea
 		spacing: Kirigami.Units.largeSpacing
 
-		Controls.Label {
+		Label {
 			text: qsTr("Provider")
 		}
 
-		Controls.ComboBox {
+        ComboBox {
 			id: comboBox
-			Layout.fillWidth: true
-			model: ProviderListModel {
-				id: providerListModel
-			}
-			textRole: "display"
+			width: parent.width
 			currentIndex: indexOfRandomlySelectedProvider()
 			onCurrentIndexChanged: field.text = ""
 
-			onActivated: {
-				if (index === 0) {
-					editText = ""
+            menu: ContextMenu {
+                id: choices
+            }
 
-					// Focus the whole combo box.
-					forceActiveFocus()
+            ProviderListModel {
+             id: providerListMode
+            }
 
-					// Focus the input text field of the combo box.
-					nextItemInFocusChain().forceActiveFocus()
-				} else if (customConnectionSettings.visible) {
-					customConnectionSettings.visible = false
-				}
-			}
+            Component.onCompleted:
+            {
+                for( i=0; i<providerListModel.rowCount(); i++)
+                    choices.addItem(providerListModel.data(i, ProviderListModel.DisplayRole));
+            }
 		}
 
 		Field {
@@ -95,9 +89,9 @@ FieldView {
 			placeholderText: "example.org"
 			inputMethodHints: Qt.ImhUrlCharactersOnly
 
-			inputField.rightActions: [
-				Kirigami.Action {
-					icon.name: "preferences-system-symbolic"
+/*			inputField.rightActions: [
+				Button {
+					icon.source: "preferences-system-symbolic"
 					text: qsTr("Connection settings")
 					onTriggered: {
 						customConnectionSettings.visible = !customConnectionSettings.visible
@@ -107,7 +101,7 @@ FieldView {
 					}
 				}
 			]
-
+*/
 			onTextChanged: {
 				if (outOfBandUrl && customProviderSelected) {
 					outOfBandUrl = ""
@@ -134,45 +128,45 @@ FieldView {
 			visible: false
 		}
 
-		Controls.ScrollView {
-			Layout.fillWidth: true
-			Layout.fillHeight: true
+        SilicaFlickable {
+			width: parent.width
+			//FIXME Layout.fillHeight: true
 
-			Kirigami.FormLayout {
-				Controls.Label {
+            Column {
+                DetailItem {
 					visible: !customProviderSelected && text
-					Kirigami.FormData.label: qsTr("Web registration only:")
-					text: inBandRegistrationSupported ? qsTr("No") : qsTr("Yes")
+                    label: qsTr("Web registration only:")
+                    value: inBandRegistrationSupported ? qsTr("No") : qsTr("Yes")
 				}
 
-				Controls.Label {
+                DetailItem {
 					visible: !customProviderSelected && text
-					Kirigami.FormData.label: qsTr("Server locations:")
-					text: providerListModel.data(comboBox.currentIndex, ProviderListModel.CountriesRole)
+                    label: qsTr("Server locations:")
+                    value: providerListModel.data(comboBox.currentIndex, ProviderListModel.CountriesRole)
 				}
 
-				Controls.Label {
+                DetailItem {
 					visible: !customProviderSelected && text
-					Kirigami.FormData.label: qsTr("Languages:")
-					text: providerListModel.data(comboBox.currentIndex, ProviderListModel.LanguagesRole)
+                    label: qsTr("Languages:")
+                    value: providerListModel.data(comboBox.currentIndex, ProviderListModel.LanguagesRole)
 				}
 
-				Controls.Label {
+                DetailItem {
 					visible: !customProviderSelected && text
-					Kirigami.FormData.label: qsTr("Online since:")
-					text: providerListModel.data(comboBox.currentIndex, ProviderListModel.OnlineSinceRole)
+                    label: qsTr("Online since:")
+                    value: providerListModel.data(comboBox.currentIndex, ProviderListModel.OnlineSinceRole)
 				}
 
-				Controls.Label {
-					visible: !customProviderSelected && text
-					Kirigami.FormData.label: qsTr("Allows to share media up to:")
-					text: providerListModel.data(comboBox.currentIndex, ProviderListModel.HttpUploadSizeRole)
+                DetailItem {
+                    visible: !customProviderSelected && text
+                    label: qsTr("Allows to share media up to:")
+                    value: providerListModel.data(comboBox.currentIndex, ProviderListModel.HttpUploadSizeRole)
 				}
 
-				Controls.Label {
+                DetailItem {
 					visible: !customProviderSelected && text
-					Kirigami.FormData.label: qsTr("Stores shared media up to:")
-					text: providerListModel.data(comboBox.currentIndex, ProviderListModel.MessageStorageDurationRole)
+                    label: qsTr("Stores shared media up to:")
+                    value: providerListModel.data(comboBox.currentIndex, ProviderListModel.MessageStorageDurationRole)
 				}
 			}
 		}
@@ -191,7 +185,7 @@ FieldView {
 
 		// placeholder
 		Item {
-			Layout.fillHeight: true
+			//FIXME Layout.fillHeight: true
 		}
 	}
 

@@ -27,40 +27,45 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
-import QtQuick 2.14
-import QtQuick.Controls 2.14 as Controls
-import QtQuick.Layouts 1.14
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+// import QtQuick.Controls 2.14 as Controls
+import Sailfish.Silica 1.0
+// import org.kde.kirigami 2.19 as Kirigami
 import im.kaidan.kaidan 1.0
-import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
+// import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
 
 /**
  * The settings page contains options to configure Kaidan.
  *
  * It is used on a new layer on mobile and inside of a Sheet on desktop.
  */
-ColumnLayout {
-	property string title: qsTr("Settings")
+Column {
+	//FIXME Layout.fillHeight: true
 
-	Layout.fillHeight: true
+	SilicaFlickable {
+		width: parent.width
+        contentHeight: mainColumn.height
 
-	MobileForm.FormCard {
-		Layout.fillWidth: true
-		contentItem: ColumnLayout {
-			spacing: 0
+        ColumnView {
+            id: mainColumn
 
-			MobileForm.FormButtonDelegate {
+            PageHeader {
+                id: header
+                title: qsTr("Settings")
+            }
+
+			Button {
 				text: qsTr("Multimedia Settings")
-				description: qsTr("Configure photo, video and audio recording settings")
+				//FIXME description: qsTr("Configure photo, video and audio recording settings")
 				onClicked: stack.push("qrc:/qml/settings/MultimediaSettings.qml")
-				icon.name: "emblem-system-symbolic"
+				icon.source: "emblem-system-symbolic"
 			}
 
-			MobileForm.FormButtonDelegate {
+			Button {
 				text: qsTr("About Kaidan")
-				description: qsTr("Learn about the current Kaidan version, view the source code and contribute")
+				//FIXME description: qsTr("Learn about the current Kaidan version, view the source code and contribute")
 				onClicked: stack.push("qrc:/qml/settings/AboutPage.qml")
-				icon.name: "help-about-symbolic"
+				icon.source: "help-about-symbolic"
 			}
 		}
 	}

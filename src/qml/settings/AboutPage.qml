@@ -29,11 +29,11 @@
  */
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-//import QtQuick 2.14
-//import QtQuick.Controls 2.14 as Controls
-//import QtQuick.Layouts 1.14
-//import org.kde.kirigami 2.19 as Kirigami
-//import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
+//import QtQuick 2.2
+//// import QtQuick.Controls 2.14 as Controls
+//import Sailfish.Silica 1.0
+//// import org.kde.kirigami 2.19 as Kirigami
+//// import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
 
 import im.kaidan.kaidan 1.0
 
@@ -45,47 +45,47 @@ SettingsPageBase {
 	implicitHeight: layout.implicitHeight
 	implicitWidth: layout.implicitWidth
 
-	ColumnLayout {
+	Column {
 		id: layout
 		anchors.fill: parent
 
-		Layout.preferredWidth: 600
+		//FIXME Layout.preferredWidth: 600
 
-		MobileForm.FormCard {
-			Layout.fillWidth: true
+		SilicaFlickable {
+			width: parent.width
 
-			contentItem: ColumnLayout {
+			 Column {
 				spacing: 0
-				MobileForm.AbstractFormDelegate {
-					Layout.fillWidth: true
-					background: Item {}
-					contentItem: RowLayout {
+				BackgroundItem {
+					width: parent.width
+					// background: Item {}
+					 Row {
 						Image {
 							source: Utils.getResourcePath("images/kaidan.svg")
-							Layout.preferredWidth: Kirigami.Units.gridUnit * 5
-							Layout.preferredHeight: Kirigami.Units.gridUnit * 5
-							Layout.fillWidth: true
-							Layout.fillHeight: true
-							Layout.alignment: Qt.AlignCenter
+							//FIXME Layout.preferredWidth: Kirigami.Units.gridUnit * 5
+							// //FIXME Layout.preferredHeight: Kirigami.Units.gridUnit * 5
+							width: parent.width
+							//FIXME Layout.fillHeight: true
+							// Layout.alignment: Qt.AlignCenter
 							fillMode: Image.PreserveAspectFit
 							mipmap: true
 							sourceSize: Qt.size(width, height)
 						}
 
-						ColumnLayout {
-							Kirigami.Heading {
+						Column {
+							SectionHeader {
 								text: Utils.applicationDisplayName + " " + Utils.versionString
 								textFormat: Text.PlainText
 								wrapMode: Text.WordWrap
-								Layout.fillWidth: true
+								width: parent.width
 								horizontalAlignment: Qt.AlignLeft
 							}
 
-							Controls.Label {
+							Label {
 								text: qsTr("User-friendly and modern chat app for every device")
 								font.italic: true
 								wrapMode: Text.WordWrap
-								Layout.fillWidth: true
+								width: parent.width
 								horizontalAlignment: Qt.AlignLeft
 							}
 						}
@@ -93,89 +93,89 @@ SettingsPageBase {
 				}
 			}
 		}
-		MobileForm.FormCard {
-			Layout.fillWidth: true
+		SilicaFlickable {
+			width: parent.width
 
-			contentItem: ColumnLayout {
+			 Column {
 				UrlFormButtonDelegate {
 					text: qsTr("Visit website")
-					description: qsTr("Open Kaidan's website in a web browser")
-					icon.name: "globe"
+					//FIXME description: qsTr("Open Kaidan's website in a web browser")
+					icon.source: "globe"
 					url: Utils.applicationWebsiteUrl
 				}
 
 				UrlFormButtonDelegate {
 					text: qsTr("Follow on Mastodon")
-					description: qsTr("Open Kaidan's Mastodon page in a web browser")
-					icon.name: "send-to-symbolic"
+					//FIXME description: qsTr("Open Kaidan's Mastodon page in a web browser")
+					icon.source: "send-to-symbolic"
 					url: Utils.mastodonUrl
 				}
 
 				UrlFormButtonDelegate {
 					text: qsTr("Donate")
-					description: qsTr("Support Kaidan's development and infrastructure by a donation")
-					icon.name: "emblem-favorite-symbolic"
+					//FIXME description: qsTr("Support Kaidan's development and infrastructure by a donation")
+					icon.source: "emblem-favorite-symbolic"
 					url: Utils.donationUrl
 				}
 
 				UrlFormButtonDelegate {
 					text: qsTr("Report problems")
-					description: qsTr("Report issues with Kaidan to the developers")
-					icon.name: "computer-fail-symbolic"
+					//FIXME description: qsTr("Report issues with Kaidan to the developers")
+					icon.source: "computer-fail-symbolic"
 					url: Utils.issueTrackingUrl
 				}
 
 				UrlFormButtonDelegate {
 					text: qsTr("View source code")
-					description: qsTr("View Kaidan's source code online and contribute to the project")
-					icon.name: "system-search-symbolic"
+					//FIXME description: qsTr("View Kaidan's source code online and contribute to the project")
+					icon.source: "system-search-symbolic"
 					url: Utils.applicationSourceCodeUrl
 				}
 			}
 		}
 
-		MobileForm.FormCard {
-			Layout.fillWidth: true
+		SilicaFlickable {
+			width: parent.width
 
-			contentItem: ColumnLayout {
-				MobileForm.AbstractFormDelegate {
-					Layout.fillWidth: true
-					background: Item {}
-					contentItem: ColumnLayout {
-						Controls.Label {
+			 Column {
+				BackgroundItem {
+					width: parent.width
+					// background: Item {}
+					 Column {
+						Label {
 							text: "GPLv3+ / CC BY-SA 4.0"
 							textFormat: Text.PlainText
 							wrapMode: Text.WordWrap
-							Layout.fillWidth: true
+							width: parent.width
 						}
 
-						Controls.Label {
+						Label {
 							text: "License"
 							font: Kirigami.Theme.smallFont
-							color: Kirigami.Theme.disabledTextColor
+							color: Kirigami.Theme.secondaryColor
 							wrapMode: Text.WordWrap
-							Layout.fillWidth: true
+							width: parent.width
 						}
 					}
 				}
 
-				MobileForm.AbstractFormDelegate {
-					Layout.fillWidth: true
-					background: Item {}
-					contentItem: ColumnLayout {
-						Controls.Label {
+				BackgroundItem {
+					width: parent.width
+					// background: Item {}
+					 Column {
+						Label {
 							text: "© 2016-2023 Kaidan developers and contributors"
 							textFormat: Text.PlainText
 							wrapMode: Text.WordWrap
-							Layout.fillWidth: true
+							width: parent.width
 						}
 
-						Controls.Label {
+						Label {
 							text: "Copyright"
 							font: Kirigami.Theme.smallFont
-							color: Kirigami.Theme.disabledTextColor
+							color: Kirigami.Theme.secondaryColor
 							wrapMode: Text.WordWrap
-							Layout.fillWidth: true
+							width: parent.width
 						}
 					}
 				}
@@ -183,7 +183,7 @@ SettingsPageBase {
 		}
 
 		Item {
-			Layout.fillHeight: true
+			//FIXME Layout.fillHeight: true
 		}
 	}
 }

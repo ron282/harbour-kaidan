@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.14
-import QtQuick.Controls 2.14 as Controls
-import QtQuick.Layouts 1.14
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+// import QtQuick.Controls 2.14 as Controls
+import Sailfish.Silica 1.0
+// import org.kde.kirigami 2.19 as Kirigami
 
 import im.kaidan.kaidan 1.0
 
@@ -14,11 +14,11 @@ import "../elements"
 DetailsHeader {
 	id: root
 	displayName: contactWatcher.item.displayName
-	avatarAction: Kirigami.Action {
+    Button {
 		text: qsTr("Maximize avatar")
-		icon.name: "view-fullscreen-symbolic"
+		icon.source: "view-fullscreen-symbolic"
 		enabled: Kaidan.avatarStorage.getAvatarUrl(jid)
-		onTriggered: Qt.openUrlExternally(Kaidan.avatarStorage.getAvatarUrl(jid))
+        onClicked: Qt.openUrlExternally(Kaidan.avatarStorage.getAvatarUrl(jid))
 	}
 
 	RosterItemWatcher {

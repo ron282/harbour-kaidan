@@ -30,9 +30,9 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-//import QtQuick 2.14
-//import QtQuick.Layouts 1.14
-//import org.kde.kirigami 2.19 as Kirigami
+//import QtQuick 2.2
+//import Sailfish.Silica 1.0
+//// import org.kde.kirigami 2.19 as Kirigami
 
 /**
  * This page is the base of decision pages with two actions.
@@ -40,8 +40,8 @@ import Sailfish.Silica 1.0
  * Each action has an own image for describing its purpose.
  */
 Page {
-	property alias topDescription: topDescription.text
-	property alias bottomDescription: bottomDescription.text
+	property alias top//FIXME description: topDescription.text
+	property alias bottom//FIXME description: bottomDescription.text
 
 	property alias topImageSource: topImage.source
 	property alias bottomImageSource: bottomImage.source
@@ -90,7 +90,7 @@ Page {
 			CenteredAdaptiveButton {
 				visible: !topActionAsMainAction
 				text: topAction.text
-				icon.name: topAction.icon.name
+				icon.source: topAction.icon.name
 				onClicked: topAction.trigger()
 				enabled: topAction.enabled
 			}
@@ -99,7 +99,7 @@ Page {
 			CenteredAdaptiveHighlightedButton {
 				visible: topActionAsMainAction
 				text: topAction.text
-				icon.name: topAction.icon.name
+				icon.source: topAction.icon.name
 				onClicked: topAction.trigger()
 				enabled: topAction.enabled
 			}
@@ -111,7 +111,7 @@ Page {
 			// button for the bottom action
 			CenteredAdaptiveButton {
 				text: bottomAction.text
-				icon.name: bottomAction.icon.name
+				icon.source: bottomAction.icon.name
 				onClicked: bottomAction.trigger()
 				enabled: bottomAction.enabled
 			}

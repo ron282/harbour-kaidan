@@ -2,12 +2,12 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick.Layouts 1.14
+import Sailfish.Silica 1.0
 
 DetailsPage {
 	id: root
 
-	required property string jid
+    property string jid
 
 	ContactDetailsHeader {
 		jid: root.jid
@@ -15,6 +15,6 @@ DetailsPage {
 
 	ContactDetailsContent {
 		jid: root.jid
-		Layout.fillWidth: true
+		width: parent.width
 	}
 }

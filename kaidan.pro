@@ -1,7 +1,7 @@
 TARGET = harbour-kaidan
 
 TEMPLATE = app
-QT += qml quick core sql xml concurrent multimedia positioning widgets multimedia-private
+QT += qml quick core sql xml concurrent multimedia positioning widgets multimedia-private location
 
 LBUILD = build
 
@@ -34,7 +34,7 @@ contains(DEFINES, SFOS) {
 QMAKE_CXXFLAGS += -std=c++17
 LIBS += -lgcrypt -lQXmppQt5 -lQXmppOmemoQt5 -lZXing
 
-CONFIG += QXmpp ZXing
+CONFIG += QXmppl-devel ZXing
 
 DEFINES += BOOST_SIGNALS_NO_DEPRECATION_WARNING
 
@@ -217,5 +217,8 @@ lupdate_only {
 
 RESOURCES += \
   src/qml/qml.qrc
+
+DISTFILES += \
+    src/qml/harbour-kaidan.desktop
 
 

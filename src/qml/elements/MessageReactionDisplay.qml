@@ -28,31 +28,31 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import QtQuick.Controls 2.14 as Controls
-import org.kde.kirigami 2.19 as Kirigami
-
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 import im.kaidan.kaidan 1.0
 
 /**
- * This is an emoji picker for adding emojis in reaction to a message.
+ * This is a button displaying an emoji and its count in reaction to a message for opening a
+ * corresponding sheet.
  */
-EmojiPicker {
+Button {
 	id: root
 
-	property string messageId
+	property bool isOwnMessage
+	property string emoji
+	property var senderJids: []
+    property string description: senderJids.length
+	property MessageReactionSenderSheet senderSheet
 
-	parent: root.parent
-	anchors.centerIn: parent
-	textArea: Controls.TextArea {
-		visible: false
-		onTextChanged: {
-			// TODO: Refactor EmojiPicker to not append trailing whitespaces in this case
-			if (text.length) {
-				MessageModel.addMessageReaction(root.messageId, text.trim())
-			}
-			text = ""
-		}
+	text: emoji + " " +  description
+    width: smallButtonWidth + (description.length == 1 ? 0 : (description.length - 1) * Theme.defaultFont.pixelSize * 0.6)
+
+	onClicked: {
+		senderSheet.messageId = root.messageId
+		senderSheet.isOwnMessage = root.isOwnMessage
+		senderSheet.emoji = root.emoji
+		senderSheet.senderJids = root.senderJids
+		senderSheet.open()
 	}
 }

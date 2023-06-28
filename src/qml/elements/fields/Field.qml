@@ -64,10 +64,10 @@ Column {
 	property bool invalidHintMayBeShown: false
 
 	// underlying data source for the completion view
-    property alias completionModel: inputField.model
+    //property alias completionModel: inputField.model
 
 	// completion model role name to query
-    property alias completionRole: inputField.role
+    //property alias completionRole: inputField.role
 
 	// completed text
     readonly property alias input: inputField.text

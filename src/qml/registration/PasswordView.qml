@@ -28,9 +28,9 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import QtQuick.Controls 2.14 as Controls
+import QtQuick 2.2
+import Sailfish.Silica 1.0
+// import QtQuick.Controls 2.14 as Controls
 
 import im.kaidan.kaidan 1.0
 
@@ -39,29 +39,28 @@ import "../elements/fields"
 /**
  * This view is used for entering a password.
  */
-FieldView {
-	descriptionText: qsTr("Your password is used to log in to your account.\nIf you don't enter a password, the randomly generated and already displayed one is used.\nDon't use passwords you're already using somewhere else!")
-	imageSource: "password"
+Column {
+    Label {
+        text: qsTr("Your password is used to log in to your account.\nIf you don't enter a password, the randomly generated and already displayed one is used.\nDon't use passwords you're already using somewhere else!")
+    }
+
+    //FIXME imageSource: "password"
 
 	property string text: field.text.length > 0 ? field.text : field.generatedPassword
 
 	property alias valid: field.valid
 
-	ColumnLayout {
-		parent: contentArea
+    RegistrationPasswordField {
+        id: field
 
-		RegistrationPasswordField {
-			id: field
+        // Validate the entered password and handle that if it is invalid.
+        onTextChanged: {
+            if (text === "")
+                valid = true
+            else
+                valid = credentialsValidator.isPasswordValid(text)
 
-			// Validate the entered password and handle that if it is invalid.
-			onTextChanged: {
-				if (text === "")
-					valid = true
-				else
-					valid = credentialsValidator.isPasswordValid(text)
-
-				handleInvalidText()
-			}
-		}
-	}
+            handleInvalidText()
+        }
+    }
 }

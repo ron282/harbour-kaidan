@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import org.kde.kirigami 2.19 as Kirigami
-import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
+import QtQuick 2.2
+import Sailfish.Silica 1.0
+// import org.kde.kirigami 2.19 as Kirigami
+// import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
 
 import im.kaidan.kaidan 1.0
 
@@ -16,7 +16,7 @@ DetailsContent {
 
 	property bool isChatWithOneself: MessageModel.currentAccountJid === jid
 
-	encryptionArea: ColumnLayout {
+	encryptionArea: Column {
 		spacing: 0
 
 		OmemoWatcher {
@@ -29,13 +29,13 @@ DetailsContent {
 			jid: root.jid
 		}
 
-		MobileForm.FormCardHeader {
-			title: qsTr("Encryption")
+		SectionHeader {
+            text: qsTr("Encryption")
 		}
 
-		MobileForm.FormSwitchDelegate {
+		TextSwitch {
 			text: qsTr("OMEMO 2")
-			description: qsTr("End-to-end encryption with OMEMO 2 ensures that nobody else than you and your chat partners can read or modify the data you exchange.")
+			//FIXME description: qsTr("End-to-end encryption with OMEMO 2 ensures that nobody else than you and your chat partners can read or modify the data you exchange.")
 			enabled: MessageModel.usableOmemoDevices.length
 			checked: MessageModel.isOmemoEncryptionEnabled
 			// The switch is toggled by setting the user's preference on using encryption.
@@ -43,7 +43,7 @@ DetailsContent {
 			onClicked: MessageModel.encryption = checked ? Encryption.Omemo2 : Encryption.NoEncryption
 		}
 
-		MobileForm.FormButtonDelegate {
+		Button {
 			text: {
 				if (!MessageModel.usableOmemoDevices.length) {
 					if (accountOmemoWatcher.distrustedOmemoDevices.length) {
@@ -63,7 +63,7 @@ DetailsContent {
 
 				return ""
 			}
-			icon.name: {
+			icon.source: {
 				if (!MessageModel.usableOmemoDevices.length) {
 					if (accountOmemoWatcher.distrustedOmemoDevices.length) {
 						return "channel-secure-symbolic"
@@ -92,7 +92,7 @@ DetailsContent {
 			}
 		}
 
-		MobileForm.FormButtonDelegate {
+		Button {
 			text: {
 				if(root.isChatWithOneself) {
 					return ""
@@ -114,7 +114,7 @@ DetailsContent {
 
 				return ""
 			}
-			icon.name: {
+			icon.source: {
 				if (!MessageModel.usableOmemoDevices.length) {
 					if (contactOmemoWatcher.distrustedOmemoDevices.length) {
 						return "channel-secure-symbolic"
@@ -137,46 +137,43 @@ DetailsContent {
 		}
 	}
 
-	Kirigami.Dialog {
+    Dialog {
 		id: qrCodeDialog
 		z: 1000
-		preferredWidth: 500
-		standardButtons: Kirigami.Dialog.NoButton
-		showCloseButton: false
 
-		ColumnLayout {
+		Column {
 			QrCode {
 				jid: root.jid
-				Layout.fillHeight: true
-				Layout.fillWidth: true
-				Layout.preferredWidth: 500
-				Layout.preferredHeight: 500
-				Layout.maximumHeight: applicationWindow().height * 0.5
+				//FIXME Layout.fillHeight: true
+				width: parent.width
+				//FIXME Layout.preferredWidth: 500
+				// //FIXME Layout.preferredHeight: 500
+                //Layout.maximumHeight: applicationWindow().height * 0.5
 			}
 		}
 	}
 
-	MobileForm.FormCard {
-		Layout.fillWidth: true
+	SilicaFlickable {
+		width: parent.width
 
-		contentItem: ColumnLayout {
+        Column {
 			spacing: 0
 
-			MobileForm.FormCardHeader {
-				title: qsTr("Sharing")
+			SectionHeader {
+                text: qsTr("Sharing")
 			}
 
-			MobileForm.FormButtonDelegate {
+			Button {
 				text: qsTr("Show QR code")
-				description: qsTr("Share this contact's chat address via QR code")
-				icon.name: "view-barcode-qr"
+				//FIXME description: qsTr("Share this contact's chat address via QR code")
+                icon.source: "image://theme/icon-m-qr"
 				onClicked: qrCodeDialog.open()
 			}
 
-			MobileForm.FormButtonDelegate {
+			Button {
 				text: qsTr("Copy chat address")
-				description: qsTr("Share this contact's chat address via text")
-				icon.name: "send-to-symbolic"
+				//FIXME description: qsTr("Share this contact's chat address via text")
+                icon.source: "image://theme/icon-m-send"
 				onClicked: {
 					Utils.copyToClipboard(Utils.trustMessageUri(root.jid))
 					passiveNotification(qsTr("Contact copied to clipboard"))
@@ -190,21 +187,21 @@ DetailsContent {
 		jid: root.jid
 	}
 
-	MobileForm.FormCard {
-		Layout.fillWidth: true
+	SilicaFlickable {
+		width: parent.width
 
-		contentItem: ColumnLayout {
+         Column {
 			spacing: 0
 
-			MobileForm.FormCardHeader {
-				title: qsTr("Notifications")
+			SectionHeader {
+                text: qsTr("Notifications")
 			}
 
-			MobileForm.FormSwitchDelegate {
+			TextSwitch {
 				text: qsTr("Incoming messages")
-				description: qsTr("Show notification and play sound on message arrival")
+				//FIXME description: qsTr("Show notification and play sound on message arrival")
 				checked: !mutedWatcher.muted
-				onToggled: mutedWatcher.muted = !mutedWatcher.muted
+				onCheckedChanged: mutedWatcher.muted = !mutedWatcher.muted
 
 				NotificationsMutedWatcher {
 					id: mutedWatcher
@@ -214,29 +211,29 @@ DetailsContent {
 		}
 	}
 
-	MobileForm.FormCard {
-		Layout.fillWidth: true
+	SilicaFlickable {
+		width: parent.width
 
-		contentItem: ColumnLayout {
+         Column {
 			spacing: 0
 
-			MobileForm.FormCardHeader {
-				title: qsTr("Privacy")
+			SectionHeader {
+                text: qsTr("Privacy")
 			}
 
-			MobileForm.FormButtonDelegate {
+			Button {
 				text: qsTr("Request status")
-				description: qsTr("Request contact's availability, devices and other personal information")
+				//FIXME description: qsTr("Request contact's availability, devices and other personal information")
 				visible: !contactWatcher.item.sendingPresence
 				onClicked: Kaidan.client.rosterManager.subscribeToPresenceRequested(root.jid)
 			}
 
-			MobileForm.FormSwitchDelegate {
+			TextSwitch {
 				text: qsTr("Send status")
-				description: qsTr("Provide your availability, devices and other personal information")
+				//FIXME description: qsTr("Provide your availability, devices and other personal information")
 				checked: contactWatcher.item.receivingPresence
 				visible: !isChatWithOneself
-				onToggled: {
+				onCheckedChanged: {
 					if (checked) {
 						Kaidan.client.rosterManager.acceptSubscriptionToPresenceRequested(MessageModel.currentChatJid)
 					} else {
@@ -245,11 +242,11 @@ DetailsContent {
 				}
 			}
 
-			MobileForm.FormSwitchDelegate {
+			TextSwitch {
 				text: qsTr("Send typing notifications")
-				description: qsTr("Indicate when you have this conversation open, are typing and stopped typing")
+				//FIXME description: qsTr("Indicate when you have this conversation open, are typing and stopped typing")
 				checked: contactWatcher.item.chatStateSendingEnabled
-				onToggled: {
+				onCheckedChanged: {
 					RosterModel.setChatStateSendingEnabled(
 						MessageModel.currentAccountJid,
 						MessageModel.currentChatJid,
@@ -257,11 +254,11 @@ DetailsContent {
 				}
 			}
 
-			MobileForm.FormSwitchDelegate {
+			TextSwitch {
 				text: qsTr("Send read notifications")
-				description: qsTr("Indicate which messages you have read")
+				//FIXME description: qsTr("Indicate which messages you have read")
 				checked: contactWatcher.item.readMarkerSendingEnabled
-				onToggled: {
+				onCheckedChanged: {
 					RosterModel.setReadMarkerSendingEnabled(
 						MessageModel.currentAccountJid,
 						MessageModel.currentChatJid,
@@ -271,34 +268,33 @@ DetailsContent {
 		}
 	}
 
-	MobileForm.FormCard {
-		Layout.fillWidth: true
+	SilicaFlickable {
+		width: parent.width
 
-		contentItem: ColumnLayout {
+         Column {
 			spacing: 0
 
-			MobileForm.FormCardHeader {
-				title: qsTr("Removal")
+			SectionHeader {
+                text: qsTr("Removal")
 			}
 
-			ColumnLayout {
+			Column {
 				spacing: 0
 
-				MobileForm.FormButtonDelegate {
+                IconTextSwitch {
 					id: removalButton
 					text: qsTr("Remove")
-					description: qsTr("Remove contact and complete chat history")
-					icon.name: "edit-delete-symbolic"
+					//FIXME description: qsTr("Remove contact and complete chat history")
+                    icon.source: "image://theme/icon-m-edit"
 					icon.color: "red"
-					checkable: true
-					onToggled: contactRemovalCorfirmButton.visible = !contactRemovalCorfirmButton.visible
+					onCheckedChanged: contactRemovalCorfirmButton.visible = !contactRemovalCorfirmButton.visible
 				}
 
-				MobileForm.FormButtonDelegate {
+				Button {
 					id: contactRemovalCorfirmButton
 					text: qsTr("Confirm")
 					visible: false
-					Layout.leftMargin: Kirigami.Units.largeSpacing * 6
+					anchors.leftMargin: Kirigami.Units.largeSpacing * 6
 					onClicked: {
 						visible = false
 						removalButton.enabled = false

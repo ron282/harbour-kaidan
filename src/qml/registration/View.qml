@@ -28,9 +28,9 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+import Sailfish.Silica 1.0
+// import org.kde.kirigami 2.19 as Kirigami
 
 import im.kaidan.kaidan 1.0
 
@@ -39,25 +39,25 @@ import "../elements"
 /**
  * This is the base for views of the swipe view.
  */
-ColumnLayout {
+Column {
 	property alias descriptionText: description.text
 	property alias contentArea: contentArea
 	property string imageSource
 
-	GridLayout {
+    SilicaGridView {
 		id: contentArea
-		Layout.alignment: Qt.AlignHCenter
-		Layout.maximumWidth: largeButtonWidth
-		Layout.margins: 15
-		columns: 1
-		rowSpacing: root.height * 0.05
+        anchors.horizontalCenter: parent
+        //FIXME Layout.maximumWidth: largeButtonWidth
+        anchors.margins: 15
+//FIXME		columns: 1
+//FIXME		rowSpacing: root.height * 0.05
 
 		Image {
 			id: image
 			source: imageSource ? Utils.getResourcePath("images/onboarding/" + imageSource + ".svg") : ""
 			visible: imageSource
-			Layout.fillWidth: true
-			Layout.fillHeight: true
+            width: parent.width
+            //FIXME Layout.fillHeight: true
 			fillMode: Image.PreserveAspectFit
 		}
 

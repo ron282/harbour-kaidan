@@ -35,9 +35,9 @@ import im.kaidan.kaidan 1.0
 /**
  * This is the base of a registration page.
  */
-Page {
+Page {  
 	// This model contains all fields from the registration form of the requested provider.
-	property DataFormModel formModel
+//	property DataFormModel formModel
 
 	// This model only contains the custom fields from the registration form of the requested provider.
 	// It may contain e.g. a CAPTCHA or an email address.
@@ -47,6 +47,8 @@ Page {
 
 	// generator for random usernames and passwords
 	property alias credentialsGenerator: credentialsGenerator
+
+    property alias title : header.title
 
 	// JID of the provider from whom the registration form is requested
 	property string provider
@@ -64,6 +66,10 @@ Page {
 	CredentialsGenerator {
 		id: credentialsGenerator
 	}
+
+    PageHeader {
+        id: header
+    }
 
 	Component.onCompleted: AccountManager.resetCustomConnectionSettings()
 

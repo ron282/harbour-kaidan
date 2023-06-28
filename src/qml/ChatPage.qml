@@ -29,11 +29,9 @@
  */
 
 import QtQuick 2.2
-import QtMultimedia 5.14 as Multimedia
 import Sailfish.Silica 1.0
-
-import im.kaidan.kaidan 1.0
 import MediaUtils 0.1
+import im.kaidan.kaidan 1.0
 
 import "elements"
 import "details"
@@ -51,22 +49,22 @@ ChatPageBase {
 //		}
 //	}
 
-	Shortcut {
-		sequence: "Ctrl+Shift+V"
-		context: Qt.WindowShortcut
-		onActivated: {
-			let imageUrl = Utils.pasteImage();
-			// check if there was an image to be pasted from the clipboard
-			if (imageUrl.toString().length > 0) {
-				sendMediaSheet.addFile(imageUrl)
-				sendMediaSheet.ensureOpen()
-			}
-		}
-	}
+//	Shortcut {
+//		sequence: "Ctrl+Shift+V"
+//		context: Qt.WindowShortcut
+//		onActivated: {
+//			imageUrl = Utils.pasteImage();
+//			// check if there was an image to be pasted from the clipboard
+//			if (imageUrl.toString().length > 0) {
+//				sendMediaSheet.addFile(imageUrl)
+//				sendMediaSheet.ensureOpen()
+//			}
+//		}
+//	}
 
 	property alias searchBar: searchBar
 	property alias sendMediaSheet: sendMediaSheet
-	property alias newMediaSheet: newMediaSheet
+    property alias newMediaSheet: newMediaSheet
 	property alias messageReactionEmojiPicker: messageReactionEmojiPicker
 	property alias messageReactionSenderSheet: messageReactionSenderSheet
 
@@ -74,75 +72,43 @@ ChatPageBase {
 	readonly property bool cameraAvailable: Multimedia.QtMultimedia.availableCameras.length > 0
 	property bool viewPositioned: false
 
-	titleDelegate: Controls.ToolButton {
-		visible: !Kirigami.Settings.isMobile
-
-		contentItem: RowLayout {
-			// weirdly having an id here, although unused, fixes the layout
-			id: layout
-
-			Avatar {
-				Layout.leftMargin: Kirigami.Units.largeSpacing
-				Layout.preferredHeight: parent.height
-				Layout.preferredWidth: parent.height
-				jid: chatItemWatcher.item.jid
-				name: chatItemWatcher.item.displayName
-			}
-			Kirigami.Heading {
-				Layout.fillWidth: true
-				Layout.leftMargin: Kirigami.Units.largeSpacing
-				Layout.rightMargin: Kirigami.Units.largeSpacing
-				text: chatItemWatcher.item.displayName
-			}
-		}
-
-		onClicked: contactDetailsSheet.open()
-	}
-	keyboardNavigationEnabled: true
-	contextualActions: [
-		Kirigami.Action {
-			visible: Kirigami.Settings.isMobile
-			icon.name: "avatar-default-symbolic"
-			text: qsTr("Details…")
-			onTriggered: pageStack.layers.push(contactDetailsPage)
-		},
-		// Action to toggle the message search bar
-		Kirigami.Action {
-			id: searchAction
-			text: qsTr("Search")
-			icon.name: "system-search-symbolic"
-
-			onTriggered: {
-				if (searchBar.active)
-					searchBar.close()
-				else
-					searchBar.open()
-			}
-		},
-		Kirigami.Action {
-			visible: !sendingPane.composition.isSpoiler
-			icon.name: "password-show-off"
-			text: qsTr("Send a spoiler message")
-			onTriggered: sendingPane.composition.isSpoiler = true
-		}
-	]
+    PageHeader {
+        Avatar {
+            width: Theme.iconSizeMedium;
+            height: width
+            jid: chatItemWatcher.item.jid
+            name: chatItemWatcher.item.displayName
+            smooth: true;
+            anchors {
+                leftMargin: Theme.paddingMedium;
+                verticalCenter: parent.verticalCenter;
+            }
+//            onClicked: contactDetailsSheet.open()
+        }
+        Rectangle {
+                z: -1;
+                color: "black";
+                opacity: 0.35;
+                anchors.fill: parent;
+            }
+        ChatPageSearchView {
+            id: searchBar
+        }
+    }
 
 	// Message search bar
-	header: ChatPageSearchView {
-		id: searchBar
-	}
 
 	RosterItemWatcher {
 		id: chatItemWatcher
 		jid: MessageModel.currentChatJid
 	}
 
-	ContactDetailsSheet {
+    ContactDetailsSheet {
 		id: contactDetailsSheet
 		jid: MessageModel.currentChatJid
 	}
 
-	Component {
+     Component {
 		id: contactDetailsPage
 
 		ContactDetailsPage {
@@ -156,10 +122,10 @@ ChatPageBase {
 		chatPage: parent
 	}
 
-	NewMediaSheet {
-		id: newMediaSheet
-		composition: sendingPane.composition
-	}
+    NewMediaSheet {
+        id: newMediaSheet
+        composition: sendingPane.composition
+    }
 
 	MessageReactionEmojiPicker {
 		id: messageReactionEmojiPicker
@@ -170,13 +136,37 @@ ChatPageBase {
 	}
 
 	// View containing the messages
-	ListView {
+    SilicaListView {
 		id: messageListView
 		verticalLayoutDirection: ListView.BottomToTop
 		spacing: 0
 
-		// Highlighting of the message containing a searched string.
-		highlight: Component {
+        PullDownMenu {
+            MenuItem {
+                text: qsTr("Details…")
+ //               onClicked: pageStack.push(contactDetailsPage)
+            }
+            // Action to toggle the message search bar
+            MenuItem {
+                id: searchAction
+                text: qsTr("Search")
+
+                onClicked: {
+                    if (searchBar.active)
+                        searchBar.close()
+                    else
+                        searchBar.open()
+                }
+            }
+            MenuItem {
+                text: qsTr("Send a spoiler message")
+                onClicked: sendingPane.composition.isSpoiler = true
+            }
+        }
+
+        // Highlighting of the message containing a searched string.
+/*
+        highlight: Component {
 			id: highlightBar
 			Rectangle {
 				height: messageListView.currentIndex === -1 ? 0 : messageListView.currentItem.implicitHeight
@@ -202,9 +192,9 @@ ChatPageBase {
 				}
 			}
 		}
-		// This is used to make the highlight bar a little bit bigger than the highlighted message.
+        // This is used to make the highlight bar a little bit bigger than the highlighted message.
 		highlightFollowsCurrentItem: false
-
+*/
 		// Initially highlighted value
 		currentIndex: -1
 
@@ -230,15 +220,16 @@ ChatPageBase {
 				// Skip the case when messages are fetched after the initial fetching because this
 				// function positioned the view at firstUnreadContactMessageIndex and that is close
 				// to the end of the loaded messages.
-				if (!root.viewPositioned) {
-					let unreadMessageCount = chatItemWatcher.item.unreadMessageCount
+                if (!root.viewPositioned) {
 
-					if (unreadMessageCount) {
-						let firstUnreadContactMessageIndex = MessageModel.firstUnreadContactMessageIndex()
+/*                    unreadMessageCount = chatItemWatcher.item.unreadMessageCount
 
-						if (firstUnreadContactMessageIndex > 0) {
-							messageListView.positionViewAtIndex(firstUnreadContactMessageIndex, ListView.End)
-						}
+                    if (unreadMessageCount) {
+                        firstUnreadContactMessageIndex = MessageModel.firstUnreadContactMessageIndex()
+
+                        if (firstUnreadContactMessageIndex > 0) {
+                            messageListView.positionViewAtIndex(firstUnreadContactMessageIndex, ListView.End)
+                        }
 
 						root.viewPositioned = true
 
@@ -247,6 +238,7 @@ ChatPageBase {
 					} else {
 						root.viewPositioned = true
 					}
+*/
 				}
 			}
 
@@ -279,12 +271,10 @@ ChatPageBase {
 			}
 		}
 
-		ChatMessageContextMenu {
-			id: messageContextMenu
-		}
 
 		delegate: ChatMessage {
-			contextMenu: messageContextMenu
+            contextMenu: ChatMessageContextMenu {
+            }
 			reactionEmojiPicker: root.messageReactionEmojiPicker
 			reactionSenderSheet: root.messageReactionSenderSheet
 			modelIndex: index
@@ -316,27 +306,27 @@ ChatPageBase {
 			}
 
 			onQuoteRequested: {
-				let quotedText = ""
-				const lines = body.split("\n")
+//				quotedText = ""
+//				const lines = body.split("\n")
 
-				for (let line in lines) {
-					quotedText += "> " + lines[line] + "\n"
-				}
+//                for (i = 0; i<lines.size(); i++) {
+//                    quotedText += "> " + lines[i] + "\n"
+//				}
 
-				sendingPane.messageArea.insert(0, quotedText)
+//				sendingPane.messageArea.insert(0, quotedText)
 			}
 		}
 
 		// Everything is upside down, looks like a footer
-		header: ColumnLayout {
+/*		header: Column {
 			anchors.left: parent.left
 			anchors.right: parent.right
 			height: stateLabel.text ? 20 : 0
 
-			Controls.Label {
+            Label {
 				id: stateLabel
-				Layout.alignment: Qt.AlignCenter
-				Layout.maximumWidth: parent.width
+                // Layout.alignment: Qt.AlignCenter
+                //FIXME Layout.maximumWidth: parent.width
 				height: !text ? 20 : 0
 				topPadding: text ? 10 : 0
 
@@ -345,7 +335,7 @@ ChatPageBase {
 			}
 		}
 
-		footer: Controls.BusyIndicator {
+        footer: BusyIndicator {
 			visible: opacity !== 0.0
 			anchors.horizontalCenter: parent.horizontalCenter
 			height: visible ? undefined : Kirigami.Units.smallSpacing * 4
@@ -358,9 +348,9 @@ ChatPageBase {
 				}
 			}
 		}
-
-		// button for jumping to the latest message
-		Controls.RoundButton {
+*/
+/*		// button for jumping to the latest message
+        IconButton {
 			visible: width > 0
 			width: parent.atYEnd ? 0 : 50
 			height: parent.atYEnd ? 0 : 50
@@ -376,7 +366,7 @@ ChatPageBase {
 
 				return Kirigami.Settings.isMobile ? 15 : 5
 			}
-			icon.name: "go-down-symbolic"
+            icon.source: "go-down-symbolic"
 			onClicked: parent.positionViewAtIndex(0, ListView.Center)
 
 			Behavior on width {
@@ -396,13 +386,15 @@ ChatPageBase {
 			}
 		}
 	}
+*/
 
-	footer: ChatPageSendingPane {
-		id: sendingPane
-		chatPage: root
-	}
+        footer: ChatPageSendingPane {
+            id: sendingPane
+            chatPage: root
+        }
 
-	function saveDraft() {
-		sendingPane.composition.saveDraft();
-	}
+        function saveDraft() {
+            sendingPane.composition.saveDraft();
+        }
+    }
 }

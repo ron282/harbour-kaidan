@@ -20,6 +20,7 @@
         <file>elements/fields/CredentialsField.qml</file>
         <file>elements/fields/Field.qml</file>
         <file>elements/fields/JidField.qml</file>
+        <file>elements/fields/RegistrationPasswordField.qml</file>
         <file>main.qml</file>
         <file>registration/AutomaticRegistrationPage.qml</file>
         <file>registration/CustomFormView.qml</file>
@@ -49,6 +50,25 @@
         <file>settings/SettingsPageBase.qml</file>
         <file>settings/SettingsSheet.qml</file>
         <file>QrCodeOnboardingPage.qml</file>
+        <file>QrCodePage.qml</file>
+        <file>elements/SubRequestAcceptSheet.qml</file>
+        <file>elements/RosterListItem.qml</file>
+        <file>elements/RosterListItemContextMenu.qml</file>
+        <file>elements/UserListItem.qml</file>
+        <file>RosterPage.qml</file>
+        <file>ChatPage.qml</file>
+        <file>ChatPageBase.qml</file>
+        <file>EmptyChatPage.qml</file>
+        <file>elements/ChatMessage.qml</file>
+        <file>elements/Avatar.qml</file>
+        <file>elements/MessageBackground.qml</file>
+        <file>elements/MessageCounter.qml</file>
+        <file>elements/ChatMessageContextMenu.qml</file>
+        <file>elements/ChatPageSendingPane.qml</file>
+        <file>elements/ClickableIcon.qml</file>
+        <file>elements/MessageReactionEmojiPicker.qml</file>
+        <file>elements/MessageReaction.qml</file>
+        <file>elements/MessageReactionAddition.qml</file>
+        <file>elements/MessageReactionDisplay.qml</file>
     </qresource>
-    <qresource prefix="/"/>
 </RCC>

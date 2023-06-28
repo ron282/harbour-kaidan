@@ -31,10 +31,6 @@
 import QtQuick 2.2
 import Sailfish.Silica 1.0
 import QtMultimedia 5.6
-//import QtQuick 2.14
-//import QtQuick.Layouts 1.14
-//import QtMultimedia 5.14
-//import org.kde.kirigami 2.19 as Kirigami
 
 import im.kaidan.kaidan 1.0
 
@@ -50,8 +46,8 @@ Item {
 	// camera with continuous focus in the center of the video
 	Camera {
 		id: camera
-		focus.focusMode: Camera.FocusContinuous
-		focus.focusPointMode: Camera.FocusPointCenter
+        focus.focusMode: Camera.FocusContinuous
+        focus.focusPointMode: Camera.FocusPointCenter
 
 		// Show camera input if this page is visible and the camera enabled.
 		cameraState: {
@@ -61,7 +57,7 @@ Item {
 		}
 
 		Component.onCompleted: {
-			filter.setCameraDefaultVideoFormat(camera);
+//			filter.setCameraDefaultVideoFormat(camera);
 		}
 	}
 
@@ -81,7 +77,7 @@ Item {
 		fillMode: VideoOutput.PreserveAspectCrop
 		source: camera
 		autoOrientation: true
-		filters: [filter]
+//		filters: [filter]
 	}
 
 	// hint for camera issues

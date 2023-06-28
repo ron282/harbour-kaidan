@@ -74,21 +74,21 @@ Page {
 		anchors.fill: parent
 
 		Item {
-			anchors.centerIn: parent
+            id: loadingArea
+            anchors.centerIn: parent
+            visible: Kaidan.connectionState === Enums.StateConnecting
 
-            Column {
-				id: loadingArea
-                width: parent.width
-				visible: Kaidan.connectionState === Enums.StateConnecting
+            BusyIndicator {
+                id: busyIndicator
+                anchors.centerIn: loadingArea
+            }
 
-                BusyIndicator {
-                    anchors.centerIn: loadingArea
-                }
-
-                Label {
-					text: "<i>" + qsTr("Connecting…") + "</i>"
-				}
-			}
+            Label {
+                text: "<i>" + qsTr("Connecting…") + "</i>"
+                anchors.horizontalCenter: busyIndicator.horizontalCenter
+                anchors.top: busyIndicator.bottom
+                anchors.topMargin: 5
+            }
 		}
 
 		filter.onScanningSucceeded: {

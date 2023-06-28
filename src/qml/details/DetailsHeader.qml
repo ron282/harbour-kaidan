@@ -4,34 +4,34 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.14
-import QtQuick.Controls 2.14 as Controls
-import QtQuick.Layouts 1.14
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+// import QtQuick.Controls 2.14 as Controls
+import Sailfish.Silica 1.0
+// import org.kde.kirigami 2.19 as Kirigami
 
 import im.kaidan.kaidan 1.0
 
 import "../elements"
 
-RowLayout {
+Row {
 	id: root
 
 	default property alias __data: mainArea.data
-	property Kirigami.OverlaySheet sheet
-	required property string jid
-	required property string displayName
-	required property Kirigami.Action avatarAction
+    property DockedPanel sheet
+	property string jid
+	property string displayName
+    property Button avatarAction
 
-	Layout.topMargin: Kirigami.Settings.isMobile ? 0 : Kirigami.Units.largeSpacing * 2
-	Layout.bottomMargin: Kirigami.Settings.isMobile ? 0 : Kirigami.Units.largeSpacing
-	Layout.leftMargin: Kirigami.Units.largeSpacing * 2
-	Layout.rightMargin: Layout.leftMargin
+	anchors.topMargin: Kirigami.Settings.isMobile ? 0 : Kirigami.Units.largeSpacing * 2
+    anchors.bottomMargin: Kirigami.Settings.isMobile ? 0 : Kirigami.Units.largeSpacing
+    anchors.leftMargin: Kirigami.Units.largeSpacing * 2
+    anchors.rightMargin: anchors.leftMargin
 
 	Avatar {
 		jid: root.jid
 		name: root.displayName
-		Layout.preferredHeight: Kirigami.Units.gridUnit * 8
-		Layout.preferredWidth: Layout.preferredHeight
+        //FIXME Layout.preferredHeight: Kirigami.Units.gridUnit * 8
+        //FIXME Layout.preferredWidth: Layout.preferredHeight
 
 		// TODO: Make icon also visible when the cursor is on it directly after opening this page
 		MouseArea {
@@ -46,7 +46,7 @@ RowLayout {
 			onExited: avatarHoverFadeOutAnimation.start()
 			onClicked: root.avatarAction.triggered()
 
-			Kirigami.Icon {
+            Icon {
 				id: avatarActionHoverImage
 				source: root.avatarAction.icon.name
 				color: Kirigami.Theme.backgroundColor
@@ -73,23 +73,23 @@ RowLayout {
 		}
 	}
 
-	ColumnLayout {
+	Column {
 		id: mainArea
-		Layout.leftMargin: 15
+        anchors.leftMargin: 15
 
-		RowLayout {
+		Row {
 			id: displayNameArea
 			spacing: 0
 
 			Button {
 				id: displayNameEditingIcon
-				Controls.ToolTip.text: qsTr("Change name…")
-				icon.name: "document-edit-symbolic"
-				display: Controls.AbstractButton.IconOnly
-				checked: !displayNameText.visible
-				flat: true
-				Layout.preferredWidth: Layout.preferredHeight
-				Layout.preferredHeight: displayNameTextField.implicitHeight
+                //FIXME Controls.ToolTip.text: qsTr("Change name…")
+                icon.source: "image://theme/icon-m-edit"
+                //FIXME display: Controls.AbstractButton.IconOnly
+                //FIXME checked: !displayNameText.visible
+                //FIXME flat: true
+                //FIXME Layout.preferredWidth: Layout.preferredHeight
+                //FIXME Layout.preferredHeight: displayNameTextField.implicitHeight
 				onHoveredChanged: {
 					if (hovered) {
 						flat = false
@@ -109,15 +109,15 @@ RowLayout {
 				}
 			}
 
-			Kirigami.Heading {
+            SectionHeader {
 				id: displayNameText
 				text: root.displayName
 				textFormat: Text.PlainText
 				maximumLineCount: 1
 				elide: Text.ElideRight
 				visible: !displayNameTextField.visible
-				Layout.alignment: Qt.AlignVCenter
-				Layout.fillWidth: true
+                //FIXME // Layout.alignment: Qt.AlignVCenter
+				width: parent.width
 				leftPadding: Kirigami.Units.largeSpacing
 				// TODO: Get update of current vCard by using Entity Capabilities
 				onTextChanged: displayNameChangedFunction()
@@ -132,16 +132,16 @@ RowLayout {
 				}
 			}
 
-			Controls.TextField {
+            TextField {
 				id: displayNameTextField
 				text: displayNameText.text
 				visible: false
-				Layout.leftMargin: Kirigami.Units.largeSpacing
-				Layout.fillWidth: true
-				onAccepted: {
-					displayNameArea.changeDisplayName(text)
-					visible = false
-				}
+                anchors.leftMargin: Kirigami.Units.largeSpacing
+				width: parent.width
+                //FIXME onAccepted: {
+                //	displayNameArea.changeDisplayName(text)
+                //	visible = false
+                //}
 			}
 
 			function changeDisplayName(newDisplayName) {
@@ -151,14 +151,14 @@ RowLayout {
 			}
 		}
 
-		Controls.Label {
+        Label {
 			text: root.jid
-			color: Kirigami.Theme.disabledTextColor
+			color: Kirigami.Theme.secondaryColor
 			textFormat: Text.PlainText
 			maximumLineCount: 1
 			elide: Text.ElideRight
-			Layout.fillWidth: true
-			Layout.leftMargin: displayNameEditingIcon.Layout.preferredWidth + displayNameTextField.Layout.leftMargin
+			width: parent.width
+            anchors.leftMargin: displayNameEditingIcon.Layout.preferredWidth + displayNameTextField.anchors.leftMargin
 		}
 	}
 }

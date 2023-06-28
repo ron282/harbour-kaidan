@@ -30,19 +30,13 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-//import QtQuick 2.14
-//import QtQuick.Layouts 1.14
-//import QtQuick.Controls 2.14 as Controls
-import QtGraphicalEffects 1.14
-//import org.kde.kirigami 2.19 as Kirigami
-
 import im.kaidan.kaidan 1.0
 import MediaUtils 0.1
 
-Kirigami.SwipeListItem {
+ListItem {
 	id: root
 
-	property Controls.Menu contextMenu
+    property ContextMenu contextMenu
 	property MessageReactionEmojiPicker reactionEmojiPicker
 	property MessageReactionSenderSheet reactionSenderSheet
 
@@ -78,14 +72,13 @@ Kirigami.SwipeListItem {
 	signal quoteRequested(string body)
 
 	height: messageArea.implicitHeight + (isGroupBegin ? Kirigami.Units.largeSpacing : Kirigami.Units.smallSpacing)
-	alwaysVisibleActions: false
 
-	actions: [
+/*	actions: [
 		// TODO: Move message to the left when action is displayed and message is too large or
 		// display all actions at the bottom / at the top of the message bubble
-		Kirigami.Action {
+		Button {
 			text: "Add message reaction"
-			icon.name: "smiley-add"
+			icon.source: "smiley-add"
 			// TODO: Remove " && Kaidan.connectionState === Enums.StateConnected" once offline queue for message reactions is implemented
 			visible: !root.isOwn && !Object.keys(root.reactions).length && Kaidan.connectionState === Enums.StateConnected
 			onTriggered: {
@@ -94,25 +87,24 @@ Kirigami.SwipeListItem {
 			}
 		}
 	]
+*/
 
-	ColumnLayout {
+    Column {
 		id: messageArea
 		spacing: -5
 
-		RowLayout {
+        Row {
 			// Own messages are on the right, others on the left side.
 			layoutDirection: isOwn ? Qt.RightToLeft : Qt.LeftToRight
 
 			// placeholder
-			Item {
-				Layout.preferredWidth: 5
-			}
+//			Item {
+//				//FIXME Layout.preferredWidth: 5
+//			}
 
 			Item {
 				visible: !isOwn
-				Layout.alignment: Qt.AlignHCenter | Qt.AlignBottom
-				Layout.preferredHeight: Kirigami.Units.gridUnit * 2.2
-				Layout.preferredWidth: Kirigami.Units.gridUnit * 2.2
+                anchors.horizontalCenter: parent.horizontalCenter
 
 				Avatar {
 					id: avatar
@@ -124,7 +116,7 @@ Kirigami.SwipeListItem {
 			}
 
 			// message bubble
-			Controls.Control {
+            BackgroundItem {
 				id: bubble
 
 				readonly property string paddingText: {
@@ -133,12 +125,7 @@ Kirigami.SwipeListItem {
 
 				readonly property alias backgroundColor: bubbleBackground.color
 
-				topPadding: Kirigami.Units.largeSpacing
-				bottomPadding: Kirigami.Units.largeSpacing
-				leftPadding: Kirigami.Units.largeSpacing + background.tailSize
-				rightPadding: Kirigami.Units.largeSpacing
-
-				background: MessageBackground {
+                MessageBackground {
 					id: bubbleBackground
 					message: root
 					showTail: !isOwn && isGroupBegin
@@ -156,14 +143,14 @@ Kirigami.SwipeListItem {
 					}
 				}
 
-				contentItem: ColumnLayout {
+                Column {
 					id: content
 
-					RowLayout {
+                    Row {
 						id: spoilerHintRow
 						visible: isSpoiler
 
-						Controls.Label {
+                        Label {
 							text: spoilerHint == "" ? qsTr("Spoiler") : spoilerHint
 							color: Kirigami.Theme.textColor
 							font.pixelSize: Kirigami.Units.gridUnit * 0.8
@@ -179,31 +166,31 @@ Kirigami.SwipeListItem {
 						}
 
 						Item {
-							Layout.fillWidth: true
+                            width: parent.width
 							height: 1
 						}
 
-						Kirigami.Icon {
+                        Icon {
 							height: 28
 							width: 28
 							source: isShowingSpoiler ? "password-show-off" : "password-show-on"
 							color: Kirigami.Theme.textColor
 						}
 					}
-					Kirigami.Separator {
+                    Separator {
 						visible: isSpoiler
-						Layout.fillWidth: true
+                        width:  parent.width
 						color: {
-							let bgColor = Kirigami.Theme.backgroundColor
-							let textColor = Kirigami.Theme.textColor
+                            bgColor = Kirigami.Theme.backgroundColor
+                            textColor = Kirigami.Theme.textColor
 							return Qt.tint(textColor, Qt.rgba(bgColor.r, bgColor.g, bgColor.b, 0.7))
 						}
 					}
 
-					ColumnLayout {
+                    Column {
 						visible: isSpoiler && isShowingSpoiler || !isSpoiler
 
-						Controls.ToolButton {
+                        Button {
 							visible: {
 								switch (root.mediaType) {
 								case Enums.MessageType.MessageUnknown:
@@ -228,20 +215,17 @@ Kirigami.SwipeListItem {
 							}
 						}
 
-						Repeater {
+						ColumnView {
 							model: root.files
 
-							Layout.preferredWidth: 200
-							Layout.preferredHeight: 200
-
 							delegate: MediaPreviewOther {
-								required property var modelData
+                                property var modelData
 
 								messageId: root.msgId
 
 								mediaSource: {
 									if (modelData.localFilePath) {
-										let local = MediaUtilsInstance.fromLocalFile(modelData.localFilePath);
+                                        local = MediaUtilsInstance.fromLocalFile(modelData.localFilePath);
 										if (MediaUtilsInstance.localFileAvailable(local)) {
 											return local;
 										}
@@ -254,22 +238,21 @@ Kirigami.SwipeListItem {
 						}
 
 						// message body
-						Controls.Label {
+                        Label {
 							id: bodyLabel
 							visible: messageBody
 							text: Utils.formatMessage(messageBody) + bubble.paddingText
 							textFormat: Text.StyledText
 							wrapMode: Text.Wrap
-							color: Kirigami.Theme.textColor
+                            color: Theme.textColor
 							onLinkActivated: Qt.openUrlExternally(link)
-							Layout.maximumWidth: root.width - Kirigami.Units.gridUnit * 6
 						}
-						Kirigami.Separator {
+                        Separator {
 							visible: isSpoiler && isShowingSpoiler
-							Layout.fillWidth: true
+                            width : parent.width
 							color: {
-								let bgColor = Kirigami.Theme.backgroundColor
-								let textColor = Kirigami.Theme.textColor
+                                bgColor = Theme.backgroundColor
+                                textColor = Theme.textColor
 								return Qt.tint(textColor, Qt.rgba(bgColor.r, bgColor.g, bgColor.b, 0.7))
 							}
 						}
@@ -278,9 +261,8 @@ Kirigami.SwipeListItem {
 					// message reactions (emojis in reaction to this message)
 					Flow {
 						spacing: 4
-						Layout.rightMargin: isOwn ? 45 : 30
-						Layout.maximumWidth: bodyLabel.Layout.maximumWidth
-						Layout.preferredWidth: {
+                        anchors.rightMargin: isOwn ? 45 : 30
+                        width: {
 							if (messageReactionAddition.visible) {
 								return (messageReactionAddition.width + spacing) * (Object.keys(root.reactions).length + 1)
 							} else {
@@ -288,7 +270,7 @@ Kirigami.SwipeListItem {
 							}
 						}
 
-						Repeater {
+/*						ColumnView {
 							model: Object.keys(root.reactions)
 
 							MessageReactionDisplay {
@@ -301,6 +283,7 @@ Kirigami.SwipeListItem {
 								accentColor: bubble.backgroundColor
 							}
 						}
+*/
 
 						MessageReactionAddition {
 							id: messageReactionAddition
@@ -332,25 +315,25 @@ Kirigami.SwipeListItem {
 						}
 
 						visible: text.length
-						color: Kirigami.Theme.negativeTextColor
+                        color: Theme.negativeTextColor
 						font.italic: true
 						scaleFactor: 0.9
-						Layout.bottomMargin: 10
+                        anchors.bottomMargin: 10
 					}
 
-					Controls.Label {
+                    Label {
 						visible: errorText
 						id: errorLabel
 						text: qsTr(errorText)
-						color: Kirigami.Theme.disabledTextColor
-						font.pixelSize: Kirigami.Units.gridUnit * 0.8
+                        color: Theme.secondaryColor
+                        font.pixelSize: 20 * 0.8
 					}
 				}
 			}
 
 			// placeholder
 			Item {
-				Layout.fillWidth: true
+                width: parent.width
 			}
 		}
 
@@ -358,8 +341,8 @@ Kirigami.SwipeListItem {
 		Text {
 			visible: isLastRead
 			text: qsTr("%1 has read up to this point").arg(chatName)
-			Layout.topMargin: 10
-			Layout.leftMargin: 10
+            anchors.topMargin: 10
+            anchors.leftMargin: 10
 		}
 	}
 

@@ -76,7 +76,7 @@ QVariant DataFormModel::data(const QModelIndex &index, int role) const
 		return field.isRequired();
 	case Value:
 		return field.value();
-	case Description:
+    case Description:
 		return field.description();
 	case MediaUrl:
 		return mediaSourceUri(field);
@@ -108,7 +108,7 @@ bool DataFormModel::setData(const QModelIndex &index, const QVariant &value, int
 	case Value:
 		field.setValue(value);
 		break;
-	case Description:
+    case Description:
 		field.setDescription(value.toString());
 		break;
 	default:

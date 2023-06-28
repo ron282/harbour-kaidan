@@ -26,7 +26,7 @@ public:
 	Q_SLOT void aggregate(const QStringList &jids);
 	Q_SLOT void aggregateKnownProviders();
 
-	RosterModel *rosterModel() const;
+    RosterModel *rosterModel() const;
 	void setRosterModel(RosterModel *model);
 	Q_SIGNAL void rosterModelChanged(RosterModel *model);
 

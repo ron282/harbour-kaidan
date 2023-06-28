@@ -28,15 +28,17 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import org.kde.kirigami 2.19 as Kirigami
+// import org.kde.kirigami 2.19 as Kirigami
 
-Kirigami.ScrollablePage {
-	title: qsTr("Settings")
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
-	topPadding: 0
-	bottomPadding: 0
-	leftPadding: 0
-	rightPadding: 0
+SilicaFlickable {
+
+//	topPadding: 0
+//	bottomPadding: 0
+//	leftPadding: 0
+//	rightPadding: 0
 
 	SettingsContent {}
 }

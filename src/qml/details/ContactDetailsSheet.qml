@@ -28,12 +28,12 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick.Layouts 1.14
+import Sailfish.Silica 1.0
 
 DetailsSheet {
 	id: root
 
-	required property string jid
+    property string jid
 
 	parent: applicationWindow().overlay
 
@@ -45,6 +45,6 @@ DetailsSheet {
 	ContactDetailsContent {
 		sheet: root
 		jid: root.jid
-		Layout.fillWidth: true
+		width: parent.width
 	}
 }

@@ -311,14 +311,13 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qRegisterMetaType<QXmppClient::State>();
 	qRegisterMetaType<QXmppMessage::State>();
 	qRegisterMetaType<QXmppStanza::Error>();
-//	qRegisterMetaType<Enums>();
-//	qRegisterMetaType<Enums::MessageType>();
-//	qRegisterMetaType<Enums::ConnectionState>();
+    qRegisterMetaType<Enums>();
+    qRegisterMetaType<Enums::MessageType>();
+    qRegisterMetaType<Enums::ConnectionState>();
 	qRegisterMetaType<PublicGroupChatModel::CustomRole>();
 	qRegisterMetaType<ClientWorker::ConnectionError>();
-//	qRegisterMetaType<Enums::MessageType>();
 	qRegisterMetaType<Presence::Availability>();
-//	qRegisterMetaType<Enums::DeliveryState>();
+    qRegisterMetaType<Enums::DeliveryState>();
 	qRegisterMetaType<MessageOrigin>();
 	qRegisterMetaType<CommonEncoderSettings::EncodingQuality>();
 	qRegisterMetaType<CommonEncoderSettings::EncodingMode>();
@@ -394,7 +393,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	//
 	// Kaidan back-end
 	//
-    Kaidan kaidan(!parser.isSet("disable-xml-log"));
+//    Kaidan kaidan(!parser.isSet("disable-xml-log"));
+    Kaidan kaidan(true);
 
 #if !defined(Q_OS_IOS) && !defined(Q_OS_ANDROID) && !defined(SFOS) 
 	// receive messages from other instances of Kaidan
@@ -494,18 +494,21 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterUncreatableType<Presence>("im.kaidan.kaidan", 1, 0, "Presence", "Cannot create object; only enums defined!");
     qmlRegisterUncreatableType<RegistrationManager>("im.kaidan.kaidan", 1, 0, "RegistrationManager", "Cannot create object; only enums defined!");
     qmlRegisterUncreatableType<ChatState>("im.kaidan.kaidan", 1, 0, "ChatState", "Cannot create object; only enums defined");
+#if !defined(SFOS)
     qmlRegisterUncreatableType<RosterModel>("im.kaidan.kaidan", 1, 0, "RosterModel", "Cannot create object; only enums defined!");
+#endif
     qmlRegisterUncreatableType<ServerFeaturesCache>("im.kaidan.kaidan", 1, 0, "ServerFeaturesCache", "ServerFeaturesCache type usable");
     qmlRegisterUncreatableType<Encryption>("im.kaidan.kaidan", 1, 0, "Encryption", "Cannot create object; only enums defined!");
     qmlRegisterUncreatableType<File>("im.kaidan.kaidan", 1, 0, "File", "Not creatable from QML");
 	qmlRegisterUncreatableType<PublicGroupChat>("PublicGroupChats", 1, 0, "PublicGroupChat", "Used by PublicGroupChatModel");
+#if !defined(SFOS)
     qmlRegisterUncreatableType<HostCompletionModel>("im.kaidan.kaidan", 1, 0, "HostCompletionModel", "Cannot create object; only enums defined!");
+#endif
 #if defined(SFOS)
     qmlRegisterUncreatableType<ChatState>("im.kaidan.kaidan", 1, 0, "ChatState", "Can't create object; only enums defined!");
     qmlRegisterUncreatableType<Enums>("im.kaidan.kaidan", 1, 0, "Enums", "Can't create object; only enums defined!");
 #else
     qmlRegisterUncreatableMetaObject(ChatState::staticMetaObject, "im.kaidan.kaidan", 1, 0, "ChatState", "Can't create object; only enums defined!");
-    qmlRegisterUncreatableMetaObject(Enums::staticMetaObject, "im.kaidan.kaidan", 1, 0, "Enums", "Can't create object; only enums defined!");
 #endif
 
 	qmlRegisterSingletonType<MediaUtils>("MediaUtils", 0, 1, "MediaUtilsInstance", [](QQmlEngine *, QJSEngine *) {

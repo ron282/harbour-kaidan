@@ -195,7 +195,7 @@ QVariant FileSelectionModel::data(const QModelIndex &index, int role) const
 	switch (role) {
 	case Filename:
 		return QUrl::fromLocalFile(file.localFilePath).fileName();
-	case Description:
+    case Description:
 		if (file.description) {
 			return *file.description;
 		}
@@ -282,7 +282,7 @@ bool FileSelectionModel::setData(const QModelIndex &index, const QVariant &value
 	auto &file = m_files[index.row()];
 
 	switch (role) {
-	case Description:
+    case Description:
 		file.description = value.toString();
 		break;
 	default:

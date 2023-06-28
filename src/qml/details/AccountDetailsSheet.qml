@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick.Layouts 1.14
+import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
 
@@ -17,6 +17,6 @@ DetailsSheet {
 	AccountDetailsContent {
 		sheet: root
 		jid: AccountManager.jid
-		Layout.fillWidth: true
+		width: parent.width
 	}
 }

@@ -3,11 +3,11 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import QtQuick.Controls 2.14 as Controls
-import org.kde.kirigami 2.19 as Kirigami
-import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
+import QtQuick 2.2
+import Sailfish.Silica 1.0
+// import QtQuick.Controls 2.14 as Controls
+// import org.kde.kirigami 2.19 as Kirigami
+// import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
 
 import im.kaidan.kaidan 1.0
 
@@ -17,7 +17,7 @@ import "../settings"
 
 DetailsContent {
 	id: root
-	encryptionArea: ColumnLayout {
+	encryptionArea: Column {
 		spacing: 0
 
 		Component.onCompleted: {
@@ -52,13 +52,13 @@ DetailsContent {
 			jid: root.jid
 		}
 
-		MobileForm.FormCardHeader {
-			title: qsTr("Encryption")
+        SectionHeader {
+            text: qsTr("Encryption")
 		}
 
-		MobileForm.FormSwitchDelegate {
+        TextSwitch {
 			text: qsTr("OMEMO 2")
-			description: qsTr("End-to-end encryption with OMEMO 2 ensures that nobody else than you and your chat partners can read or modify the data you exchange.")
+            //FIXME description: qsTr("End-to-end encryption with OMEMO 2 ensures that nobody else than you and your chat partners can read or modify the data you exchange.")
 			checked: Kaidan.settings.encryption === Encryption.Omemo2
 			// The switch is toggled by setting the user's preference on using encryption.
 			// Note that 'checked' has already the value after the button is clicked.
@@ -73,7 +73,7 @@ DetailsContent {
 			}
 		}
 
-		MobileForm.FormButtonDelegate {
+        Button {
 			text: {
 				if (!omemoWatcher.usableOmemoDevices.length) {
 					if (omemoWatcher.distrustedOmemoDevices.length) {
@@ -91,7 +91,7 @@ DetailsContent {
 
 				return ""
 			}
-			icon.name: {
+			icon.source: {
 				if (!omemoWatcher.usableOmemoDevices.length) {
 					if (omemoWatcher.distrustedOmemoDevices.length) {
 						return "channel-secure-symbolic"
@@ -123,9 +123,9 @@ DetailsContent {
 		id: contactAdditionSheet
 	}
 
-	MobileForm.FormCard {
+    SilicaFlickable {
 		id: providerArea
-		Layout.fillWidth: true
+		width: parent.width
 		visible: providerUrl  || chatSupportList.length || groupChatSupportList.length
 
 		readonly property string providerUrl: {
@@ -138,7 +138,7 @@ DetailsContent {
 		readonly property var chatSupportList: providerListModel.providerFromBareJid(root.jid).chatSupport
 		readonly property var groupChatSupportList: providerListModel.providerFromBareJid(root.jid).groupChatSupport
 
-		contentItem: ColumnLayout {
+         Column {
 			spacing: 0
 
 			ProviderListModel {
@@ -150,20 +150,20 @@ DetailsContent {
 				chatSupportList: providerArea.chatSupportList
 			}
 
-			MobileForm.FormCardHeader {
-				title: qsTr("Provider")
+            SectionHeader {
+                text: qsTr("Provider")
 			}
 
-			MobileForm.FormButtonDelegate {
+            Button {
 				text: qsTr("Visit website")
-				description: qsTr("Open your provider's website in a web browser")
+                //FIXME description: qsTr("Open your provider's website in a web browser")
 				visible: providerArea.providerUrl
 				onClicked: Qt.openUrlExternally(providerArea.providerUrl)
 			}
 
-			MobileForm.FormButtonDelegate {
+            Button {
 				text: qsTr("Copy website address")
-				description: qsTr("Copy your provider's web address to the clipboard")
+                //FIXME description: qsTr("Copy your provider's web address to the clipboard")
 				visible: providerArea.providerUrl
 				onClicked: {
 					Utils.copyToClipboard(providerArea.providerUrl)
@@ -171,9 +171,9 @@ DetailsContent {
 				}
 			}
 
-			MobileForm.FormButtonDelegate {
+            Button {
 				text: qsTr("Open support chat")
-				description: qsTr("Start chat with your provider's support contact")
+                //FIXME description: qsTr("Start chat with your provider's support contact")
 				visible: providerArea.chatSupportList.length > 0
 				onClicked: {
 					if (providerArea.chatSupportList.length === 1) {
@@ -190,9 +190,9 @@ DetailsContent {
 				}
 			}
 
-			MobileForm.FormButtonDelegate {
+            Button {
 				text: qsTr("Open support group")
-				description: qsTr("Join your provider's public support group")
+                //FIXME description: qsTr("Join your provider's public support group")
 				visible: providerArea.groupChatSupportList.length > 0
 				onClicked: {
 					if (providerArea.groupChatSupportList.length === 1) {
@@ -209,37 +209,40 @@ DetailsContent {
 		}
 	}
 
-	MobileForm.FormCard {
+    SilicaFlickable {
 		visible: Kaidan.serverFeaturesCache.inBandRegistrationSupported
-		Layout.fillWidth: true
+		width: parent.width
 
-		contentItem: ColumnLayout {
+         Column {
 			spacing: 0
 
-			MobileForm.FormCardHeader {
-				title: qsTr("Password Change")
+            SectionHeader {
+                text: qsTr("Password Change")
 			}
 
-			MobileForm.FormSectionText {
+            Label {
 				text: qsTr("Change your password. You need to enter the new password on all your other devices!")
 			}
 
-			MobileForm.AbstractFormDelegate {
-				background: Item {}
-				contentItem: ColumnLayout {
+            BackgroundItem {
+                // background: Item {}
+                 Column {
+                    TextField {
+                        text: qsTr("Current password")
+                    }
+
 					PasswordField {
 						id: passwordVerificationField
-						labelText: "Current password"
 						placeholderText: "Enter your current password"
-						invalidHintText: qsTr("Enter correct password")
+                        // invalidHintText: qsTr("Enter correct password")
 						visible: Kaidan.settings.passwordVisibility !== Kaidan.PasswordVisible
 						enabled: !passwordBusyIndicator.visible
-						Layout.rightMargin: passwordChangeConfirmationButton.Layout.preferredWidth + passwordButtonFieldArea.spacing
+                        anchors.rightMargin: passwordChangeConfirmationButton.Layout.preferredWidth + passwordButtonFieldArea.spacing
 						onTextChanged: {
 							valid = text === AccountManager.password
 							toggleHintForInvalidText()
 						}
-						inputField.onAccepted: passwordChangeConfirmationButton.clicked()
+                        EnterKey.onClicked: passwordChangeConfirmationButton.clicked()
 
 						function initialize() {
 							showPassword = false
@@ -248,21 +251,24 @@ DetailsContent {
 						}
 					}
 
-					RowLayout {
+					Row {
 						id: passwordButtonFieldArea
 
-						PasswordField {
+                        TextField {
+                            text: passwordVerificationField.visible ? qStr("New password") : qStr("Password")
+                        }
+
+                        PasswordField {
 							id: passwordField
-							labelText: passwordVerificationField.visible ? "New password" : "Password"
 							placeholderText: "Enter your new password"
-							invalidHintText: qsTr("Enter different password to change it")
-							invalidHintMayBeShown: true
+                            //invalidHintText: qsTr("Enter different password to change it")
+                            //invalidHintMayBeShown: true
 							enabled: !passwordBusyIndicator.visible
 							onTextChanged: {
 								valid = credentialsValidator.isPasswordValid(text) && text !== AccountManager.password
 								toggleHintForInvalidText()
 							}
-							inputField.onAccepted: passwordChangeConfirmationButton.clicked()
+                            EnterKey.onClicked: passwordChangeConfirmationButton.clicked()
 
 							function initialize() {
 								showPassword = false
@@ -275,13 +281,13 @@ DetailsContent {
 
 						Button {
 							id: passwordChangeConfirmationButton
-							Controls.ToolTip.text: qsTr("Change password")
-							icon.name: "emblem-ok-symbolic"
+                            //FIXME Controls.ToolTip.text: qsTr("Change password")
+                            icon.source: "image://theme/icon-m-enter-accept"
 							visible: !passwordBusyIndicator.visible
-							flat: true
-							Layout.preferredWidth: Layout.preferredHeight
-							Layout.preferredHeight: passwordField.inputField.implicitHeight
-							Layout.alignment: passwordField.invalidHint.visible ? Qt.AlignVCenter : Qt.AlignBottom
+                            //FIXME flat: true
+                            //FIXME Layout.preferredWidth: // Layout.preferredHeight
+                            // //FIXME Layout.preferredHeight: passwordField.inputField.implicitHeight
+                            // Layout.alignment: passwordField.invalidHint.visible ? Qt.AlignVCenter : Qt.AlignBottom
 							onHoveredChanged: {
 								if (hovered) {
 									flat = false
@@ -302,23 +308,23 @@ DetailsContent {
 							}
 						}
 
-						Controls.BusyIndicator {
+                        BusyIndicator {
 							id: passwordBusyIndicator
 							visible: false
-							Layout.preferredWidth: passwordChangeConfirmationButton.Layout.preferredWidth
-							Layout.preferredHeight: Layout.preferredWidth
-							Layout.alignment: passwordChangeConfirmationButton.Layout.alignment
+                            //FIXME Layout.preferredWidth: passwordChangeConfirmationButton.Layout.preferredWidth
+                            // //FIXME Layout.preferredHeight: Layout.preferredWidth
+                            // Layout.alignment: passwordChangeConfirmationButton.Layout.alignment
 						}
 					}
 
-					Controls.Label {
+                    Label {
 						id: passwordChangeErrorMessage
 						visible: false
 						font.bold: true
 						wrapMode: Text.WordWrap
 						padding: 10
-						Layout.fillWidth: true
-						background: Rectangle {
+						width: parent.width
+                        Rectangle {
 							color: Kirigami.Theme.negativeBackgroundColor
 							radius: roundedCornersRadius
 						}
@@ -344,37 +350,37 @@ DetailsContent {
 		}
 	}
 
-	MobileForm.FormCard {
+    SilicaFlickable {
 		visible: Kaidan.settings.passwordVisibility !== Kaidan.PasswordInvisible
-		Layout.fillWidth: true
+		width: parent.width
 
-		contentItem: ColumnLayout {
+         Column {
 			spacing: 0
 
-			MobileForm.FormCardHeader {
-				title: qsTr("Password Security")
+            SectionHeader {
+                text: qsTr("Password Security")
 			}
 
-			MobileForm.FormSectionText {
+            Label {
 				text: qsTr("Configure this device to not expose your password for changing it or switching to another device. If you want to change your password or use your account on another device later, <b>consider storing the password somewhere else. This cannot be undone!</b>")
 			}
 
-			MobileForm.FormButtonDelegate {
+            Button {
 				text: qsTr("Don't show password as text")
 				visible: Kaidan.settings.passwordVisibility === Kaidan.PasswordVisible
-				description: qsTr("Allow to add additional devices using the login QR code but never show the password")
-				icon.name: "security-medium-symbolic"
+                //FIXME description: qsTr("Allow to add additional devices using the login QR code but never show the password")
+                icon.source: "image://theme/icon-splus-hide-password"
 				onClicked: {
 					Kaidan.settings.passwordVisibility = Kaidan.PasswordVisibleQrOnly
 					passwordField.initialize()
 				}
 			}
 
-			MobileForm.FormButtonDelegate {
+            Button {
 				text: qsTr("Don't expose password in any way")
 				visible: Kaidan.settings.passwordVisibility !== Kaidan.PasswordInvisible
-				description: qsTr("Neither allow to add additional devices using the login QR code nor show the password")
-				icon.name: "security-high-symbolic"
+                //FIXME description: qsTr("Neither allow to add additional devices using the login QR code nor show the password")
+				icon.source: "security-high-symbolic"
 				onClicked: {
 					const oldPasswordVisibility = Kaidan.settings.passwordVisibility
 					Kaidan.settings.passwordVisibility = Kaidan.PasswordInvisible
@@ -388,26 +394,26 @@ DetailsContent {
 		}
 	}
 
-	MobileForm.FormCard {
-		Layout.fillWidth: true
+    SilicaFlickable {
+		width: parent.width
 
-		contentItem: ColumnLayout {
+         Column {
 			spacing: 0
 
-			MobileForm.FormCardHeader {
-				title: qsTr("Connection")
+            SectionHeader {
+                text: qsTr("Connection")
 			}
 
-			MobileForm.FormSectionText {
+            Label {
 				text: qsTr("Configure the hostname and port to connect to (empty fields for default values)")
 			}
 
-			MobileForm.AbstractFormDelegate {
-				background: Item {}
-				contentItem: ColumnLayout {
+            BackgroundItem {
+                // background: Item {}
+                 Column {
 					id: connectionSettings
 
-					RowLayout {
+					Row {
 						CustomConnectionSettings {
 							id: customConnectionSettings
 							confirmationButton: connectionSettingsConfirmationButton
@@ -415,13 +421,13 @@ DetailsContent {
 
 						Button {
 							id: connectionSettingsConfirmationButton
-							Controls.ToolTip.text: qsTr("Change connection settings")
-							icon.name: "emblem-ok-symbolic"
+                            //FIXME Controls.ToolTip.text: qsTr("Change connection settings")
+							icon.source: "emblem-ok-symbolic"
 							visible: !connectionSettingsBusyIndicator.visible
-							flat: true
-							Layout.preferredWidth: Layout.preferredHeight
-							Layout.preferredHeight: customConnectionSettings.portField.implicitHeight
-							Layout.alignment: Qt.AlignBottom
+                            //FIXME flat: true
+                            //FIXME Layout.preferredWidth: // Layout.preferredHeight
+                            // //FIXME Layout.preferredHeight: customConnectionSettings.portField.implicitHeight
+                            // Layout.alignment: Qt.AlignBottom
 							onHoveredChanged: {
 								if (hovered) {
 									flat = false
@@ -450,23 +456,23 @@ DetailsContent {
 							}
 						}
 
-						Controls.BusyIndicator {
+                        BusyIndicator {
 							id: connectionSettingsBusyIndicator
 							visible: false
-							Layout.preferredWidth: connectionSettingsConfirmationButton.Layout.preferredWidth
-							Layout.preferredHeight: Layout.preferredWidth
-							Layout.alignment: connectionSettingsConfirmationButton.Layout.alignment
+                            //FIXME Layout.preferredWidth: connectionSettingsConfirmationButton.Layout.preferredWidth
+                            // //FIXME Layout.preferredHeight: Layout.preferredWidth
+                            // Layout.alignment: connectionSettingsConfirmationButton.Layout.alignment
 						}
 					}
 
-					Controls.Label {
+                    Label {
 						id: connectionSettingsErrorMessage
 						visible: false
 						font.bold: true
 						wrapMode: Text.WordWrap
 						padding: 10
-						Layout.fillWidth: true
-						background: Rectangle {
+						width: parent.width
+                        Rectangle {
 							color: Kirigami.Theme.negativeBackgroundColor
 							radius: roundedCornersRadius
 						}
@@ -512,34 +518,33 @@ DetailsContent {
 		}
 	}
 
-	MobileForm.FormCard {
-		Layout.fillWidth: true
+    SilicaFlickable {
+		width: parent.width
 
-		contentItem: ColumnLayout {
+         Column {
 			spacing: 0
 
-			MobileForm.FormCardHeader {
-				title: qsTr("Removal")
+            SectionHeader {
+                text: qsTr("Removal")
 			}
 
-			ColumnLayout {
+			Column {
 				spacing: 0
 
-				MobileForm.FormButtonDelegate {
+                IconTextSwitch {
 					id: removalButton
 					text: qsTr("Remove from Kaidan")
-					description: qsTr("Remove account from this app. Back up your credentials and chat history if needed!")
-					icon.name: "edit-delete-symbolic"
-					icon.color: Kirigami.Theme.neutralTextColor
-					checkable: true
-					onToggled: contactRemovalCorfirmationButton.visible = !contactRemovalCorfirmationButton.visible
+                    //FIXME description: qsTr("Remove account from this app. Back up your credentials and chat history if needed!")
+                    icon.source: "image://theme/icon-s-edit"
+                    // checkable: true
+                    onCheckedChanged: contactRemovalCorfirmationButton.visible = !contactRemovalCorfirmationButton.visible
 				}
 
-				MobileForm.FormButtonDelegate {
+                Button {
 					id: contactRemovalCorfirmationButton
 					text: qsTr("Confirm")
 					visible: false
-					Layout.leftMargin: Kirigami.Units.largeSpacing * 6
+                    anchors.leftMargin: Kirigami.Units.largeSpacing * 6
 					onClicked: {
 						visible = false
 						removalButton.enabled = false
@@ -548,24 +553,23 @@ DetailsContent {
 				}
 			}
 
-			ColumnLayout {
+			Column {
 				spacing: 0
 
-				MobileForm.FormButtonDelegate {
+                IconTextSwitch {
 					id: deletionButton
 					text: qsTr("Delete completely")
-					description: qsTr("Delete account from provider. You will not be able to use your account again!")
-					icon.name: "edit-delete-symbolic"
-					icon.color: Kirigami.Theme.negativeTextColor
-					checkable: true
-					onToggled: contactDeletionCorfirmationButton.visible = !contactDeletionCorfirmationButton.visible
+                    //FIXME description: qsTr("Delete account from provider. You will not be able to use your account again!")
+                    icon.source: "image://theme/icon-s-edit"
+                    // checkable: true
+                    onCheckedChanged: contactDeletionCorfirmationButton.visible = !contactDeletionCorfirmationButton.visible
 				}
 
-				MobileForm.FormButtonDelegate {
+                Button {
 					id: contactDeletionCorfirmationButton
 					text: qsTr("Confirm")
 					visible: false
-					Layout.leftMargin: Kirigami.Units.largeSpacing * 6
+                    anchors.leftMargin: Kirigami.Units.largeSpacing * 6
 					onClicked: {
 						visible = false
 						removalButton.enabled = false

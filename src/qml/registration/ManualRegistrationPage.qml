@@ -27,10 +27,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import QtQuick.Controls 2.14 as Controls
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
 
@@ -65,15 +63,10 @@ RegistrationPage {
 	username: usernameView ? usernameView.text : ""
 	password: passwordView ? passwordView.text : ""
 
-	ColumnLayout {
-		anchors.fill: parent
-		spacing: 0
+    SlideshowView {
+        width: parent.width
 
-		Controls.SwipeView {
-			id: swipeView
-			interactive: !loadingViewActive
-			Layout.fillWidth: true
-			Layout.fillHeight: true
+//			interactive: !loadingViewActive
 			property int lastIndex: 0
 
 			onCurrentIndexChanged: {
@@ -101,7 +94,6 @@ RegistrationPage {
 		NavigationBar {
 			id: navigationBar
 		}
-	}
 
 	Component {id: webRegistrationViewComponent; WebRegistrationView {}}
 	Component {id: loadingViewComponent; LoadingView {}}
@@ -125,7 +117,7 @@ RegistrationPage {
 			formModel = dataFormModel
 			formFilterModel.sourceModel = dataFormModel
 
-			let indexToInsert = loadingView.Controls.SwipeView.index
+            indexToInsert = loadingView.Controls.SwipeView.index
 
 			// There are three cases here:
 			//
@@ -235,7 +227,7 @@ RegistrationPage {
 	 * If the provider does not support web registration and it is not a custom provider, another one is automatically selected.
 	 */
 	function handleInBandRegistrationNotSupported() {
-		let notificationText = providerView.customProviderSelected ? qsTr("The provider does not support registration via this app.") : qsTr("The provider does currently not support registration via this app.")
+        notificationText = providerView.customProviderSelected ? qsTr("The provider does not support registration via this app.") : qsTr("The provider does currently not support registration via this app.")
 
 		if (providerView.registrationWebPage || providerView.outOfBandUrl) {
 			addWebRegistrationView()
@@ -258,7 +250,7 @@ RegistrationPage {
 	 * If a random username was used for registration, a new one is generated.
 	 */
 	function handleUsernameConflictError() {
-		let notificationText = qsTr("The username is already taken.")
+        notificationText = qsTr("The username is already taken.")
 
 		if (usernameView.enteredText.length === 0) {
 			usernameView.regenerateUsername()
@@ -302,7 +294,7 @@ RegistrationPage {
 	 * Adds the dynamically loaded views used for the In-Band Registration to the swipe view.
 	 */
 	function addDynamicallyLoadedInBandRegistrationViews() {
-		let indexToInsert = providerView.Controls.SwipeView.index
+        indexToInsert = providerView.Controls.SwipeView.index
 
 		addUsernameView(++indexToInsert)
 		addPasswordView(++indexToInsert)
@@ -314,9 +306,9 @@ RegistrationPage {
 	 * Removes the dynamically loaded views from the swipe view.
 	 */
 	function removeDynamicallyLoadedInBandRegistrationViews() {
-		for (const view of [usernameView, passwordView, customFormView, resultView]) {
-			swipeView.removeItem(view)
-		}
+//		for (const view of [usernameView, passwordView, customFormView, resultView]) {
+//			swipeView.removeItem(view)
+//		}
 	}
 
 	/**

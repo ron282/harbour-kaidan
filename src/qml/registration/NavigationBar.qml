@@ -28,10 +28,10 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import QtQuick.Controls 2.14 as Controls
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+import Sailfish.Silica 1.0
+// import QtQuick.Controls 2.14 as Controls
+// import org.kde.kirigami 2.19 as Kirigami
 
 /**
  * This is the navigation bar for the swipe view.
@@ -39,17 +39,17 @@ import org.kde.kirigami 2.19 as Kirigami
  * It contains buttons for jumping to the previous and the next view.
  * In between the navigation buttons there is an indicator for the current view.
  */
-RowLayout {
-	Layout.fillWidth: true
-	Layout.margins: 15
+Row {
+    width: parent.width
+    anchors.margins: 15
 
 	property alias nextButton: nextButton
 
 	// button for jumping to the previous view
-	Controls.RoundButton {
+    IconButton {
 		id: previousButton
-		Layout.alignment: Qt.AlignLeft
-		icon.name: "go-previous-symbolic"
+        // // Layout.alignment: Qt.AlignLeft
+        icon.source: "go-previous-symbolic"
 		highlighted: true
 		visible: swipeView.currentIndex !== 0
 		enabled: jumpingToViewsEnabled
@@ -65,7 +65,7 @@ RowLayout {
 
 	// placeholder
 	Item {
-		Layout.fillWidth: true
+//		width: parent.width
 		width: {
 			if (previousButton.visible)
 				return previousButton.width
@@ -73,17 +73,17 @@ RowLayout {
 	}
 
 	// indicator for showing the current postion (index) of the siwpe view
-	Controls.PageIndicator {
+/*	Controls.PageIndicator {
 		id: indicator
-		Layout.alignment: Qt.AlignCenter
+        // Layout.alignment: Qt.AlignCenter
 
 		count: swipeView.count
 		currentIndex: swipeView.currentIndex
 	}
-
+*/
 	// placeholder
 	Item {
-		Layout.fillWidth: true
+        width: parent.width
 	}
 
 	// placeholder for the next button when it is invisible
@@ -94,10 +94,10 @@ RowLayout {
 	}
 
 	// button for jumping to the next view
-	Controls.RoundButton {
+    IconButton {
 		id: nextButton
-		Layout.alignment: Qt.AlignRight
-		icon.name: "go-next-symbolic"
+        // // Layout.alignment: Qt.AlignRight
+        icon.source: "go-next-symbolic"
 		highlighted: true
 		visible: swipeView.currentIndex !== (swipeView.count - 1)
 		enabled: jumpingToViewsEnabled

@@ -28,34 +28,31 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import QtQuick.Controls 2.14 as Controls
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
-import im.kaidan.kaidan 1.0
+ChatPageBase {
+/*
+    Item {
+		height: root.height * 0.8
 
-/**
- * This is a button used for a reaction or for reacting to a message.
- */
-Controls.Button {
-	id: root
+		// message bubble
+		Kirigami.ShadowedRectangle {
+			anchors.centerIn: parent
+			width: label.width
+			height: label.height
+			shadow.color: Qt.darker(color, 1.2)
+			shadow.size: 4
+			radius: roundedCornersRadius
+			color: primaryBackgroundColor
 
-	property string messageId
-	property color primaryColor
-	property color accentColor
-
-	height: Kirigami.Theme.defaultFont.pixelSize * 2.1
-	hoverEnabled: true
-
-	background: Rectangle {
-		radius: roundedCornersRadius
-		color: {
-			if (root.hovered) {
-				return Qt.tint(root.primaryColor, Qt.rgba(root.accentColor.r, root.accentColor.g, root.accentColor.b, 0.1))
+            Label {
+				id: label
+				text: qsTr("Please select a chat to start messaging")
+				anchors.centerIn: parent
+				padding: Kirigami.Units.gridUnit * 0.4
 			}
-
-			return Qt.tint(root.primaryColor, Qt.rgba(root.accentColor.r, root.accentColor.g, root.accentColor.b, 0.5))
 		}
 	}
+*/
 }

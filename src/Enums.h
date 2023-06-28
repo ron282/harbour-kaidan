@@ -172,8 +172,10 @@ static 	QString toString(const T flags) {
 		InvalidLoginUri,\
 		)
 
-	Q_DECLARE_METATYPE(Enums::ConnectionState);
+    Q_DECLARE_METATYPE(Enums::ConnectionState);
+    Q_DECLARE_METATYPE(Enums::MessageType);
 	Q_DECLARE_METATYPE(Enums::DeliveryState);
+    Q_DECLARE_METATYPE(Enums::LoginByUriState);
 
 #endif
 // Needed workaround to trigger older CMake auto moc versions to generate moc

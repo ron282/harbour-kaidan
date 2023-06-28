@@ -47,18 +47,18 @@ Page {
 
         Button {
             anchors.horizontalCenter: parent.horizontalCenter
-            icon: Image {
-                source: Utils.getResourcePath("images/onboarding/automatic-registration.svg")
-            }
+//            icon: Image {
+//                source: Utils.getResourcePath("images/onboarding/automatic-registration.svg")
+//            }
             text: qsTr("Generate an account automatically")
             onClicked: pageStack.push(automaticRegistrationPage)
         }
 
         Button {
             anchors.horizontalCenter: parent.horizontalCenter
-            icon: Image {
-                source: Utils.getResourcePath("images/onboarding/manual-registration.svg")
-            }
+//            icon: Image {
+//                source: Utils.getResourcePath("images/onboarding/manual-registration.svg")
+//            }
             text: qsTr("Create an account manually")
             onClicked: pageStack.push(manualRegistrationPage)
         }

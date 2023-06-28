@@ -59,92 +59,54 @@ Page {
             id: jidField
 
             EnterKey.onClicked: passwordField.focus()
+        }
 
-/*				inputField.rightActions: [
-                Kirigami.Action {
-                    icon.name: "preferences-system-symbolic"
-                    text: qsTr("Connection settings")
-                    onTriggered: {
-                        customConnectionSettings.visible = !customConnectionSettings.visible
+        // password field
+        PasswordField {
+            id: passwordField
 
-                        if (jidField.valid && customConnectionSettings.visible)
-                            customConnectionSettings.forceActiveFocus()
-                        else
-                            jidField.forceActiveFocus()
+            // Simulate the pressing of the loginButton.
+            EnterKey.iconSource: "image://theme/icon-m-enter-accept"
+            EnterKey.onClicked: {
+                loginButton.clicked()
+            }
+        }
+
+        Button {
+            id: loginButton
+            text: qsTr("Log in")
+            anchors.horizontalCenter: parent.horizontalCenter
+
+            state: Kaidan.connectionState !== Enums.StateDisconnected ? "connecting" : ""
+            states: [
+                State {
+                    name: "connecting"
+                    PropertyChanges {
+                        target: loginButton
+                        text: qsTr("Connecting…")
+                        enabled: false
                     }
                 }
             ]
-*/
-          }
 
-//			CustomConnectionSettings {
-//				id: customConnectionSettings
-//				confirmationButton: loginButton
-//				visible: false
-//			}
+            // Connect to the server and authenticate by the entered credentials if the JID is valid and a password entered.
+            onClicked: {
+                // If the JID is invalid, focus its field.
+                if (!jidField.valid) {
+                    jidField.forceActiveFocus()
+                } else {
+                    AccountManager.jid = jidField.text
+                    AccountManager.password = passwordField.text
+                    AccountManager.host = ""
+                    AccountManager.port = ""
 
-			// password field
-			PasswordField {
-				id: passwordField
-
-				// Simulate the pressing of the loginButton.
-                EnterKey.iconSource: "image://theme/icon-m-enter-accept"
-                EnterKey.onClicked: {
-                    if( acceptableInput)
-                        loginButton.clicked()
-				}
-			}
-
-            Button {
-				id: loginButton
-				text: qsTr("Log in")
-                anchors.horizontalCenter: parent.horizontalCenter
-
-				state: Kaidan.connectionState !== Enums.StateDisconnected ? "connecting" : ""
-				states: [
-					State {
-						name: "connecting"
-						PropertyChanges {
-							target: loginButton
-							text: qsTr("Connecting…")
-							enabled: false
-						}
-					}
-				]
-
-				// Connect to the server and authenticate by the entered credentials if the JID is valid and a password entered.
-				onClicked: {
-					// If the JID is invalid, focus its field.
-					if (!jidField.valid) {
-						jidField.forceActiveFocus()
-					// If the password is invalid, focus its field.
-					// This also implies that if the JID field is focused and the password invalid, the password field will be focused instead of immediately trying to connect.
-					} else if (!passwordField.valid) {
-						passwordField.forceActiveFocus()
-					} else {
-						AccountManager.jid = jidField.text
-						AccountManager.password = passwordField.text
-						AccountManager.host = customConnectionSettings.hostField.text
-						AccountManager.port = customConnectionSettings.portField.value
-
-						Kaidan.logIn()
-					}
-				}
-			}
+                    Kaidan.logIn()
+                }
+            }
+        }
         Component.onCompleted: {
             AccountManager.resetCustomConnectionSettings()
             jidField.forceActiveFocus()
         }
     }
-
-	/*
-	 * Fills the JID field with "@" followed by a domain and moves the cursor to
-	 * the beginning so that the username can be directly entered.
-	 *
-	 * \param domain domain being inserted into the JID field
-	 */
-	function prefillJidDomain(domain) {
-		jidField.text = "@" + domain
-		jidField.inputField.cursorPosition = 0
-	}
 }

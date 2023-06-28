@@ -28,49 +28,31 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import QtQuick 2.2
+import Sailfish.Silica 1.0
+
+import im.kaidan.kaidan 1.0
+
 /**
- * This element is used in the @see SendMediaSheet to display information about a selected video to
- * the user. It just displays the video in a rectangle.
+ * This is the base for a chat page.
  */
+Page {
+        // color of the message bubbles on the right side
+        readonly property color rightMessageBubbleColor: {
+            const accentColor = Theme.highlightColor
+            return Qt.tint(Theme.backgroundColor, Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.1))
+        }
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import QtMultimedia 5.14 as Multimedia
-import org.kde.kirigami 2.19 as Kirigami
-
-MediaPreviewAudio {
-	id: root
-
-	Layout.preferredHeight: message ? messageSize : Kirigami.Units.gridUnit * 18
-	Layout.preferredWidth: Kirigami.Units.gridUnit * 32
-	Layout.maximumWidth: message ? messageSize : -1
-
-	placeHolder: Multimedia.VideoOutput {
-		source: root.player
-		fillMode: Image.PreserveAspectFit
-
-		anchors {
-			fill: parent
-		}
-
-		Kirigami.Icon {
-			source: "video-x-generic"
-			visible: root.player.playbackState === Multimedia.MediaPlayer.StoppedState
-
-			width: parent.width
-			height: parent.height
-
-			anchors {
-				centerIn: parent
-			}
-		}
-
-		MouseArea {
-			anchors {
-				fill: parent
-			}
-
-			onPressed: root.playPauseButton.clicked()
-		}
-	}
+    // background of the chat page
+    //Rectangle {
+    //    color: secondaryBackgroundColor
+    //
+    //        Image {
+    //            source: Utils.getResourcePath("images/chat-page-background.svg")
+    //            anchors.fill: parent
+    //            fillMode: Image.Tile
+    //            horizontalAlignment: Image.AlignLeft
+    //            verticalAlignment: Image.AlignTop
+    //        }
+    //}
 }

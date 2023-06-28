@@ -30,10 +30,6 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-//import QtQuick 2.14
-//import QtQuick.Layouts 1.14
-//import QtQuick.Controls 2.14 as Controls
-//import org.kde.kirigami 2.19 as Kirigami
 
 import im.kaidan.kaidan 1.0
 import MediaUtils 0.1
@@ -41,15 +37,14 @@ import MediaUtils 0.1
 /**
  * This is a pane for writing and sending chat messages.
  */
-Controls.Pane {
+DockedPanel {
 	id: root
-	padding: 6
 
-	background: Kirigami.ShadowedRectangle {
-		shadow.color: Qt.darker(color, 1.2)
-		shadow.size: 4
-		color: Kirigami.Theme.backgroundColor
-	}
+//	background: Kirigami.ShadowedRectangle {
+//		shadow.color: Qt.darker(color, 1.2)
+//		shadow.size: 4
+//		color: Kirigami.Theme.backgroundColor
+//	}
 
 	property QtObject chatPage
 	property alias messageArea: messageArea
@@ -69,28 +64,27 @@ Controls.Pane {
 		}
 	}
 
-	ColumnLayout {
+    Column {
 		anchors.fill: parent
 		spacing: 0
 
-		RowLayout {
+        Row {
 			visible: composition.isSpoiler
 			spacing: 0
 
-			Controls.TextArea {
+            TextArea {
 				id: spoilerHintField
-				Layout.fillWidth: true
+                width: parent.width
 				placeholderText: qsTr("Spoiler hint")
-				wrapMode: Controls.TextArea.Wrap
-				selectByMouse: true
-				background: Item {}
+				wrapMode: TextArea.Wrap
+				// background: Item {}
 			}
 
-			Controls.Button {
-				text: qsTr("Close spoiler hint field")
-				icon.name: "window-close-symbolic"
-				display: Controls.Button.IconOnly
-				flat: true
+            IconButton {
+                //text: qsTr("Close spoiler hint field")
+                icon.source: "image://theme/icon-m-close"
+                ////FIXME display: Controls.Button.IconOnly
+                ////FIXME flat: true
 
 				onClicked: {
 					composition.isSpoiler = false
@@ -99,19 +93,19 @@ Controls.Pane {
 			}
 		}
 
-		Kirigami.Separator {
+        Separator {
 			visible: composition.isSpoiler
-			Layout.fillWidth: true
-			Layout.topMargin: root.padding
-			Layout.bottomMargin: Layout.topMargin
+            width: parent.width
+            anchors.topMargin: root.padding
+            anchors.bottomMargin: anchors.topMargin
 		}
 
-		RowLayout {
+        Row {
 			spacing: 0
 
 			// emoji picker button
 			ClickableIcon {
-				source: "face-smile"
+                icon.source: "face-smile"
 				enabled: sendButton.enabled
 				onClicked: !emojiPicker.toggle()
 			}
@@ -123,15 +117,15 @@ Controls.Pane {
 				textArea: messageArea
 			}
 
-			Controls.TextArea {
+            TextArea {
 				id: messageArea
 				placeholderText: MessageModel.isOmemoEncryptionEnabled ? qsTr("Compose <b>encrypted</b> message") : qsTr("Compose <b>unencrypted</b> message")
-				background: Item {}
+				// background: Item {}
 				wrapMode: TextEdit.Wrap
-				Layout.leftMargin: Style.isMaterial ? 6 : 0
-				Layout.rightMargin: Style.isMaterial ? 6 : 0
-				Layout.bottomMargin: Style.isMaterial ? -8 : 0
-				Layout.fillWidth: true
+                anchors.leftMargin: Style.isMaterial ? 6 : 0
+                anchors.rightMargin: Style.isMaterial ? 6 : 0
+                anchors.bottomMargin: Style.isMaterial ? -8 : 0
+                width: parent.width
 				verticalAlignment: TextEdit.AlignVCenter
 				state: "compose"
 
@@ -198,7 +192,7 @@ Controls.Pane {
 
 			// Voice message button
 			ClickableIcon {
-				source: MediaUtilsInstance.newMediaIconName(Enums.MessageType.MessageAudio)
+                icon.source: MediaUtilsInstance.newMediaIconName(Enums.MessageType.MessageAudio)
 				visible: messageArea.text === ""
 
 				opacity: visible ? 1 : 0
@@ -213,8 +207,8 @@ Controls.Pane {
 
 			// file sharing button
 			ClickableIcon {
-				source: "mail-attachment-symbolic"
-				visible: Kaidan.serverFeaturesCache.httpUploadSupported && messageArea.text === ""
+                icon.source: "mail-attachment-symbolic"
+                visible: messageArea.text === ""
 				opacity: visible ? 1 : 0
 				Behavior on opacity {
 					NumberAnimation {}
@@ -232,42 +226,37 @@ Controls.Pane {
 				}
 			}
 
-			Controls.Popup {
+            ContextMenu {
 				id: mediaPopup
 				x:  root.width - width - 40
 				y: - height - root.padding - 20
-				padding: 1
+//				padding: 1
 
 				width: 470
-				ColumnLayout {
+                Column {
 					anchors.fill: parent
-					Kirigami.AbstractApplicationHeader {
-						Layout.fillWidth: true
-						leftPadding: Kirigami.Units.largeSpacing
-						Kirigami.Heading {
-							text: qsTr("Attachments")
-						}
-
-					}
-					Controls.ScrollView {
-						Layout.fillWidth: true
-						Layout.fillHeight: true
+//                    AbstractApplicationHeader {
+//						width: parent.width
+//						leftPadding: Kirigami.Units.largeSpacing
+//						SectionHeader {
+//							text: qsTr("Attachments")
+//						}
+//					}
+                    SilicaFlickable {
+                        anchors.fill: parent
 
 						visible: thumbnails.count !== 0
 
-						RowLayout {
-							Repeater {
+                        Row {
+                            /*ColumnView {
 								id: thumbnails
-								Layout.fillHeight: true
-								Layout.fillWidth: true
-								model: RecentPicturesModel {}
+                                anchors.fill: parent
+                                model: RecentPicturesModel {}
 
 								delegate: Item {
-									Layout.margins: Kirigami.Units.smallSpacing
+                                    anchors.margins: Theme.smallSpacing
 
-									Layout.fillWidth: true
-									Layout.preferredHeight: 125
-									Layout.preferredWidth: 150
+                                    width: parent.width
 
 									MouseArea {
 										anchors.fill: parent
@@ -286,58 +275,48 @@ Controls.Pane {
 										asynchronous: true
 									}
 								}
-							}
+                            }*/
 						}
 					}
 
-					RowLayout {
-						Layout.fillWidth: true
-						RowLayout {
-							Layout.margins: 5
-							Layout.fillWidth: true
+                    Row {
+                        Row {
+                            anchors.margins: 5
 
-							IconTopButton {
-								Layout.fillWidth: true
-								implicitWidth: parent.width / 4
-								buttonIcon: "camera-photo-symbolic"
-								title: qsTr("Take picture")
-								tooltipText: qsTr("Take a picture using your camera")
+                            IconButton {
+                                icon.source: "image://theme/icon-m-camera"
+//                                text: qsTr("Take picture")
+//								tooltipText: qsTr("Take a picture using your camera")
 
 								onClicked: {
 									chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageImage)
 									mediaPopup.close()
 								}
 							}
-							IconTopButton {
-								Layout.fillWidth: true
-								implicitWidth: parent.width / 4
-								buttonIcon: "camera-video-symbolic"
-								title: qsTr("Record video")
-								tooltipText: qsTr("Record a video using your camera")
+                            IconButton {
+                                icon.source: "image://theme/icon-m-video"
+//								title: qsTr("Record video")
+//								tooltipText: qsTr("Record a video using your camera")
 
 								onClicked: {
 									chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageVideo)
 									mediaPopup.close()
 								}
 							}
-							IconTopButton {
-								Layout.fillWidth: true
-								implicitWidth: parent.width / 4
-								buttonIcon: "document-open-symbolic"
-								title: qsTr("Share files")
-								tooltipText: qsTr("Share files from your device")
+                            IconButton {
+                                icon.source: "image://theme/icon-m-document"
+//                                title: qsTr("Share files")
+//								tooltipText: qsTr("Share files from your device")
 
 								onClicked: {
 									chatPage.sendMediaSheet.selectFile()
 									mediaPopup.close()
 								}
 							}
-							IconTopButton {
-								Layout.fillWidth: true
-								implicitWidth: parent.width / 4
-								buttonIcon: "mark-location-symbolic"
-								title: qsTr("Share location")
-								tooltipText: qsTr("Send your location")
+                            IconButton {
+                                icon.source: "image://theme/icon-m-location"
+//								title: qsTr("Share location")
+//								tooltipText: qsTr("Send your location")
 
 								onClicked: {
 									chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageGeoLocation)
@@ -355,7 +334,7 @@ Controls.Pane {
 				Behavior on opacity {
 					NumberAnimation {}
 				}
-				source: {
+                icon.source: {
 					if (messageArea.state === "compose")
 						return "mail-send-symbolic"
 					else if (messageArea.state === "edit")
@@ -372,11 +351,9 @@ Controls.Pane {
 	 *
 	 * The focus is not forced on mobile devices because the soft keyboard would otherwise pop up.
 	 */
-	function forceActiveFocus() {
-		if (!Kirigami.Settings.isMobile) {
-			messageArea.forceActiveFocus()
-		}
-	}
+//	function forceActiveFocus() {
+//
+//	}
 
 	/**
 	 * Sends the text entered in the messageArea.

@@ -28,40 +28,40 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Controls 2.14 as Controls
-import QtQuick.Layouts 1.14
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+// import QtQuick.Controls 2.14 as Controls
+import Sailfish.Silica 1.0
+// import org.kde.kirigami 2.19 as Kirigami
 
 /**
  * This sheet is used on desktop systems instead of a new layer. It doesn't
  * fill the complete width, so it looks a bit nicer on large screens.
  */
-Kirigami.OverlaySheet {
+DockedPanel {
 	id: settingsSheet
 	Kirigami.Theme.inherit: false
-	Kirigami.Theme.colorSet: Kirigami.Theme.Window
+	//FIXME Kirigami.Theme.colorSet: Kirigami.Theme.Window
 	leftPadding: 0
 	rightPadding: 0
-	header: RowLayout {
+	header: Row {
 		anchors.fill: parent
 		spacing: 1
 		Controls.ToolButton {
 			id: backButton
 			enabled: stack.currentItem !== stack.initialItem
-			icon.name: "draw-arrow-back"
+			icon.source: "draw-arrow-back"
 			onClicked: stack.pop()
 		}
-		Kirigami.Heading {
-			Layout.fillWidth: true
-			Layout.alignment: Qt.AlignVCenter
+		SectionHeader {
+			width: parent.width
+			//FIXME // Layout.alignment: Qt.AlignVCenter
 			text: stack.currentItem.title
 		}
 	}
 
-	contentItem: Controls.StackView {
-		Layout.fillHeight: true
-		Layout.fillWidth: true
+	 Controls.StackView {
+		//FIXME Layout.fillHeight: true
+		width: parent.width
 
 		id: stack
 		implicitHeight: currentItem.implicitHeight

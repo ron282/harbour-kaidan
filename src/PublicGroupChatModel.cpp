@@ -21,7 +21,7 @@ QVariant PublicGroupChatModel::data(const QModelIndex &index, int role) const
 		switch (static_cast<CustomRole>(role)) {
 		case CustomRole::Name:
 			return groupChat.name();
-		case CustomRole::Description:
+        case CustomRole::Description:
 			return groupChat.description();
 		case CustomRole::Address:
 			return groupChat.address();

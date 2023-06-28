@@ -28,7 +28,8 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick.Controls 2.14 as Controls
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 /**
  * This view is used for entering the values into the custom fields of the received registration form during the automatic registration.
@@ -41,8 +42,8 @@ CustomFormView {
 	}
 
 	// This is used for automatically focusing the first field of the form.
-	Controls.StackView.onStatusChanged: {
-		if (Controls.StackView.status === Controls.StackView.Active)
-			forceActiveFocus()
-	}
+//	Controls.StackView.onStatusChanged: {
+//		if (Controls.StackView.status === Controls.StackView.Active)
+//			forceActiveFocus()
+//	}
 }

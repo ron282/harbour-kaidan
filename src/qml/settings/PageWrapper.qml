@@ -2,11 +2,11 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.14
-import org.kde.kirigami 2.19 as Kirigami
-import QtQuick.Layouts 1.14
+import QtQuick 2.2
+// import org.kde.kirigami 2.19 as Kirigami
+import Sailfish.Silica 1.0
 
-Kirigami.Page {
+Page {
 	title: pageLoader.item ? pageLoader.item.title : ""
 
 	leftPadding: pageLoader.item ? pageLoader.item.leftPadding : 0

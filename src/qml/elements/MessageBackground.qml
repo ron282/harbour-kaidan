@@ -32,11 +32,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import QtGraphicalEffects 1.14
-import QtQuick.Controls 2.14 as Controls
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
 
@@ -45,7 +42,7 @@ Item {
 
 	property QtObject message
 	property color color: message.isOwn ? rightMessageBubbleColor : primaryBackgroundColor
-	property int tailSize: Kirigami.Units.largeSpacing
+    property int tailSize: Theme.paddingLarge
 	property bool showTail: true
 	property alias dummy: dummy
 	readonly property alias metaInfoWidth: metaInfo.width
@@ -86,27 +83,13 @@ Item {
 			rightMargin: -backgroundRoot.tailSize
 			right: mainBG.left
 		}
-		Kirigami.ShadowedRectangle {
+        Rectangle {
 			anchors.fill: parent
 			anchors.rightMargin: backgroundRoot.tailSize
 
 			width: backgroundRoot.tailSize * 3
 			color: "black"
-
-			corners {
-				topLeftRadius: 0
-				topRightRadius: 0
-				bottomRightRadius: backgroundRoot.tailSize * 10
-				bottomLeftRadius: 0
-			}
 		}
-	}
-	OpacityMask {
-		visible: showTail
-		anchors.fill: tailBase
-		source: tailBase
-		maskSource: tailMask
-		invert: true
 	}
 	Rectangle {
 		id: mainBG
@@ -116,7 +99,7 @@ Item {
 		anchors.leftMargin: backgroundRoot.tailSize
 	}
 
-	RowLayout {
+    Row {
 		id: metaInfo
 		anchors {
 			bottom: parent.bottom
@@ -124,7 +107,7 @@ Item {
 			margins: Kirigami.Units.smallSpacing
 		}
 
-		Controls.Label {
+        Label {
 			id: timestamp
 			opacity: 0.5
 			text: Qt.formatDateTime(message.dateTime, "hh:mm")
@@ -136,34 +119,29 @@ Item {
 				anchors.fill: parent
 			}
 
-			Controls.ToolTip {
-				visible: timestampMouseArea.containsMouse
-				text: Qt.formatDateTime(message.dateTime, "dd. MMM yyyy, hh:mm")
-				delay: 500
-			}
+//			Controls.ToolTip {
+//				visible: timestampMouseArea.containsMouse
+//				text: Qt.formatDateTime(message.dateTime, "dd. MMM yyyy, hh:mm")
+//				delay: 500
+//			}
 		}
 
-		Kirigami.Icon {
+        Icon {
 			source: backgroundRoot.message.encryption === Encryption.NoEncryption ? "channel-insecure-symbolic" : "channel-secure-symbolic"
-			Layout.preferredWidth: Kirigami.Units.iconSizes.small
-			Layout.preferredHeight: Layout.preferredWidth
+            width: Theme.iconSizeSmall
+            height: width
 		}
 
-		Kirigami.Icon {
+        Icon {
 			// TODO: Use "security-low-symbolic" for distrusted, "security-medium-symbolic" for automatically trusted and "security-high-symbolic" for authenticated
 			source: backgroundRoot.message.isTrusted ? "security-high-symbolic" : "security-low-symbolic"
 			visible: backgroundRoot.message.encryption !== Encryption.NoEncryption
-			Layout.preferredWidth: Kirigami.Units.iconSizes.small
-			Layout.preferredHeight: Layout.preferredWidth
+            width: Theme.iconSizeSmall
+            height: width
 		}
 
 		Image {
 			visible: message.isOwn
-			source: deliveryStateIcon
-			Layout.preferredHeight: Kirigami.Units.gridUnit * 0.6
-			Layout.preferredWidth: Kirigami.Units.gridUnit * 0.6
-			sourceSize.height: Kirigami.Units.gridUnit * 0.6
-			sourceSize.width: Kirigami.Units.gridUnit * 0.6
 
 			MouseArea {
 				id: checkmarkMouseArea
@@ -171,21 +149,21 @@ Item {
 				hoverEnabled: true
 			}
 
-			Controls.ToolTip {
-				text: message.deliveryStateName
-				visible: checkmarkMouseArea.containsMouse
-				delay: 500
-			}
+//			Controls.ToolTip {
+//				text: message.deliveryStateName
+//				visible: checkmarkMouseArea.containsMouse
+//				delay: 500
+//			}
 		}
-		Kirigami.Icon {
+        Icon {
 			source: "document-edit-symbolic"
 			visible: message.edited
-			Layout.preferredHeight: Kirigami.Units.gridUnit * 0.65
-			Layout.preferredWidth: Kirigami.Units.gridUnit * 0.65
+//			// //FIXME Layout.preferredHeight: Kirigami.Units.gridUnit * 0.65
+//			//FIXME Layout.preferredWidth: Kirigami.Units.gridUnit * 0.65
 		}
 	}
 
-	Controls.Label {
+    Label {
 		id: dummy
 		text: "⠀"
 	}

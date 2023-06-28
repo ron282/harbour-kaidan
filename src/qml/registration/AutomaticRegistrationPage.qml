@@ -62,15 +62,14 @@ RegistrationPage {
 		id: providerListModel
 	}
 
-	ColumnLayout {
+    Column {
 		anchors.fill: parent
 
-		Controls.StackView {
+        SlideshowView {
 			id: stackView
 			clip: true
-			Layout.fillWidth: true
-			Layout.fillHeight: true
-			initialItem: loadingViewComponent
+            anchors.fill: parent
+            delegate: loadingViewComponent
 		}
 	}
 

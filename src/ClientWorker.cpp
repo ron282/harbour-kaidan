@@ -170,12 +170,17 @@ void ClientWorker::finishTask()
 
 void ClientWorker::logIn()
 {
-	const auto jid = AccountManager::instance()->jid();
+    qDebug() << "[main] ClientWorker::logIn";
+
+    const auto jid = AccountManager::instance()->jid();
 	m_atmManager->setAccountJid(jid);
 	m_omemoManager->setAccountJid(jid);
 
-	await(m_omemoManager->load(), this, [this]() {
-		if (!m_isFirstLoginAfterStart || m_caches->settings->authOnline()) {
+    qDebug() << "[main] await(m_omemoManager->load()";
+
+    await(m_omemoManager->load(), this, [this]() {
+        qDebug() << "[main] await(m_omemoManager->load() returned";
+        if (!m_isFirstLoginAfterStart || m_caches->settings->authOnline()) {
 			// Store the latest online state which is restored when opening Kaidan again after closing.
 			m_caches->settings->setAuthOnline(true);
 
@@ -184,7 +189,7 @@ void ClientWorker::logIn()
 			config.setPassword(AccountManager::instance()->password());
 			config.setAutoAcceptSubscriptions(false);
 
-			connectToServer(config);
+            connectToServer(config);
 		}
 
 		m_isFirstLoginAfterStart = false;
@@ -200,7 +205,8 @@ void ClientWorker::connectToRegister()
 
 void ClientWorker::connectToServer(QXmppConfiguration config)
 {
-	switch (m_client->state()) {
+    qDebug() << "[main] connectToServer. state:" << m_client->state();
+    switch (m_client->state()) {
 	case QXmppClient::ConnectingState:
 		qDebug() << "[main] Tried to connect even if already connecting! Nothing is done.";
 		break;
@@ -238,8 +244,9 @@ void ClientWorker::connectToServer(QXmppConfiguration config)
 		// server did not support it anymore.
 		m_caches->serverFeaturesCache->setInBandRegistrationSupported(false);
 
-		m_client->connectToServer(config);
-	}
+        qDebug() << "[main] connectToServer(" << config.jid() << ")";
+        m_client->connectToServer(config);
+	}        
 }
 
 void ClientWorker::logOut(bool isApplicationBeingClosed)
@@ -250,13 +257,15 @@ void ClientWorker::logOut(bool isApplicationBeingClosed)
 
 	switch (m_client->state()) {
 	case QXmppClient::DisconnectedState:
-		break;
+        qDebug() << "[main] Disconnection state";
+        break;
 	case QXmppClient::ConnectingState:
 		qDebug() << "[main] Tried to disconnect even if still connecting! Waiting for connecting to succeed and disconnect afterwards.";
 		m_isDisconnecting = true;
 		break;
 	case QXmppClient::ConnectedState:
-		if (AccountManager::instance()->hasNewCredentials()) {
+        qDebug() << "[main] Connected state";
+        if (AccountManager::instance()->hasNewCredentials()) {
 			AccountManager::instance()->setHasNewCredentials(false);
 		}
 
@@ -345,6 +354,7 @@ void ClientWorker::onConnected()
 	// The following tasks are only done after a login with new credentials or connection settings.
 	if (AccountManager::instance()->hasNewCredentials() || AccountManager::instance()->hasNewConnectionSettings()) {
 		if (AccountManager::instance()->hasNewCredentials()) {
+            qDebug() << "[client] emit loggedInWithNewCredentials";
 			emit loggedInWithNewCredentials();
 		}
 
@@ -359,15 +369,10 @@ void ClientWorker::onConnected()
 	MessageModel::instance()->sendPendingMessages();
 
 	// Send read markers that could not be sent yet because the client was offline.
-#if SFOS
-	QMetaObject::invokeMethod(RosterModel::instance(), "sendPendingReadMarkers", 
-		Qt::QueuedConnection, 
-		Q_ARG(QString, AccountManager::instance()->jid()));
-#else
 	runOnThread(RosterModel::instance(), [jid = AccountManager::instance()->jid()]() {
+        qDebug() << "[client] sendPendingReadMarkers("<<jid<<")";
 		RosterModel::instance()->sendPendingReadMarkers(jid);
 	});
-#endif
 	m_omemoManager->setUp();
 }
 
@@ -392,6 +397,7 @@ void ClientWorker::onDisconnected()
 
 void ClientWorker::onConnectionStateChanged(QXmppClient::State connectionState)
 {
+    qDebug() << "[client] connection state changed: << " << connectionState;
 	emit connectionStateChanged(Enums::ConnectionState(connectionState));
 }
 

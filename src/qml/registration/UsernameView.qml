@@ -28,9 +28,9 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import QtQuick.Controls 2.14 as Controls
+import QtQuick 2.2
+import Sailfish.Silica 1.0
+// import QtQuick.Controls 2.14 as Controls
 
 import im.kaidan.kaidan 1.0
 
@@ -40,7 +40,7 @@ import "../elements/fields"
  * This view is used for entering a username.
  */
 FieldView {
-	descriptionText: qsTr("Your username is used to log in to your account and to chat with you.\nIf you don't enter a username, the randomly generated and already displayed one is used.\nUsing an own username may let it be more recognizable but also could decrease your privacy!")
+    descriptionText: qsTr("Your username is used to log in to your account and to chat with you.\nIf you don't enter a username, the randomly generated and already displayed one is used.\nUsing an own username may it be more recognizable but also could decrease your privacy!")
 	imageSource: "username"
 
 	property string text: enteredText.length > 0 ? enteredText : field.placeholderText
@@ -52,7 +52,7 @@ FieldView {
 		placeholderText = credentialsGenerator.generateUsername()
 	}
 
-	ColumnLayout {
+	Column {
 		parent: contentArea
 
 		CredentialsField {
@@ -62,13 +62,13 @@ FieldView {
 			// Set the display name as the entered text while replacing all whitespaces by dots.
 			text: displayNameView.text.replace(/ /g, ".").toLowerCase()
 
-			placeholderText: credentialsGenerator.generateUsername()
-			inputMethodHints: Qt.ImhPreferLowercase
-			invalidHintText: qsTr("Please enter a valid username or leave the field empty for a random one.")
+//@			placeholderText: credentialsGenerator.generateUsername()
+//			inputMethodHints: Qt.ImhPreferLowercase
+//			invalidHintText: qsTr("Please enter a valid username or leave the field empty for a random one.")
 			valid: true
 
 			// Validate the entered username and handle that if it is invalid.
-			onTextChanged: {
+            onTextChanged: {
 				if (text === "")
 					valid = true
 				else

@@ -28,10 +28,10 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Controls 2.14 as Controls
-import QtQuick.Layouts 1.14
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+// import QtQuick.Controls 2.14 as Controls
+import Sailfish.Silica 1.0
+// import org.kde.kirigami 2.19 as Kirigami
 
 Kirigami.BasicListItem {
 	property string name
@@ -39,19 +39,19 @@ Kirigami.BasicListItem {
 
 	reserveSpaceForIcon: icon
 
-	contentItem: ColumnLayout {
-		Kirigami.Heading {
+	 Column {
+		SectionHeader {
 			text: name
 			textFormat: Text.PlainText
 			elide: Text.ElideRight
 			maximumLineCount: 1
 			level: 2
-			Layout.fillWidth: true
+			width: parent.width
 			Layout.maximumHeight: Kirigami.Units.gridUnit * 1.5
 		}
 
-		Controls.Label {
-			Layout.fillWidth: true
+		Label {
+			width: parent.width
 			text: description
 			wrapMode: Text.WordWrap
 			textFormat: Text.PlainText

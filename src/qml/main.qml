@@ -34,9 +34,9 @@ import Sailfish.Silica 1.0
 import im.kaidan.kaidan 1.0
 
 
-//import "elements"
-//import "registration"
-//import "settings"
+import "elements"
+import "registration"
+import "settings"
 
 
 ApplicationWindow {
@@ -45,22 +45,16 @@ ApplicationWindow {
 //	minimumHeight: 300
 //	minimumWidth: 280
 
-//	readonly property ChatPage currentChatPage: {
-//		return pageStack.find(function(p){
-//			p instanceof ChatPage
-//		});
-//		for (let i = 0; i < pageStack.items.length; ++i) {
-//			const page = pageStack.items[i];
-//
-//			if (page instanceof ChatPage) {
-//				return page;
-//			}
-//		}
-//
-//		return null;
-//	}
+    property bool wideScreen: false
+    readonly property ChatPage currentChatPage: {
+        return pageStack.find(function(p){
+            p instanceof ChatPage
+        });
 
-    /*
+        return null;
+    }
+
+
 	property bool currentDraftSaved: false
 
 	readonly property color primaryBackgroundColor: {
@@ -76,11 +70,10 @@ ApplicationWindow {
 
 	readonly property int largeButtonWidth: Theme.buttonWidthLarge
 	readonly property int smallButtonWidth: Theme.buttonWidthSmall
-*/
 
 	// This is an alias for use in settings ONLY
 	// it is only used on mobile, on desktop another item overrides the id "stack"
-//	property var stack: SettingsStack {}
+//    property var stack: SettingsStack {}
 
 //	StatusBar {
 //		color: Material.Material.color(Material.Material.Green, Material.Material.Shade700)
@@ -98,21 +91,21 @@ ApplicationWindow {
 //	}
 
 
-//	SubRequestAcceptSheet {
-//		id: subReqAcceptSheet
-//	}
+    SubRequestAcceptSheet {
+        id: subReqAcceptSheet
+    }
 
     // components for all main pages
 	Component {id: startPage; StartPage {}}
     Component {id: registrationLoginDecisionPage; RegistrationLoginDecisionPage {}}
-//    Component {id: registrationDecisionPage; RegistrationDecisionPage {}}
-//  Component {id: automaticRegistrationPage; AutomaticRegistrationPage {}}
-//	Component {id: manualRegistrationPage; ManualRegistrationPage {}}
+    Component {id: registrationDecisionPage; RegistrationDecisionPage {}}
+    Component {id: automaticRegistrationPage; AutomaticRegistrationPage {}}
+    Component {id: manualRegistrationPage; ManualRegistrationPage {}}
     Component {id: loginPage; LoginPage {}}
-//	Component {id: rosterPage; RosterPage {}}
-//	Component {id: chatPage; ChatPage {}}
-//	Component {id: emptyChatPage; EmptyChatPage {}}
-//	Component {id: settingsPage; SettingsPage {}}
+    Component {id: rosterPage; RosterPage {}}
+    Component {id: chatPage; ChatPage {}}
+    Component {id: emptyChatPage; EmptyChatPage {}}
+    Component {id: settingsPage; SettingsPage {}}
     Component {id: qrCodeOnboardingPage; QrCodeOnboardingPage {}}
 
 //	onWideScreenChanged: showRosterPageForNarrowWindow()
@@ -135,15 +128,23 @@ ApplicationWindow {
 	/**
 	 * Shows a passive notification for a long period.
 	 */
-//	function passiveNotification(text) {
-//		showPassiveNotification(text, "long")
-//	}
+    function passiveNotification(text) {
+        showPassiveNotification(text, "long")
+    }
+
+    function showPassiveNotification(text, style) {
+        var m = messageNotification.createObject(null)
+        m.category = "x-nemo.messaging.im"
+        m.previewBody = text
+        // This is needed to call default action
+        m.publish()
+    }
 
 	function openStartPage() {
 //		globalDrawer.enabled = false
 
-//		popLayersAboveLowest()
-//		popAllPages()
+        popLayersAboveLowest()
+        popAllPages()
         pageStack.push(startPage)
 	}
 
@@ -151,20 +152,20 @@ ApplicationWindow {
 	 * Opens the view with the roster and chat page.
 	 */
 	function openChatView() {
+        console.log("[main.qml] OpenChatView called")
+
 //		globalDrawer.enabled = true
 
-//		popLayersAboveLowest()
-//		popAllPages()
-//		pageStack.push(rosterPage)
-//		if (!Kirigami.Settings.isMobile)
-//			pageStack.push(emptyChatPage)
-//		showRosterPageForNarrowWindow()
+//        popLayersAboveLowest()
+//        popAllPages()
+          pageStack.push(rosterPage, {}, PageStackAction.Immediate)
+//        showRosterPageForNarrowWindow()
 	}
 
 	// Show the rosterPage instead of the emptyChatPage if the window is narrow.
 	function showRosterPageForNarrowWindow() {
-//		if (pageStack.layers.depth < 2 && pageStack.currentItem instanceof EmptyChatPage && !wideScreen)
-//			pageStack.goBack()
+//        if (pageStack.depth < 2 && pageStack.currentItem instanceof EmptyChatPage && !wideScreen)
+//            pageStack.goBack()
 	}
 
 	/**
@@ -173,33 +174,34 @@ ApplicationWindow {
 	 * @param countOfLayersToPop count of layers which are popped
 	 */
 	function popLayers(countOfLayersToPop) {
-//		for (let i = 0; i < countOfLayersToPop; i++)
-//			pageStack.pop()
-//			pageStack.layers.pop()
+        for (i = 0; i < countOfLayersToPop; i++)
+            pageStack.pop()
+            pageStack.layers.pop()
 	}
 
 	/**
 	 * Pops all layers except the layer with index 0 from the page stack.
 	 */
 	function popLayersAboveLowest() {
-//		while (pageStack.depth > 1)
-//			pageStack.pop()
-//		while (pageStack.layers.depth > 1)
-//			pageStack.layers.pop()
+//        while (pageStack.depth > 1)
+//            pageStack.pop()
+//        while (pageStack.layers.depth > 1)
+//            pageStack.layers.pop()
 	}
 
 	/**
 	 * Pops all pages from the page stack.
 	 */
 	function popAllPages() {
-//		while (pageStack.depth > 0)
-//			pageStack.pop()
+        while (pageStack.depth > 0)
+            pageStack.pop()
 	}
 
     Connections {
 		target: Kaidan
 
 		function onRaiseWindowRequested() {
+            console.log("[main.qml] onRaiseWindowRequested")
 			if (!root.active) {
 				root.raise()
 				root.requestActivate()
@@ -207,20 +209,23 @@ ApplicationWindow {
 		}
 
 		function onPassiveNotificationRequested(text) {
+            console.log("[main.qml] onPassiveNotificationRequested")
 			passiveNotification(text)
 		}
 
 		function onCredentialsNeeded() {
+            console.log("[main.qml] onCredentialsNeeded")
 			openStartPage()
 		}
 
 		function onOpenChatViewRequested() {
+            console.log("[main.qml] onOpenChatViewRequested")
 			openChatView()
 		}
 	}
 
 
-/*    Connections {
+    Connections {
 		target: RosterModel
 
         function onSubscriptionRequestReceived(from, msg) {
@@ -231,40 +236,17 @@ ApplicationWindow {
 			subReqAcceptSheet.open()
 		}
     }
-*/
-
 
 	Component.onCompleted: {
-//		HostCompletionModel.rosterModel = RosterModel;
-//		HostCompletionModel.aggregateKnownProviders();
-
-		// Restore the latest application window state if it is stored.
-//		if (!Kirigami.Settings.isMobile) {
-//			const latestPosition = Kaidan.settings.windowPosition
-//			root.x = latestPosition.x
-//			root.y = latestPosition.y
-//
-//			const latestSize = Kaidan.settings.windowSize
-//			if (latestSize.width > 0) {
-//				root.width = latestSize.width
-//				root.height = latestSize.height
-//			}
-//		}
+        HostCompletionModel.rosterModel = RosterModel;
+        //HostCompletionModel.aggregateKnownProviders();
 
 		if (AccountManager.loadConnectionData()) {
 			openChatView()
 			// Announce that the user interface is ready and the application can start connecting.
-			Kaidan.logIn()
+            Kaidan.logIn()
 		} else {
 			openStartPage()
 		}
     }
-
-	Component.onDestruction: {
-		// Store the application window state for restoring the latest state on the next start.
-//		if (!Kirigami.Settings.isMobile) {
-//			Kaidan.settings.windowPosition = Qt.point(x, y)
-//			Kaidan.settings.windowSize = Qt.size(width, height)
-//		}
-	}
 }

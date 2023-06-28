@@ -8,5 +8,5 @@ Icon=harbour-kaidan
 Exec=harbour-kaidan
 
 [X-Sailjail]
-Permissions=Internet;UserDirs;RemovableMedia;MediaIndexing
+Permissions=Internet;UserDirs;RemovableMedia;MediaIndexing;Camera
 ApplicationName=Kaidan

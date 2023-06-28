@@ -76,7 +76,6 @@ private:
 	void transaction();
 	/// Commits the transaction if every transaction has been finished.
 	void commit();
-
 	/**
 	 * @return true if the database has to be converted using @c convertDatabase()
 	 * because the database is not up-to-date.

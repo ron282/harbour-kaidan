@@ -3,26 +3,30 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.14
-import QtQuick.Controls 2.14 as Controls
-import QtQuick.Layouts 1.14
-import QtQuick.Dialogs 1.3 as QQD
+import QtQuick 2.2
+// import QtQuick.Controls 2.14 as Controls
+import Sailfish.Silica 1.0
+// import QtQuick.Dialogs 1.3 as QQD
 import QtGraphicalEffects 1.14
 
-import org.kde.kirigami 2.19 as Kirigami
-import org.kde.kquickimageeditor 1.0 as KQuickImageEditor
+// import org.kde.kirigami 2.19 as Kirigami
+// import org.kde.kquickimageeditor 1.0 as KQuickImageEditor
+import Sailfish.Pickers 1.0
 
 import im.kaidan.kaidan 1.0
 
 import "../elements"
 
-Kirigami.Page {
+Page {
 	id: root
-	title: qsTr("Change profile image")
+
+    PageHeader {
+        title: qsTr("Change profile image")
+    }
 
 	property string imagePath: Kaidan.avatarStorage.getAvatarUrl(AccountManager.jid)
 
-	Controls.BusyIndicator {
+	BusyIndicator {
 		id: busyIndicator
 		visible: false
 		anchors.centerIn: parent
@@ -30,84 +34,75 @@ Kirigami.Page {
 		height: 60
 	}
 
-	QQD.FileDialog {
+    Component {
 		id: fileDialog
-		title: qsTr("Choose profile image")
-		folder: shortcuts.home
 
-		selectMultiple: false
+        ImagePickerPage {
+            title: qsTr("Choose profile image")
 
-		onAccepted: {
-			imageDoc.path = fileDialog.fileUrl
-			imagePath = fileDialog.fileUrl
-
-			fileDialog.close()
-		}
-
-		onRejected: {
-			fileDialog.close()
-		}
-
-		Component.onCompleted: {
-			visible = false
-		}
+            onSelectedContentPropertiesChanged:
+            {
+                imageDoc.path = selectedContentProperties.filePath
+                imagePath = selectedContentProperties.filePath
+            }
+        }
 	}
 
-	ColumnLayout {
+	Column {
 		id: content
 		visible: !busyIndicator.visible
 		spacing: 0
 		anchors.fill: parent
 
-		KQuickImageEditor.ImageItem {
+        Image {
 			id: editImage
 
-			Layout.fillWidth: true
-			Layout.fillHeight: true
+			width: parent.width
+			//FIXME Layout.fillHeight: true
 
-			Layout.margins: 25
+			anchors.margins: 25
 
 			readonly property real ratioX: editImage.paintedWidth / editImage.nativeWidth;
 			readonly property real ratioY: editImage.paintedHeight / editImage.nativeHeight;
 
 			// Assigning this to the contentItem and setting the padding causes weird positioning issues
 
-			fillMode: KQuickImageEditor.ImageItem.PreserveAspectFit
-			image: imageDoc.image
+            fillMode: Image.PreserveAspectFit
+            source: imageDoc.image
 
-			KQuickImageEditor.ImageDocument {
-				id: imageDoc
-				path: root.imagePath
-			}
+//			KQuickImageEditor.ImageDocument {
+//				id: imageDoc
+//				path: root.imagePath
+//			}
 
-			KQuickImageEditor.SelectionTool {
-				id: selectionTool
-				width: editImage.paintedWidth
-				height: editImage.paintedHeight
-				x: editImage.horizontalPadding
-				y: editImage.verticalPadding
+//			KQuickImageEditor.SelectionTool {
+//				id: selectionTool
+//				width: editImage.paintedWidth
+//				height: editImage.paintedHeight
+//				x: editImage.horizontalPadding
+//				y: editImage.verticalPadding
 
-				KQuickImageEditor.CropBackground {
-					anchors.fill: parent
-					z: -1
-					insideX: selectionTool.selectionX
-					insideY: selectionTool.selectionY
-					insideWidth: selectionTool.selectionWidth
-					insideHeight: selectionTool.selectionHeight
-				}
-			}
-			onImageChanged: {
-				selectionTool.selectionX = 0
-				selectionTool.selectionY = 0
-				selectionTool.selectionWidth = Qt.binding(() => selectionTool.width)
-				selectionTool.selectionHeight = Qt.binding(() => selectionTool.height)
-			}
-		}
+//				KQuickImageEditor.CropBackground {
+//					anchors.fill: parent
+//					z: -1
+//					insideX: selectionTool.selectionX
+//					insideY: selectionTool.selectionY
+//					insideWidth: selectionTool.selectionWidth
+//					insideHeight: selectionTool.selectionHeight
+//				}
+//			}
+//			onImageChanged: {
+//				selectionTool.selectionX = 0
+//				selectionTool.selectionY = 0
+//				selectionTool.selectionWidth = Qt.binding(() => selectionTool.width)
+//				selectionTool.selectionHeight = Qt.binding(() => selectionTool.height)
+//			}
+        }
 
-		ColumnLayout {
-			Layout.fillWidth: true
-			Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
-			Layout.maximumWidth: largeButtonWidth
+		Column {
+			width: parent.width
+			// Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
+			//FIXME Layout.maximumWidth: largeButtonWidth
 
 			CenteredAdaptiveButton {
 				text: qsTr("Open image…")

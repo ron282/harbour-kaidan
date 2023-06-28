@@ -28,15 +28,21 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Controls 2.14 as Controls
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 import "../elements/fields"
 
 /**
  * This view is the base for views containing fields.
  */
-View {
+BackgroundItem {
+
+    property alias descriptionText : fieldDesc.text
+    property alias imageSource: fieldIcon.source
+
+    anchors.fill: parent
+
 	/**
 	 * Disallows the swiping and shows or hides the hint for invalid text input.
 	 */
@@ -49,17 +55,36 @@ View {
 		field.forceActiveFocus()
 	}
 
-	Controls.SwipeView.onIsCurrentItemChanged: {
-		if (Controls.SwipeView.isCurrentItem) {
-			if (!field.focus) {
-				forceActiveFocus()
-			}
-		}
-	}
+    Image {
+        id: fieldIcon
+        anchors.top: parent.top
+        anchors.left: parent.left
+    }
 
-	Component.onCompleted: {
-		if (Controls.SwipeView.isCurrentItem) {
-			forceActiveFocus()
-		}
-	}
+    TextArea {
+        id: fieldDesc
+        anchors.left: fieldIcon.right
+        anchors.top: parent.top
+    }
+
+    ViewPlaceholder {
+        id: contentArea
+        width: parent.width
+        anchors.top: fieldDesc.bottom
+        anchors.bottom: parent.bottom
+    }
+
+//	Controls.SwipeView.onIsCurrentItemChanged: {
+//		if (Controls.SwipeView.isCurrentItem) {
+//			if (!field.focus) {
+//				forceActiveFocus()
+//			}
+//		}
+//	}
+
+//	Component.onCompleted: {
+//		if (Controls.SwipeView.isCurrentItem) {
+//			forceActiveFocus()
+//		}
+//	}
 }

@@ -38,6 +38,8 @@
 #include <QMutex>
 #if !defined(SFOS)
 #include <QRandomGenerator>
+#else
+#include <QTimer>
 #endif
 #include <QSqlDriver>
 #include <QSqlError>
@@ -213,7 +215,17 @@ void Database::createTables()
 void Database::startTransaction()
 {
 #if defined(SFOS)
-	QMetaObject::invokeMethod(d->dbWorker, "transaction");
+    QTimer* timer = new QTimer();
+    timer->moveToThread(&d->dbThread);
+    timer->setSingleShot(true);
+    QObject::connect(timer, &QTimer::timeout, [timer, this]()
+    {
+        qDebug() << "[database] transaction()";
+        // main thread
+        transaction();
+        timer->deleteLater();
+    });
+    QMetaObject::invokeMethod(timer, "start", Qt::QueuedConnection, Q_ARG(int, 0));
 #else
 	QMetaObject::invokeMethod(d->dbWorker, [this] {
 		transaction();
@@ -224,7 +236,17 @@ void Database::startTransaction()
 void Database::commitTransaction()
 {
 #if defined(SFOS)
-	QMetaObject::invokeMethod(d->dbWorker, "commit");
+    QTimer* timer = new QTimer();
+    timer->moveToThread(&d->dbThread);
+    timer->setSingleShot(true);
+    QObject::connect(timer, &QTimer::timeout, [timer, this]()
+    {
+        // main thread
+        qDebug() << "[database] commit()";
+        commit();
+        timer->deleteLater();
+    });
+    QMetaObject::invokeMethod(timer, "start", Qt::QueuedConnection, Q_ARG(int, 0));
 #else
 	QMetaObject::invokeMethod(d->dbWorker, [this] {
 		commit();

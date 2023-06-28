@@ -28,8 +28,8 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
 
@@ -46,7 +46,7 @@ View {
 
 	property string jid: username && provider ? username + "@" + provider : ""
 
-	ColumnLayout {
+	Column {
 		parent: contentArea
 		spacing: 40
 

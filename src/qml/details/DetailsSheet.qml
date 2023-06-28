@@ -2,25 +2,31 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+import Sailfish.Silica 1.0
+// import org.kde.kirigami 2.19 as Kirigami
 
-Kirigami.OverlaySheet {
+DockedPanel {
 	id: root
 
 	default property alias __data: mainArea.data
 
-	topPadding: 0
-	bottomPadding: 0
-	leftPadding: 0
-	rightPadding: 0
-	Kirigami.Theme.colorSet: Kirigami.Theme.Header
+//	topPadding: 0
+//	bottomPadding: 0
+//	leftPadding: 0
+//	rightPadding: 0
+    //FIXME Kirigami.Theme.colorSet: Kirigami.Theme.Header
 
-	ColumnLayout {
+    dock: Dock.Bottom
+    width: parent.width
+    height: mainArea.height
+
+
+	Column {
 		id: mainArea
-		Layout.preferredWidth: 600
-		Layout.preferredHeight: 600
-		Layout.maximumWidth: 600
+        anchors.centerIn: parent
+		//FIXME Layout.preferredWidth: 600
+        //FIXME Layout.preferredHeight: 600
+        //FIXME Layout.maximumWidth: 600
 	}
 }

@@ -30,22 +30,23 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-//import QtQuick 2.14
-//import QtQuick.Layouts 1.14
-//import QtQuick.Controls 2.14 as Controls
-//import org.kde.kirigami 2.19 as Kirigami
-
 import im.kaidan.kaidan 1.0
 
 /**
- * This is a centered button having an adjustable label and fitting its parent's width.
+ * This is a password field for registration with an option for showing the password and extras regarding registration.
+ * The password strength is indicated by a colored bar.
+ * A hint is shown for improving the password strength.
  */
-Button {
-    anchors.horizontalCenter: parent.horizontalCenter
-    width: parent.width
+PasswordField {
 
-//	Kirigami.Theme.textColor: {
-//		if (Style.isMaterial)
-//			return Kirigami.Theme.positiveTextColor
+    property bool valid : true
+
+    //FIXME	placeholderText: {
+//		if (field.inputField.echoMode === TextInput.Password)
+//			return "●".repeat(generatedPassword.length)
+//		return generatedPassword
 //	}
+
+    property string generatedPassword: credentialsGenerator.generatePassword()
 }
+

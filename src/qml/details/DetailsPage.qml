@@ -2,19 +2,20 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick.Layouts 1.14
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+import Sailfish.Silica 1.0
+// import org.kde.kirigami 2.19 as Kirigami
 
-Kirigami.ScrollablePage {
+SilicaFlickable {
 	id: root
 
 	default property alias __data: mainArea.data
 
-	leftPadding: 0
-	rightPadding: 0
-	Kirigami.Theme.colorSet: Kirigami.Theme.Window
+    //FIXME leftPadding: 0
+    //FIXME rightPadding: 0
+    //FIXME Kirigami.Theme.colorSet: Kirigami.Theme.Window
 
-	ColumnLayout {
+	Column {
 		id: mainArea
 	}
 }

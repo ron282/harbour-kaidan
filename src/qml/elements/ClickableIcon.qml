@@ -30,69 +30,20 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-//import QtQuick 2.14
-//import QtQuick.Controls 2.14 as Controls
-//import QtQuick.Layouts 1.14
-//import org.kde.kirigami 2.19 as Kirigami
 
-import im.kaidan.kaidan 1.0
+/**
+ * This is a clickable icon changing its color on several events if possible.
+ */
+IconButton  {
+    width: /*Kirigami.Units.largeSpacing*/ 20 * 3.8
+	height: width
 
-Page {
-	id: root
+    onClicked: {
+        parent.clicked()
 
-	required property var chatSupportList
-	property bool isGroupChatSupportSheet: false
-
-    PageHeader {
-        title: isGroupChatSupportSheet ? qsTr("Support Group") : qsTr("Support")
-		wrapMode: Text.WordWrap
-	}
-
-    SilicaListView {
-		implicitWidth: largeButtonWidth
-		clip: true
-		model: Array.from(chatSupportList)
-
-		RosterAddContactSheet {
-			id: addContactSheet
-		}
-
-        delegate: ListItem {
-			required property int index
-			required property string modelData
-			readonly property string chatName: {
-				(isGroupChatSupportSheet ? qsTr("Group Support %1") : qsTr("Support %1")).arg(index + 1)
-			}
-
-			height: 65
-
-            Column {
-				spacing: 12
-
-                Label {
-					text: chatName
-					font.bold: true
-				}
-
-                Label {
-					text: modelData
-					wrapMode: Text.Wrap
-				}
-			}
-
-			onClicked: {
-				if (isGroupChatSupportSheet) {
-					Qt.openUrlExternally("xmpp:" + modelData + "?join")
-				} else {
-					if (!addContactSheet.sheetOpen) {
-						addContactSheet.jid = modelData
-						addContactSheet.nickName = chatName
-						addContactSheet.open()
-					}
-				}
-
-				root.close()
-			}
-		}
-	}
+        if (containsMouse)
+            entered()
+        else
+            exited()
+    }
 }

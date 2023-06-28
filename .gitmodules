@@ -1,3 +1,6 @@
 [submodule "3rdparty/breeze-icons"]
 	path = 3rdparty/breeze-icons
 	url = https://invent.kde.org/frameworks/breeze-icons.git
+[submodule "3rdparty/QEmuStringView"] 
+  path = 3rdparty/QEmuStringView
+  url = https://github.com/RJVB/QEmuStringView.git

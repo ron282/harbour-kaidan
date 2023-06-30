@@ -51,7 +51,7 @@ ListItem {
 
     Row {
 		id: content
-        spacing: 20 * 0.5 // Kirigami.Units.gridUnit * 0.5
+        spacing: Theme.paddingSmall
 
 		// fading background colors
 //		ColorAnimation {
@@ -66,7 +66,7 @@ ListItem {
 		// left border: presence
 		Rectangle {
 			id: presenceIndicator
-            width: 20 *.3 // Kirigami.Units.gridUnit * 0.3
+            width: 5
 			height: parent.height
 			color: userPresence.availabilityColor
 
@@ -76,18 +76,12 @@ ListItem {
 			}
 		}
 
-		// left: avatar
-		Item {
-//			//FIXME Layout.preferredWidth: parent.height - Kirigami.Units.gridUnit * 0.8
-//			// //FIXME Layout.preferredHeight: Layout.preferredWidth
-
-            Icon {
-				id: avatar
-				anchors.fill: parent
-                property string jid: root.jid
-                property string name: root.name
-				width: height
-			}
-		}
+        // left: avatar
+        Avatar {
+            id: avatar
+            jid: root.jid
+            name: root.name
+            width: height
+        }
 	}
 }

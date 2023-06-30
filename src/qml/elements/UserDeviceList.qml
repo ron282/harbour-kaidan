@@ -29,7 +29,6 @@
  */
 
 import QtQuick 2.2
-// import QtQuick.Controls 2.14 as Controls
 import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0

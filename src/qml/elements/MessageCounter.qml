@@ -31,20 +31,26 @@
 import QtQuick 2.2
 import Sailfish.Silica 1.0
 
-Label {
-	property int count: 0
-	property bool muted: false
-
-	text: count > 9999 ? "9999+" : count
-//    font.pixelSize: Theme.defaultFont.pixelSize * 0.9
-	visible: count
-//	leftPadding: font.pixelSize * 0.45
-//	rightPadding: leftPadding
-//	topPadding: leftPadding * 0.3
-//	bottomPadding: topPadding
-
-    Rectangle {
-		radius: parent.height * 0.5
-        color: parent.muted ? Theme.secondaryColor : Theme.highlightColor
-	}
+Rectangle {
+    property int count: 0
+    property bool muted: false
+    width: Math.max(lblUnread.implicitWidth+radius, height)
+    height: lblUnread.implicitHeight
+    color: Theme.highlightBackgroundColor
+    radius: height*0.5
+    anchors {
+        top: parent.top
+        right: parent.right
+        topMargin: Theme.paddingSmall
+        rightMargin: Theme.paddingSmall
+    }
+    visible: (count > 0) ? true : false
+    Label {
+        id: lblUnread
+        font.bold: true
+        text: count > 9999 ? "9999+" : count
+        font.pixelSize: Theme.fontSizeTiny
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: parent.verticalCenter
+    }
 }

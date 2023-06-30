@@ -7,8 +7,6 @@
 #include <QCoreApplication>
 
 #if defined(SFOS)
-#include <QDebug>
-#define QSTRINGVIEW_EMULATE
 #include "../3rdparty/QEmuStringView/qemustringview.h"
 #endif
 

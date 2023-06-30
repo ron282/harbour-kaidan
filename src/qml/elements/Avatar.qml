@@ -32,10 +32,18 @@ import QtQuick 2.2
 import Sailfish.Silica 1.0
 import im.kaidan.kaidan 1.0
 
+
 Image {
-	property string jid
+    id: img
+    property string jid
     property string  name
-	source: jid ? Kaidan.avatarStorage.getAvatarUrl(jid) : ""
+    source: jid ? Kaidan.avatarStorage.getAvatarUrl(jid) : "image://theme/icon-m-contact"
     fillMode: Image.PreserveAspectCrop;
     antialiasing: true;
+    anchors {
+        top: parent.top;
+        left: parent.left;
+        leftMargin: Theme.paddingMedium
+    }
 }
+

@@ -51,10 +51,11 @@ UserListItem {
 	// middle
     Column {
         spacing: Theme.paddingLarge
-        width: parent.width
+        anchors.right: parent.right
+        anchors.left: content.right
 
 		// name
-        SectionHeader  {
+        Label  {
 			id: nameText
 			text: name
 			textFormat: Text.PlainText
@@ -93,14 +94,14 @@ UserListItem {
 	onIsSelectedChanged: textColorAnimation.restart()
 
 	// fading text colors
-	ColorAnimation {
-		id: textColorAnimation
-		targets: [nameText, lastMessageText]
-		property: "color"
-        to: root.isSelected ? Theme.primaryColor : Theme.highlightColor
-        duration: 1 // Kirigami.Units.shortDuration
-		running: false
-	}
+//	ColorAnimation {
+//		id: textColorAnimation
+//		targets: [nameText, lastMessageText]
+//		property: "color"
+//        to: root.isSelected ? Theme.primaryColor : Theme.highlightColor
+//        duration: 1 // Kirigami.Units.shortDuration
+//		running: false
+//	}
 
 	// right: icon for muted contact
 	// Its size depends on the font's pixel size to be as large as the message counter.
@@ -116,17 +117,17 @@ UserListItem {
 	// Its size depends on the font's pixel size to be as large as the message counter.
     Icon {
         source: "image://theme/icon-m-asterisk"
-        width: Theme.iconSizeLarge
+        width: Theme.iconSizeMedium
         height: width
 		visible: pinned
 	}
 
-	// right: unread message counter
-	MessageCounter {
-		id: counter
-		count: unreadMessages
-		muted: mutedWatcher.muted
-	}
+    // right: unread message counter
+    MessageCounter {
+        id: counter
+        count: unreadMessages
+        muted: mutedWatcher.muted
+    }
 
 	// right: icon for reordering
 //	Kirigami.ListItemDragHandle {

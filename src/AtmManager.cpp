@@ -28,8 +28,6 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 #if defined(SFOS)
-#include <QDebug>
-#define QSTRINGVIEW_EMULATE
 #include "../3rdparty/QEmuStringView/qemustringview.h"
 #endif
 

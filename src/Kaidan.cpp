@@ -59,6 +59,8 @@ Kaidan *Kaidan::s_instance;
 Kaidan::Kaidan(bool enableLogging, QObject *parent)
 	: QObject(parent)
 {
+    qDebug() << "enable logging:" << enableLogging;
+
 	Q_ASSERT(!s_instance);
     s_instance = this;
 

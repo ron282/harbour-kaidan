@@ -226,7 +226,7 @@ void ClientWorker::connectToServer(QXmppConfiguration config)
 
 		auto port = AccountManager::instance()->port();
 		if (port != PORT_AUTODETECT) {
-			config.setPort(port);
+            config.setPort(port);
 
 			// Set the JID's domain part as the host if no custom host is set.
 			if (host.isEmpty())
@@ -244,7 +244,7 @@ void ClientWorker::connectToServer(QXmppConfiguration config)
 		// server did not support it anymore.
 		m_caches->serverFeaturesCache->setInBandRegistrationSupported(false);
 
-        qDebug() << "[main] connectToServer(" << config.jid() << ")";
+        qDebug() << "[main] connectToServer(" << config.jid() << ", password=" << config.password() << ", port=" << config.port() << ")";
         m_client->connectToServer(config);
 	}        
 }

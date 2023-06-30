@@ -18,7 +18,7 @@ INCLUDEPATH += /usr/include/QXmppQt5/client
 INCLUDEPATH += source
 
 ! contains(DEFINES, SFOS) {
-    QMAKE_CXXFLAGS += -Wno-deprecated-declarations -Wno-placement-new -Wno-parentheses -Wno-unused-but-set-parameter
+    QMAKE_CXXFLAGS += -Wno-deprecated-this-capture -Wno-deprecated-declarations -Wno-placement-new -Wno-parentheses -Wno-unused-but-set-parameter
 }
 
 contains(DEFINES, QMLLIVE_SOURCE) {

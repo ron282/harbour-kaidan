@@ -74,7 +74,8 @@ void LogHandler::handleLog(QXmppLogger::MessageType type, const QString &text)
 		qDebug().noquote() << "[client] [warn]" << text;
 		break;
 	default:
-		break;
+        qDebug().noquote() << "[client] [other]" << text;
+        break;
 	}
 }
 

@@ -294,7 +294,7 @@ DetailsContent {
 					id: contactRemovalCorfirmButton
 					text: qsTr("Confirm")
 					visible: false
-					anchors.leftMargin: Kirigami.Units.largeSpacing * 6
+                    anchors.leftMargin: Theme.paddingLarge
 					onClicked: {
 						visible = false
 						removalButton.enabled = false

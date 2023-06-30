@@ -35,7 +35,7 @@ DetailsSheet {
 
     property string jid
 
-	parent: applicationWindow().overlay
+//	parent: applicationWindow().overlay
 
 	ContactDetailsHeader {
 		sheet: root

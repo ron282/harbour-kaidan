@@ -91,10 +91,9 @@ Page {
                 unreadMessages: model ? model.unreadMessages : 0
                 pinned: model ? model.pinned : false
 
-                menu: RosterListItemContextMenu {
+               menu: RosterListItemContextMenu {
                     id: itemContextMenu
                 }
-
 
                 onClicked: {
                     // Open the chatPage only if it is not yet open.
@@ -140,5 +139,9 @@ Page {
             popLayersAboveLowest()
 */
             pageStack.push(chatPage, {}, PageStackAction.Immediate)
+        }
+
+        Component.onCompleted: {
+            console.log("[rosterpage.qml] Roster Page completed")
         }
 }

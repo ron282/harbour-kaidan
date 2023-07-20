@@ -37,7 +37,7 @@ import ".."
  */
 Column {
 	// text of the label for the input field
-	property alias labelText: label.text
+    property alias labelText: inputField.label
 
 	// input field
 	property alias inputField: inputField

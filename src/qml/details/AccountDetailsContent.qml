@@ -57,15 +57,15 @@ DetailsContent {
 		}
 
         TextSwitch {
-			text: qsTr("OMEMO 2")
-            //FIXME description: qsTr("End-to-end encryption with OMEMO 2 ensures that nobody else than you and your chat partners can read or modify the data you exchange.")
-			checked: Kaidan.settings.encryption === Encryption.Omemo2
+            text: qsTr("OMEMO 0")
+            //FIXME description: qsTr("End-to-end encryption with OMEMO 0 ensures that nobody else than you and your chat partners can read or modify the data you exchange.")
+            checked: Kaidan.settings.encryption === Encryption.Omemo0
 			// The switch is toggled by setting the user's preference on using encryption.
 			// Note that 'checked' has already the value after the button is clicked.
 			onClicked: {
 				if (checked) {
-					Kaidan.settings.encryption = Encryption.Omemo2
-					RosterModel.setItemEncryption(root.jid, Encryption.Omemo2)
+                    Kaidan.settings.encryption = Encryption.Omemo0
+                    RosterModel.setItemEncryption(root.jid, Encryption.Omemo0)
 				} else {
 					Kaidan.settings.encryption = Encryption.NoEncryption
 					RosterModel.setItemEncryption(root.jid, Encryption.NoEncryption)
@@ -79,7 +79,7 @@ DetailsContent {
 					if (omemoWatcher.distrustedOmemoDevices.length) {
 						return qsTr("Scan the QR codes of <b>your</b> devices to encrypt for them")
 					} else if (ownResourcesWatcher.resourcesCount > 1) {
-						return qsTr("<b>Your</b> other devices don't use OMEMO 2")
+                        return qsTr("<b>Your</b> other devices don't use OMEMO 0")
 					}
 				} else if (omemoWatcher.authenticatableOmemoDevices.length) {
 					if (omemoWatcher.authenticatableOmemoDevices.length === omemoWatcher.distrustedOmemoDevices.length) {
@@ -94,16 +94,16 @@ DetailsContent {
 			icon.source: {
 				if (!omemoWatcher.usableOmemoDevices.length) {
 					if (omemoWatcher.distrustedOmemoDevices.length) {
-						return "channel-secure-symbolic"
+                        return "image://theme/icon-m-device-lock"
 					} else if (ownResourcesWatcher.resourcesCount > 1) {
-						return "channel-insecure-symbolic"
+                        return "image://theme/icon-m-warning"
 					}
 				} else if (omemoWatcher.authenticatableOmemoDevices.length) {
 					if (omemoWatcher.authenticatableOmemoDevices.length === omemoWatcher.distrustedOmemoDevices.length) {
-						return "security-medium-symbolic"
+                        return "image://theme/icon-m-warning"
 					}
 
-					return "security-high-symbolic"
+                    return "image://theme/icon-m-device-lock"
 				}
 
 				return ""

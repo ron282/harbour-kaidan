@@ -167,7 +167,11 @@ void Settings::setAuthPasswordVisibility(Kaidan::PasswordVisibility visibility)
 Encryption::Enum Settings::encryption() const
 {
 	QMutexLocker locker(&m_mutex);
-	return m_settings.value(QStringLiteral(KAIDAN_SETTINGS_ENCRYPTION), Encryption::Omemo2).value<Encryption::Enum>();
+#if defined(SFOS)
+    return m_settings.value(QStringLiteral(KAIDAN_SETTINGS_ENCRYPTION), Encryption::Omemo0).value<Encryption::Enum>();
+#else
+    return m_settings.value(QStringLiteral(KAIDAN_SETTINGS_ENCRYPTION), Encryption::Omemo2).value<Encryption::Enum>();
+#endif
 }
 
 void Settings::setEncryption(Encryption::Enum encryption)

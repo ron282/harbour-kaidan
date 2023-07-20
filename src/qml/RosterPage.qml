@@ -82,7 +82,6 @@ Page {
         delegate:
             RosterListItem {
                 listView: rosterListView
-                contextMenu: itemContextMenu
                 accountJid: AccountManager.jid
                 jid: model ? model.jid : ""
                 name: model ? (model.name ? model.name : model.jid) : ""
@@ -90,6 +89,7 @@ Page {
                 lastMessageIsDraft: model ? model.draftId : false
                 unreadMessages: model ? model.unreadMessages : 0
                 pinned: model ? model.pinned : false
+                contentHeight: Theme.itemSizeMedium;
 
                menu: RosterListItemContextMenu {
                     id: itemContextMenu
@@ -97,9 +97,9 @@ Page {
 
                 onClicked: {
                     // Open the chatPage only if it is not yet open.
-                    if (!isSelected || !wideScreen) {
+                    //if (!isSelected) {
                         openChatPage(accountJid, jid)
-                    }
+                    //}
                 }
             }
 
@@ -120,25 +120,10 @@ Page {
          */
         function openChatPage(accountJid, chatJid) {
             console.log("[rosterpage.qml] OpenChatPage called")
-/*            page = pageStack.find(function(page) { return true; } )
 
-            while (page) {
-                if (page instanceof ChatPage) {
-                    page.saveDraft();
-                }
-
-                page = pageStack.nextPage(page)
-            }
             MessageModel.setCurrentChat(accountJid, chatJid)
-            searchAction.checked = false
 
-            // Close all pages (especially the chat page) except the roster page.
-            while (pageStack.depth > 1)
-                pageStack.pop()
-
-            popLayersAboveLowest()
-*/
-            pageStack.push(chatPage, {}, PageStackAction.Immediate)
+            pageStack.push(chatPage, {})
         }
 
         Component.onCompleted: {

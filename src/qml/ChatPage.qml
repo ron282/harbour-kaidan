@@ -32,6 +32,7 @@ import QtQuick 2.2
 import Sailfish.Silica 1.0
 import MediaUtils 0.1
 import im.kaidan.kaidan 1.0
+import QtMultimedia 5.6
 
 import "elements"
 import "details"
@@ -39,37 +40,14 @@ import "details"
 ChatPageBase {
 	id: root
 
-//	DropArea {
-//		anchors.fill: parent
-//		onDropped: function (drop) {
-//			for (const url of drop.urls) {
-//				sendMediaSheet.addFile(url)
-//			}
-//			sendMediaSheet.ensureOpen()
-//		}
-//	}
-
-//	Shortcut {
-//		sequence: "Ctrl+Shift+V"
-//		context: Qt.WindowShortcut
-//		onActivated: {
-//			imageUrl = Utils.pasteImage();
-//			// check if there was an image to be pasted from the clipboard
-//			if (imageUrl.toString().length > 0) {
-//				sendMediaSheet.addFile(imageUrl)
-//				sendMediaSheet.ensureOpen()
-//			}
-//		}
-//	}
-
 	property alias searchBar: searchBar
-	property alias sendMediaSheet: sendMediaSheet
-    property alias newMediaSheet: newMediaSheet
-	property alias messageReactionEmojiPicker: messageReactionEmojiPicker
-	property alias messageReactionSenderSheet: messageReactionSenderSheet
+//	property alias sendMediaSheet: sendMediaSheet
+//    property alias newMediaSheet: newMediaSheet
+//	property alias messageReactionEmojiPicker: messageReactionEmojiPicker
+//	property alias messageReactionSenderSheet: messageReactionSenderSheet
 
 	property string messageToCorrect
-	readonly property bool cameraAvailable: Multimedia.QtMultimedia.availableCameras.length > 0
+    readonly property bool cameraAvailable: QtMultimedia.availableCameras.length > 0
 	property bool viewPositioned: false
 
     PageHeader {
@@ -83,7 +61,7 @@ ChatPageBase {
                 leftMargin: Theme.paddingMedium;
                 verticalCenter: parent.verticalCenter;
             }
-//            onClicked: contactDetailsSheet.open()
+            onClicked: contactDetailsSheet.open()
         }
         Rectangle {
                 z: -1;
@@ -98,24 +76,26 @@ ChatPageBase {
 
 	// Message search bar
 
-	RosterItemWatcher {
+
+    RosterItemWatcher {
 		id: chatItemWatcher
 		jid: MessageModel.currentChatJid
 	}
-
+/*
     ContactDetailsSheet {
 		id: contactDetailsSheet
 		jid: MessageModel.currentChatJid
 	}
 
-     Component {
+    Component {
 		id: contactDetailsPage
 
 		ContactDetailsPage {
 			jid: MessageModel.currentChatJid
 		}
 	}
-
+*/
+/*
 	SendMediaSheet {
 		id: sendMediaSheet
 		composition: sendingPane.composition
@@ -134,17 +114,20 @@ ChatPageBase {
 	MessageReactionSenderSheet {
 		id: messageReactionSenderSheet
 	}
-
-	// View containing the messages
+*/
+     // View containing the messages
     SilicaListView {
 		id: messageListView
-		verticalLayoutDirection: ListView.BottomToTop
+        anchors.fill: parent
+        VerticalScrollDecorator { flickable: rosterListView }
+        verticalLayoutDirection: ListView.BottomToTop
+        cacheBuffer: Screen.width // do avoid flickering when image width is changed
 		spacing: 0
 
         PullDownMenu {
             MenuItem {
                 text: qsTr("Details…")
- //               onClicked: pageStack.push(contactDetailsPage)
+                onClicked: pageStack.push(contactDetailsPage)
             }
             // Action to toggle the message search bar
             MenuItem {
@@ -199,30 +182,17 @@ ChatPageBase {
 		currentIndex: -1
 
 		// Connect to the database,
-		model: MessageModel
-
-		visibleArea.onYPositionChanged: handleMessageRead()
-		onActiveFocusChanged: {
-			// This makes it possible on desktop devices to directly enter a message after opening
-			// the chat page.
-			// The workaround is needed because messageListView's focus is automatically forced
-			// after creation even when forcing sendingPane's focus within its
-			// Component.onCompleted.
-			if (activeFocus) {
-				sendingPane.forceActiveFocus()
-			}
-		}
+        model: MessageModel
 
 		Connections {
 			target: MessageModel
 
-			function onMessageFetchingFinished() {
+/*			function onMessageFetchingFinished() {
 				// Skip the case when messages are fetched after the initial fetching because this
 				// function positioned the view at firstUnreadContactMessageIndex and that is close
 				// to the end of the loaded messages.
                 if (!root.viewPositioned) {
-
-/*                    unreadMessageCount = chatItemWatcher.item.unreadMessageCount
+                   unreadMessageCount = chatItemWatcher.item.unreadMessageCount
 
                     if (unreadMessageCount) {
                         firstUnreadContactMessageIndex = MessageModel.firstUnreadContactMessageIndex()
@@ -238,10 +208,9 @@ ChatPageBase {
 					} else {
 						root.viewPositioned = true
 					}
-*/
 				}
 			}
-
+*/
 			function onMessageSearchFinished(queryStringMessageIndex) {
 				if (queryStringMessageIndex !== -1) {
 					messageListView.currentIndex = queryStringMessageIndex
@@ -273,10 +242,10 @@ ChatPageBase {
 
 
 		delegate: ChatMessage {
-            contextMenu: ChatMessageContextMenu {
-            }
-			reactionEmojiPicker: root.messageReactionEmojiPicker
-			reactionSenderSheet: root.messageReactionSenderSheet
+//            contextMenu: ChatMessageContextMenu {
+//            }
+//			reactionEmojiPicker: root.messageReactionEmojiPicker
+//			reactionSenderSheet: root.messageReactionSenderSheet
 			modelIndex: index
 			msgId: model.id
 			senderJid: model.sender
@@ -318,7 +287,7 @@ ChatPageBase {
 		}
 
 		// Everything is upside down, looks like a footer
-/*		header: Column {
+        header: Column {
 			anchors.left: parent.left
 			anchors.right: parent.right
 			height: stateLabel.text ? 20 : 0
@@ -326,7 +295,7 @@ ChatPageBase {
             Label {
 				id: stateLabel
                 // Layout.alignment: Qt.AlignCenter
-                //FIXME Layout.maximumWidth: parent.width
+                width: parent.width
 				height: !text ? 20 : 0
 				topPadding: text ? 10 : 0
 
@@ -338,61 +307,30 @@ ChatPageBase {
         footer: BusyIndicator {
 			visible: opacity !== 0.0
 			anchors.horizontalCenter: parent.horizontalCenter
-			height: visible ? undefined : Kirigami.Units.smallSpacing * 4
-			padding: 0
+            height: visible ? undefined : Theme.paddingMedium
 			opacity: MessageModel.mamLoading ? 1.0 : 0.0
 
-			Behavior on opacity {
-				NumberAnimation {
-					duration: Kirigami.Units.shortDuration
-				}
-			}
+//			Behavior on opacity {
+//				NumberAnimation {
+//					duration: Theme.short
+//				}
+//			}
 		}
-*/
-/*		// button for jumping to the latest message
-        IconButton {
-			visible: width > 0
-			width: parent.atYEnd ? 0 : 50
-			height: parent.atYEnd ? 0 : 50
-			anchors.right: parent.right
-			anchors.bottom: parent.bottom
-			anchors.bottomMargin: 7
-			anchors.rightMargin: {
-				if (root.flickable.Controls.ScrollBar.vertical) {
-					return Kirigami.Settings.isMobile
-						? root.flickable.Controls.ScrollBar.vertical.implicitWidth + 15
-						: root.flickable.Controls.ScrollBar.vertical.implicitWidth + 5
-				}
 
-				return Kirigami.Settings.isMobile ? 15 : 5
-			}
-            icon.source: "go-down-symbolic"
-			onClicked: parent.positionViewAtIndex(0, ListView.Center)
-
-			Behavior on width {
-				SmoothedAnimation {}
-			}
-
-			Behavior on height {
-				SmoothedAnimation {}
-			}
-
-			MessageCounter {
+        MessageCounter {
 				id: unreadMessageCounter
 				count: chatItemWatcher.item.unreadMessageCount
 				anchors.horizontalCenter: parent.horizontalCenter
 				anchors.verticalCenter: parent.top
 				anchors.verticalCenterOffset: -2
-			}
-		}
-	}
-*/
+        }
 
-        footer: ChatPageSendingPane {
+
+/*        footer: ChatPageSendingPane {
             id: sendingPane
             chatPage: root
         }
-
+*/
         function saveDraft() {
             sendingPane.composition.saveDraft();
         }

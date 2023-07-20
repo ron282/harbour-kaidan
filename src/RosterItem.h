@@ -86,8 +86,11 @@ public:
 	QXmppRosterIq::Item::SubscriptionType subscription = QXmppRosterIq::Item::NotSet;
 
 	// End-to-end encryption used for this roster item.
-	Encryption::Enum encryption = Encryption::Omemo2;
-
+#if defined(SFOS)
+    Encryption::Enum encryption = Encryption::Omemo0;
+#else
+    Encryption::Enum encryption = Encryption::Omemo2;
+#endif
 	// Number of messages unread by the user.
 	int unreadMessages = 0;
 

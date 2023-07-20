@@ -92,8 +92,8 @@ DockedPanel {
 	Column {
         Label {
 			anchors.horizontalCenter: parent
-            //anchors.topMargin: Kirigami.Units.gridUnit * 10
-            //anchors.bottomMargin: Kirigami.Units.gridUnit * 10
+            anchors.topMargin: Theme.paddingSmall
+            anchors.bottomMargin: Theme.paddingSmall
 			text: qsTr("Choose files")
 			visible: fileList.count === 0
 		}
@@ -109,8 +109,8 @@ DockedPanel {
                 Row {
 					// Icon
 					Icon {
-						//FIXME Layout.preferredWidth: Kirigami.Units.iconSizes.huge
-						// //FIXME Layout.preferredHeight: Kirigami.Units.iconSizes.huge
+                        width: Theme.iconSizeExtraLarge
+                        height: width
 						source: model.thumbnail
 					}
 
@@ -146,7 +146,7 @@ DockedPanel {
 					}
 
                     Button {
-						icon.source: "list-remove-symbolic"
+                        icon.source: "image://theme/icon-splus-remove"
 						text: qsTr("Remove file")
 						//FIXME display: Controls.AbstractButton.IconOnly
 						onClicked: root.composition.fileSelectionModel.removeFile(model.index)
@@ -169,7 +169,7 @@ DockedPanel {
 		Row {
             Button {
 				text: qsTr("Add")
-				icon.source: "list-add-symbolic"
+                icon.source: "image://theme/icon-m-attach"
 
 				onClicked: root.composition.fileSelectionModel.selectFile()
 			}
@@ -180,7 +180,7 @@ DockedPanel {
 
             Button {
 				text: qsTr("Send")
-				icon.source: "mail-send-symbolic"
+                icon.source: "image://theme/icon-m-send"
 				onClicked: {
 					root.composition.send()
 					close()

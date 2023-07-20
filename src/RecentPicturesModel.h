@@ -30,11 +30,9 @@
 
 #pragma once
 
-/*
+#include <QSortFilterProxyModel>
 
-#include <KDirSortFilterProxyModel>
-
-class RecentPicturesModel : public KDirSortFilterProxyModel
+class RecentPicturesModel : public QSortFilterProxyModel
 {
 	Q_OBJECT
 
@@ -43,7 +41,27 @@ class RecentPicturesModel : public KDirSortFilterProxyModel
 	};
 
 public:
-	explicit RecentPicturesModel(QObject *parent = nullptr);
+    RecentPicturesModel(QObject *parent = nullptr);
+
+    QHash<int, QByteArray> roleNames() const override;
+
+    QVariant data(const QModelIndex &index, int role) const override;
+
+//    bool subSortLessThan(const QModelIndex &left, const QModelIndex &right) const;
+};
+
+
+/*
+class RecentPicturesModel : public KDirSortFilterProxyModel
+{
+    Q_OBJECT
+
+    enum Role {
+        FilePath = Qt::UserRole + 1
+    };
+
+public:
+    explicit RecentPicturesModel(QObject *parent = nullptr);
 
     QHash<int, QByteArray> roleNames() const override;
 

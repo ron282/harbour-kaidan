@@ -127,7 +127,7 @@ auto runAsync(QObject *targetObject, Function function)
 		interface.reportFinished();
         timer->deleteLater();
     });
-    QMetaObject::invokeMethod(timer, "start", Qt::QueuedConnection, Q_ARG(int, 0));
+    QMetaObject::invokeMethod(timer, "start", Qt::AutoConnection, Q_ARG(int, 0));
 #else
 	QMetaObject::invokeMethod(targetObject, [interface, function = std::move(function)]() mutable {
 		interface.reportStarted();

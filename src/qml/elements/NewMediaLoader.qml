@@ -76,7 +76,7 @@ Loader {
 	}
 
 	//FIXME Layout.fillHeight: item ? item.Layout.fillHeight : false
-    width: item ? item.width : nul
+    //width: item ? item.width : null
 	// //FIXME Layout.preferredHeight: item ? item.// Layout.preferredHeight : -1
 	//FIXME Layout.preferredWidth: item ? item.Layout.preferredWidth : -1
 	//FIXME Layout.minimumHeight: item ? item.Layout.minimumHeight : -1

@@ -50,6 +50,7 @@ Page {
         spacing: Theme.paddingLarge
 
         Label {
+            anchors.leftMargin: Theme.paddingSmall
 			text: qsTr("Log in to your XMPP account")
 			wrapMode: Text.WordWrap
 		}

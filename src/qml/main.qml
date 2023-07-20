@@ -42,9 +42,6 @@ import "settings"
 ApplicationWindow {
 	id: root
 
-//	minimumHeight: 300
-//	minimumWidth: 280
-
     property bool wideScreen: false
     readonly property ChatPage currentChatPage: {
         return pageStack.find(function(p){

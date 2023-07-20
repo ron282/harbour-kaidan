@@ -44,6 +44,7 @@ Button {
 	property var senderJids: []
     property string description: senderJids.length
 	property MessageReactionSenderSheet senderSheet
+    property string messageId
 
 	text: emoji + " " +  description
     width: smallButtonWidth + (description.length == 1 ? 0 : (description.length - 1) * Theme.defaultFont.pixelSize * 0.6)

@@ -16,7 +16,7 @@ DetailsHeader {
 	displayName: contactWatcher.item.displayName
     Button {
 		text: qsTr("Maximize avatar")
-		icon.source: "view-fullscreen-symbolic"
+        icon.source: "image://theme/icon-m-device"
 		enabled: Kaidan.avatarStorage.getAvatarUrl(jid)
         onClicked: Qt.openUrlExternally(Kaidan.avatarStorage.getAvatarUrl(jid))
 	}

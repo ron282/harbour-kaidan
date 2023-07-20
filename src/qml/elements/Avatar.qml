@@ -40,10 +40,18 @@ Image {
     source: jid ? Kaidan.avatarStorage.getAvatarUrl(jid) : "image://theme/icon-m-contact"
     fillMode: Image.PreserveAspectCrop;
     antialiasing: true;
-    anchors {
-        top: parent.top;
-        left: parent.left;
-        leftMargin: Theme.paddingMedium
+    height: parent.height
+    width: height
+
+    signal clicked()
+
+    MouseArea {
+        id: mousearea
+        anchors.fill: parent
+    }
+
+    Component.onCompleted: {
+        mousearea.clicked.connect(clicked)
     }
 }
 

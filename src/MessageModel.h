@@ -182,7 +182,6 @@ public:
 	 * Sends pending messages again after searching them in the database.
 	 */
 	void sendPendingMessages();
-
 	/**
 	  * Returns the current chat state
 	  */
@@ -237,8 +236,14 @@ signals:
 private:
 	void handleKeysRetrieved(const QHash<QString, QHash<QByteArray, QXmpp::TrustLevel>> &keys);
 
+#if defined(SFOS)
+private slots:
+#endif
 	void handleMessagesFetched(const QVector<Message> &m_messages);
-	void handleMamBacklogRetrieved(const QString &accountJid, const QString &jid, const QDateTime &lastStamp, bool complete);
+#if defined(SFOS)
+private:
+#endif
+    void handleMamBacklogRetrieved(const QString &accountJid, const QString &jid, const QDateTime &lastStamp, bool complete);
 
 	void addMessage(const Message &msg);
 	void updateMessage(const QString &id,

@@ -468,9 +468,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<UserPresenceWatcher>("im.kaidan.kaidan", 1, 0, "UserPresenceWatcher");
     qmlRegisterType<UserResourcesWatcher>("im.kaidan.kaidan", 1, 0, "UserResourcesWatcher");
     qmlRegisterType<RosterItemWatcher>("im.kaidan.kaidan", 1, 0, "RosterItemWatcher");
-#if !defined(SFOS)
     qmlRegisterType<RecentPicturesModel>("im.kaidan.kaidan", 1, 0, "RecentPicturesModel");
-#endif
     qmlRegisterType<NotificationsMutedWatcher>("im.kaidan.kaidan", 1, 0, "NotificationsMutedWatcher");
 	qmlRegisterType<PublicGroupChatSearchManager>("PublicGroupChats", 1, 0, "SearchManager");
 	qmlRegisterType<PublicGroupChatModel>("PublicGroupChats", 1, 0, "Model");

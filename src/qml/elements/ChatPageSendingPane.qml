@@ -76,7 +76,7 @@ DockedPanel {
 				id: spoilerHintField
                 width: parent.width
 				placeholderText: qsTr("Spoiler hint")
-				wrapMode: TextArea.Wrap
+                wrapMode: TextEdit.Wrap
 				// background: Item {}
 			}
 
@@ -105,7 +105,7 @@ DockedPanel {
 
 			// emoji picker button
 			ClickableIcon {
-                icon.source: "face-smile"
+                icon.source: "image://theme/icon-m-developer-mode"
 				enabled: sendButton.enabled
 				onClicked: !emojiPicker.toggle()
 			}
@@ -180,39 +180,39 @@ DockedPanel {
 					}
 				}
 
-				Connections {
-					target: chatPage.messageReactionEmojiPicker
+//				Connections {
+//					target: chatPage.messageReactionEmojiPicker
 
 					// Restore the active focus when messageReactionEmojiPicker is closed.
-					function onClosed() {
-						root.forceActiveFocus()
-					}
-				}
-			}
+//					function onClosed() {
+//						root.forceActiveFocus()
+//					}
+//				}
+            }
 
 			// Voice message button
-			ClickableIcon {
-                icon.source: MediaUtilsInstance.newMediaIconName(Enums.MessageType.MessageAudio)
-				visible: messageArea.text === ""
+//			ClickableIcon {
+//                icon.source: MediaUtilsInstance.newMediaIconName(Enums.MessageType.MessageAudio)
+//				visible: messageArea.text === ""
 
-				opacity: visible ? 1 : 0
-				Behavior on opacity {
-					NumberAnimation {}
-				}
+//				opacity: visible ? 1 : 0
+//				Behavior on opacity {
+//					NumberAnimation {}
+//				}
 
-				onClicked: {
-					chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageAudio)
-				}
+//				onClicked: {
+//					chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageAudio)
+//				}
 			}
 
 			// file sharing button
-			ClickableIcon {
-                icon.source: "mail-attachment-symbolic"
+            IconButton {
+                icon.source: "image://theme/icon-m-share"
                 visible: messageArea.text === ""
 				opacity: visible ? 1 : 0
 				Behavior on opacity {
 					NumberAnimation {}
-				}
+                }
 
 				property bool checked: false
 				onClicked: {
@@ -226,16 +226,15 @@ DockedPanel {
 				}
 			}
 
-            ContextMenu {
+            SilicaControl {
 				id: mediaPopup
 				x:  root.width - width - 40
 				y: - height - root.padding - 20
-//				padding: 1
 
 				width: 470
                 Column {
 					anchors.fill: parent
-//                    AbstractApplicationHeader {
+//                  AbstractApplicationHeader {
 //						width: parent.width
 //						leftPadding: Kirigami.Units.largeSpacing
 //						SectionHeader {
@@ -248,9 +247,10 @@ DockedPanel {
 						visible: thumbnails.count !== 0
 
                         Row {
-                            /*ColumnView {
+                            ColumnView {
 								id: thumbnails
                                 anchors.fill: parent
+                                itemHeight: 125
                                 model: RecentPicturesModel {}
 
 								delegate: Item {
@@ -275,7 +275,7 @@ DockedPanel {
 										asynchronous: true
 									}
 								}
-                            }*/
+                            }
 						}
 					}
 
@@ -286,7 +286,6 @@ DockedPanel {
                             IconButton {
                                 icon.source: "image://theme/icon-m-camera"
 //                                text: qsTr("Take picture")
-//								tooltipText: qsTr("Take a picture using your camera")
 
 								onClicked: {
 									chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageImage)
@@ -296,7 +295,6 @@ DockedPanel {
                             IconButton {
                                 icon.source: "image://theme/icon-m-video"
 //								title: qsTr("Record video")
-//								tooltipText: qsTr("Record a video using your camera")
 
 								onClicked: {
 									chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageVideo)
@@ -306,7 +304,6 @@ DockedPanel {
                             IconButton {
                                 icon.source: "image://theme/icon-m-document"
 //                                title: qsTr("Share files")
-//								tooltipText: qsTr("Share files from your device")
 
 								onClicked: {
 									chatPage.sendMediaSheet.selectFile()
@@ -316,7 +313,6 @@ DockedPanel {
                             IconButton {
                                 icon.source: "image://theme/icon-m-location"
 //								title: qsTr("Share location")
-//								tooltipText: qsTr("Send your location")
 
 								onClicked: {
 									chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageGeoLocation)
@@ -336,15 +332,14 @@ DockedPanel {
 				}
                 icon.source: {
 					if (messageArea.state === "compose")
-						return "mail-send-symbolic"
+                        return "image://theme/icon-m-send"
 					else if (messageArea.state === "edit")
-						return "document-edit-symbolic"
+                        return "image://theme/icon-m-edit"
 				}
 
 				onClicked: sendMessage()
 			}
 		}
-	}
 
 	/**
 	 * Forces the active focus on desktop devices.

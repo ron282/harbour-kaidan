@@ -95,7 +95,7 @@ DockedPanel {
 
 		// buttons for send/cancel
 		Row {
-			anchors.topMargin: Kirigami.Units.largeSpacing
+            anchors.topMargin: Theme.paddingLarge
 			width: parent.width
 
 			Button {

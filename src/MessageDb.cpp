@@ -197,21 +197,23 @@ QSqlRecord MessageDb::createUpdateRecord(const Message &oldMsg, const Message &n
 
 QFuture<QVector<Message>> MessageDb::fetchMessages(const QString &accountJid, const QString &chatJid, int index)
 {
+    qDebug() << "fetchMessages" << "accountJid=" << accountJid;
+
 	return run([this, accountJid, chatJid, index]() {
 		auto query = createQuery();
 		prepareQuery(
 			query,
-			"SELECT * FROM " DB_VIEW_CHAT_MESSAGES " "
+            "SELECT * FROM " DB_VIEW_CHAT_MESSAGES " "
 			"WHERE (sender = :accountJid AND recipient = :chatJid) OR "
 				  "(sender = :chatJid AND recipient = :accountJid) "
-			"ORDER BY timestamp DESC "
-			"LIMIT :index, :limit"
+            "ORDER BY timestamp DESC "
+            "LIMIT :index, :limit"
 		);
 		bindValues(query, {
-			{ u":accountJid", accountJid },
-			{ u":chatJid", chatJid },
-			{ u":index", index },
-			{ u":limit", DB_QUERY_LIMIT_MESSAGES },
+            { ":accountJid", accountJid },
+            { ":chatJid", chatJid },
+            { ":index", index },
+            { ":limit", DB_QUERY_LIMIT_MESSAGES },
 		});
 		execQuery(query);
 
@@ -219,12 +221,13 @@ QFuture<QVector<Message>> MessageDb::fetchMessages(const QString &accountJid, co
 		_fetchReactions(messages);
 
 		emit messagesFetched(messages);
-		return messages;
+        return messages;
 	});
 }
 
 QFuture<QVector<Message> > MessageDb::fetchMessagesUntilFirstContactMessage(const QString &accountJid, const QString &chatJid, int index)
 {
+    qDebug() << "fetchMessagesUntilFirstContactMessage" << "accountJid=" << accountJid;
 	return run([this, accountJid, chatJid, index]() {
 		auto query = createQuery();
 		prepareQuery(
@@ -251,23 +254,25 @@ QFuture<QVector<Message> > MessageDb::fetchMessagesUntilFirstContactMessage(cons
 			)"
 		);
 		bindValues(query, {
-			{ u":accountJid", accountJid },
-			{ u":chatJid", chatJid },
-			{ u":index", index },
-			{ u":limit", DB_QUERY_LIMIT_MESSAGES },
+            { ":accountJid", accountJid },
+            { ":chatJid", chatJid },
+            { ":index", index },
+            { ":limit", DB_QUERY_LIMIT_MESSAGES },
 		});
 		execQuery(query);
 
 		auto messages = _fetchMessagesFromQuery(query);
 		_fetchReactions(messages);
 
-		emit messagesFetched(messages);
+        emit messagesFetched(messages);
 		return messages;
 	});
 }
 
 QFuture<QVector<Message>> MessageDb::fetchMessagesUntilId(const QString &accountJid, const QString &chatJid, int index, const QString &limitingId)
 {
+    qDebug() << "fetchMessagesUntilId";
+
 	return run([this, accountJid, chatJid, index, limitingId]() {
 		auto query = createQuery();
 		prepareQuery(
@@ -297,7 +302,8 @@ QFuture<QVector<Message>> MessageDb::fetchMessagesUntilId(const QString &account
 		auto messages = _fetchMessagesFromQuery(query);
 		_fetchReactions(messages);
 
-		emit messagesFetched(messages);
+        emit messagesFetched(messages);
+
 		return messages;
 	});
 }
@@ -323,11 +329,11 @@ QFuture<MessageDb::MessageResult> MessageDb::fetchMessagesUntilQueryString(const
 			"(sender = :chatJid AND recipient = :accountJid))"
 		);
 		bindValues(query, {
-			{ u":accountJid", accountJid },
-			{ u":chatJid", chatJid },
-			{ u":index", index },
+            { ":accountJid", accountJid },
+            { ":chatJid", chatJid },
+            { ":index", index },
 			// '%' is intended here as a placeholder inside the query for SQL statement "LIKE".
-			{ u":queryString", "%" + queryString + "%" },
+            { ":queryString", "%" + queryString + "%" },
 		});
 		execQuery(query);
 
@@ -349,10 +355,10 @@ QFuture<MessageDb::MessageResult> MessageDb::fetchMessagesUntilQueryString(const
 			"LIMIT :index, :limit"
 		);
 		bindValues(query, {
-			{ u":accountJid", accountJid },
-			{ u":chatJid", chatJid },
-			{ u":index", index },
-			{ u":limit", messagesUntilQueryStringCount + DB_QUERY_LIMIT_MESSAGES },
+            { ":accountJid", accountJid },
+            { ":chatJid", chatJid },
+            { ":index", index },
+            { ":limit", messagesUntilQueryStringCount + DB_QUERY_LIMIT_MESSAGES },
 		});
 		execQuery(query);
 
@@ -364,6 +370,7 @@ QFuture<MessageDb::MessageResult> MessageDb::fetchMessagesUntilQueryString(const
 
 		_fetchReactions(result.messages);
 
+        qDebug() << "fetchMessagesUntilQueryString: emit messagesFetched";
 		emit messagesFetched(result.messages);
 
 		return result;
@@ -581,6 +588,7 @@ QFuture<void> MessageDb::removeMessages(const QString &, const QString &)
 QFuture<void> MessageDb::updateMessage(const QString &id,
                                        const std::function<void (Message &)> &updateMsg)
 {
+    qDebug() << "updateMessage";
 	return run([this, id, updateMsg]() {
 		emit messageUpdated(id, updateMsg);
 
@@ -1086,7 +1094,7 @@ void MessageDb::_fetchReactions(QVector<Message> &messages)
 		);
 
 		// Iterate over all found emojis.
-		while (query.next()) {
+        while (query.next()) {
 			auto &reaction = message.reactions[query.value(SenderJid).toString()];
 
 			// Use the timestamp of the current emoji as the latest timestamp if the emoji's

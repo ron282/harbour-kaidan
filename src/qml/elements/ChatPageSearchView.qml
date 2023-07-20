@@ -54,10 +54,6 @@ Item {
 	}
 
 	// Background of the message search bar
-	Rectangle {
-		anchors.fill: parent
-		color: Kirigami.Theme.backgroundColor
-	}
 
 	// Search field and its corresponding buttons
 	Row {
@@ -66,7 +62,7 @@ Item {
 		anchors.left: parent.left
 		anchors.right: parent.right
 		anchors.bottom: parent.bottom
-		anchors.margins: Kirigami.Units.largeSpacing
+        anchors.margins: Theme.paddingLarge
 
         Button {
 			text: qsTr("Close message search bar")

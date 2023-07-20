@@ -22,9 +22,9 @@ Row {
 	property string displayName
     property Button avatarAction
 
-	anchors.topMargin: Kirigami.Settings.isMobile ? 0 : Kirigami.Units.largeSpacing * 2
-    anchors.bottomMargin: Kirigami.Settings.isMobile ? 0 : Kirigami.Units.largeSpacing
-    anchors.leftMargin: Kirigami.Units.largeSpacing * 2
+    anchors.topMargin:  0
+    anchors.bottomMargin: 0
+    anchors.leftMargin: Theme.paddingLarge* 2
     anchors.rightMargin: anchors.leftMargin
 
 	Avatar {
@@ -34,43 +34,6 @@ Row {
         //FIXME Layout.preferredWidth: Layout.preferredHeight
 
 		// TODO: Make icon also visible when the cursor is on it directly after opening this page
-		MouseArea {
-			anchors.fill: parent
-			hoverEnabled: true
-			cursorShape: Qt.PointingHandCursor
-			visible: avatarAction.enabled
-			onEntered: {
-				avatarActionHoverImage.visible = true
-				avatarHoverFadeInAnimation.start()
-			}
-			onExited: avatarHoverFadeOutAnimation.start()
-			onClicked: root.avatarAction.triggered()
-
-            Icon {
-				id: avatarActionHoverImage
-				source: root.avatarAction.icon.name
-				color: Kirigami.Theme.backgroundColor
-				width: parent.width / 2
-				height: width
-				anchors.centerIn: parent
-				opacity: 0
-				visible: false
-
-				NumberAnimation on opacity {
-					id: avatarHoverFadeInAnimation
-					from: 0
-					to: 0.8
-					duration: 250
-				}
-
-				NumberAnimation on opacity {
-					id: avatarHoverFadeOutAnimation
-					from: 0.8
-					to: 0
-					duration: 250
-				}
-			}
-		}
 	}
 
 	Column {
@@ -85,11 +48,6 @@ Row {
 				id: displayNameEditingIcon
                 //FIXME Controls.ToolTip.text: qsTr("Change name…")
                 icon.source: "image://theme/icon-m-edit"
-                //FIXME display: Controls.AbstractButton.IconOnly
-                //FIXME checked: !displayNameText.visible
-                //FIXME flat: true
-                //FIXME Layout.preferredWidth: Layout.preferredHeight
-                //FIXME Layout.preferredHeight: displayNameTextField.implicitHeight
 				onHoveredChanged: {
 					if (hovered) {
 						flat = false
@@ -118,7 +76,7 @@ Row {
 				visible: !displayNameTextField.visible
                 //FIXME // Layout.alignment: Qt.AlignVCenter
 				width: parent.width
-				leftPadding: Kirigami.Units.largeSpacing
+                leftPadding: Theme.paddingLarge
 				// TODO: Get update of current vCard by using Entity Capabilities
 				onTextChanged: displayNameChangedFunction()
 
@@ -136,7 +94,7 @@ Row {
 				id: displayNameTextField
 				text: displayNameText.text
 				visible: false
-                anchors.leftMargin: Kirigami.Units.largeSpacing
+                anchors.leftMargin: Theme.paddingLarge
 				width: parent.width
                 //FIXME onAccepted: {
                 //	displayNameArea.changeDisplayName(text)
@@ -153,12 +111,11 @@ Row {
 
         Label {
 			text: root.jid
-			color: Kirigami.Theme.secondaryColor
 			textFormat: Text.PlainText
 			maximumLineCount: 1
 			elide: Text.ElideRight
 			width: parent.width
-            anchors.leftMargin: displayNameEditingIcon.Layout.preferredWidth + displayNameTextField.anchors.leftMargin
+            anchors.leftMargin: displayNameTextField.anchors.leftMargin
 		}
 	}
 }

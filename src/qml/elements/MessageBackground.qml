@@ -111,8 +111,6 @@ Item {
 			id: timestamp
 			opacity: 0.5
 			text: Qt.formatDateTime(message.dateTime, "hh:mm")
-			font.pointSize: -1
-			font.pixelSize: Kirigami.Units.gridUnit * (2/3)
 
 			MouseArea {
 				id: timestampMouseArea
@@ -127,14 +125,14 @@ Item {
 		}
 
         Icon {
-			source: backgroundRoot.message.encryption === Encryption.NoEncryption ? "channel-insecure-symbolic" : "channel-secure-symbolic"
+            source: backgroundRoot.message.encryption === Encryption.NoEncryption ? "image://theme/icon-m-warning" : "image://theme/icon-m-device-lock"
             width: Theme.iconSizeSmall
             height: width
 		}
 
         Icon {
 			// TODO: Use "security-low-symbolic" for distrusted, "security-medium-symbolic" for automatically trusted and "security-high-symbolic" for authenticated
-			source: backgroundRoot.message.isTrusted ? "security-high-symbolic" : "security-low-symbolic"
+            source: backgroundRoot.message.isTrusted ? "image://theme/icon-m-device-lock" : "image://theme/icon-m-warning"
 			visible: backgroundRoot.message.encryption !== Encryption.NoEncryption
             width: Theme.iconSizeSmall
             height: width
@@ -156,7 +154,7 @@ Item {
 //			}
 		}
         Icon {
-			source: "document-edit-symbolic"
+            source: "image://theme/	icon-s-edit"
 			visible: message.edited
 //			// //FIXME Layout.preferredHeight: Kirigami.Units.gridUnit * 0.65
 //			//FIXME Layout.preferredWidth: Kirigami.Units.gridUnit * 0.65

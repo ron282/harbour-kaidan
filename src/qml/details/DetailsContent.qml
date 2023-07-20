@@ -30,7 +30,7 @@ SilicaControl {
 
     Column {
 		id: mainArea
-		spacing: Kirigami.Units.largeSpacing
+        spacing: Theme.paddingLarge
 
 		Component {
 			id: qrCodePage
@@ -80,8 +80,8 @@ SilicaControl {
 
                             Label {
 								text: model.key
-								color: Kirigami.Theme.secondaryColor
-								font: Kirigami.Theme.smallFont
+                                color: Theme.secondaryColor
+                                font.pixelSize: Theme.fontSizeSmall
 								textFormat: Text.PlainText
 								wrapMode: Text.WordWrap
 								width: parent.width
@@ -136,8 +136,8 @@ SilicaControl {
 
                             Label {
 								text: model.os
-								color: Kirigami.Theme.secondaryColor
-								font: Kirigami.Theme.smallFont
+                                color: Theme.secondaryColor
+                                font.pixelSize: Theme.fontSizeSmall
 								textFormat: Text.PlainText
 								wrapMode: Text.WordWrap
 								width: parent.width

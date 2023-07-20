@@ -41,7 +41,10 @@ class Encryption
 public:
 	enum Enum {
 		NoEncryption = QXmpp::NoEncryption,  ///< No encryption
-		Omemo2 = QXmpp::Omemo2               ///< XEP-0384 OMEMO Encryption since version 0.8
-	};
+        Omemo2 = QXmpp::Omemo2               ///< XEP-0384 OMEMO Encryption since version 0.8
+#if defined(SFOS)
+        ,Omemo0 = QXmpp::Omemo0
+#endif
+    };
 	Q_ENUM(Enum)
 };

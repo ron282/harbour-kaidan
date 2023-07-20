@@ -37,7 +37,6 @@ UserListItem {
 	id: root
 
 	property ListView listView
-    property ContextMenu contextMenu
 	property bool lastMessageIsDraft
 	property string lastMessage
 	property int unreadMessages
@@ -51,75 +50,71 @@ UserListItem {
 	// middle
     Column {
         spacing: Theme.paddingLarge
-        anchors.right: parent.right
-        anchors.left: content.right
+        anchors {
+            left: avatar.right;
+            right: parent.right
+            margins: Theme.paddingMedium;
+            verticalCenter: parent.verticalCenter;
+        }
 
 		// name
         Label  {
 			id: nameText
-			text: name
+            text: name
 			textFormat: Text.PlainText
 			elide: Text.ElideRight
 			maximumLineCount: 1
-//			level: 4
-            width: parent.width
-		}
+            width: parent.width - mutedIcon.width
+            font.pixelSize: Theme.fontSizeMedium;
+        }
 
 		// last message or error status message if available, otherwise not visible
         Row {
+            id: layout
 			visible: lastMessageText.text
+            width: parent.width
 
             Label {
 				id: draft
 				visible: lastMessageIsDraft
+                font.pixelSize: Theme.fontSizeSmall
 				textFormat: Text.PlainText
 				text: qsTr("Draft:")
-				font {
-					weight: Font.Light
-					italic: true
-				}
 			}
 
             Label {
 				id: lastMessageText
+                width: layout.width - draft.width - layout.spacing
 				elide: Text.ElideRight
 				maximumLineCount: 1
 				text: Utils.removeNewLinesFromString(lastMessage)
 				textFormat: Text.PlainText
-				font.weight: Font.Light
-			}
+                font.pixelSize: Theme.fontSizeSmall
+            }
 		}
 	}
-
-	onIsSelectedChanged: textColorAnimation.restart()
-
-	// fading text colors
-//	ColorAnimation {
-//		id: textColorAnimation
-//		targets: [nameText, lastMessageText]
-//		property: "color"
-//        to: root.isSelected ? Theme.primaryColor : Theme.highlightColor
-//        duration: 1 // Kirigami.Units.shortDuration
-//		running: false
-//	}
 
 	// right: icon for muted contact
 	// Its size depends on the font's pixel size to be as large as the message counter.
     Icon {
 		id: mutedIcon
         source: "image://theme/icon-m-speaker-mute"
-        width: Theme.iconSizeMedium
+        width: Theme.iconSizeSmall
         height: width
 		visible: mutedWatcher.muted
+        anchors.left: nameText.right
+        anchors.leftMargin: Theme.paddingMedium
 	}
 
 	// right: icon for pinned chat
 	// Its size depends on the font's pixel size to be as large as the message counter.
     Icon {
         source: "image://theme/icon-m-asterisk"
-        width: Theme.iconSizeMedium
+        width: Theme.iconSizeSmall
         height: width
 		visible: pinned
+        anchors.top: mutedIcon.top
+        anchors.right: parent.right
 	}
 
     // right: unread message counter
@@ -137,29 +132,8 @@ UserListItem {
 //		onMoveRequested: RosterModel.reorderPinnedItem(root.accountJid, root.jid, oldIndex, newIndex)
 //	}
 
-	MouseArea {
-		parent: root
-		anchors.fill: parent
-		acceptedButtons: Qt.RightButton
-
-		onClicked: {
-			if (mouse.button === Qt.RightButton) {
-				showContextMenu()
-			}
-		}
-
-		onPressAndHold: showContextMenu()
-	}
-
 	NotificationsMutedWatcher {
 		id: mutedWatcher
 		jid: root.jid
-	}
-
-	function showContextMenu() {
-		if (contextMenu) {
-			contextMenu.item = this
-			contextMenu.popup()
-		}
 	}
 }

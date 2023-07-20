@@ -59,19 +59,19 @@ ListItem {
 	property string spoilerHint
 	property bool isShowingSpoiler: false
 	property string errorText: ""
-	property alias bodyLabel: bodyLabel
+//	property alias bodyLabel: bodyLabel
 	property var files;
 	property var reactions
 
 	property bool isGroupBegin: {
-		return modelIndex < 1 ||
+        return modelIndex < 1 ||
 			MessageModel.data(MessageModel.index(modelIndex - 1, 0), MessageModel.Sender) !== senderJid
-	}
+    }
 
 	signal messageEditRequested(string id, string body)
 	signal quoteRequested(string body)
 
-	height: messageArea.implicitHeight + (isGroupBegin ? Kirigami.Units.largeSpacing : Kirigami.Units.smallSpacing)
+    height: messageArea.implicitHeight + (isGroupBegin ? Theme.paddingLarge : Theme.paddingSmall)
 
 /*	actions: [
 		// TODO: Move message to the left when action is displayed and message is too large or
@@ -93,14 +93,14 @@ ListItem {
 		id: messageArea
 		spacing: -5
 
+        // Own messages are on the right, others on the left side.
+        anchors {
+            left: (isOwn ? parent.left : undefined);
+            right: (!isOwn ? parent.right : undefined);
+            margins: -shadow.anchors.margins;
+            verticalCenter: parent.verticalCenter;
+        }
         Row {
-			// Own messages are on the right, others on the left side.
-			layoutDirection: isOwn ? Qt.RightToLeft : Qt.LeftToRight
-
-			// placeholder
-//			Item {
-//				//FIXME Layout.preferredWidth: 5
-//			}
 
 			Item {
 				visible: !isOwn
@@ -115,15 +115,16 @@ ListItem {
 				}
 			}
 
+
 			// message bubble
-            BackgroundItem {
+/*            BackgroundItem {
 				id: bubble
 
-				readonly property string paddingText: {
+                readonly property string paddingText: {
 					"⠀".repeat(Math.ceil(background.metaInfoWidth / background.dummy.implicitWidth))
 				}
-
-				readonly property alias backgroundColor: bubbleBackground.color
+*/
+/*				readonly property alias backgroundColor: bubbleBackground.color
 
                 MessageBackground {
 					id: bubbleBackground
@@ -132,28 +133,28 @@ ListItem {
 
 					MouseArea {
 						anchors.fill: parent
-						acceptedButtons: Qt.LeftButton | Qt.RightButton
 
 						onClicked: {
 							if (mouse.button === Qt.RightButton)
-								showContextMenu()
+                                showContextMenu()
 						}
 
 						onPressAndHold: showContextMenu()
 					}
 				}
+*/
 
                 Column {
 					id: content
 
-                    Row {
+                    /*Row {
 						id: spoilerHintRow
 						visible: isSpoiler
 
                         Label {
 							text: spoilerHint == "" ? qsTr("Spoiler") : spoilerHint
-							color: Kirigami.Theme.textColor
-							font.pixelSize: Kirigami.Units.gridUnit * 0.8
+                            color: Theme.primaryColor
+                            font.pixelSize: Theme.fontSizeMedium
 							MouseArea {
 								anchors.fill: parent
 								acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -173,24 +174,18 @@ ListItem {
                         Icon {
 							height: 28
 							width: 28
-							source: isShowingSpoiler ? "password-show-off" : "password-show-on"
-							color: Kirigami.Theme.textColor
+                            source: isShowingSpoiler ? "image://theme/icon-splus-hide-password" : "image://theme/icon-splus-show-password"
 						}
 					}
                     Separator {
 						visible: isSpoiler
                         width:  parent.width
-						color: {
-                            bgColor = Kirigami.Theme.backgroundColor
-                            textColor = Kirigami.Theme.textColor
-							return Qt.tint(textColor, Qt.rgba(bgColor.r, bgColor.g, bgColor.b, 0.7))
-						}
-					}
+                    }*/
 
                     Column {
 						visible: isSpoiler && isShowingSpoiler || !isSpoiler
 
-                        Button {
+                        /*Button {
 							visible: {
 								switch (root.mediaType) {
 								case Enums.MessageType.MessageUnknown:
@@ -215,7 +210,7 @@ ListItem {
 							}
 						}
 
-						ColumnView {
+                        ColumnView {
 							model: root.files
 
 							delegate: MediaPreviewOther {
@@ -235,31 +230,27 @@ ListItem {
 								message: root
 								file: modelData
 							}
-						}
+                        }*/
+
 
 						// message body
                         Label {
 							id: bodyLabel
 							visible: messageBody
-							text: Utils.formatMessage(messageBody) + bubble.paddingText
+                            text: Utils.formatMessage(messageBody) // + bubble.paddingText
 							textFormat: Text.StyledText
 							wrapMode: Text.Wrap
-                            color: Theme.textColor
 							onLinkActivated: Qt.openUrlExternally(link)
 						}
                         Separator {
 							visible: isSpoiler && isShowingSpoiler
                             width : parent.width
-							color: {
-                                bgColor = Theme.backgroundColor
-                                textColor = Theme.textColor
-								return Qt.tint(textColor, Qt.rgba(bgColor.r, bgColor.g, bgColor.b, 0.7))
-							}
 						}
 					}
 
 					// message reactions (emojis in reaction to this message)
-					Flow {
+
+                    /*Flow {
 						spacing: 4
                         anchors.rightMargin: isOwn ? 45 : 30
                         width: {
@@ -270,7 +261,7 @@ ListItem {
 							}
 						}
 
-/*						ColumnView {
+                        ColumnView {
 							model: Object.keys(root.reactions)
 
 							MessageReactionDisplay {
@@ -279,13 +270,11 @@ ListItem {
 								isOwnMessage: root.isOwn
 								senderJids: root.reactions[modelData]
 								senderSheet: root.reactionSenderSheet
-								primaryColor: root.isOwn ? primaryBackgroundColor : secondaryBackgroundColor
-								accentColor: bubble.backgroundColor
+//								primaryColor: root.isOwn ? primaryBackgroundColor : secondaryBackgroundColor
+//								accentColor: bubble.backgroundColor
 							}
 						}
-*/
-
-						MessageReactionAddition {
+                        MessageReactionAddition {
 							id: messageReactionAddition
 							// TODO: Remove " && Kaidan.connectionState === Enums.StateConnected" once offline queue for message reactions is implemented
 							visible: !root.isOwn && Object.keys(root.reactions).length && Kaidan.connectionState === Enums.StateConnected
@@ -294,10 +283,10 @@ ListItem {
 							primaryColor: secondaryBackgroundColor
 							accentColor: bubble.backgroundColor
 						}
-					}
+                    }*/
 
 					// warning for different encryption corner cases
-					CenteredAdaptiveText {
+                    /*CenteredAdaptiveText {
 						text: {
 							if (root.encryption === Encryption.NoEncryption) {
 								if (MessageModel.isOmemoEncryptionEnabled) {
@@ -319,14 +308,15 @@ ListItem {
 						font.italic: true
 						scaleFactor: 0.9
                         anchors.bottomMargin: 10
-					}
+                    }*/
+
 
                     Label {
 						visible: errorText
 						id: errorLabel
 						text: qsTr(errorText)
                         color: Theme.secondaryColor
-                        font.pixelSize: 20 * 0.8
+                        font.pixelSize: Theme.fontSizeSmall
 					}
 				}
 			}
@@ -344,7 +334,6 @@ ListItem {
             anchors.topMargin: 10
             anchors.leftMargin: 10
 		}
-	}
 
 	/**
 	 * Shows a context menu (if available) for this message.

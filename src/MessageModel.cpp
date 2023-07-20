@@ -138,12 +138,10 @@ MessageModel::MessageModel(QObject *parent)
 		m_chatStateCache.insert(m_currentChatJid, QXmppMessage::Gone);
 		emit chatStateChanged();
 	});
-
 	connect(MessageDb::instance(), &MessageDb::messagesFetched,
 	        this, &MessageModel::handleMessagesFetched);
 	connect(MessageDb::instance(), &MessageDb::pendingMessagesFetched,
 	        this, &MessageModel::pendingMessagesFetched);
-
 	// addMessage requests are forwarded to the MessageDb, are deduplicated there and
 	// added if MessageDb::messageAdded is emitted
 	connect(MessageDb::instance(), &MessageDb::messageAdded, this, &MessageModel::handleMessage);
@@ -168,6 +166,7 @@ bool MessageModel::isEmpty() const
 
 int MessageModel::rowCount(const QModelIndex &) const
 {
+    qDebug() << "MessageModel::rowCount()" << m_messages.length();
 	return m_messages.length();
 }
 
@@ -197,6 +196,7 @@ QHash<int, QByteArray> MessageModel::roleNames() const
 
 QVariant MessageModel::data(const QModelIndex &index, int role) const
 {
+    qDebug() << "MessageModel::data(index=" << index << ", role=" << role << ")";
 	if (!hasIndex(index.row(), index.column(), index.parent())) {
 		qWarning() << "Could not get data from message model." << index << role;
 		return {};
@@ -374,6 +374,7 @@ void MessageModel::fetchMore(const QModelIndex &)
 		}
 	}
 	// already fetched everything from DB and MAM
+    qDebug() << "already fetched everything from DB and MAM";
 }
 
 bool MessageModel::canFetchMore(const QModelIndex &) const
@@ -393,6 +394,8 @@ QString MessageModel::currentChatJid()
 
 void MessageModel::setCurrentChat(const QString &accountJid, const QString &chatJid)
 {
+    qDebug() << "setCurrentChat(" << accountJid << "," << chatJid << ")";
+
 	if (accountJid == m_currentAccountJid && chatJid == m_currentChatJid) {
 		return;
 	}
@@ -405,6 +408,8 @@ void MessageModel::setCurrentChat(const QString &accountJid, const QString &chat
 	runOnThread(Kaidan::instance()->client()->omemoManager(), [accountJid, chatJid] {
 		Kaidan::instance()->client()->omemoManager()->initializeChat(accountJid, chatJid);
 	});
+
+    qDebug() << "setCurrentChat end";
 }
 
 void MessageModel::resetCurrentChat() {
@@ -700,6 +705,8 @@ bool MessageModel::canCorrectMessage(int index) const
 
 void MessageModel::handleMessagesFetched(const QVector<Message> &msgs)
 {
+    qDebug() << "handleMessagesFetched";
+
 	if (msgs.length() < DB_QUERY_LIMIT_MESSAGES)
 		m_fetchedAllFromDb = true;
 
@@ -979,6 +986,8 @@ QXmppMessage::State MessageModel::chatState() const
 
 void MessageModel::sendChatState(QXmppMessage::State state)
 {
+    qDebug() << "MessageModel::sendChatState(" << state << ")";
+
 	if (!m_rosterItemWatcher.item().chatStateSendingEnabled) {
 		return;
 	}

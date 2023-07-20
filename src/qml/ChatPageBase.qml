@@ -38,21 +38,8 @@ import im.kaidan.kaidan 1.0
  */
 Page {
         // color of the message bubbles on the right side
-        readonly property color rightMessageBubbleColor: {
-            const accentColor = Theme.highlightColor
-            return Qt.tint(Theme.backgroundColor, Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.1))
-        }
-
-    // background of the chat page
-    //Rectangle {
-    //    color: secondaryBackgroundColor
-    //
-    //        Image {
-    //            source: Utils.getResourcePath("images/chat-page-background.svg")
-    //            anchors.fill: parent
-    //            fillMode: Image.Tile
-    //            horizontalAlignment: Image.AlignLeft
-    //            verticalAlignment: Image.AlignTop
-    //        }
-    //}
+//        readonly property color rightMessageBubbleColor: {
+//            const accentColor = Theme.highlightColor
+//            return Qt.tint(Theme.backgroundColor, Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.1))
+//        }
 }

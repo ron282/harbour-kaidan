@@ -28,6 +28,21 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "RecentPicturesModel.h"
+
+#include <QFileSystemModel>
+
+RecentPicturesModel::RecentPicturesModel(QObject *parent)
+    : QSortFilterProxyModel(parent)
+{
+    auto *dirModel = new QFileSystemModel(this);
+    setSourceModel(dirModel);
+    dirModel->setNameFilters(QStringList() << "*.png" << "*.jpg");
+#warning "Improve by filtering on mimeType not on name"
+//	dirModel->openUrl(QStringLiteral("recentlyused:/files/"));
+//	dirModel->dirLister()->setAutoErrorHandlingEnabled(false);
+}
+
 /*
 #include "RecentPicturesModel.h"
 
@@ -43,6 +58,7 @@ RecentPicturesModel::RecentPicturesModel(QObject *parent)
 	dirModel->openUrl(QStringLiteral("recentlyused:/files/"));
 	dirModel->dirLister()->setAutoErrorHandlingEnabled(false);
 }
+*/
 
 QHash<int, QByteArray> RecentPicturesModel::roleNames() const {
 	return {
@@ -51,14 +67,10 @@ QHash<int, QByteArray> RecentPicturesModel::roleNames() const {
 }
 
 QVariant RecentPicturesModel::data(const QModelIndex &index, int role) const {
-	if (role == Role::FilePath) {
-		auto fileItem = KDirSortFilterProxyModel::data(index, KDirModel::FileItemRole).value<KFileItem>();
-		return fileItem.mostLocalUrl();
-	}
-
-	return KDirSortFilterProxyModel::data(index, role);
+    return QSortFilterProxyModel::data(index, role);
 }
 
+/*
 bool RecentPicturesModel::subSortLessThan(const QModelIndex &left, const QModelIndex &right) const
 {
 	auto leftFile = left.data(KDirModel::FileItemRole).value<KFileItem>();

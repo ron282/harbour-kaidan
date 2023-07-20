@@ -36,52 +36,36 @@ import im.kaidan.kaidan 1.0
 ListItem {
 	id: root
 
-	default property alias __data: content.data
+//	default property alias __data: content.data
 	property alias avatar: avatar
 
 	property string accountJid
 	property string jid
 	property string name
 	property bool isSelected: false
-	height: 65
+    height: Theme.iconSizeExtraLarge
 
-	onIsSelectedChanged: {
-		backgroundColorAnimation.restart()
-	}
+    // left border: presence
+    Rectangle {
+        id: presenceIndicator
+        width: Theme.paddingSmall
+        height: parent.height
+        color: userPresence.availabilityColor
+        anchors.left: parent.left
+        anchors.leftMargin: Theme.paddingMedium
 
-    Row {
-		id: content
-        spacing: Theme.paddingSmall
-
-		// fading background colors
-//		ColorAnimation {
-//			id: backgroundColorAnimation
-//			targets: [root]
-//			property: "backgroundColor"
-//			to: root.isSelected ? Kirigami.Theme.backgroundColor : Kirigami.Theme.highlightColor
-//            duration: 1 // Kirigami.Units.shortDuration
-//			running: false
-//		}
-
-		// left border: presence
-		Rectangle {
-			id: presenceIndicator
-            width: 5
-			height: parent.height
-			color: userPresence.availabilityColor
-
-			UserPresenceWatcher {
-				id: userPresence
-				jid: root.jid
-			}
-		}
-
-        // left: avatar
-        Avatar {
-            id: avatar
+        UserPresenceWatcher {
+            id: userPresence
             jid: root.jid
-            name: root.name
-            width: height
         }
-	}
+    }
+
+    // left: avatar
+    Avatar {
+        id: avatar
+        jid: root.jid
+        name: root.name
+        anchors.left: presenceIndicator.right
+        anchors.top: presenceIndicator.top
+    }
 }

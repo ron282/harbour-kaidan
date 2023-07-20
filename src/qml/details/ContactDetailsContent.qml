@@ -34,13 +34,13 @@ DetailsContent {
 		}
 
 		TextSwitch {
-			text: qsTr("OMEMO 2")
+            text: qsTr("OMEMO 0")
 			//FIXME description: qsTr("End-to-end encryption with OMEMO 2 ensures that nobody else than you and your chat partners can read or modify the data you exchange.")
 			enabled: MessageModel.usableOmemoDevices.length
 			checked: MessageModel.isOmemoEncryptionEnabled
 			// The switch is toggled by setting the user's preference on using encryption.
 			// Note that 'checked' has already the value after the button is clicked.
-			onClicked: MessageModel.encryption = checked ? Encryption.Omemo2 : Encryption.NoEncryption
+            onClicked: MessageModel.encryption = checked ? Encryption.Omemo0 : Encryption.NoEncryption
 		}
 
 		Button {
@@ -49,9 +49,9 @@ DetailsContent {
 					if (accountOmemoWatcher.distrustedOmemoDevices.length) {
 						return qsTr("Scan the QR codes of <b>your</b> devices to encrypt for them")
 					} else if (ownResourcesWatcher.resourcesCount > 1) {
-						return qsTr("<b>Your</b> other devices don't use OMEMO 2")
+                        return qsTr("<b>Your</b> other devices don't use OMEMO 0")
 					} else if (root.isChatWithOneself) {
-						return qsTr("<b>You</b> have no other devices supporting OMEMO 2")
+                        return qsTr("<b>You</b> have no other devices supporting OMEMO 0")
 					}
 				} else if (accountOmemoWatcher.authenticatableOmemoDevices.length) {
 					if (accountOmemoWatcher.authenticatableOmemoDevices.length === accountOmemoWatcher.distrustedOmemoDevices.length) {
@@ -66,18 +66,18 @@ DetailsContent {
 			icon.source: {
 				if (!MessageModel.usableOmemoDevices.length) {
 					if (accountOmemoWatcher.distrustedOmemoDevices.length) {
-						return "channel-secure-symbolic"
+                        return "image://theme/icon-m-device-lock"
 					} else if (ownResourcesWatcher.resourcesCount > 1) {
-						return "channel-insecure-symbolic"
+                        return "image://theme/icon-m-warning"
 					} else if (root.isChatWithOneself) {
-						return "channel-insecure-symbolic"
+                        return "image://theme/icon-m-warning"
 					}
 				} else if (accountOmemoWatcher.authenticatableOmemoDevices.length) {
 					if (accountOmemoWatcher.authenticatableOmemoDevices.length === accountOmemoWatcher.distrustedOmemoDevices.length) {
-						return "security-medium-symbolic"
+                        return "image://theme/icon-m-device-lock"
 					}
 
-					return "security-high-symbolic"
+                    return "image://theme/icon-m-device-lock"
 				}
 
 				return ""
@@ -117,16 +117,16 @@ DetailsContent {
 			icon.source: {
 				if (!MessageModel.usableOmemoDevices.length) {
 					if (contactOmemoWatcher.distrustedOmemoDevices.length) {
-						return "channel-secure-symbolic"
+                        return "image://theme/icon-m-warning"
 					}
 
-					return "channel-insecure-symbolic"
+                    return "image://theme/icon-m-warning"
 				} else if (contactOmemoWatcher.authenticatableOmemoDevices.length) {
 					if (contactOmemoWatcher.authenticatableOmemoDevices.length === contactOmemoWatcher.distrustedOmemoDevices.length) {
-						return "security-medium-symbolic"
+                        return "image://theme/icon-m-warning"
 					}
 
-					return "security-high-symbolic"
+                    return "image://theme/icon-m-device-lock"
 				}
 
 				return ""

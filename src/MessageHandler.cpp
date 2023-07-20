@@ -120,7 +120,6 @@ MessageHandler::MessageHandler(ClientWorker *clientWorker, QXmppClient *client, 
 	});
 
 	connect(this, &MessageHandler::retrieveBacklogMessagesRequested, this, &MessageHandler::retrieveBacklogMessages);
-
 	client->addExtension(&m_receiptManager);
 
 	connect(MessageModel::instance(), &MessageModel::pendingMessagesFetched,

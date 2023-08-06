@@ -50,7 +50,7 @@ Page {
 
 
         HighlightImage {
-            source: "/usr/share/harbour-kaidan/qml/images/kaidan.svg" // Utils.getResourcePath("images/kaidan.svg")
+            source: Utils.getResourcePath("images/kaidan.svg")
             fillMode: Image.PreserveAspectFit
             sourceSize.width: width
             sourceSize.height: width

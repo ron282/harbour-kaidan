@@ -13,8 +13,9 @@ DetailsPage {
 		jid: root.jid
 	}
 
-	ContactDetailsContent {
+/*	ContactDetailsContent {
 		jid: root.jid
 		width: parent.width
 	}
+*/
 }

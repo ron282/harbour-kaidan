@@ -43,9 +43,9 @@ import MediaUtils 0.1
 MediaPreview {
 	id: root
 
-	readonly property bool isNewImage: mediaSourceType === Enums.MessageType.MessageImage
-	readonly property bool isNewAudio: mediaSourceType === Enums.MessageType.MessageAudio
-	readonly property bool isNewVideo: mediaSourceType === Enums.MessageType.MessageVideo
+    readonly property bool isNewImage: mediaSourceType === Enums.MessageImage
+    readonly property bool isNewAudio: mediaSourceType === Enums.MessageAudio
+    readonly property bool isNewVideo: mediaSourceType === Enums.MessageVideo
 
 	// //FIXME Layout.preferredHeight: Kirigami.Units.gridUnit * 14
 	//FIXME Layout.preferredWidth: Kirigami.Units.gridUnit * 14
@@ -56,18 +56,18 @@ MediaPreview {
 
 		type: {
 			switch (root.mediaSourceType) {
-			case Enums.MessageType.MessageUnknown:
-			case Enums.MessageType.MessageText:
-			case Enums.MessageType.MessageFile:
-			case Enums.MessageType.MessageDocument:
-			case Enums.MessageType.MessageGeoLocation:
-				return MediaRecorder.Type.Invalid
-			case Enums.MessageType.MessageImage:
-				return MediaRecorder.Type.Image
-			case Enums.MessageType.MessageAudio:
-				return MediaRecorder.Type.Audio
-			case Enums.MessageType.MessageVideo:
-				return MediaRecorder.Type.Video
+            case Enums.MessageUnknown:
+            case Enums.MessageText:
+            case Enums.MessageFile:
+            case Enums.MessageDocument:
+            case Enums.MessageGeoLocation:
+                return MediaRecorder.Invalid
+            case Enums.MessageImage:
+                return MediaRecorder.Image
+            case Enums.MessageAudio:
+                return MediaRecorder.Audio
+            case Enums.MessageVideo:
+                return MediaRecorder.Video
 			}
 		}
 	}
@@ -78,7 +78,7 @@ MediaPreview {
 		anchors.fill: parent
 
 		Icon {
-			visible: root.mediaSourceType === Enums.MessageType.MessageAudio
+            visible: root.mediaSourceType === Enums.MessageAudio
 			property var images: [Utils.getResourcePath("images/mic0.svg"), Utils.getResourcePath("images/mic1.svg"), Utils.getResourcePath("images/mic2.svg"), Utils.getResourcePath("images/mic3.svg")]
 			property int currentIndex: 0
 			anchors.centerIn: parent
@@ -90,7 +90,7 @@ MediaPreview {
 			Timer {
 				interval: 200
 				repeat: true
-				running: root.mediaSourceType === Enums.MessageType.MessageAudio && recorder.status === MediaRecorder.Status.RecordingStatus
+                running: root.mediaSourceType === Enums.MessageAudio && recorder.status === MediaRecorder.RecordingStatus
 				onTriggered: {
 					if (parent.currentIndex > 2) {
 						parent.currentIndex = 0
@@ -129,11 +129,11 @@ MediaPreview {
 				height: width
 				enabled: {
 					return recorder.isReady ||
-							(recorder.status >= MediaRecorder.Status.StartingStatus
-							 && recorder.status <= MediaRecorder.Status.FinalizingStatus)
+                            (recorder.status >= MediaRecorder.StartingStatus
+                             && recorder.status <= MediaRecorder.FinalizingStatus)
 				}
 
-                icon.source: checked ? 'media-playback-stop-symbolic' : 'media-record-symbolic'
+                icon.source: checked ? 'image://theme/icon-m-call-recording-off' : 'image://theme/icon-m-call-recording-on-dark'
 
 				anchors {
 					horizontalCenter: parent.horizontalCenter
@@ -173,19 +173,19 @@ MediaPreview {
 				radius: width * 0.5
 				width: 20
 				height: width
-				visible: root.mediaSourceType === Enums.MessageType.MessageVideo && recorder.status === MediaRecorder.Status.RecordingStatus
+                visible: root.mediaSourceType === Enums.MessageVideo && recorder.status === MediaRecorder.RecordingStatus
 
 				Timer {
 					interval: 500
-					running: root.mediaSourceType === Enums.MessageType.MessageVideo && recorder.status === MediaRecorder.Status.RecordingStatus
+                    running: root.mediaSourceType === Enums.MessageVideo && recorder.status === MediaRecorder.RecordingStatus
 					onTriggered: {
-						if (recorder.status === MediaRecorder.Status.RecordingStatus) {
+                        if (recorder.status === MediaRecorder.RecordingStatus) {
 							parent.visible = !parent.visible
 						}
 					}
 					onRunningChanged: {
 						if (!running)
-							parent.visible = Qt.binding(function() {return root.mediaSourceType === Enums.MessageType.MessageVideo && recorder.status === MediaRecorder.Status.RecordingStatus})
+                            parent.visible = Qt.binding(function() {return root.mediaSourceType === Enums.MessageVideo && recorder.status === MediaRecorder.RecordingStatus})
 					}
 
 					repeat: true
@@ -199,7 +199,7 @@ MediaPreview {
 			}
 
 			BusyIndicator {
-				visible: recorder.status === MediaRecorder.Status.FinalizingStatus
+                visible: recorder.status === MediaRecorder.FinalizingStatus
 				width: 30
 				height: width
 
@@ -219,17 +219,17 @@ MediaPreview {
 					}
 
 					switch (recorder.status) {
-					case MediaRecorder.Status.UnavailableStatus:
+                    case MediaRecorder.UnavailableStatus:
 						return qsTr('Unavailable')
-					case MediaRecorder.Status.UnloadedStatus:
-					case MediaRecorder.Status.LoadingStatus:
-					case MediaRecorder.Status.LoadedStatus:
+                    case MediaRecorder.UnloadedStatus:
+                    case MediaRecorder.LoadingStatus:
+                    case MediaRecorder.LoadedStatus:
 						return recorder.isReady ? "" : qsTr('Initializing…')
-					case MediaRecorder.Status.StartingStatus:
-					case MediaRecorder.Status.RecordingStatus:
-					case MediaRecorder.Status.FinalizingStatus:
+                    case MediaRecorder.StartingStatus:
+                    case MediaRecorder.RecordingStatus:
+                    case MediaRecorder.FinalizingStatus:
 						return ""
-					case MediaRecorder.Status.PausedStatus:
+                    case MediaRecorder.PausedStatus:
 						return qsTr('Paused %1').arg(MediaUtilsInstance.prettyDuration(recorder.duration))
 					}
 				}
@@ -244,7 +244,7 @@ MediaPreview {
 				anchors.top: parent.top
 				anchors.margins: 10
 				text: {
-					if (recorder.status === MediaRecorder.Status.RecordingStatus) {
+                    if (recorder.status === MediaRecorder.RecordingStatus) {
 						return qsTr('Recording… %1').arg(MediaUtilsInstance.prettyDuration(recorder.duration))
 					} else {
 						return ""
@@ -278,7 +278,7 @@ MediaPreview {
 				}
 
 				Button {
-                    icon.source: 'image://icon-m-cancel'
+                    icon.source: 'image://theme/icon-m-cancel'
 
 					onClicked: {
 						recorder.cancel()

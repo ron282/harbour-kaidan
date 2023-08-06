@@ -104,7 +104,7 @@ DockedPanel {
 				width: parent.width
 
 				onClicked: {
-					close()
+                    hide()
 					root.rejected()
 				}
 			}
@@ -120,7 +120,7 @@ DockedPanel {
 				onClicked: {
 					composition.fileSelectionModel.addFile(root.source)
 					composition.send()
-					close()
+                    hide()
 					root.accepted()
 				}
 			}
@@ -135,13 +135,13 @@ DockedPanel {
 
     onOpenChanged: {
         if (!open) {
-			sourceType = Enums.MessageType.MessageUnknown
+            sourceType = Enums.MessageUnknown
 		}
 	}
 
 	function sendMessageType(jid, type) {
 		sourceType = type
-		open()
+        show()
 	}
 
 	function sendNewMessageType(jid, type) {

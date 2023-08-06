@@ -104,7 +104,7 @@ Item {
 		anchors {
 			bottom: parent.bottom
 			right: mainBG.right
-			margins: Kirigami.Units.smallSpacing
+            margins: Theme.paddingSmall
 		}
 
         Label {
@@ -154,7 +154,7 @@ Item {
 //			}
 		}
         Icon {
-            source: "image://theme/	icon-s-edit"
+            source: "image://theme/icon-s-edit"
 			visible: message.edited
 //			// //FIXME Layout.preferredHeight: Kirigami.Units.gridUnit * 0.65
 //			//FIXME Layout.preferredWidth: Kirigami.Units.gridUnit * 0.65

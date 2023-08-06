@@ -50,14 +50,19 @@ Icon {
 	source: {
 		if (width > 0) {
 			if (isForLogin) {
-				return qrCodeGenerator.generateLoginUriQrCode(width)
+                console.log("[QrCode.qml]: generateLoginUriQrCode")
+                return qrCodeGenerator.generateLoginUriQrCode(width)
 			} else if (jid) {
+                console.log("[QrCode.qml]: generateContactTrustMessageQrCode")
 				return qrCodeGenerator.generateContactTrustMessageQrCode(width, jid)
 			} else {
-				return qrCodeGenerator.generateOwnTrustMessageQrCode(width)
+                console.log("[QrCode.qml]: generateOwnTrustMessageQrCode")
+                return qrCodeGenerator.generateOwnTrustMessageQrCode(width)
 			}
 		}
-
+        else {
+            console.log("[QrCode.qml]: width=0")
+        }
 		return ""
 	}
 

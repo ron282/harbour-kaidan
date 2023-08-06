@@ -71,4 +71,9 @@
         <file>elements/MessageReactionAddition.qml</file>
         <file>elements/MessageReactionDisplay.qml</file>
     </qresource>
+    <qresource prefix="/">
+        <file>details/MediaOverview.qml</file>
+        <file>elements/SelectablePreview.qml</file>
+        <file>elements/SelectionMarker.qml</file>
+    </qresource>
 </RCC>

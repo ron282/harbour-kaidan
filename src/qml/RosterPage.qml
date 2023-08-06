@@ -79,54 +79,86 @@ Page {
             sourceModel: RosterModel
         }
 
-        delegate:
-            RosterListItem {
-                listView: rosterListView
-                accountJid: AccountManager.jid
-                jid: model ? model.jid : ""
-                name: model ? (model.name ? model.name : model.jid) : ""
-                lastMessage: model ? model.lastMessage : ""
-                lastMessageIsDraft: model ? model.draftId : false
-                unreadMessages: model ? model.unreadMessages : 0
-                pinned: model ? model.pinned : false
-                contentHeight: Theme.itemSizeMedium;
+        RosterListItemContextMenu {
+            id: itemContextMenu
+        }
 
-               menu: RosterListItemContextMenu {
-                    id: itemContextMenu
+        delegate: RosterListItem {
+            listView: rosterListView
+            contextMenu: itemContextMenu
+            accountJid: AccountManager.jid
+            jid: model ? model.jid : ""
+            name: model ? (model.name ? model.name : model.jid) : ""
+            lastMessage: model ? model.lastMessage : ""
+            lastMessageIsDraft: model ? model.draftId : false
+            unreadMessages: model ? model.unreadMessages : 0
+            pinned: model ? model.pinned : false
+            contentHeight: Theme.itemSizeLarge;
+            onClicked: {
+                // Open the chatPage only if it is not yet open.
+//                if (!isSelected || !wideScreen) {
+//                    Kaidan.openChatPageRequested(accountJid, jid)
+//                }
+
+                MessageModel.setCurrentChat(accountJid, jid)
+
+                // Close all pages (especially the chat page) except the roster page.
+                while (pageStack.depth > 1) {
+                    pageStack.pop()
                 }
 
-                onClicked: {
-                    // Open the chatPage only if it is not yet open.
-                    //if (!isSelected) {
-                        openChatPage(accountJid, jid)
-                    //}
-                }
+                popLayersAboveLowest()
+                pageStack.push(chatPage)
             }
+        }
 
-            Connections {
-                target: Kaidan
+        Connections {
+            target: Kaidan
 
-                function onOpenChatPageRequested(accountJid, chatJid) {
-                    openChatPage(accountJid, chatJid)
+            function onOpenChatPageRequested(accountJid, chatJid) {
+                console.log("[roster.qml] onOpenChatPageRequested")
+//                if (Kirigami.Settings.isMobile) {
+                    toggleSearchBar()
+//				} else {
+//					searchField.text = ""
+//				}
+
+//				for (let i = 0; i < pageStack.items.length; ++i) {
+//					let page = pageStack.items[i];
+//
+//					if (page instanceof ChatPage) {
+//						page.saveDraft();
+//					}
+//				}
+
+                MessageModel.setCurrentChat(accountJid, chatJid)
+
+                // Close all pages (especially the chat page) except the roster page.
+                while (pageStack.depth > 1) {
+                    pageStack.pop()
                 }
+
+                popLayersAboveLowest()
+                pageStack.push(chatPage)
             }
         }
+    }
 
-        /**
-         * Opens the chat page for the chat JID currently set in the message model.
-         *
-         * @param accountJid JID of the account for that the chat page is opened
-         * @param chatJid JID of the chat for that the chat page is opened
-         */
-        function openChatPage(accountJid, chatJid) {
-            console.log("[rosterpage.qml] OpenChatPage called")
+    /**
+     * Opens the chat page for the chat JID currently set in the message model.
+     *
+     * @param accountJid JID of the account for that the chat page is opened
+     * @param chatJid JID of the chat for that the chat page is opened
+     */
+    function openChatPage(accountJid, chatJid) {
+        console.log("[rosterpage.qml] OpenChatPage called")
 
-            MessageModel.setCurrentChat(accountJid, chatJid)
+        MessageModel.setCurrentChat(accountJid, chatJid)
 
-            pageStack.push(chatPage, {})
-        }
+        pageStack.push(chatPage, {})
+    }
 
-        Component.onCompleted: {
-            console.log("[rosterpage.qml] Roster Page completed")
-        }
+    Component.onCompleted: {
+        console.log("[openChatPageterpage.qml] Roster Page completed")
+    }
 }

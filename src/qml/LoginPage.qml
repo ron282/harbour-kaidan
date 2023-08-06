@@ -41,24 +41,24 @@ import "settings"
  * This page is used for deciding between registration or login.
  */
 Page {
-    PageHeader {
-        title: qsTr("Log in")
-    }
     Column {
-        anchors.verticalCenter: parent.verticalCenter
-        width: parent.width
+        anchors.fill: parent
+        anchors.leftMargin: Theme.horizontalPageMargin
         spacing: Theme.paddingLarge
 
+        PageHeader {
+            title: qsTr("Log in")
+        }
+
         Label {
-            anchors.leftMargin: Theme.paddingSmall
-			text: qsTr("Log in to your XMPP account")
-			wrapMode: Text.WordWrap
+            text: qsTr("Log in to your XMPP account")
+            wrapMode: Text.WordWrap
 		}
 
         // JID field
         JidField {
             id: jidField
-
+            anchors.rightMargin: Theme.horizontalPageMargin
             EnterKey.onClicked: passwordField.focus()
         }
 

@@ -90,10 +90,10 @@ DockedPanel {
 	}
 
 	Column {
+        anchors.horizontalCenter: parent
+        anchors.topMargin: Theme.paddingSmall
+        anchors.bottomMargin: Theme.paddingSmall
         Label {
-			anchors.horizontalCenter: parent
-            anchors.topMargin: Theme.paddingSmall
-            anchors.bottomMargin: Theme.paddingSmall
 			text: qsTr("Choose files")
 			visible: fileList.count === 0
 		}
@@ -159,7 +159,7 @@ DockedPanel {
 			id: messageText
 
 			width: parent.width
-			anchors.topMargin: Kirigami.Units.largeSpacing
+            anchors.topMargin: Theme.paddingLarge
 
 			placeholderText: qsTr("Compose message")
 			onFocusChanged: root.composition.body = messageText.text

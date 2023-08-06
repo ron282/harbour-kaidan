@@ -17,6 +17,90 @@ import "../settings"
 
 DetailsContent {
 	id: root
+
+    rosterGroupArea: Column {
+        spacing: 0
+        SectionHeader {
+            text: qsTr("Labels")
+        }
+        ColumnView {
+            id: rosterGroupListView
+            model: RosterModel.groups
+            visible: rosterGroupExpansionButton.checked
+            implicitHeight: contentHeight
+            width: parent.width
+            delegate: BackgroundItem {
+                id: rosterGroupDelegate
+                width: ListView.view.width
+                onClicked: rosterGroupEditingButton.toggled()
+                Row {
+                    Label {
+                        id: rosterGroupText
+                        text: modelData
+                        textFormat: Text.PlainText
+                        maximumLineCount: 1
+                        elide: Text.ElideRight
+                        visible: !rosterGroupTextField.visible
+                        height: rosterGroupTextField.height
+                        width: parent.width
+                        leftPadding: Theme.paddingSmall
+                    }
+
+                    TextField {
+                        id: rosterGroupTextField
+                        text: modelData
+                        visible: false
+                        width: parent.width
+//                        onAccepted: rosterGroupEditingButton.toggled()
+                    }
+
+                    IconButton {
+                        id: rosterGroupEditingButton
+//                        text: qsTr("Change label…")
+                        icon.source: "document-edit-symbolic"
+//                      display: Controls.AbstractButton.IconOnly
+                        visible: !rosterGroupText.visible
+//                      checked: !rosterGroupText.visible
+//                      flat: !hovered
+//                      Controls.ToolTip.text: text
+                        // Ensure that the button can be used within "rosterGroupDelegate"
+                        // which acts as an overlay to toggle this button when clicked.
+                        // Otherwise, this button would be toggled by "rosterGroupDelegate"
+                        // and by this button's own visible area at the same time resulting
+                        // in resetting the toggling on each click.
+//                      autoRepeat: true
+                        onClicked: {
+//                      onToggled: {
+                            if (rosterGroupText.visible) {
+                                rosterGroupTextField.visible = true
+                                rosterGroupTextField.forceActiveFocus()
+                                rosterGroupTextField.selectAll()
+                            } else {
+                                rosterGroupTextField.visible = false
+
+                                if (rosterGroupTextField.text !== modelData) {
+                                    RosterModel.updateGroup(modelData, rosterGroupTextField.text)
+                                }
+                            }
+                        }
+                    }
+
+                    IconButton {
+                        id: rosterGroupRemovalButton
+//                      text: qsTr("Remove label")
+                        icon.source: "image://theme/icon-m-delete"
+//                      display: Controls.AbstractButton.IconOnly
+//                      flat: !rosterGroupDelegate.hovered
+//                      Controls.ToolTip.text: text
+                        onClicked: {
+                            rosterGroupTextField.visible = false
+                            RosterModel.removeGroup(modelData)
+                        }
+                    }
+                }
+            }
+        }
+    }
 	encryptionArea: Column {
 		spacing: 0
 

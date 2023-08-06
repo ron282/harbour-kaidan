@@ -35,8 +35,8 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-// import QtQuick.Controls 2.14 as Controls
 import QtMultimedia 5.6 as Multimedia
+// import QtQuick.Controls 2.14 as Controls
 // import org.kde.kirigami 2.19 as Kirigami
 
 import MediaUtils 0.1
@@ -59,7 +59,7 @@ MediaPreview {
 		id: mediaPlayer
 
 		source: root.mediaSource
-		volume: volumePlayer.volume
+//		volume: volumePlayer.volume
 
 		onStopped: seek(0)
 	}
@@ -87,8 +87,8 @@ MediaPreview {
 				id: playPause
 
 				icon.source: mediaPlayer.playbackState === Multimedia.MediaPlayer.PlayingState
-						   ? 'media-playback-pause-symbolic'
-						   : 'media-playback-start-symbolic'
+                           ? 'image://theme/icon-m-pause'
+                           : 'image://theme/icon-m-play'
 
 				onClicked: {
 					switch (mediaPlayer.playbackState) {
@@ -144,7 +144,7 @@ MediaPreview {
 			}
 
             IconButton {
-                icon.source: 'document-open-symbolic'
+                icon.source: 'image://theme/icon-m-document'
 
 				onClicked: Qt.openUrlExternally(root.mediaSource)
 			}

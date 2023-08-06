@@ -37,14 +37,24 @@ DetailsSheet {
 
 //	parent: applicationWindow().overlay
 
-	ContactDetailsHeader {
-		sheet: root
+    ContactDetailsHeader {
+        id: header
 		jid: root.jid
-	}
+    }
 
-	ContactDetailsContent {
-		sheet: root
-		jid: root.jid
-		width: parent.width
-	}
+    SilicaFlickable {
+        anchors.top: header.bottom
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+
+        contentHeight: Screen.height*2
+        contentWidth: parent.width
+
+        ContactDetailsContent {
+            sheet: root
+            jid: root.jid
+            width: parent.width
+        }
+    }
 }

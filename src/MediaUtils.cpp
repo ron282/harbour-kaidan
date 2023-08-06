@@ -292,14 +292,30 @@ QString MediaUtils::newMediaIconName(Enums::MessageType hint)
 {
 	switch (hint) {
 	case Enums::MessageType::MessageImage:
-		return QStringLiteral("camera-photo-symbolic");
-	case Enums::MessageType::MessageVideo:
-		return QStringLiteral("camera-video-symbolic");
-	case Enums::MessageType::MessageAudio:
+#if defined(SFOS)
+        return QStringLiteral("image://theme/icon-m-browser-camera");
+#else
+        return QStringLiteral("camera-photo-symbolic");
+#endif
+    case Enums::MessageType::MessageVideo:
+#if defined(SFOS)
+        return QStringLiteral("image://theme/icon-m-video");
+#else
+        return QStringLiteral("camera-video-symbolic");
+#endif
+    case Enums::MessageType::MessageAudio:
+#if defined(SFOS)
+        return QStringLiteral("image://theme/icon-m-browser-microphone");
+#else
 		return QStringLiteral("audio-input-microphone-symbolic");
-	case Enums::MessageType::MessageGeoLocation:
-		return QStringLiteral("mark-location-symbolic");
-	case Enums::MessageType::MessageText:
+#endif
+    case Enums::MessageType::MessageGeoLocation:
+#if defined(SFOS)
+        return QStringLiteral("image://theme/icon-m-location");
+#else
+        return QStringLiteral("mark-location-symbolic");
+#endif
+    case Enums::MessageType::MessageText:
 	case Enums::MessageType::MessageFile:
 	case Enums::MessageType::MessageDocument:
 	case Enums::MessageType::MessageUnknown:

@@ -1,4 +1,4 @@
-/*
+﻿/*
  *  Kaidan - A user-friendly XMPP client for every device!
  *
  *  Copyright (C) 2016-2023 Kaidan developers and contributors
@@ -37,10 +37,12 @@ UserListItem {
 	id: root
 
 	property ListView listView
-	property bool lastMessageIsDraft
+    property ContextMenu contextMenu
+    property bool lastMessageIsDraft
 	property string lastMessage
 	property int unreadMessages
 	property bool pinned
+    property bool notificationsMuted
 
 	isSelected: {
         return MessageModel.currentAccountJid === accountJid &&
@@ -53,19 +55,48 @@ UserListItem {
         anchors {
             left: avatar.right;
             right: parent.right
+            top: parent.top
             margins: Theme.paddingMedium;
-            verticalCenter: parent.verticalCenter;
         }
 
 		// name
-        Label  {
-			id: nameText
-            text: name
-			textFormat: Text.PlainText
-			elide: Text.ElideRight
-			maximumLineCount: 1
-            width: parent.width - mutedIcon.width
-            font.pixelSize: Theme.fontSizeMedium;
+        Row {
+            width: parent.width
+            Label  {
+                id: nameText
+                text: name
+                textFormat: Text.PlainText
+                elide: Text.ElideRight
+                maximumLineCount: 1
+                width: parent.width - mutedIcon.width - pinnedIcon.width - counter.width
+                font.pixelSize: Theme.fontSizeMedium;
+            }
+            // right: icon for muted contact
+            // Its size depends on the font's pixel size to be as large as the message counter.
+            Icon {
+                id: mutedIcon
+                source: "image://theme/icon-m-speaker-mute"
+                width: Theme.iconSizeSmall
+                height: width
+                visible: mutedWatcher.muted
+            }
+
+            // right: icon for pinned chat
+            // Its size depends on the font's pixel size to be as large as the message counter.
+            Icon {
+                id: pinnedIcon
+                source: "image://theme/icon-m-asterisk"
+                width: Theme.iconSizeSmall
+                height: width
+                visible: pinned
+            }
+
+            // right: unread message counter
+            MessageCounter {
+                id: counter
+                count: unreadMessages
+                muted: mutedWatcher.muted
+            }
         }
 
 		// last message or error status message if available, otherwise not visible
@@ -94,35 +125,6 @@ UserListItem {
 		}
 	}
 
-	// right: icon for muted contact
-	// Its size depends on the font's pixel size to be as large as the message counter.
-    Icon {
-		id: mutedIcon
-        source: "image://theme/icon-m-speaker-mute"
-        width: Theme.iconSizeSmall
-        height: width
-		visible: mutedWatcher.muted
-        anchors.left: nameText.right
-        anchors.leftMargin: Theme.paddingMedium
-	}
-
-	// right: icon for pinned chat
-	// Its size depends on the font's pixel size to be as large as the message counter.
-    Icon {
-        source: "image://theme/icon-m-asterisk"
-        width: Theme.iconSizeSmall
-        height: width
-		visible: pinned
-        anchors.top: mutedIcon.top
-        anchors.right: parent.right
-	}
-
-    // right: unread message counter
-    MessageCounter {
-        id: counter
-        count: unreadMessages
-        muted: mutedWatcher.muted
-    }
 
 	// right: icon for reordering
 //	Kirigami.ListItemDragHandle {
@@ -136,4 +138,29 @@ UserListItem {
 		id: mutedWatcher
 		jid: root.jid
 	}
+
+/*    MouseArea {
+        parent: root
+        anchors.fill: parent
+
+        onClicked: {
+            if (mouse.button === Qt.RightButton) {
+                showContextMenu()
+            }
+            else
+            {
+                mouse.accepted = false
+            }
+        }
+
+        onPressAndHold: showContextMenu()
+    }
+*/
+    function showContextMenu() {
+        if (contextMenu) {
+            root.menu = contextMenu
+            contextMenu.item = root
+            contextMenu.open(root)
+        }
+    }
 }

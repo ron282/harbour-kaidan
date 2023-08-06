@@ -71,7 +71,9 @@ ListItem {
 	signal messageEditRequested(string id, string body)
 	signal quoteRequested(string body)
 
-    height: messageArea.implicitHeight + (isGroupBegin ? Theme.paddingLarge : Theme.paddingSmall)
+    contentHeight: messageArea.height + (isGroupBegin ? Theme.paddingLarge : Theme.paddingSmall)
+    width: parent.width
+    menu: contextMenu
 
 /*	actions: [
 		// TODO: Move message to the left when action is displayed and message is too large or
@@ -89,23 +91,36 @@ ListItem {
 	]
 */
 
+
+    Rectangle {
+        id: shadow;
+        color: "white";
+        radius: 3;
+        opacity: (!isOwn ? 0.05 : 0.15);
+        antialiasing: true;
+        anchors {
+            fill: messageArea;
+        }
+    }
+
     Column {
 		id: messageArea
-		spacing: -5
+        width: parent.width * 0.85
+//		spacing: -5
 
         // Own messages are on the right, others on the left side.
         anchors {
             left: (isOwn ? parent.left : undefined);
             right: (!isOwn ? parent.right : undefined);
-            margins: -shadow.anchors.margins;
+            margins: Theme.paddingSmall;
             verticalCenter: parent.verticalCenter;
         }
         Row {
-
+            height: bubble.height
 			Item {
+                id: avatarItem
 				visible: !isOwn
-                anchors.horizontalCenter: parent.horizontalCenter
-
+                width: Theme.iconSizeSmall
 				Avatar {
 					id: avatar
 					visible: !isOwn && isGroupBegin
@@ -115,16 +130,17 @@ ListItem {
 				}
 			}
 
-
 			// message bubble
-/*            BackgroundItem {
+            BackgroundItem {
 				id: bubble
+                width: messageArea.width - avatarItem.width
+                height: content.height
 
-                readonly property string paddingText: {
-					"⠀".repeat(Math.ceil(background.metaInfoWidth / background.dummy.implicitWidth))
-				}
-*/
-/*				readonly property alias backgroundColor: bubbleBackground.color
+//                readonly property string paddingText: {
+//					"⠀".repeat(Math.ceil(background.metaInfoWidth / background.dummy.implicitWidth))
+//				}
+
+                readonly property alias backgroundColor: bubbleBackground.color
 
                 MessageBackground {
 					id: bubbleBackground
@@ -142,16 +158,17 @@ ListItem {
 						onPressAndHold: showContextMenu()
 					}
 				}
-*/
 
                 Column {
 					id: content
+                    width: parent.width
 
-                    /*Row {
+                    Row {
 						id: spoilerHintRow
 						visible: isSpoiler
 
                         Label {
+                            id: spoilerLabel
 							text: spoilerHint == "" ? qsTr("Spoiler") : spoilerHint
                             color: Theme.primaryColor
                             font.pixelSize: Theme.fontSizeMedium
@@ -166,87 +183,85 @@ ListItem {
 							}
 						}
 
-						Item {
-                            width: parent.width
-							height: 1
-						}
-
                         Icon {
-							height: 28
-							width: 28
+                            height: Theme.iconSizeExtraSmall
+                            width: height
                             source: isShowingSpoiler ? "image://theme/icon-splus-hide-password" : "image://theme/icon-splus-show-password"
 						}
 					}
+
                     Separator {
 						visible: isSpoiler
                         width:  parent.width
-                    }*/
+                    }
 
-                    Column {
-						visible: isSpoiler && isShowingSpoiler || !isSpoiler
+                    Button {
+                        visible: {
+                            switch (root.mediaType) {
+                            case Enums.MessageUnknown:
+                            case Enums.MessageText:
+                            case Enums.MessageGeoLocation:
+                                break
+                            case Enums.MessageImage:
+                            case Enums.MessageAudio:
+                            case Enums.MessageVideo:
+                            case Enums.MessageFile:
+                            case Enums.MessageDocument:
+                                return (isSpoiler && isShowingSpoiler) || !isSpoiler &&
+                                       !transferWatcher.isLoading && root.mediaGetUrl !== ""
+                                       && (root.mediaLocation === "" || !MediaUtilsInstance.localFileAvailable(media.mediaSource))
+                            }
 
-                        /*Button {
-							visible: {
-								switch (root.mediaType) {
-								case Enums.MessageType.MessageUnknown:
-								case Enums.MessageType.MessageText:
-								case Enums.MessageType.MessageGeoLocation:
-									break
-								case Enums.MessageType.MessageImage:
-								case Enums.MessageType.MessageAudio:
-								case Enums.MessageType.MessageVideo:
-								case Enums.MessageType.MessageFile:
-								case Enums.MessageType.MessageDocument:
-									return !transferWatcher.isLoading && root.mediaGetUrl !== ""
-											&& (root.mediaLocation === "" || !MediaUtilsInstance.localFileAvailable(media.mediaSource))
-								}
+                            return false
+                        }
+                        text: qsTr("Download")
+                        onClicked: {
+                            print("Downloading " + mediaGetUrl + "…")
+                            Kaidan.client.downloadManager.startDownloadRequested(msgId, mediaGetUrl)
+                        }
+                    }
 
-								return false
-							}
-							text: qsTr("Download")
-							onClicked: {
-								print("Downloading " + mediaGetUrl + "…")
-								Kaidan.client.downloadManager.startDownloadRequested(msgId, mediaGetUrl)
-							}
-						}
+                    ColumnView {
+                        model: root.files
+                        itemHeight: Theme.itemSizeHuge
+                        visible: {
+                            console.log("MediaPreviewVisible=" + (isSpoiler && isShowingSpoiler) || !isSpoiler);
+                            return (isSpoiler && isShowingSpoiler) || !isSpoiler;
+                        }
 
-                        ColumnView {
-							model: root.files
+                        delegate: MediaPreviewOther {
+                            property var modelData
 
-							delegate: MediaPreviewOther {
-                                property var modelData
+                            messageId: root.msgId
 
-								messageId: root.msgId
+                            mediaSource: {
+                                if (modelData.localFilePath) {
+                                    local = MediaUtilsInstance.fromLocalFile(modelData.localFilePath);
+                                    if (MediaUtilsInstance.localFileAvailable(local)) {
+                                        return local;
+                                    }
+                                }
+                                return "";
+                            }
+                            message: root
+                            file: modelData
+                        }
+                    }
 
-								mediaSource: {
-									if (modelData.localFilePath) {
-                                        local = MediaUtilsInstance.fromLocalFile(modelData.localFilePath);
-										if (MediaUtilsInstance.localFileAvailable(local)) {
-											return local;
-										}
-									}
-									return "";
-								}
-								message: root
-								file: modelData
-							}
-                        }*/
-
-
-						// message body
-                        Label {
-							id: bodyLabel
-							visible: messageBody
-                            text: Utils.formatMessage(messageBody) // + bubble.paddingText
-							textFormat: Text.StyledText
-							wrapMode: Text.Wrap
-							onLinkActivated: Qt.openUrlExternally(link)
-						}
-                        Separator {
-							visible: isSpoiler && isShowingSpoiler
-                            width : parent.width
-						}
-					}
+                    // message body
+                    Label {
+                        id: bodyLabel
+                        visible: messageBody
+                        text: Utils.formatMessage(messageBody) // + bubble.paddingText
+                        textFormat: Text.StyledText
+                        wrapMode: Text.Wrap
+                        width: parent.width;
+                        onLinkActivated: Qt.openUrlExternally(link)
+                    }
+                    Separator {
+                        visible: isSpoiler && isShowingSpoiler
+                        width : parent.width
+                    }
 
 					// message reactions (emojis in reaction to this message)
 
@@ -286,7 +301,7 @@ ListItem {
                     }*/
 
 					// warning for different encryption corner cases
-                    /*CenteredAdaptiveText {
+                    Label {
 						text: {
 							if (root.encryption === Encryption.NoEncryption) {
 								if (MessageModel.isOmemoEncryptionEnabled) {
@@ -303,48 +318,51 @@ ListItem {
 							return ""
 						}
 
-						visible: text.length
-                        color: Theme.negativeTextColor
+                        width: parent.width;
+                        visible: text.length
+                        color: Theme.secondaryColor
 						font.italic: true
-						scaleFactor: 0.9
-                        anchors.bottomMargin: 10
-                    }*/
+                        font.pixelSize: Theme.fontSizeTiny
+                        anchors.bottomMargin: Theme.paddingSmall
+                    }
 
 
                     Label {
 						visible: errorText
 						id: errorLabel
 						text: qsTr(errorText)
+                        width: parent.width;
                         color: Theme.secondaryColor
-                        font.pixelSize: Theme.fontSizeSmall
-					}
+                        font.pixelSize: Theme.fontSizeTiny
+                    }
 				}
 			}
 
 			// placeholder
-			Item {
-                width: parent.width
-			}
-		}
+//			Item {
+//                width: parent.width
+//			}
+        }
+        // Read marker text for own message
+        Text {
+            id: isLastReadText
+            visible: isLastRead
+            color: Theme.primaryColor
+            text: qsTr("%1 has read up to this point").arg(chatName)
+            font.pixelSize: Theme.fontSizeTiny
+        }
 
-		// Read marker text for own message
-		Text {
-			visible: isLastRead
-			text: qsTr("%1 has read up to this point").arg(chatName)
-            anchors.topMargin: 10
-            anchors.leftMargin: 10
-		}
-
-	/**
-	 * Shows a context menu (if available) for this message.
-	 *
-	 * That is especially the case when this message is an element of the ChatPage.
-	 */
-	function showContextMenu() {
-		if (contextMenu) {
-			contextMenu.file = null
-			contextMenu.message = this
-			contextMenu.popup()
-		}
-	}
+        /**
+         * Shows a context menu (if available) for this message.
+         *
+         * That is especially the case when this message is an element of the ChatPage.
+         */
+        function showContextMenu() {
+            if (contextMenu) {
+                contextMenu.file = null
+                contextMenu.message = this
+                contextMenu.popup()
+            }
+        }
+    }
 }

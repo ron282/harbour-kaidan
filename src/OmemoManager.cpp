@@ -107,12 +107,25 @@ QFuture<void> OmemoManager::load()
 	if (m_isLoaded) {
 		interface.reportFinished();
 	} else {
+#if defined(WITH_OMEMO_V03)
+        auto future = m_manager->setSecurityPolicy(QXmpp::TrustSecurityPolicy::NoSecurityPolicy);
+#else
 		auto future = m_manager->setSecurityPolicy(QXmpp::TrustSecurityPolicy::Toakafa);
+#endif
 		future.then(this, [this, interface]() mutable {
 			const auto productName = QSysInfo::prettyProductName();
 			const QString productNameWithoutVersion = productName.contains(" ") ? productName.section(" ", 0, -2) : productName;
 			auto future = m_manager->changeDeviceLabel(APPLICATION_DISPLAY_NAME % QStringLiteral(" - ") % productNameWithoutVersion);
-			future.then(this, [this, interface](bool) mutable {
+#if defined(WITH_OMEMO_V03)
+        constexpr auto ANY_TRUST_LEVEL = QXmpp::TrustLevel::Undecided |
+                    QXmpp::TrustLevel::AutomaticallyDistrusted |
+                    QXmpp::TrustLevel::ManuallyDistrusted |
+                    QXmpp::TrustLevel::AutomaticallyTrusted |
+                    QXmpp::TrustLevel::ManuallyTrusted |
+                    QXmpp::TrustLevel::Authenticated;
+        m_manager->setAcceptedSessionBuildingTrustLevels(ANY_TRUST_LEVEL);
+#endif
+        future.then(this, [this, interface](bool) mutable {
 				auto future = m_manager->load();
 				future.then(this, [this, interface](bool isLoaded) mutable {
 					m_isLoaded = isLoaded;

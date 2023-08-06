@@ -14,7 +14,8 @@ SilicaFlickable {
     //FIXME leftPadding: 0
     //FIXME rightPadding: 0
     //FIXME Kirigami.Theme.colorSet: Kirigami.Theme.Window
-
+    contentWidth: parent.width
+    contentHeight: mainArea.height
 	Column {
 		id: mainArea
 	}

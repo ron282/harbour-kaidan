@@ -46,31 +46,31 @@ Loader {
 
 	enabled:  {
 		switch (mediaSourceType) {
-		case Enums.MessageType.MessageUnknown:
-		case Enums.MessageType.MessageText:
-		case Enums.MessageType.MessageFile:
-		case Enums.MessageType.MessageDocument:
+        case Enums.MessageUnknown:
+        case Enums.MessageText:
+        case Enums.MessageFile:
+        case Enums.MessageDocument:
 			return false;
-		case Enums.MessageType.MessageImage:
-		case Enums.MessageType.MessageAudio:
-		case Enums.MessageType.MessageVideo:
-		case Enums.MessageType.MessageGeoLocation:
+        case Enums.MessageImage:
+        case Enums.MessageAudio:
+        case Enums.MessageVideo:
+        case Enums.MessageGeoLocation:
 			return mediaSheet
 		}
 	}
 	visible: enabled
 	sourceComponent: {
 		switch (mediaSourceType) {
-		case Enums.MessageType.MessageUnknown:
-		case Enums.MessageType.MessageText:
-		case Enums.MessageType.MessageFile:
-		case Enums.MessageType.MessageDocument:
+        case Enums.MessageUnknown:
+        case Enums.MessageText:
+        case Enums.MessageFile:
+        case Enums.MessageDocument:
 			return null
-		case Enums.MessageType.MessageImage:
-		case Enums.MessageType.MessageAudio:
-		case Enums.MessageType.MessageVideo:
+        case Enums.MessageImage:
+        case Enums.MessageAudio:
+        case Enums.MessageVideo:
 			return newMedia
-		case Enums.MessageType.MessageGeoLocation:
+        case Enums.MessageGeoLocation:
 			return newMediaLocation
 		}
 	}

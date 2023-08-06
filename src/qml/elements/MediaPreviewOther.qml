@@ -43,7 +43,7 @@ Rectangle {
 	id: root
 
     property url mediaSource
-	property int messageSize: Kirigami.Units.gridUnit * 14
+    //property int messageSize: Kirigami.Units.gridUnit * 14
     property QtObject message
     property var file
     property string messageId
@@ -74,11 +74,12 @@ Rectangle {
 				id: fallbackCircle
 
 				visible: !file.hasThumbnail
+                height: parent.height
 				//FIXME Layout.fillHeight: true
 				//FIXME Layout.preferredWidth: height
 				// // Layout.alignment: Qt.AlignLeft
 				radius: height / 2
-				color: Qt.lighter(Kirigami.Theme.focusColor, 1.05)
+                //color: Qt.lighter(Kirigami.Theme.focusColor, 1.05)
 
 				Icon {
 					source: root.fileAvailable ? file.mimeTypeIcon : "download"
@@ -95,7 +96,8 @@ Rectangle {
 			Icon {
 				id: thumbnailIcon
 				visible: file.hasThumbnail
-				//FIXME Layout.fillHeight: true
+                height: parent.height
+                //FIXME Layout.fillHeight: true
 				//FIXME Layout.preferredWidth: height
                 //FIXME Layout.alignment: Qt.AlignLeft
 				source: file.thumbnailSquare
@@ -144,7 +146,7 @@ Rectangle {
 					textFormat: Text.PlainText
 					elide: Text.ElideRight
 					maximumLineCount: 1
-					color: Kirigami.Theme.secondaryColor
+                    color: Theme.secondaryColor
 				}
 			}
 

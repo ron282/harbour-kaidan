@@ -38,8 +38,9 @@ import im.kaidan.kaidan 1.0
  */
 Page {
         // color of the message bubbles on the right side
-//        readonly property color rightMessageBubbleColor: {
-//            const accentColor = Theme.highlightColor
+        readonly property color rightMessageBubbleColor: {
+            const accentColor = Theme.highlightColor
+            return Theme.highlightColor
 //            return Qt.tint(Theme.backgroundColor, Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.1))
-//        }
+        }
 }

@@ -37,8 +37,9 @@ import MediaUtils 0.1
 /**
  * This is a pane for writing and sending chat messages.
  */
-DockedPanel {
+BackgroundItem {
 	id: root
+    width: parent.width
 
 //	background: Kirigami.ShadowedRectangle {
 //		shadow.color: Qt.darker(color, 1.2)
@@ -49,12 +50,12 @@ DockedPanel {
 	property QtObject chatPage
 	property alias messageArea: messageArea
 	property int lastMessageLength: 0
-	readonly property MessageComposition composition: MessageComposition {
+    readonly property MessageComposition composition: MessageComposition {
 		id: composition
 		account: AccountManager.jid
 		to: MessageModel.currentChatJid
 		body: messageArea.text
-		spoilerHint: spoilerHintField.text
+        spoilerHint: spoilerHintField.text
 		draftId: MessageModel.currentDraftMessageId
 
 		onDraftFetched: {
@@ -62,27 +63,32 @@ DockedPanel {
 			spoilerHintField.text = spoilerHint;
 			messageArea.text = body;
 		}
-	}
+    }
 
     Column {
-		anchors.fill: parent
+        width: parent.width
 		spacing: 0
 
         Row {
 			visible: composition.isSpoiler
 			spacing: 0
+            width: parent.width
+            height: Theme.iconSizeMedium
 
             TextArea {
 				id: spoilerHintField
-                width: parent.width
+                width: parent.width - closeSpoilerIcon.width
 				placeholderText: qsTr("Spoiler hint")
                 wrapMode: TextEdit.Wrap
 				// background: Item {}
 			}
 
             IconButton {
+                id: closeSpoilerIcon
                 //text: qsTr("Close spoiler hint field")
                 icon.source: "image://theme/icon-m-close"
+                width: Theme.iconSizeMedium
+                height: Theme.iconSizeMedium
                 ////FIXME display: Controls.Button.IconOnly
                 ////FIXME flat: true
 
@@ -96,37 +102,49 @@ DockedPanel {
         Separator {
 			visible: composition.isSpoiler
             width: parent.width
-            anchors.topMargin: root.padding
+            anchors.topMargin: Theme.paddingSmall
             anchors.bottomMargin: anchors.topMargin
 		}
 
         Row {
 			spacing: 0
+            width: parent.width
+            height: Theme.iconSizeMedium
 
 			// emoji picker button
-			ClickableIcon {
-                icon.source: "image://theme/icon-m-developer-mode"
-				enabled: sendButton.enabled
-				onClicked: !emojiPicker.toggle()
+            ClickableIcon {
+                id: emojiPickerIcon
+                icon.source: "image://theme/icon-m-toy"
+                enabled: sendButton.enabled
+                onClicked: !emojiPicker.toggle()
 			}
 
-			EmojiPicker {
+/*			EmojiPicker {
 				id: emojiPicker
 				x: - root.padding
 				y: - height - root.padding
 				textArea: messageArea
 			}
-
+*/
             TextArea {
 				id: messageArea
 				placeholderText: MessageModel.isOmemoEncryptionEnabled ? qsTr("Compose <b>encrypted</b> message") : qsTr("Compose <b>unencrypted</b> message")
 				// background: Item {}
 				wrapMode: TextEdit.Wrap
-                anchors.leftMargin: Style.isMaterial ? 6 : 0
-                anchors.rightMargin: Style.isMaterial ? 6 : 0
-                anchors.bottomMargin: Style.isMaterial ? -8 : 0
-                width: parent.width
-				verticalAlignment: TextEdit.AlignVCenter
+//              anchors.leftMargin: Style.isMaterial ? 6 : 0
+//              anchors.rightMargin: Style.isMaterial ? 6 : 0
+//              anchors.bottomMargin: Style.isMaterial ? -8 : 0
+                width: getMessageAreaWidth(parent.width)
+
+                function getMessageAreaWidth(w) {
+                    if(emojiPickerIcon.visible) w = w - emojiPickerIcon.width;
+                    if(shareIcon.visible) w = w - shareIcon.width;
+                    if(voiceIcon.visible) w = w - voiceIcon.width;
+                    if(sendButton.visible) w = w - sendButton.width;
+                    return w;
+                }
+
+//				verticalAlignment: TextEdit.AlignVCenter
 				state: "compose"
 
 				onTextChanged: {
@@ -190,143 +208,162 @@ DockedPanel {
 //				}
             }
 
-			// Voice message button
-//			ClickableIcon {
-//                icon.source: MediaUtilsInstance.newMediaIconName(Enums.MessageType.MessageAudio)
-//				visible: messageArea.text === ""
-
-//				opacity: visible ? 1 : 0
-//				Behavior on opacity {
-//					NumberAnimation {}
-//				}
-
-//				onClicked: {
-//					chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageAudio)
-//				}
+            // Voice message button
+            ClickableIcon {
+                id: voiceIcon
+                icon.source: MediaUtilsInstance.newMediaIconName(Enums.MessageAudio)
+                visible: messageArea.text === ""
+                opacity: visible ? 1 : 0
+                Behavior on opacity {
+                    NumberAnimation {}
+                }
+                onClicked: {
+                    chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageAudio)
+                }
 			}
 
-			// file sharing button
-            IconButton {
-                icon.source: "image://theme/icon-m-share"
+            // file sharing button
+            ClickableIcon {
+                id: shareIcon
+                icon.source: "image://theme/icon-m-attach"
+//                anchors.right: parent.right
+
                 visible: messageArea.text === ""
-				opacity: visible ? 1 : 0
-				Behavior on opacity {
-					NumberAnimation {}
+                opacity: visible ? 1 : 0
+                Behavior on opacity {
+                    NumberAnimation {}
                 }
 
-				property bool checked: false
-				onClicked: {
-					if (!checked) {
-						mediaPopup.open()
-						checked = true
-					} else {
-						mediaPopup.close()
-						checked = false
-					}
-				}
-			}
+                property bool checked: false
+                onClicked:
+                {
+                    if (!checked) {
+                        mediaPopup.show()
+                        checked = true
+                    } else {
+                        mediaPopup.hide()
+                        checked = false
+                    }
+                }
+            }
 
-            SilicaControl {
-				id: mediaPopup
-				x:  root.width - width - 40
-				y: - height - root.padding - 20
+            DockedPanel {
+                id: mediaPopup
+                dock: Dock.Bottom
+                width: parent.width
+                height: Screen.height / 2
 
-				width: 470
-                Column {
-					anchors.fill: parent
-//                  AbstractApplicationHeader {
-//						width: parent.width
-//						leftPadding: Kirigami.Units.largeSpacing
-//						SectionHeader {
-//							text: qsTr("Attachments")
-//						}
-//					}
-                    SilicaFlickable {
-                        anchors.fill: parent
+    //				x:  root.width - width - 40
+    //				y: - height - root.padding - 20
+    //				width: 470
+    //                Column {
+    //					anchors.fill: parent
+    //                    AbstractApplicationHeader {
+    //						width: parent.width
+    //						leftPadding: Kirigami.Units.largeSpacing
+    //						SectionHeader {
+    //							text: qsTr("Attachments")
+    //						}
+    //					}
 
-						visible: thumbnails.count !== 0
+                SilicaFlickable {
+                    Column {
+                        PageHeader {
+                            title: qsTr("Attachments")
+                        }
 
-                        Row {
-                            ColumnView {
-								id: thumbnails
-                                anchors.fill: parent
-                                itemHeight: 125
-                                model: RecentPicturesModel {}
+                       width: parent.width
+    //                   visible: thumbnails.count !== 0
 
-								delegate: Item {
-                                    anchors.margins: Theme.smallSpacing
+                        ColumnView {
+                            id: thumbnails
+                            width: parent.width
+                            itemHeight: Theme.itemSizeLarge
+    //                            model: RecentPicturesModel {}
 
-                                    width: parent.width
+                            delegate: Item {
+                                anchors.margins: Theme.smallSpacing
 
-									MouseArea {
-										anchors.fill: parent
-										onClicked: {
-											chatPage.sendMediaSheet.openWithExistingFile(model.filePath)
-											mediaPopup.close()
-										}
-									}
+                                width: parent.width
 
-									Image {
-										source: model.filePath
-										height: 125
-										width: 150
-										sourceSize: "125x150"
-										fillMode: Image.PreserveAspectFit
-										asynchronous: true
-									}
-								}
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        chatPage.sendMediaSheet.openWithExistingFile(model.filePath)
+                                        mediaPopup.close()
+                                    }
+                                }
+
+                                Image {
+                                    source: model.filePath
+                                    height: 125
+                                    width: 150
+                                    sourceSize: "125x150"
+                                    fillMode: Image.PreserveAspectFit
+                                    asynchronous: true
+                                }
                             }
-						}
-					}
+                        }
+                    }
 
                     Row {
-                        Row {
-                            anchors.margins: 5
+                        width: parent.width
+                        height: Theme.iconSizeMedium
+                        anchors.margins: 5
 
-                            IconButton {
-                                icon.source: "image://theme/icon-m-camera"
-//                                text: qsTr("Take picture")
+                        IconButton {
+                            width: Theme.iconSizeMedium
+                            height: Theme.iconSizeMedium
+                            icon.source: "image://theme/icon-m-camera"
+    //                                text: qsTr("Take picture")
 
-								onClicked: {
-									chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageImage)
-									mediaPopup.close()
-								}
-							}
-                            IconButton {
-                                icon.source: "image://theme/icon-m-video"
-//								title: qsTr("Record video")
+                            onClicked: {
+                                chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageImage)
+                                mediaPopup.close()
+                            }
+                        }
+                        IconButton {
+                            width: Theme.iconSizeMedium
+                            height: Theme.iconSizeMedium
+                            icon.source: "image://theme/icon-m-video"
+    //								title: qsTr("Record video")
 
-								onClicked: {
-									chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageVideo)
-									mediaPopup.close()
-								}
-							}
-                            IconButton {
-                                icon.source: "image://theme/icon-m-document"
-//                                title: qsTr("Share files")
+                            onClicked: {
+                                chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageVideo)
+                                mediaPopup.close()
+                            }
+                        }
+                        IconButton {
+                            width: Theme.iconSizeMedium
+                            height: Theme.iconSizeMedium
+                            icon.source: "image://theme/icon-m-document"
+    //                      title: qsTr("Share files")
 
-								onClicked: {
-									chatPage.sendMediaSheet.selectFile()
-									mediaPopup.close()
-								}
-							}
-                            IconButton {
-                                icon.source: "image://theme/icon-m-location"
-//								title: qsTr("Share location")
+                            onClicked: {
+                                chatPage.sendMediaSheet.selectFile()
+                                mediaPopup.close()
+                            }
+                        }
+                        IconButton {
+                            width: Theme.iconSizeMedium
+                            height: Theme.iconSizeMedium
+                            icon.source: "image://theme/icon-m-location"
+    //				        title: qsTr("Share location")
 
-								onClicked: {
-									chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageGeoLocation)
-									mediaPopup.close()
-								}
-							}
-						}
-					}
-				}
-			}
-			ClickableIcon {
+                            onClicked: {
+                                chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageGeoLocation)
+                                mediaPopup.close()
+                            }
+                        }
+                    }
+                }
+            } // DockedPanel
+
+            ClickableIcon {
 				id: sendButton
 				visible: messageArea.text !== ""
 				opacity: visible ? 1 : 0
+//               anchors.right: parent.right
 				Behavior on opacity {
 					NumberAnimation {}
 				}
@@ -339,51 +376,51 @@ DockedPanel {
 
 				onClicked: sendMessage()
 			}
-		}
+        } // Row
+    }
 
-	/**
-	 * Forces the active focus on desktop devices.
-	 *
-	 * The focus is not forced on mobile devices because the soft keyboard would otherwise pop up.
-	 */
-//	function forceActiveFocus() {
-//
-//	}
+        /**
+         * Forces the active focus on desktop devices.
+         *
+         * The focus is not forced on mobile devices because the soft keyboard would otherwise pop up.
+         */
+        function forceActiveFocus() {
+        }
 
-	/**
-	 * Sends the text entered in the messageArea.
-	 */
-	function sendMessage() {
-		// Do not send empty messages.
-		if (!messageArea.text.length)
-			return
+        /**
+         * Sends the text entered in the messageArea.
+         */
+        function sendMessage() {
+            // Do not send empty messages.
+            if (!messageArea.text.length)
+                return
 
-		// Disable the button to prevent sending the same message several times.
-		sendButton.enabled = false
+            // Disable the button to prevent sending the same message several times.
+            sendButton.enabled = false
 
-		// Send the message.
-		if (messageArea.state === "compose") {
-			composition.send()
-		} else if (messageArea.state === "edit") {
-			MessageModel.correctMessage(chatPage.messageToCorrect, messageArea.text)
-		}
-		MessageModel.resetComposingChatState();
+            // Send the message.
+            if (messageArea.state === "compose") {
+                composition.send()
+            } else if (messageArea.state === "edit") {
+                MessageModel.correctMessage(chatPage.messageToCorrect, messageArea.text)
+            }
+            MessageModel.resetComposingChatState();
 
-		clearMessageArea()
+            clearMessageArea()
 
-		// Enable the button again.
-		sendButton.enabled = true
+            // Enable the button again.
+            sendButton.enabled = true
 
-		// Show the cursor even if another element like the sendButton (after
-		// clicking on it) was focused before.
-		messageArea.forceActiveFocus()
-	}
+            // Show the cursor even if another element like the sendButton (after
+            // clicking on it) was focused before.
+            messageArea.forceActiveFocus()
+        }
 
 	/**
 	 * Handles characters used for special actions.
 	 */
 	function handleShortcuts() {
-		const currentCharacter = messageArea.getText(messageArea.cursorPosition - 1, messageArea.cursorPosition)
+        const currentCharacter = messageArea.text.substr(messageArea.cursorPosition - 1, 1)
 
 		if (emojiPicker.isSearchActive()) {
 			if (emojiPicker.searchedText === "" || currentCharacter === "" || currentCharacter === " ") {
@@ -401,7 +438,7 @@ DockedPanel {
 		} else {
 			if (currentCharacter === ":") {
 				if (messageArea.cursorPosition !== 1) {
-					const predecessorOfCurrentCharacter = messageArea.getText(messageArea.cursorPosition - 2, messageArea.cursorPosition - 1)
+                    const predecessorOfCurrentCharacter = messageArea.text.substr(messageArea.cursorPosition - 2, 1)
 					if (predecessorOfCurrentCharacter === " " || predecessorOfCurrentCharacter === "\n") {
 						emojiPicker.openForSearch(currentCharacter)
 						emojiPicker.search()

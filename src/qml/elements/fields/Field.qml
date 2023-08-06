@@ -37,7 +37,7 @@ import ".."
  */
 Column {
 	// text of the label for the input field
-    property alias labelText: inputField.label
+    property alias labelText: label.text
 
 	// input field
 	property alias inputField: inputField
@@ -72,16 +72,22 @@ Column {
 	// completed text
     readonly property alias input: inputField.text
 
+    width: parent.width
+
 	// label for the input field
     Label {
-		id: label
-	}
+        id: label
+    }
 
     Row {
+        height: Theme.itemSizeMedium
+        width: parent.width
+        spacing: 0
+
 		// input field
         TextField {
 			id: inputField
-            width: parent.width
+            width: parent.width - invalidIcon.width
 
 			// Show a hint for the first time if the entered text is not valid as soon as the input field loses the focus.
 			onFocusChanged: {
@@ -96,7 +102,7 @@ Column {
         Icon {
 			id: invalidIcon
 			visible: invalidHint.visible
-			source: "dialog-error-symbolic"
+            source: "image://theme/icon-s-warning"
             width: Theme.iconSizeSmall
 			height: width
 		}
@@ -106,9 +112,6 @@ Column {
     Label {
 		id: invalidHint
 		visible: false
-        width: parent.width
-        anchors.leftMargin: 5
-        anchors.rightMargin: 5
 		wrapMode: Text.Wrap
 //		color: Kirigami.Theme.neutralTextColor
 	}

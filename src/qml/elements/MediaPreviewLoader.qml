@@ -46,34 +46,34 @@ Loader {
 
 	enabled:  {
 		switch (mediaSourceType) {
-		case Enums.MessageType.MessageUnknown:
-		case Enums.MessageType.MessageText:
+        case Enums.MessageUnknown:
+        case Enums.MessageText:
 			return false
-		case Enums.MessageType.MessageImage:
-		case Enums.MessageType.MessageAudio:
-		case Enums.MessageType.MessageVideo:
-		case Enums.MessageType.MessageFile:
-		case Enums.MessageType.MessageDocument:
-		case Enums.MessageType.MessageGeoLocation:
+        case Enums.MessageImage:
+        case Enums.MessageAudio:
+        case Enums.MessageVideo:
+        case Enums.MessageFile:
+        case Enums.MessageDocument:
+        case Enums.MessageGeoLocation:
             return mediaSource != '' && sourceComponent !== null
 		}
 	}
 	visible: enabled
 	sourceComponent: {
 		switch (mediaSourceType) {
-		case Enums.MessageType.MessageUnknown:
-		case Enums.MessageType.MessageText:
+        case Enums.MessageUnknown:
+        case Enums.MessageText:
 			return null
-		case Enums.MessageType.MessageImage:
+        case Enums.MessageImage:
 			return imagePreview
-		case Enums.MessageType.MessageAudio:
+        case Enums.MessageAudio:
 			return audioPreview
-		case Enums.MessageType.MessageVideo:
+        case Enums.MessageVideo:
 			return videoPreview
-		case Enums.MessageType.MessageFile:
-		case Enums.MessageType.MessageDocument:
+        case Enums.MessageFile:
+        case Enums.MessageDocument:
 			return otherPreview
-		case Enums.MessageType.MessageGeoLocation:
+        case Enums.MessageGeoLocation:
 			return locationPreview
 		}
 	}

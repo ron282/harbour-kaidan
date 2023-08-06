@@ -44,15 +44,15 @@ Rectangle {
 	id: root
 
 	property url mediaSource
-	property int mediaSourceType: Enums.MessageType.MessageUnknown
-	property int messageSize: Kirigami.Units.gridUnit * 14
+    property int mediaSourceType: Enums.MessageUnknown
+    property int messageSize: Theme.paddingLarge
 	property QtObject message
 	property QtObject mediaSheet
 
-	color: message ? 'transparent' : Kirigami.Theme.backgroundColor
+//	color: message ? 'transparent' : Kirigami.Theme.backgroundColor
 
 	//FIXME Layout.fillHeight: false
-    width: message ? parent.width : nil
+    width: message ? parent.width : undefined
 	// Layout.alignment: Qt.AlignCenter
 	anchors.topMargin: -6
 	anchors.leftMargin: anchors.topMargin

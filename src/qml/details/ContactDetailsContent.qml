@@ -16,7 +16,45 @@ DetailsContent {
 
 	property bool isChatWithOneself: MessageModel.currentAccountJid === jid
 
-	encryptionArea: Column {
+//    mediaOverview {
+//        accountJid: MessageModel.currentAccountJid
+//        chatJid: MessageModel.currentChatJid
+//    }
+
+    vCardRepeater {
+        itemHeight: Theme.itemSizeMedium * 2
+
+        model: VCardModel {
+            jid: root.jid
+        }
+        delegate: SilicaItem {
+            id: vCardDelegate
+//          background: Item {}
+            Column {
+                width: parent.width
+                Label {
+                    text: Utils.formatMessage(model.value)
+                    textFormat: Text.StyledText
+                    wrapMode: Text.WordWrap
+                    visible: !vCardDelegate.editMode
+                    width: parent.width
+                    onLinkActivated: Qt.openUrlExternally(link)
+                }
+
+                Label {
+                    text: model.key
+                    color: Theme.secondaryColor
+                    font.pixelSize: Theme.fontSizeSmall
+                    textFormat: Text.PlainText
+                    wrapMode: Text.WordWrap
+                    width: parent.width
+                }
+            }
+        }
+    }
+
+    encryptionArea: Column {
+        width: parent.width
 		spacing: 0
 
 		OmemoWatcher {
@@ -34,8 +72,8 @@ DetailsContent {
 		}
 
 		TextSwitch {
-            text: qsTr("OMEMO 0")
-			//FIXME description: qsTr("End-to-end encryption with OMEMO 2 ensures that nobody else than you and your chat partners can read or modify the data you exchange.")
+            text: qsTr("OMEMO")
+            description: qsTr("End-to-end encryption with OMEMO ensures that nobody else than you and your chat partners can read or modify the data you exchange.")
 			enabled: MessageModel.usableOmemoDevices.length
 			checked: MessageModel.isOmemoEncryptionEnabled
 			// The switch is toggled by setting the user's preference on using encryption.
@@ -43,28 +81,47 @@ DetailsContent {
             onClicked: MessageModel.encryption = checked ? Encryption.Omemo0 : Encryption.NoEncryption
 		}
 
-		Button {
-			text: {
+        ValueButton {
+            label: {
 				if (!MessageModel.usableOmemoDevices.length) {
 					if (accountOmemoWatcher.distrustedOmemoDevices.length) {
-						return qsTr("Scan the QR codes of <b>your</b> devices to encrypt for them")
+                        return qsTr("Scan your devices")
 					} else if (ownResourcesWatcher.resourcesCount > 1) {
-                        return qsTr("<b>Your</b> other devices don't use OMEMO 0")
+                        return qsTr("No scan for your devices")
 					} else if (root.isChatWithOneself) {
-                        return qsTr("<b>You</b> have no other devices supporting OMEMO 0")
+                        return qsTr("No scan for your devices")
 					}
 				} else if (accountOmemoWatcher.authenticatableOmemoDevices.length) {
 					if (accountOmemoWatcher.authenticatableOmemoDevices.length === accountOmemoWatcher.distrustedOmemoDevices.length) {
-						return qsTr("Scan the QR codes of <b>your</b> devices to encrypt for them")
+                        return qsTr("Scan your devices")
 					}
 
-					return qsTr("Scan the QR codes of <b>your</b> devices for maximum security")
+                    return qsTr("Scan your devices")
 				}
 
 				return ""
 			}
-			icon.source: {
-				if (!MessageModel.usableOmemoDevices.length) {
+            description: {
+                if (!MessageModel.usableOmemoDevices.length) {
+                    if (accountOmemoWatcher.distrustedOmemoDevices.length) {
+                        return qsTr("Scan the QR codes of <b>your</b> devices to encrypt for them")
+                    } else if (ownResourcesWatcher.resourcesCount > 1) {
+                        return qsTr("<b>Your</b> other devices don't use OMEMO 0")
+                    } else if (root.isChatWithOneself) {
+                        return qsTr("<b>You</b> have no other devices supporting OMEMO 0")
+                    }
+                } else if (accountOmemoWatcher.authenticatableOmemoDevices.length) {
+                    if (accountOmemoWatcher.authenticatableOmemoDevices.length === accountOmemoWatcher.distrustedOmemoDevices.length) {
+                        return qsTr("Scan the QR codes of <b>your</b> devices to encrypt for them")
+                    }
+
+                    return qsTr("Scan the QR codes of <b>your</b> devices for maximum security")
+                }
+
+                return ""
+            }
+/*			icon.source: {
+                if (!MessageModel.usableOmemoDevices.length) {
 					if (accountOmemoWatcher.distrustedOmemoDevices.length) {
                         return "image://theme/icon-m-device-lock"
 					} else if (ownResourcesWatcher.resourcesCount > 1) {
@@ -82,7 +139,8 @@ DetailsContent {
 
 				return ""
 			}
-			visible: text
+*/
+            visible: label
 			enabled: accountOmemoWatcher.authenticatableOmemoDevices.length
 			onClicked: pageStack.layers.push(qrCodePage, { isForOwnDevices: true })
 
@@ -92,29 +150,50 @@ DetailsContent {
 			}
 		}
 
-		Button {
-			text: {
-				if(root.isChatWithOneself) {
-					return ""
-				}
+        ValueButton {
+            label: {
+                if(root.isChatWithOneself) {
+                    return ""
+                }
 
-				if (!MessageModel.usableOmemoDevices.length) {
-					if (contactOmemoWatcher.distrustedOmemoDevices.length) {
-						return qsTr("Scan the QR code of your <b>contact</b> to enable encryption")
-					}
+                if (!MessageModel.usableOmemoDevices.length) {
+                    if (contactOmemoWatcher.distrustedOmemoDevices.length) {
+                        return qsTr("Scan contact")
+                    }
 
-					return qsTr("Your <b>contact</b> doesn't use OMEMO 2")
-				} else if (contactOmemoWatcher.authenticatableOmemoDevices.length) {
-					if (contactOmemoWatcher.authenticatableOmemoDevices.length === contactOmemoWatcher.distrustedOmemoDevices.length) {
-						return qsTr("Scan the QR codes of your <b>contact's</b> devices to encrypt for them")
-					}
+                    return qsTr("No scan for contact")
+                } else if (contactOmemoWatcher.authenticatableOmemoDevices.length) {
+                    if (contactOmemoWatcher.authenticatableOmemoDevices.length === contactOmemoWatcher.distrustedOmemoDevices.length) {
+                        return qsTr("Scan contact")
+                    }
 
-					return qsTr("Scan the QR code of your <b>contact</b> for maximum security")
-				}
+                    return qsTr("Scan contact")
+                }
 
-				return ""
-			}
-			icon.source: {
+                return ""
+            }
+            description: {
+                if(root.isChatWithOneself) {
+                    return ""
+                }
+
+                if (!MessageModel.usableOmemoDevices.length) {
+                    if (contactOmemoWatcher.distrustedOmemoDevices.length) {
+                        return qsTr("Scan the QR code of your <b>contact</b> to enable encryption")
+                    }
+
+                    return qsTr("Your <b>contact</b> doesn't use OMEMO 2")
+                } else if (contactOmemoWatcher.authenticatableOmemoDevices.length) {
+                    if (contactOmemoWatcher.authenticatableOmemoDevices.length === contactOmemoWatcher.distrustedOmemoDevices.length) {
+                        return qsTr("Scan the QR codes of your <b>contact's</b> devices to encrypt for them")
+                    }
+
+                    return qsTr("Scan the QR code of your <b>contact</b> for maximum security")
+                }
+
+                return ""
+            }
+/*			icon.source: {
 				if (!MessageModel.usableOmemoDevices.length) {
 					if (contactOmemoWatcher.distrustedOmemoDevices.length) {
                         return "image://theme/icon-m-warning"
@@ -131,177 +210,147 @@ DetailsContent {
 
 				return ""
 			}
-			visible: text
+*/
+            visible: label
 			enabled: contactOmemoWatcher.authenticatableOmemoDevices.length
-			onClicked: pageStack.layers.push(qrCodePage, { contactJid: root.jid })
+            onClicked: pageStack.push(qrCodePage, { contactJid: root.jid })
 		}
 	}
 
     Dialog {
 		id: qrCodeDialog
-		z: 1000
+    //	z: 1000
 
-		Column {
-			QrCode {
+         Column {
+            width: parent.width
+            DialogHeader { title: qsTr("QR Code") }
+
+            QrCode {
 				jid: root.jid
-				//FIXME Layout.fillHeight: true
+                height:  Screen.height * 0.5 // Math.min(parent.height, Screen.height * 0.5)
 				width: parent.width
-				//FIXME Layout.preferredWidth: 500
-				// //FIXME Layout.preferredHeight: 500
-                //Layout.maximumHeight: applicationWindow().height * 0.5
 			}
 		}
 	}
 
-	SilicaFlickable {
-		width: parent.width
+    RosterItemWatcher {
+        id: contactWatcher
+        jid: root.jid
+    }
 
-        Column {
-			spacing: 0
+    extraContentArea: Column {
+        spacing: 0
+        width: parent.width
 
-			SectionHeader {
-                text: qsTr("Sharing")
-			}
+        SectionHeader {
+            text: qsTr("Sharing")
+        }
 
-			Button {
-				text: qsTr("Show QR code")
-				//FIXME description: qsTr("Share this contact's chat address via QR code")
-                icon.source: "image://theme/icon-m-qr"
-				onClicked: qrCodeDialog.open()
-			}
+        ValueButton {
+            label: qsTr("Show QR code")
+            description: qsTr("Share this contact's chat address via QR code")
+//            icon.source: "image://theme/icon-m-qr"
+            onClicked: qrCodeDialog.open()
+        }
 
-			Button {
-				text: qsTr("Copy chat address")
-				//FIXME description: qsTr("Share this contact's chat address via text")
-                icon.source: "image://theme/icon-m-send"
-				onClicked: {
-					Utils.copyToClipboard(Utils.trustMessageUri(root.jid))
-					passiveNotification(qsTr("Contact copied to clipboard"))
-				}
-			}
-		}
-	}
+        ValueButton {
+            label: qsTr("Copy chat address")
+            description: qsTr("Share this contact's chat address via text")
+//            icon.source: "image://theme/icon-m-send"
+            onClicked: {
+                Utils.copyToClipboard(Utils.trustMessageUri(root.jid))
+                passiveNotification(qsTr("Contact copied to clipboard"))
+            }
+        }
 
-	RosterItemWatcher {
-		id: contactWatcher
-		jid: root.jid
-	}
+        SectionHeader {
+            text: qsTr("Notifications")
+        }
 
-	SilicaFlickable {
-		width: parent.width
+        TextSwitch {
+            text: qsTr("Incoming messages")
+            description: qsTr("Show notification and play sound on message arrival")
+            checked: !mutedWatcher.muted
+            onCheckedChanged: mutedWatcher.muted = !mutedWatcher.muted
 
-         Column {
-			spacing: 0
+            NotificationsMutedWatcher {
+                id: mutedWatcher
+                jid: root.jid
+            }
+        }
 
-			SectionHeader {
-                text: qsTr("Notifications")
-			}
+        SectionHeader {
+            text: qsTr("Privacy")
+        }
 
-			TextSwitch {
-				text: qsTr("Incoming messages")
-				//FIXME description: qsTr("Show notification and play sound on message arrival")
-				checked: !mutedWatcher.muted
-				onCheckedChanged: mutedWatcher.muted = !mutedWatcher.muted
+        ValueButton {
+            label: qsTr("Request status")
+            description: qsTr("Request contact's availability, devices and other personal information")
+            visible: !contactWatcher.item.sendingPresence
+            onClicked: Kaidan.client.rosterManager.subscribeToPresenceRequested(root.jid)
+        }
 
-				NotificationsMutedWatcher {
-					id: mutedWatcher
-					jid: root.jid
-				}
-			}
-		}
-	}
+        TextSwitch {
+            text: qsTr("Send status")
+            description: qsTr("Provide your availability, devices and other personal information")
+            checked: contactWatcher.item.receivingPresence
+            visible: !isChatWithOneself
+            onCheckedChanged: {
+                if (checked) {
+                    Kaidan.client.rosterManager.acceptSubscriptionToPresenceRequested(MessageModel.currentChatJid)
+                } else {
+                    Kaidan.client.rosterManager.refuseSubscriptionToPresenceRequested(MessageModel.currentChatJid)
+                }
+            }
+        }
 
-	SilicaFlickable {
-		width: parent.width
+        TextSwitch {
+            text: qsTr("Send typing notifications")
+            description: qsTr("Indicate when you have this conversation open, are typing and stopped typing")
+            checked: contactWatcher.item.chatStateSendingEnabled
+            onCheckedChanged: {
+                RosterModel.setChatStateSendingEnabled(
+                    MessageModel.currentAccountJid,
+                    MessageModel.currentChatJid,
+                    checked)
+            }
+        }
 
-         Column {
-			spacing: 0
+        TextSwitch {
+            text: qsTr("Send read notifications")
+            description: qsTr("Indicate which messages you have read")
+            checked: contactWatcher.item.readMarkerSendingEnabled
+            onCheckedChanged: {
+                RosterModel.setReadMarkerSendingEnabled(
+                    MessageModel.currentAccountJid,
+                    MessageModel.currentChatJid,
+                    checked)
+            }
+        }
 
-			SectionHeader {
-                text: qsTr("Privacy")
-			}
+        SectionHeader {
+            text: qsTr("Removal")
+        }
 
-			Button {
-				text: qsTr("Request status")
-				//FIXME description: qsTr("Request contact's availability, devices and other personal information")
-				visible: !contactWatcher.item.sendingPresence
-				onClicked: Kaidan.client.rosterManager.subscribeToPresenceRequested(root.jid)
-			}
+        IconTextSwitch {
+            id: removalButton
+            text: qsTr("Remove")
+            description: qsTr("Remove contact and complete chat history")
+            icon.source: "image://theme/icon-m-delete"
+            icon.color: "red"
+            onCheckedChanged: contactRemovalCorfirmButton.visible = !contactRemovalCorfirmButton.visible
+        }
 
-			TextSwitch {
-				text: qsTr("Send status")
-				//FIXME description: qsTr("Provide your availability, devices and other personal information")
-				checked: contactWatcher.item.receivingPresence
-				visible: !isChatWithOneself
-				onCheckedChanged: {
-					if (checked) {
-						Kaidan.client.rosterManager.acceptSubscriptionToPresenceRequested(MessageModel.currentChatJid)
-					} else {
-						Kaidan.client.rosterManager.refuseSubscriptionToPresenceRequested(MessageModel.currentChatJid)
-					}
-				}
-			}
-
-			TextSwitch {
-				text: qsTr("Send typing notifications")
-				//FIXME description: qsTr("Indicate when you have this conversation open, are typing and stopped typing")
-				checked: contactWatcher.item.chatStateSendingEnabled
-				onCheckedChanged: {
-					RosterModel.setChatStateSendingEnabled(
-						MessageModel.currentAccountJid,
-						MessageModel.currentChatJid,
-						checked)
-				}
-			}
-
-			TextSwitch {
-				text: qsTr("Send read notifications")
-				//FIXME description: qsTr("Indicate which messages you have read")
-				checked: contactWatcher.item.readMarkerSendingEnabled
-				onCheckedChanged: {
-					RosterModel.setReadMarkerSendingEnabled(
-						MessageModel.currentAccountJid,
-						MessageModel.currentChatJid,
-						checked)
-				}
-			}
-		}
-	}
-
-	SilicaFlickable {
-		width: parent.width
-
-         Column {
-			spacing: 0
-
-			SectionHeader {
-                text: qsTr("Removal")
-			}
-
-			Column {
-				spacing: 0
-
-                IconTextSwitch {
-					id: removalButton
-					text: qsTr("Remove")
-					//FIXME description: qsTr("Remove contact and complete chat history")
-                    icon.source: "image://theme/icon-m-edit"
-					icon.color: "red"
-					onCheckedChanged: contactRemovalCorfirmButton.visible = !contactRemovalCorfirmButton.visible
-				}
-
-				Button {
-					id: contactRemovalCorfirmButton
-					text: qsTr("Confirm")
-					visible: false
-                    anchors.leftMargin: Theme.paddingLarge
-					onClicked: {
-						visible = false
-						removalButton.enabled = false
-						Kaidan.client.rosterManager.removeContactRequested(jid)
-					}
-				}
-			}
-		}
-	}
+        Button {
+            id: contactRemovalCorfirmButton
+            text: qsTr("Confirm")
+            visible: false
+            anchors.leftMargin: Theme.horizontalPageMargin
+            onClicked: {
+                visible = false
+                removalButton.enabled = false
+                Kaidan.client.rosterManager.removeContactRequested(jid)
+            }
+        }
+    }
 }

@@ -166,7 +166,6 @@ bool MessageModel::isEmpty() const
 
 int MessageModel::rowCount(const QModelIndex &) const
 {
-    qDebug() << "MessageModel::rowCount()" << m_messages.length();
 	return m_messages.length();
 }
 
@@ -196,7 +195,6 @@ QHash<int, QByteArray> MessageModel::roleNames() const
 
 QVariant MessageModel::data(const QModelIndex &index, int role) const
 {
-    qDebug() << "MessageModel::data(index=" << index << ", role=" << role << ")";
 	if (!hasIndex(index.row(), index.column(), index.parent())) {
 		qWarning() << "Could not get data from message model." << index << role;
 		return {};
@@ -374,7 +372,6 @@ void MessageModel::fetchMore(const QModelIndex &)
 		}
 	}
 	// already fetched everything from DB and MAM
-    qDebug() << "already fetched everything from DB and MAM";
 }
 
 bool MessageModel::canFetchMore(const QModelIndex &) const
@@ -394,8 +391,6 @@ QString MessageModel::currentChatJid()
 
 void MessageModel::setCurrentChat(const QString &accountJid, const QString &chatJid)
 {
-    qDebug() << "setCurrentChat(" << accountJid << "," << chatJid << ")";
-
 	if (accountJid == m_currentAccountJid && chatJid == m_currentChatJid) {
 		return;
 	}
@@ -408,8 +403,6 @@ void MessageModel::setCurrentChat(const QString &accountJid, const QString &chat
 	runOnThread(Kaidan::instance()->client()->omemoManager(), [accountJid, chatJid] {
 		Kaidan::instance()->client()->omemoManager()->initializeChat(accountJid, chatJid);
 	});
-
-    qDebug() << "setCurrentChat end";
 }
 
 void MessageModel::resetCurrentChat() {
@@ -433,12 +426,20 @@ QHash<QString, QHash<QByteArray, QXmpp::TrustLevel>> MessageModel::keys()
 
 Encryption::Enum MessageModel::activeEncryption()
 {
-	return isOmemoEncryptionEnabled() ? Encryption::Omemo2 : Encryption::NoEncryption;
+#if defined(WITH_OMEMO_V03)
+    return isOmemoEncryptionEnabled() ? Encryption::Omemo0 : Encryption::NoEncryption;
+#else
+    return isOmemoEncryptionEnabled() ? Encryption::Omemo2 : Encryption::NoEncryption;
+#endif
 }
 
 bool MessageModel::isOmemoEncryptionEnabled() const
 {
+#if defined(WITH_OMEMO_V03)
+    return encryption() == Encryption::Omemo0 && !usableOmemoDevices().isEmpty();
+#else
 	return encryption() == Encryption::Omemo2 && !usableOmemoDevices().isEmpty();
+#endif
 }
 
 Encryption::Enum MessageModel::encryption() const
@@ -705,8 +706,6 @@ bool MessageModel::canCorrectMessage(int index) const
 
 void MessageModel::handleMessagesFetched(const QVector<Message> &msgs)
 {
-    qDebug() << "handleMessagesFetched";
-
 	if (msgs.length() < DB_QUERY_LIMIT_MESSAGES)
 		m_fetchedAllFromDb = true;
 
@@ -986,8 +985,6 @@ QXmppMessage::State MessageModel::chatState() const
 
 void MessageModel::sendChatState(QXmppMessage::State state)
 {
-    qDebug() << "MessageModel::sendChatState(" << state << ")";
-
 	if (!m_rosterItemWatcher.item().chatStateSendingEnabled) {
 		return;
 	}

@@ -41,8 +41,8 @@ ChatPageBase {
 	id: root
 
 	property alias searchBar: searchBar
-//	property alias sendMediaSheet: sendMediaSheet
-//    property alias newMediaSheet: newMediaSheet
+    property alias sendMediaSheet: sendMediaSheet
+    property alias newMediaSheet: newMediaSheet
 //	property alias messageReactionEmojiPicker: messageReactionEmojiPicker
 //	property alias messageReactionSenderSheet: messageReactionSenderSheet
 
@@ -50,18 +50,29 @@ ChatPageBase {
     readonly property bool cameraAvailable: QtMultimedia.availableCameras.length > 0
 	property bool viewPositioned: false
 
+    onStatusChanged: {
+        if (status === PageStatus.Active) {
+            pageStack.pushAttached(contactDetailsSheet)
+        }
+    }
+
     PageHeader {
-        Avatar {
-            width: Theme.iconSizeMedium;
-            height: width
-            jid: chatItemWatcher.item.jid
-            name: chatItemWatcher.item.displayName
-            smooth: true;
+        id: ph
+        title: chatItemWatcher.item.displayName
+        SilicaItem {
+            parent: ph.extraContent
+            height: Theme.iconSizeMedium
             anchors {
-                leftMargin: Theme.paddingMedium;
-                verticalCenter: parent.verticalCenter;
+                leftMargin: Theme.paddingMedium
+                verticalCenter: parent.verticalCenter
             }
-            onClicked: contactDetailsSheet.open()
+            Avatar {
+                id: avatar
+                jid: chatItemWatcher.item.jid
+                name: chatItemWatcher.item.displayName
+                smooth: true;
+                onClicked: contactDetailsSheet.show()
+            }
         }
         Rectangle {
                 z: -1;
@@ -81,7 +92,6 @@ ChatPageBase {
 		id: chatItemWatcher
 		jid: MessageModel.currentChatJid
 	}
-/*
     ContactDetailsSheet {
 		id: contactDetailsSheet
 		jid: MessageModel.currentChatJid
@@ -94,8 +104,7 @@ ChatPageBase {
 			jid: MessageModel.currentChatJid
 		}
 	}
-*/
-/*
+
 	SendMediaSheet {
 		id: sendMediaSheet
 		composition: sendingPane.composition
@@ -107,7 +116,8 @@ ChatPageBase {
         composition: sendingPane.composition
     }
 
-	MessageReactionEmojiPicker {
+    /*
+    MessageReactionEmojiPicker {
 		id: messageReactionEmojiPicker
 	}
 
@@ -118,13 +128,23 @@ ChatPageBase {
      // View containing the messages
     SilicaListView {
 		id: messageListView
-        anchors.fill: parent
+        anchors {
+            top: ph.bottom
+            left: parent.left
+            right: parent.right
+            bottom: sendingPane.top
+        }
         VerticalScrollDecorator { flickable: rosterListView }
         verticalLayoutDirection: ListView.BottomToTop
         cacheBuffer: Screen.width // do avoid flickering when image width is changed
-		spacing: 0
+        clip: true;
+        focus: true;
+        spacing: 0
 
         PullDownMenu {
+            enabled: true
+            visible: true
+
             MenuItem {
                 text: qsTr("Details…")
                 onClicked: pageStack.push(contactDetailsPage)
@@ -242,8 +262,8 @@ ChatPageBase {
 
 
 		delegate: ChatMessage {
-//            contextMenu: ChatMessageContextMenu {
-//            }
+            contextMenu: ChatMessageContextMenu {
+            }
 //			reactionEmojiPicker: root.messageReactionEmojiPicker
 //			reactionSenderSheet: root.messageReactionSenderSheet
 			modelIndex: index
@@ -275,14 +295,14 @@ ChatPageBase {
 			}
 
 			onQuoteRequested: {
-//				quotedText = ""
-//				const lines = body.split("\n")
+                quotedText = ""
+                const lines = body.split("\n")
 
-//                for (i = 0; i<lines.size(); i++) {
-//                    quotedText += "> " + lines[i] + "\n"
-//				}
+                for (i = 0; i<lines.size(); i++) {
+                    quotedText += "> " + lines[i] + "\n"
+                }
 
-//				sendingPane.messageArea.insert(0, quotedText)
+                sendingPane.messageArea.insert(0, quotedText)
 			}
 		}
 
@@ -294,45 +314,70 @@ ChatPageBase {
 
             Label {
 				id: stateLabel
-                // Layout.alignment: Qt.AlignCenter
+                anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width
-				height: !text ? 20 : 0
-				topPadding: text ? 10 : 0
+                height: !text ? Theme.paddingMedium : 0
+                topPadding: text ? Theme.paddingSmall : 0
+                color: Theme.primaryColor
 
 				text: Utils.chatStateDescription(chatItemWatcher.item.displayName, MessageModel.chatState)
 				elide: Qt.ElideMiddle
 			}
 		}
 
-        footer: BusyIndicator {
-			visible: opacity !== 0.0
-			anchors.horizontalCenter: parent.horizontalCenter
+/*        footer: BusyIndicator {
+            visible: opacity !== 0.0
+            anchors.horizontalCenter: parent.horizontalCenter
             height: visible ? undefined : Theme.paddingMedium
-			opacity: MessageModel.mamLoading ? 1.0 : 0.0
+            opacity: MessageModel.mamLoading ? 1.0 : 0.0
 
-//			Behavior on opacity {
-//				NumberAnimation {
-//					duration: Theme.short
-//				}
-//			}
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 10
+                }
+            }
 		}
+*/
+/*        IconButton {
+            visible: width > 0
+            width: parent.atYEnd ? 0 : Theme.buttonWidthLarge
+            height: parent.atYEnd ? 0 : Theme.buttonWidthLarge
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: Theme.paddingMedium
+            anchors.rightMargin: Theme.paddingMedium
+            icon.source: "image://theme/icon-s-down"
+            onClicked: parent.positionViewAtIndex(0, ListView.Center)
 
-        MessageCounter {
-				id: unreadMessageCounter
-				count: chatItemWatcher.item.unreadMessageCount
-				anchors.horizontalCenter: parent.horizontalCenter
-				anchors.verticalCenter: parent.top
-				anchors.verticalCenterOffset: -2
-        }
+            Behavior on width {
+                SmoothedAnimation {}
+            }
 
+            Behavior on height {
+                SmoothedAnimation {}
+            }
 
-/*        footer: ChatPageSendingPane {
-            id: sendingPane
-            chatPage: root
+            MessageCounter {
+                id: unreadMessageCounter
+                count: chatItemWatcher.item.unreadMessageCount
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.top
+                anchors.verticalCenterOffset: -2
+            }
         }
 */
-        function saveDraft() {
-            sendingPane.composition.saveDraft();
-        }
+    } // SilicaListView
+
+
+    ChatPageSendingPane {
+        id: sendingPane
+        chatPage: root
+        anchors.bottom: root.bottom
     }
-}
+
+    function saveDraft() {
+        sendingPane.composition.saveDraft();
+    }
+
+
+} // ChatPageBase

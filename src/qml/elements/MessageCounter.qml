@@ -38,12 +38,6 @@ Rectangle {
     height: lblUnread.implicitHeight
     color: Theme.highlightBackgroundColor
     radius: height*0.5
-    anchors {
-        top: parent.top
-        right: parent.right
-        topMargin: Theme.paddingSmall
-        rightMargin: Theme.paddingSmall
-    }
     visible: (count > 0) ? true : false
     Label {
         id: lblUnread

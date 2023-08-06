@@ -5,6 +5,8 @@ QT += qml quick core sql xml concurrent multimedia positioning widgets multimedi
 
 LBUILD = build
 
+DEFINES += WITH_OMEMO_V03
+
 contains(DEFINES, DBUS) {
     CONFIG += console
     QT += dbus
@@ -40,12 +42,13 @@ DEFINES += BOOST_SIGNALS_NO_DEPRECATION_WARNING
 
 
 DEFINES += APPLICATION_DISPLAY_NAME=\\\"Kaidan\\\"
-DEFINES += APPLICATION_NAME=\\\"Kaidan\\\"
+DEFINES += APPLICATION_NAME=\\\"harbour-kaidan\\\"
 DEFINES += VERSION_STRING=\\\"0.0.1\\\"
 DEFINES += QSTRINGVIEW_EMULATE
 DEFINES += Q_COMPILER_UNICODE_STRINGS
 
 SOURCES += \
+    3rdparty/QImagePainter/qimagepainter.cpp \
     src/AccountManager.cpp \
     src/AtmManager.cpp \
     src/AudioDeviceModel.cpp \
@@ -120,6 +123,7 @@ SOURCES += \
 
 
 HEADERS += \
+    3rdparty/QImagePainter/qimagepainter.h \
     src/AbstractNotifier.h \
     src/AccountManager.h \
     src/Algorithms.h \
@@ -217,7 +221,10 @@ lupdate_only {
 }
 
 RESOURCES += \
-  src/qml/qml.qrc
+  src/qml/qml.qrc \
+  data/images/images.qrc \
+  data/data.qrc \
+  misc/misc.qrc
 
 DISTFILES += \
     src/qml/harbour-kaidan.desktop

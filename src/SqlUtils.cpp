@@ -61,8 +61,7 @@ void bindValues(QSqlQuery &query, const std::vector<QVariant> &values)
 void bindValues(QSqlQuery &query, const std::vector<QueryBindValue> &values)
 {
 	for (const auto &bindValue : values) {
-        qDebug() << "bindValues key=" << bindValue.key.toString() << ", value=" << bindValue.value;
-		query.bindValue(bindValue.key.toString(), bindValue.value);
+        query.bindValue(bindValue.key.toString(), bindValue.value);
 	}
 }
 
@@ -72,7 +71,6 @@ void execQuery(QSqlQuery &query)
 		qDebug() << "Failed to execute query:" << query.executedQuery();
 		qFatal("QSqlError: %s", qPrintable(query.lastError().text()));
 	}
-    qDebug() << "Executed query:" << query.executedQuery();
 }
 
 void execQuery(QSqlQuery &query, const QString &sql)

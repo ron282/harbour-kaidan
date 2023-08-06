@@ -5,56 +5,70 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick 2.2
-// import QtQuick.Controls 2.14 as Controls
 import Sailfish.Silica 1.0
-// import org.kde.kirigami 2.19 as Kirigami
 
 import im.kaidan.kaidan 1.0
 
 import "../elements"
 
-Row {
+PageHeader {
 	id: root
 
-	default property alias __data: mainArea.data
-    property DockedPanel sheet
 	property string jid
 	property string displayName
-    property Button avatarAction
 
-    anchors.topMargin:  0
-    anchors.bottomMargin: 0
-    anchors.leftMargin: Theme.paddingLarge* 2
-    anchors.rightMargin: anchors.leftMargin
+    title: displayName
 
-	Avatar {
-		jid: root.jid
-		name: root.displayName
-        //FIXME Layout.preferredHeight: Kirigami.Units.gridUnit * 8
-        //FIXME Layout.preferredWidth: Layout.preferredHeight
+//    property Button avatarAction
 
-		// TODO: Make icon also visible when the cursor is on it directly after opening this page
-	}
+//    anchors.topMargin:  0
+//    anchors.bottomMargin: 0
+//    anchors.leftMargin: Theme.paddingLarge* 2
+//    anchors.rightMargin: anchors.leftMargin
 
-	Column {
+
+    SilicaItem {
+        parent: root.extraContent
+        height: Theme.iconSizeMedium
+        anchors {
+            leftMargin: Theme.paddingMedium
+            verticalCenter: parent.verticalCenter
+        }
+        Avatar {
+            id: avatar
+            jid: chatItemWatcher.item.jid
+            name: chatItemWatcher.item.displayName
+            smooth: true;
+            onClicked: contactDetailsSheet.show()
+        }
+    }
+    Rectangle {
+            z: -1;
+            color: "black";
+            opacity: 0.35;
+            anchors.fill: parent;
+    }
+}
+
+/*    Row {
 		id: mainArea
-        anchors.leftMargin: 15
+        parent: root.extraContent
+        anchors.leftMargin: Theme.paddingMedium
 
-		Row {
+        Avatar {
+            jid: root.jid
+            name: root.displayName
+
+            // TODO: Make icon also visible when the cursor is on it directly after opening this page
+        }
+
+        Row {
 			id: displayNameArea
 			spacing: 0
 
-			Button {
+            IconButton {
 				id: displayNameEditingIcon
-                //FIXME Controls.ToolTip.text: qsTr("Change name…")
-                icon.source: "image://theme/icon-m-edit"
-				onHoveredChanged: {
-					if (hovered) {
-						flat = false
-					} else {
-						flat = true
-					}
-				}
+                icon.source: "image://theme/icon-s-edit"
 				onClicked: {
 					if (displayNameText.visible) {
 						displayNameTextField.visible = true
@@ -67,25 +81,20 @@ Row {
 				}
 			}
 
-            SectionHeader {
-				id: displayNameText
+            Label {
+                id: displayNameText
 				text: root.displayName
-				textFormat: Text.PlainText
+                textFormat: Text.PlainText
 				maximumLineCount: 1
 				elide: Text.ElideRight
 				visible: !displayNameTextField.visible
-                //FIXME // Layout.alignment: Qt.AlignVCenter
-				width: parent.width
+                width: parent.width - displayNameEditingIcon.width
                 leftPadding: Theme.paddingLarge
 				// TODO: Get update of current vCard by using Entity Capabilities
 				onTextChanged: displayNameChangedFunction()
 
 				MouseArea {
 					anchors.fill: displayNameText
-					hoverEnabled: true
-					cursorShape: Qt.PointingHandCursor
-					onEntered: displayNameEditingIcon.flat = false
-					onExited: displayNameEditingIcon.flat = true
 					onClicked: displayNameEditingIcon.clicked(Qt.LeftButton)
 				}
 			}
@@ -94,8 +103,8 @@ Row {
 				id: displayNameTextField
 				text: displayNameText.text
 				visible: false
-                anchors.leftMargin: Theme.paddingLarge
-				width: parent.width
+//                anchors.leftMargin: Theme.paddingLarge
+                width: parent.width - displayNameEditingIcon.width
                 //FIXME onAccepted: {
                 //	displayNameArea.changeDisplayName(text)
                 //	visible = false
@@ -114,8 +123,8 @@ Row {
 			textFormat: Text.PlainText
 			maximumLineCount: 1
 			elide: Text.ElideRight
-			width: parent.width
-            anchors.leftMargin: displayNameTextField.anchors.leftMargin
+            width: parent.width
+//          anchors.leftMargin: displayNameTextField.anchors.leftMargin
 		}
 	}
-}
+}*/

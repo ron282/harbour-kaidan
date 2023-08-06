@@ -29,6 +29,7 @@
  */
 #if defined(SFOS)
 #include "../3rdparty/QEmuStringView/qemustringview.h"
+#include "../3rdparty/QImagePainter/qimagepainter.h"
 #endif
 
 #if defined(SFOS)
@@ -410,16 +411,14 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	//
 	// QML-GUI
 	//
-
 	if (QIcon::themeName().isEmpty()) {
 		QIcon::setThemeName("breeze");
 	}
-
-	QQmlApplicationEngine engine;
+    QQmlApplicationEngine engine;
 
 	engine.addImageProvider(QLatin1String(BITS_OF_BINARY_IMAGE_PROVIDER_NAME), BitsOfBinaryImageProvider::instance());
 
-	// QtQuickControls2 Style
+    // QtQuickControls2 Style
 	if (qEnvironmentVariableIsEmpty("QT_QUICK_CONTROLS_STYLE")) {
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
 		const QString defaultStyle = QStringLiteral("Material");
@@ -438,6 +437,10 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	// QML type bindings
 #ifdef STATIC_BUILD
 	KirigamiPlugin::getInstance().registerTypes();
+#endif
+
+#if defined(SFOS)
+    qmlRegisterType<ImagePainter>("im.kaidan.kaidan", 0, 1, "ImagePainter");
 #endif
 	qmlRegisterType<StatusBar>("StatusBar", 0, 1, "StatusBar");
 	qmlRegisterType<EmojiModel>("EmojiModel", 0, 1, "EmojiModel");

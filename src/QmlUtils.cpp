@@ -100,22 +100,18 @@ QString QmlUtils::connectionErrorMessage(ClientWorker::ConnectionError error)
 
 QString QmlUtils::getResourcePath(const QString &name)
 {
-#if defined(SFOS)
-    qDebug() << "getResourcePath " << name;
-#endif
     // We generally prefer to first search for files in application resources
     if (QFile::exists("/" + name))
-#if defined(SFOS)
-        return QString("/" + name);
-#else
         return QString("qrc:/" + name);
-#endif
     // list of file paths where to search foooooooor the resource file
 	QStringList pathList;
 	// add relative path from binary (only works if installed)
 	pathList << QCoreApplication::applicationDirPath() + QString("/../share/") + QString(APPLICATION_NAME);
 	// get the standard app data locations for current platform
 	pathList << QStandardPaths::standardLocations(QStandardPaths::AppDataLocation);
+#if defined(SFOS)
+    pathList << QString("/usr/share/") + QString(APPLICATION_NAME);
+#endif
 #ifdef UBUNTU_TOUCH
 	pathList << QString("./share/") + QString(APPLICATION_NAME);
 #endif

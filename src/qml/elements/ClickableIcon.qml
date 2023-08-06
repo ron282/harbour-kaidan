@@ -35,15 +35,6 @@ import Sailfish.Silica 1.0
  * This is a clickable icon changing its color on several events if possible.
  */
 IconButton  {
-    width: /*Kirigami.Units.largeSpacing*/ 20 * 3.8
+    width: Theme.iconSizeMedium
 	height: width
-
-    onClicked: {
-        parent.clicked()
-
-        if (containsMouse)
-            entered()
-        else
-            exited()
-    }
 }

@@ -47,7 +47,7 @@ Page {
         spacing: Theme.paddingLarge
 
         Button {
-            text: qsTr("Register a new account")
+            text: qsTr("Register a new account")            
             icon.source: Utils.getResourcePath("images/onboarding/registration.svg")
             anchors.horizontalCenter: parent.horizontalCenter
             onClicked: pageStack.push(registrationDecisionPage)

@@ -690,9 +690,24 @@ QFuture<QXmpp::SendResult> MessageHandler::send(QXmppMessage &&message)
 
 	const auto recipientJid = message.to();
 
+#if defined(WITH_OMEMO_V03)
+    QXmppSendStanzaParams sendParams;
+
+    constexpr auto ANY_TRUST_LEVEL = QXmpp::TrustLevel::Undecided |
+                QXmpp::TrustLevel::AutomaticallyDistrusted |
+                QXmpp::TrustLevel::ManuallyDistrusted |
+                QXmpp::TrustLevel::AutomaticallyTrusted |
+                QXmpp::TrustLevel::ManuallyTrusted |
+                QXmpp::TrustLevel::Authenticated;
+
+    sendParams.setAcceptedTrustLevels(ANY_TRUST_LEVEL);
+    auto sendEncrypted = [=, this]() mutable {
+        m_client->sendSensitive(std::move(message), sendParams).then(this, [=](QXmpp::SendResult result) mutable {
+#else
 	auto sendEncrypted = [=, this]() mutable {
-		m_client->sendSensitive(std::move(message)).then(this, [=](QXmpp::SendResult result) mutable {
-			reportFinishedResult(interface, result);
+        m_client->sendSensitive(std::move(message)).then(this, [=](QXmpp::SendResult result) mutable {
+#endif
+            reportFinishedResult(interface, result);
 		});
 	};
 
@@ -722,11 +737,18 @@ QFuture<QXmpp::SendResult> MessageHandler::send(QXmppMessage &&message)
 			runOnThread(RosterModel::instance(), [accountJid = AccountManager::instance()->jid(), recipientJid]() {
 				return RosterModel::instance()->itemEncryption(accountJid, recipientJid).value_or(Encryption::NoEncryption);
 			}, this, [=, this](Encryption::Enum activeEncryption) mutable {
-				if (activeEncryption == Encryption::Omemo2) {
-					auto future = m_clientWorker->omemoManager()->hasUsableDevices({ recipientJid });
+#if defined(WITH_OMEMO_V03)
+                if (activeEncryption == Encryption::Omemo0) {
+#else
+                if (activeEncryption == Encryption::Omemo2) {
+#endif
+                    auto future = m_clientWorker->omemoManager()->hasUsableDevices({ recipientJid });
 					await(future, this, [=](bool hasUsableDevices) mutable {
-						const auto isOmemoEncryptionEnabled = activeEncryption == Encryption::Omemo2 && hasUsableDevices;
-
+#if defined(WITH_OMEMO_V03)
+                        const auto isOmemoEncryptionEnabled = activeEncryption == Encryption::Omemo0 && hasUsableDevices;
+#else
+                        const auto isOmemoEncryptionEnabled = activeEncryption == Encryption::Omemo2 && hasUsableDevices;
+#endif
 						if (isOmemoEncryptionEnabled) {
 							sendEncrypted();
 						} else {

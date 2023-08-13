@@ -1,32 +1,16 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2017 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2017 Jonah Brüchert <jbb@kaidan.im>
+// SPDX-FileCopyrightText: 2018 Ilya Bizyaev <bizyaev@zoho.com>
+// SPDX-FileCopyrightText: 2019 Xavier <xavi@delape.net>
+// SPDX-FileCopyrightText: 2019 Robert Maerkisch <zatrox@kaidan.im>
+// SPDX-FileCopyrightText: 2019 Filipe Azevedo <pasnox@gmail.com>
+// SPDX-FileCopyrightText: 2019 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2019 Yury Gubich <blue@macaw.me>
+// SPDX-FileCopyrightText: 2022 Mathis Brüchert <mbb@kaidan.im>
+// SPDX-FileCopyrightText: 2022 Tibor Csötönyi <work@taibsu.de>
+// SPDX-FileCopyrightText: 2023 Bhavy Airi <airiraghav@gmail.com>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick 2.14
 import QtQuick.Layouts 1.14
@@ -70,8 +54,9 @@ ChatPageBase {
 	property alias sendMediaSheet: sendMediaSheet
 	property alias newMediaSheet: newMediaSheet
 	property alias messageReactionEmojiPicker: messageReactionEmojiPicker
-	property alias messageReactionSenderSheet: messageReactionSenderSheet
+	property alias messageReactionDetailsSheet: messageReactionDetailsSheet
 
+	property ChatPageSendingPane sendingPane
 	property string messageToCorrect
 	readonly property bool cameraAvailable: Multimedia.QtMultimedia.availableCameras.length > 0
 	property bool viewPositioned: false
@@ -98,7 +83,7 @@ ChatPageBase {
 			}
 		}
 
-		onClicked: contactDetailsSheet.open()
+		onClicked: openOverlay(contactDetailsSheet)
 	}
 	keyboardNavigationEnabled: true
 	contextualActions: [
@@ -106,7 +91,7 @@ ChatPageBase {
 			visible: Kirigami.Settings.isMobile
 			icon.name: "avatar-default-symbolic"
 			text: qsTr("Details…")
-			onTriggered: pageStack.layers.push(contactDetailsPage)
+			onTriggered: openPage(contactDetailsPage)
 		},
 		// Action to toggle the message search bar
 		Kirigami.Action {
@@ -139,9 +124,12 @@ ChatPageBase {
 		jid: MessageModel.currentChatJid
 	}
 
-	ContactDetailsSheet {
+	Component {
 		id: contactDetailsSheet
-		jid: MessageModel.currentChatJid
+
+		ContactDetailsSheet {
+			jid: MessageModel.currentChatJid
+		}
 	}
 
 	Component {
@@ -167,8 +155,8 @@ ChatPageBase {
 		id: messageReactionEmojiPicker
 	}
 
-	MessageReactionSenderSheet {
-		id: messageReactionSenderSheet
+	MessageReactionDetailsSheet {
+		id: messageReactionDetailsSheet
 	}
 
 	// View containing the messages
@@ -288,7 +276,7 @@ ChatPageBase {
 		delegate: ChatMessage {
 			contextMenu: messageContextMenu
 			reactionEmojiPicker: root.messageReactionEmojiPicker
-			reactionSenderSheet: root.messageReactionSenderSheet
+			reactionDetailsSheet: root.messageReactionDetailsSheet
 			modelIndex: index
 			msgId: model.id
 			senderJid: model.sender
@@ -308,7 +296,9 @@ ChatPageBase {
 			spoilerHint: model.spoilerHint
 			errorText: model.errorText
 			files: model.files
-			reactions: model.reactions
+			displayedReactions: model.displayedReactions
+			detailedReactions: model.detailedReactions
+			ownDetailedReactions: model.ownDetailedReactions
 
 			onMessageEditRequested: {
 				messageToCorrect = id
@@ -399,9 +389,46 @@ ChatPageBase {
 		}
 	}
 
-	footer: ChatPageSendingPane {
-		id: sendingPane
-		chatPage: root
+	footer:	ListView {
+		id: chatHintListView
+		height: contentHeight
+		verticalLayoutDirection: ListView.BottomToTop
+		interactive: false
+		model: ChatHintModel {}
+		delegate: ChatHintArea {
+			id: chatHintArea
+			chatHintModel: chatHintListView.model
+			index: model.index
+			text: model.text
+			buttons: model.buttons
+			loading: model.loading
+			loadingDescription: model.loadingDescription
+			anchors.bottom: root.sendingPane.top
+
+			Connections {
+				target: chatHintListView
+
+				function onCountChanged() {
+					if (chatHintListView.count > 0) {
+						chatHintArea.enabled = chatHintArea.index === chatHintListView.count - 1
+					} else {
+						chatHintArea.enabled = false
+					}
+				}
+			}
+		}
+		header: ChatPageSendingPane {
+			chatPage: root
+			width: root.width
+
+			Component.onCompleted: {
+				root.sendingPane = this
+			}
+		}
+		onCountChanged: {
+			// Make it possible to directly enter a message after chatHintListView is focused because of changes in its model.
+			sendingPane.forceActiveFocus()
+		}
 	}
 
 	function saveDraft() {

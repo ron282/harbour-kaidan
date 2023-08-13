@@ -17,7 +17,6 @@ RowLayout {
 	id: root
 
 	default property alias __data: mainArea.data
-	property Kirigami.OverlaySheet sheet
 	required property string jid
 	required property string displayName
 	required property Kirigami.Action avatarAction
@@ -82,12 +81,13 @@ RowLayout {
 			spacing: 0
 
 			Button {
-				id: displayNameEditingIcon
-				Controls.ToolTip.text: qsTr("Change name…")
+				id: displayNameEditingButton
+				text: qsTr("Change name…")
 				icon.name: "document-edit-symbolic"
 				display: Controls.AbstractButton.IconOnly
 				checked: !displayNameText.visible
 				flat: true
+				Controls.ToolTip.text: text
 				Layout.preferredWidth: Layout.preferredHeight
 				Layout.preferredHeight: displayNameTextField.implicitHeight
 				onHoveredChanged: {
@@ -104,7 +104,10 @@ RowLayout {
 						displayNameTextField.selectAll()
 					} else {
 						displayNameTextField.visible = false
-						displayNameArea.changeDisplayName(displayNameTextField.text)
+
+						if (displayNameTextField.text !== root.displayName) {
+							root.changeDisplayName(displayNameTextField.text)
+						}
 					}
 				}
 			}
@@ -120,15 +123,15 @@ RowLayout {
 				Layout.fillWidth: true
 				leftPadding: Kirigami.Units.largeSpacing
 				// TODO: Get update of current vCard by using Entity Capabilities
-				onTextChanged: displayNameChangedFunction()
+				onTextChanged: handleDisplayNameChanged()
 
 				MouseArea {
 					anchors.fill: displayNameText
 					hoverEnabled: true
 					cursorShape: Qt.PointingHandCursor
-					onEntered: displayNameEditingIcon.flat = false
-					onExited: displayNameEditingIcon.flat = true
-					onClicked: displayNameEditingIcon.clicked(Qt.LeftButton)
+					onEntered: displayNameEditingButton.flat = false
+					onExited: displayNameEditingButton.flat = true
+					onClicked: displayNameEditingButton.clicked()
 				}
 			}
 
@@ -138,16 +141,7 @@ RowLayout {
 				visible: false
 				Layout.leftMargin: Kirigami.Units.largeSpacing
 				Layout.fillWidth: true
-				onAccepted: {
-					displayNameArea.changeDisplayName(text)
-					visible = false
-				}
-			}
-
-			function changeDisplayName(newDisplayName) {
-				if (newDisplayName !== root.displayName) {
-					root.displayNameChangeFunction(newDisplayName)
-				}
+				onAccepted: displayNameEditingButton.clicked()
 			}
 		}
 
@@ -158,7 +152,7 @@ RowLayout {
 			maximumLineCount: 1
 			elide: Text.ElideRight
 			Layout.fillWidth: true
-			Layout.leftMargin: displayNameEditingIcon.Layout.preferredWidth + displayNameTextField.Layout.leftMargin
+			Layout.leftMargin: displayNameEditingButton.Layout.preferredWidth + displayNameTextField.Layout.leftMargin
 		}
 	}
 }

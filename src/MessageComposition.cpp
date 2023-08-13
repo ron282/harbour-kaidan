@@ -1,4 +1,6 @@
 // SPDX-FileCopyrightText: 2022 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2022 Jonah Brüchert <jbb@kaidan.im>
+// SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -101,8 +103,10 @@ void MessageComposition::send()
 		message.from = AccountManager::instance()->jid();
 		message.body = m_body;
 		message.files = m_fileSelectionModel->files();
+		message.receiptRequested = true;
+		message.encryption = MessageModel::instance()->activeEncryption();
 
-		bool encrypt = MessageModel::instance()->activeEncryption() != Encryption::NoEncryption;
+		bool encrypt = message.encryption != Encryption::NoEncryption;
 		Kaidan::instance()->fileSharingController()->sendMessage(std::move(message), encrypt);
 		m_fileSelectionModel->clear();
 	} else {

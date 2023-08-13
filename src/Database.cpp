@@ -1,32 +1,13 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2017 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2019 Xavier <xavi@delape.net>
+// SPDX-FileCopyrightText: 2020 Yury Gubich <blue@macaw.me>
+// SPDX-FileCopyrightText: 2020 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2022 Bhavy Airi <airiragahv@gmail.com>
+// SPDX-FileCopyrightText: 2023 Sergey Smirnykh <sergey.smirnykh@siborgium.xyz>
+// SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
+// SPDX-FileCopyrightText: 2023 Tibor Csötönyi <work@taibsu.de>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "Database.h"
 
@@ -62,8 +43,8 @@ using namespace SqlUtils;
 	}
 
 // Both need to be updated on version bump:
-#define DATABASE_LATEST_VERSION 27
-#define DATABASE_CONVERT_TO_LATEST_VERSION() DATABASE_CONVERT_TO_VERSION(27)
+#define DATABASE_LATEST_VERSION 34
+#define DATABASE_CONVERT_TO_LATEST_VERSION() DATABASE_CONVERT_TO_VERSION(34)
 
 #define SQL_BOOL "BOOL"
 #define SQL_BOOL_NOT_NULL "BOOL NOT NULL"
@@ -307,7 +288,7 @@ void Database::loadDatabaseInfo()
 void Database::saveDatabaseInfo()
 {
 	if (d->version <= DbOldVersion || d->version > DATABASE_LATEST_VERSION) {
-		qFatal("[database] Fatal error: Attempted to save invalid db version number.");
+		qFatal("[Database] Fatal error: Attempted to save invalid db version number.");
 	}
 
 	QSqlRecord updateRecord;
@@ -339,13 +320,15 @@ bool Database::needToConvert()
 
 void Database::convertDatabase()
 {
-	qDebug() << "[database] Converting database to latest version from version" << d->version;
 	transaction();
 
-	if (d->version == DbNotCreated)
+	if (d->version == DbNotCreated) {
+		qDebug() << "[Database] Creating new database with latest version" << DATABASE_LATEST_VERSION;
 		createNewDatabase();
-	else
+	} else {
+		qDebug() << "[Database] Converting database from version" << d->version << "to latest version" << DATABASE_LATEST_VERSION;
 		DATABASE_CONVERT_TO_LATEST_VERSION();
+	}
 
 	saveDatabaseInfo();
 	commit();
@@ -382,6 +365,7 @@ void Database::createNewDatabase()
 		query,
 		SQL_CREATE_TABLE(
 			DB_TABLE_ROSTER,
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
 			SQL_ATTRIBUTE(jid, SQL_TEXT_NOT_NULL)
 			SQL_ATTRIBUTE(name, SQL_TEXT)
 			SQL_ATTRIBUTE(subscription, SQL_INTEGER)
@@ -394,7 +378,21 @@ void Database::createNewDatabase()
 			SQL_ATTRIBUTE(chatStateSendingEnabled, SQL_BOOL)
 			SQL_ATTRIBUTE(readMarkerSendingEnabled, SQL_BOOL)
 			SQL_ATTRIBUTE(draftMessageId, SQL_TEXT)
+			SQL_ATTRIBUTE(notificationsMuted, SQL_BOOL)
+			"PRIMARY KEY(accountJid, jid),"
 			"FOREIGN KEY(draftMessageId) REFERENCES " DB_TABLE_MESSAGES " (id)"
+		)
+	);
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			DB_TABLE_ROSTER_GROUPS,
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(chatJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(name, SQL_TEXT_NOT_NULL)
+			"PRIMARY KEY(accountJid, chatJid, name),"
+			"FOREIGN KEY(accountJid) REFERENCES " DB_TABLE_ROSTER " (accountJid),"
+			"FOREIGN KEY(chatJid) REFERENCES " DB_TABLE_ROSTER " (jid)"
 		)
 	);
 
@@ -406,12 +404,11 @@ void Database::createNewDatabase()
 			SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
 			SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
 			SQL_ATTRIBUTE(timestamp, SQL_TEXT)
-			SQL_ATTRIBUTE(message, SQL_TEXT)
+			SQL_ATTRIBUTE(body, SQL_TEXT)
 			SQL_ATTRIBUTE(id, SQL_TEXT)
 			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
 			SQL_ATTRIBUTE(senderKey, SQL_BLOB)
 			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
-			SQL_ATTRIBUTE(isEdited, SQL_BOOL)
 			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
 			SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
 			SQL_ATTRIBUTE(errorText, SQL_TEXT)
@@ -419,6 +416,7 @@ void Database::createNewDatabase()
 			SQL_ATTRIBUTE(originId, SQL_TEXT)
 			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
 			SQL_ATTRIBUTE(fileGroupId, SQL_INTEGER)
+			SQL_ATTRIBUTE(removed, SQL_BOOL_NOT_NULL)
 			"FOREIGN KEY(sender) REFERENCES " DB_TABLE_ROSTER " (jid),"
 			"FOREIGN KEY(recipient) REFERENCES " DB_TABLE_ROSTER " (jid)"
 		)
@@ -484,9 +482,10 @@ void Database::createNewDatabase()
 			SQL_ATTRIBUTE(messageRecipient, SQL_TEXT_NOT_NULL)
 			SQL_ATTRIBUTE(messageId, SQL_TEXT_NOT_NULL)
 			SQL_ATTRIBUTE(senderJid, SQL_TEXT_NOT_NULL)
-			SQL_ATTRIBUTE(timestamp, SQL_INTEGER)
 			SQL_ATTRIBUTE(emoji, SQL_TEXT_NOT_NULL)
-			"PRIMARY KEY(messageSender, messageRecipient, messageId, senderJid, timestamp, emoji)"
+			SQL_ATTRIBUTE(timestamp, SQL_INTEGER)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			"PRIMARY KEY(messageSender, messageRecipient, messageId, senderJid, emoji)"
 		)
 	);
 
@@ -590,8 +589,10 @@ void Database::createNewDatabase()
 		)
 	);
 
-	execQuery(query, "CREATE VIEW " DB_VIEW_CHAT_MESSAGES " AS SELECT * FROM " DB_TABLE_MESSAGES " WHERE deliveryState != 4");
-	execQuery(query, "CREATE VIEW " DB_VIEW_DRAFT_MESSAGES " AS SELECT * FROM " DB_TABLE_MESSAGES " WHERE deliveryState = 4");
+	execQuery(query, "CREATE VIEW " DB_VIEW_CHAT_MESSAGES " AS SELECT * FROM " DB_TABLE_MESSAGES
+					 " WHERE deliveryState != 4 AND removed != 1");
+	execQuery(query, "CREATE VIEW " DB_VIEW_DRAFT_MESSAGES " AS SELECT * FROM " DB_TABLE_MESSAGES
+					 " WHERE deliveryState = 4");
 
 	d->version = DATABASE_LATEST_VERSION;
 }
@@ -1367,8 +1368,213 @@ void Database::convertDatabaseToV27()
 {
 	DATABASE_CONVERT_TO_VERSION(26);
 	QSqlQuery query(currentDatabase());
-	execQuery(query, "ALTER TABLE " DB_TABLE_ROSTER " ADD draftMessageId " SQL_TEXT " REFERENCES " DB_TABLE_MESSAGES " (id)");
-	execQuery(query, "CREATE VIEW " DB_VIEW_CHAT_MESSAGES " AS SELECT * FROM " DB_TABLE_MESSAGES " WHERE deliveryState != 4");
-	execQuery(query, "CREATE VIEW " DB_VIEW_DRAFT_MESSAGES " AS SELECT * FROM " DB_TABLE_MESSAGES " WHERE deliveryState = 4");
+	execQuery(query, "ALTER TABLE roster ADD draftMessageId " SQL_TEXT " REFERENCES messages (id)");
+	execQuery(query, "CREATE VIEW chatMessages AS SELECT * FROM messages WHERE deliveryState != 4");
+	execQuery(query, "CREATE VIEW draftMessages AS SELECT * FROM messages WHERE deliveryState = 4");
 	d->version = 27;
+}
+
+void Database::convertDatabaseToV28()
+{
+	DATABASE_CONVERT_TO_VERSION(27);
+	QSqlQuery query(currentDatabase());
+	execQuery(query, "ALTER TABLE roster ADD notificationsMuted " SQL_BOOL);
+	d->version = 28;
+}
+
+void Database::convertDatabaseToV29()
+{
+	DATABASE_CONVERT_TO_VERSION(28);
+	QSqlQuery query(currentDatabase());
+
+	// Add the column "deliveryState" and remove the column "timestamp" from the primary key.
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messageReactions_tmp",
+			SQL_ATTRIBUTE(messageSender, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(messageRecipient, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(messageId, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(senderJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(emoji, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(timestamp, SQL_INTEGER)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			"PRIMARY KEY(messageSender, messageRecipient, messageId, senderJid, emoji)"
+		)
+	);
+
+	execQuery(
+		query,
+		"INSERT INTO messageReactions_tmp SELECT messageSender, messageRecipient, messageId, "
+		"senderJid, emoji, timestamp, NULL FROM messageReactions"
+	);
+
+	execQuery(query, "DROP TABLE messageReactions");
+
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messageReactions",
+			SQL_ATTRIBUTE(messageSender, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(messageRecipient, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(messageId, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(senderJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(emoji, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(timestamp, SQL_INTEGER)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			"PRIMARY KEY(messageSender, messageRecipient, messageId, senderJid, emoji)"
+		)
+	);
+
+	execQuery(query, "INSERT INTO messageReactions SELECT * FROM messageReactions_tmp");
+	execQuery(query, "DROP TABLE messageReactions_tmp");
+
+	d->version = 29;
+}
+
+void Database::convertDatabaseToV30()
+{
+	DATABASE_CONVERT_TO_VERSION(29);
+	QSqlQuery query(currentDatabase());
+	execQuery(query, "ALTER TABLE messages ADD removed " SQL_BOOL_NOT_NULL " DEFAULT 0");
+	execQuery(query, "DROP VIEW chatMessages");
+	execQuery(query, "CREATE VIEW chatMessages AS SELECT * FROM messages WHERE deliveryState != 4 AND removed != 1");
+	d->version = 30;
+}
+
+void Database::convertDatabaseToV31()
+{
+	DATABASE_CONVERT_TO_VERSION(30);
+	QSqlQuery query(currentDatabase());
+	execQuery(query, "ALTER TABLE messages RENAME COLUMN message TO body");
+	d->version = 31;
+}
+
+void Database::convertDatabaseToV32()
+{
+	DATABASE_CONVERT_TO_VERSION(31);
+	QSqlQuery query(currentDatabase());
+
+	// Remove the column "isEdited".
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messages_tmp",
+			SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(timestamp, SQL_TEXT)
+			SQL_ATTRIBUTE(body, SQL_TEXT)
+			SQL_ATTRIBUTE(id, SQL_TEXT)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(senderKey, SQL_BLOB)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
+			SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
+			SQL_ATTRIBUTE(errorText, SQL_TEXT)
+			SQL_ATTRIBUTE(replaceId, SQL_TEXT)
+			SQL_ATTRIBUTE(originId, SQL_TEXT)
+			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(fileGroupId, SQL_INTEGER)
+			SQL_ATTRIBUTE(removed, SQL_BOOL_NOT_NULL)
+			"FOREIGN KEY(sender) REFERENCES " DB_TABLE_ROSTER " (jid),"
+			"FOREIGN KEY(recipient) REFERENCES " DB_TABLE_ROSTER " (jid)"
+		)
+	);
+
+	execQuery(
+		query,
+		"INSERT INTO messages_tmp SELECT sender, recipient, timestamp, body, id, encryption, "
+		"senderKey, deliveryState, spoilerHint, isSpoiler, errorText, replaceId, "
+		"originId, stanzaId, fileGroupId, removed FROM messages"
+	);
+
+	execQuery(query, "DROP TABLE messages");
+
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messages",
+			SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(timestamp, SQL_TEXT)
+			SQL_ATTRIBUTE(body, SQL_TEXT)
+			SQL_ATTRIBUTE(id, SQL_TEXT)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(senderKey, SQL_BLOB)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
+			SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
+			SQL_ATTRIBUTE(errorText, SQL_TEXT)
+			SQL_ATTRIBUTE(replaceId, SQL_TEXT)
+			SQL_ATTRIBUTE(originId, SQL_TEXT)
+			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(fileGroupId, SQL_INTEGER)
+			SQL_ATTRIBUTE(removed, SQL_BOOL_NOT_NULL)
+			"FOREIGN KEY(sender) REFERENCES " DB_TABLE_ROSTER " (jid),"
+			"FOREIGN KEY(recipient) REFERENCES " DB_TABLE_ROSTER " (jid)"
+		)
+	);
+
+	execQuery(query, "INSERT INTO messages SELECT * FROM messages_tmp");
+	execQuery(query, "DROP TABLE messages_tmp");
+
+	d->version = 32;
+}
+
+void Database::convertDatabaseToV33()
+{
+	DATABASE_CONVERT_TO_VERSION(32);
+	QSqlQuery query(currentDatabase());
+
+	// Add the column "accountJid" and set a new primary key.
+	// The value for the new column "accountJid" cannot be determined by the database.
+	// Thus, the table "roster" is removed and recreated in order to store the latest values from
+	// the server (e.g., "name") in the database again and include the new "accountJid".
+	// Unfortunately, all data not stored on the server (e.g., "encryption") is lost.
+	execQuery(query, "DROP TABLE roster");
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"roster",
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(jid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(name, SQL_TEXT)
+			SQL_ATTRIBUTE(subscription, SQL_INTEGER)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(unreadMessages, SQL_INTEGER)
+			SQL_ATTRIBUTE(lastReadOwnMessageId, SQL_TEXT)
+			SQL_ATTRIBUTE(lastReadContactMessageId, SQL_TEXT)
+			SQL_ATTRIBUTE(readMarkerPending, SQL_BOOL)
+			SQL_ATTRIBUTE(pinningPosition, SQL_INTEGER_NOT_NULL)
+			SQL_ATTRIBUTE(chatStateSendingEnabled, SQL_BOOL)
+			SQL_ATTRIBUTE(readMarkerSendingEnabled, SQL_BOOL)
+			SQL_ATTRIBUTE(draftMessageId, SQL_TEXT)
+			SQL_ATTRIBUTE(notificationsMuted, SQL_BOOL)
+			"PRIMARY KEY(accountJid, jid),"
+			"FOREIGN KEY(draftMessageId) REFERENCES " DB_TABLE_MESSAGES " (id)"
+		)
+	);
+
+	d->version = 33;
+}
+
+void Database::convertDatabaseToV34()
+{
+	DATABASE_CONVERT_TO_VERSION(33);
+	QSqlQuery query(currentDatabase());
+
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"rosterGroups",
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(chatJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(name, SQL_TEXT_NOT_NULL)
+			"PRIMARY KEY(accountJid, chatJid, name),"
+			"FOREIGN KEY(accountJid) REFERENCES " DB_TABLE_ROSTER " (accountJid),"
+			"FOREIGN KEY(chatJid) REFERENCES " DB_TABLE_ROSTER " (jid)"
+		)
+	);
+
+	d->version = 34;
 }

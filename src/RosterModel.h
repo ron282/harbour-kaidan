@@ -1,32 +1,11 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2017 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2020 Mathis Brüchert <mbblp@protonmail.ch>
+// SPDX-FileCopyrightText: 2020 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2022 Bhavy Airi <airiragahv@gmail.com>
+// SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
+// SPDX-FileCopyrightText: 2023 Tibor Csötönyi <work@taibsu.de>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
 
@@ -48,15 +27,21 @@ class RosterModel : public QAbstractListModel
 {
 	Q_OBJECT
 
+	Q_PROPERTY(QStringList accountJids READ accountJids NOTIFY accountJidsChanged)
+	Q_PROPERTY(QStringList groups READ groups NOTIFY groupsChanged)
+
 public:
 	enum RosterItemRoles {
+		AccountJidRole,
 		JidRole,
 		NameRole,
-		LastExchangedRole,
+		GroupsRole,
+		LastMessageDateTimeRole,
 		UnreadMessagesRole,
 		LastMessageRole,
+		LastMessageIsDraftRole,
 		PinnedRole,
-		DraftIdRole,
+		NotificationsMutedRole,
 	};
 
 	/**
@@ -86,6 +71,25 @@ public:
 	 * @return true if a roster item with the passed properties exists, otherwise false
 	 */
 	Q_INVOKABLE bool hasItem(const QString &jid) const;
+
+	/**
+	 * Returns the account JIDs of all roster items.
+	 *
+	 * @return all account JIDs
+	 */
+	QStringList accountJids() const;
+	Q_SIGNAL void accountJidsChanged();
+
+	/**
+	 * Returns the roster groups of all roster items.
+	 *
+	 * @return all roster groups
+	 */
+	QStringList groups() const;
+	Q_SIGNAL void groupsChanged();
+
+	Q_INVOKABLE void updateGroup(const QString &oldGroup, const QString &newGroup);
+	Q_INVOKABLE void removeGroup(const QString &group);
 
 	/**
 	 * Returns whether an account's presence is subscribed by a roster item.
@@ -131,16 +135,18 @@ public:
 
 	const QVector<RosterItem> &items() const;
 
+	void updateItem(const QString &jid, const std::function<void (RosterItem &)> &updateItem);
+
 	Q_INVOKABLE void pinItem(const QString &accountJid, const QString &jid);
 	Q_INVOKABLE void unpinItem(const QString &accountJid, const QString &jid);
 	Q_INVOKABLE void reorderPinnedItem(const QString &accountJid, const QString &jid, int oldIndex, int newIndex);
 
 	Q_INVOKABLE void setChatStateSendingEnabled(const QString &accountJid, const QString &jid, bool chatStateSendingEnabled);
 	Q_INVOKABLE void setReadMarkerSendingEnabled(const QString &accountJid, const QString &jid, bool readMarkerSendingEnabled);
+	Q_INVOKABLE void setNotificationsMuted(const QString &accountJid, const QString &jid, bool notificationsMuted);
 
 signals:
 	void addItemRequested(const RosterItem &item);
-	void removeItemRequested(const QString &jid);
 	void updateItemRequested(const QString &jid,
 	                         const std::function<void (RosterItem &)> &updateItem);
 	void replaceItemsRequested(const QHash<QString, RosterItem> &items);
@@ -162,10 +168,12 @@ private:
 	void handleItemsFetched(const QVector<RosterItem> &items);
 
 	void addItem(const RosterItem &item);
-	void removeItem(const QString &jid);
-	void updateItem(const QString &jid,
-	                const std::function<void (RosterItem &)> &updateItem);
 	void replaceItems(const QHash<QString, RosterItem> &items);
+
+	void updateLastMessage(QVector<RosterItem>::Iterator &itr,
+						   const Message &message,
+						   QVector<int> &changedRoles,
+						   bool onlyUpdateIfNewer = true);
 
 	/**
 	 * Removes all roster items of an account or a specific roster item.
@@ -180,11 +188,14 @@ private:
 	void handleDraftMessageUpdated(const Message &message);
 	void handleDraftMessageRemoved(const QString &id);
 	void handleDraftMessageFetched(const Message &msg);
+	void handleMessageRemoved(std::shared_ptr<Message> newLastMessage);
 
 	void insertItem(int index, const RosterItem &item);
 	void updateItemPosition(int currentIndex);
 	int positionToAdd(const RosterItem &item);
 	int positionToMove(int currentIndex);
+	
+	QString formattedLastMessageDateTime(const QDateTime &lastMessageDateTime) const;
 
 	QVector<RosterItem> m_items;
 

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2023 Mathis Brüchert <mbb@kaidan.im>
 // SPDX-FileCopyrightText: 2023 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -21,6 +22,11 @@ Controls.Control {
 	property Kirigami.OverlaySheet sheet
 	required property string jid
 	property alias qrCodePage: qrCodePage
+	property alias mediaOverview: mediaOverview
+	property alias mediaOverviewExpansionButton: mediaOverviewExpansionButton
+	property alias vCardArea: vCardArea.data
+	property alias vCardRepeater: vCardRepeater
+	property ColumnLayout rosterGroupArea
 	required property ColumnLayout encryptionArea
 
 	topPadding: Kirigami.Settings.isMobile ? Kirigami.Units.largeSpacing : Kirigami.Units.largeSpacing * 3
@@ -54,9 +60,46 @@ Controls.Control {
 		}
 
 		MobileForm.FormCard {
-			visible: infoRepeater.count
+			visible: contentItem.enabled
 			Layout.fillWidth: true
 			contentItem: ColumnLayout {
+				enabled: mediaOverview.totalFilesCount
+				spacing: 0
+
+				MobileForm.FormCardHeader {
+					title: qsTr("Media")
+				}
+
+				MediaOverview {
+					id: mediaOverview
+					visible: mediaOverviewExpansionButton.checked
+					Layout.fillWidth: true
+				}
+
+				FormExpansionButton {
+					id: mediaOverviewExpansionButton
+					onCheckedChanged: {
+						if (checked) {
+							mediaOverview.selectionMode = false
+
+							// Display the content of the first tab only on initial loading.
+							// Afterwards, display the content of the last active tab.
+							if (mediaOverview.tabBarCurrentIndex === -1) {
+								mediaOverview.tabBarCurrentIndex = 0
+							}
+
+							mediaOverview.loadDownloadedFiles()
+						}
+					}
+				}
+			}
+		}
+
+		MobileForm.FormCard {
+			visible: vCardRepeater.count
+			Layout.fillWidth: true
+			contentItem: ColumnLayout {
+				id: vCardArea
 				spacing: 0
 
 				MobileForm.FormCardHeader {
@@ -64,35 +107,15 @@ Controls.Control {
 				}
 
 				Repeater {
-					id: infoRepeater
+					id: vCardRepeater
 					Layout.fillHeight: true
-					model: VCardModel {
-						jid: root.jid
-					}
-					delegate: MobileForm.AbstractFormDelegate {
-						Layout.fillWidth: true
-						background: Item {}
-						contentItem: ColumnLayout {
-							Controls.Label {
-								text: Utils.formatMessage(model.value)
-								textFormat: Text.StyledText
-								wrapMode: Text.WordWrap
-								Layout.fillWidth: true
-								onLinkActivated: Qt.openUrlExternally(link)
-							}
-
-							Controls.Label {
-								text: model.key
-								color: Kirigami.Theme.disabledTextColor
-								font: Kirigami.Theme.smallFont
-								textFormat: Text.PlainText
-								wrapMode: Text.WordWrap
-								Layout.fillWidth: true
-							}
-						}
-					}
 				}
 			}
+		}
+
+		MobileForm.FormCard {
+			Layout.fillWidth: true
+			contentItem: root.rosterGroupArea
 		}
 
 		MobileForm.FormCard {
@@ -117,7 +140,6 @@ Controls.Control {
 						jid: root.jid
 					}
 					delegate: MobileForm.AbstractFormDelegate {
-						Layout.fillWidth: true
 						background: Item {}
 						contentItem: ColumnLayout {
 							Controls.Label {

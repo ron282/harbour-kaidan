@@ -1,4 +1,5 @@
-// SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
+// SPDX-FileCopyrightText: 2022 Filipe Azevedo <pasnox@gmail.com>
+// SPDX-FileCopyrightText: 2023 Melvin Keskin <melvo@olomono.de>
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -167,34 +168,13 @@ Kirigami.OverlaySheet {
 				}
 			}
 
-			Item {
+			LoadingArea {
+				id: loadingArea
+				description: qsTr("Downloading…")
 				anchors.centerIn: parent
-
-				// background of loadingArea
-				Rectangle {
-					anchors.fill: loadingArea
-					anchors.margins: -8
-					radius: roundedCornersRadius
-					color: Kirigami.Theme.backgroundColor
-					opacity: 0.9
-					visible: loadingArea.visible
-				}
-
-				ColumnLayout {
-					id: loadingArea
-					anchors.centerIn: parent
-					visible: groupChatsManager.isRunning
-					onVisibleChanged: root.forceActiveFocus()
-
-					Controls.BusyIndicator {
-						Layout.alignment: Qt.AlignHCenter
-					}
-
-					Controls.Label {
-						text: "<i>" + qsTr("Loading…") + "</i>"
-						color: Kirigami.Theme.textColor
-					}
-				}
+				background.visible: false
+				visible: groupChatsManager.isRunning
+				onVisibleChanged: root.forceActiveFocus()
 			}
 
 			Item {

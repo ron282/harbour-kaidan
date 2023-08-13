@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2018 Jonah Brüchert <jbb@kaidan.im>
+#
+# SPDX-License-Identifier: CC0-1.0
+
 [Desktop Entry]
 Type=Application
 Version=1.0
@@ -9,6 +13,7 @@ Name[cs]=Kaidan
 Name[de]=Kaidan
 Name[el]=Kaidan
 Name[en_GB]=Kaidan
+Name[eo]=Kaidan
 Name[es]=Kaidan
 Name[et]=Kaidan
 Name[eu]=Kaidan

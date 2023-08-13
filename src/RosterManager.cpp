@@ -1,32 +1,10 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2017 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2019 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2019 Robert Maerkisch <zatroxde@protonmail.ch>
+// SPDX-FileCopyrightText: 2020 Jonah Brüchert <jbb@kaidan.im>
+// SPDX-FileCopyrightText: 2022 Bhavy Airi <airiragahv@gmail.com>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "RosterManager.h"
 // Kaidan
@@ -56,7 +34,7 @@ RosterManager::RosterManager(ClientWorker *clientWorker,
 
 	connect(m_manager, &QXmppRosterManager::itemAdded,
 		this, [this](const QString &jid) {
-		RosterItem rosterItem { m_manager->getRosterEntry(jid) };
+		RosterItem rosterItem { m_client->configuration().jidBare(), m_manager->getRosterEntry(jid) };
 		rosterItem.encryption = Kaidan::instance()->settings()->encryption();
 		emit RosterModel::instance()->addItemRequested(rosterItem);
 
@@ -70,8 +48,16 @@ RosterManager::RosterManager(ClientWorker *clientWorker,
 		emit RosterModel::instance()->updateItemRequested(jid, [this, jid](RosterItem &item) {
 			const auto updatedItem = m_manager->getRosterEntry(jid);
 			item.name = updatedItem.name();
-			item.subscription= updatedItem.subscriptionType();
+			item.subscription = updatedItem.subscriptionType();
+
+			const auto groups = updatedItem.groups();
+			item.groups = QVector(groups.cbegin(), groups.cend());
 		});
+
+		if (m_isItemBeingChanged) {
+			m_clientWorker->finishTask();
+			m_isItemBeingChanged = false;
+		}
 	});
 
 	connect(m_manager, &QXmppRosterManager::itemRemoved, this, [this](const QString &jid) {
@@ -107,6 +93,8 @@ RosterManager::RosterManager(ClientWorker *clientWorker,
 	connect(this, &RosterManager::subscribeToPresenceRequested, this, &RosterManager::subscribeToPresence);
 	connect(this, &RosterManager::acceptSubscriptionToPresenceRequested, this, &RosterManager::acceptSubscriptionToPresence);
 	connect(this, &RosterManager::refuseSubscriptionToPresenceRequested, this, &RosterManager::refuseSubscriptionToPresence);
+
+	connect(this, &RosterManager::updateGroupsRequested, this, &RosterManager::updateGroups);
 }
 
 void RosterManager::populateRoster()
@@ -117,7 +105,7 @@ void RosterManager::populateRoster()
 	const QStringList bareJids = m_manager->getRosterBareJids();
 	const auto initialTime = QDateTime::currentDateTimeUtc();
 	for (const auto &jid : bareJids) {
-		RosterItem rosterItem { m_manager->getRosterEntry(jid), initialTime };
+		RosterItem rosterItem { m_client->configuration().jidBare(), m_manager->getRosterEntry(jid), initialTime };
 		rosterItem.encryption = Kaidan::instance()->settings()->encryption();
 		items.insert(jid, rosterItem);
 
@@ -175,7 +163,7 @@ void RosterManager::subscribeToPresence(const QString &contactJid)
 {
 	m_manager->subscribeTo(contactJid).then(this, [contactJid](QXmpp::SendResult result) {
 		if (const auto error = std::get_if<QXmppError>(&result)) {
-			emit Kaidan::instance()->passiveNotificationRequested(tr("Requesting to see the status of %s failed because of a connection problem: %s").arg(contactJid, error->description));
+			emit Kaidan::instance()->passiveNotificationRequested(tr("Requesting to see the status of %1 failed because of a connection problem: %2").arg(contactJid, error->description));
 		}
 	});
 }
@@ -183,13 +171,25 @@ void RosterManager::subscribeToPresence(const QString &contactJid)
 void RosterManager::acceptSubscriptionToPresence(const QString &contactJid)
 {
 	if (!m_manager->acceptSubscription(contactJid)) {
-		emit Kaidan::instance()->passiveNotificationRequested(tr("Allowing %s to see your status failed").arg(contactJid));
+		emit Kaidan::instance()->passiveNotificationRequested(tr("Allowing %1 to see your status failed").arg(contactJid));
 	}
 }
 
 void RosterManager::refuseSubscriptionToPresence(const QString &contactJid)
 {
 	if (!m_manager->refuseSubscription(contactJid)) {
-		emit Kaidan::instance()->passiveNotificationRequested(tr("Disallowing %s to see your status failed").arg(contactJid));
+		emit Kaidan::instance()->passiveNotificationRequested(tr("Disallowing %1 to see your status failed").arg(contactJid));
 	}
+}
+
+void RosterManager::updateGroups(const QString &jid, const QString &name, const QVector<QString> &groups)
+{
+	m_isItemBeingChanged = true;
+
+	m_clientWorker->startTask(
+		[this, jid, name, groups] {
+			// TODO: Add updating only groups to QXmppRosterManager without the need to pass the unmodified name
+			m_manager->addItem(jid, name, QSet(groups.cbegin(), groups.cend()));
+		}
+	);
 }

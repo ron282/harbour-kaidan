@@ -1,32 +1,10 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2019 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2020 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2020 Yury Gubich <blue@macaw.me>
+// SPDX-FileCopyrightText: 2022 Tibor Csötönyi <dev@taibsu.de>
+// SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "MessageDb.h"
 
@@ -39,6 +17,7 @@
 #include <QStringBuilder>
 #include <QMimeDatabase>
 #include <QBuffer>
+#include <QFile>
 // QXmpp
 #include <QXmppUtils.h>
 // Kaidan
@@ -101,9 +80,8 @@ QVector<Message> MessageDb::_fetchMessagesFromQuery(QSqlQuery &query)
 	int idxId = rec.indexOf("id");
 	int idxEncryption = rec.indexOf("encryption");
 	int idxSenderKey = rec.indexOf("senderKey");
-	int idxBody = rec.indexOf("message");
+	int idxBody = rec.indexOf("body");
 	int idxDeliveryState = rec.indexOf("deliveryState");
-	int idxIsEdited = rec.indexOf("isEdited");
 	int idxSpoilerHint = rec.indexOf("spoilerHint");
 	int idxIsSpoiler = rec.indexOf("isSpoiler");
 	int idxErrorText = rec.indexOf("errorText");
@@ -111,7 +89,9 @@ QVector<Message> MessageDb::_fetchMessagesFromQuery(QSqlQuery &query)
 	int idxOriginId = rec.indexOf("originId");
 	int idxStanza = rec.indexOf("stanzaId");
 	int idxFileGroupId = rec.indexOf("fileGroupId");
+	int idxRemoved = rec.indexOf("removed");
 
+	reserve(messages, query);
 	while (query.next()) {
 		Message msg;
 		msg.from = query.value(idxFrom).toString();
@@ -125,7 +105,6 @@ QVector<Message> MessageDb::_fetchMessagesFromQuery(QSqlQuery &query)
 		msg.senderKey = query.value(idxSenderKey).toByteArray();
 		msg.body = query.value(idxBody).toString();
 		msg.deliveryState = static_cast<Enums::DeliveryState>(query.value(idxDeliveryState).toInt());
-		msg.isEdited = query.value(idxIsEdited).toBool();
 		msg.spoilerHint = query.value(idxSpoilerHint).toString();
 		msg.errorText = query.value(idxErrorText).toString();
 		msg.isSpoiler = query.value(idxIsSpoiler).toBool();
@@ -135,6 +114,7 @@ QVector<Message> MessageDb::_fetchMessagesFromQuery(QSqlQuery &query)
 		msg.fileGroupId = variantToOptional<qint64>(query.value(idxFileGroupId));
 		// this is useful with resending pending messages
 		msg.receiptRequested = true;
+		msg.removed = query.value(idxRemoved).toBool();
 
 		// fetch referenced files
 		if (msg.fileGroupId) {
@@ -167,13 +147,11 @@ QSqlRecord MessageDb::createUpdateRecord(const Message &oldMsg, const Message &n
 	if (oldMsg.senderKey != newMsg.senderKey)
 		rec.append(createSqlField("senderKey", newMsg.senderKey));
 	if (oldMsg.body != newMsg.body)
-		rec.append(createSqlField("message", newMsg.body));
+		rec.append(createSqlField("body", newMsg.body));
 	if (oldMsg.deliveryState != newMsg.deliveryState)
 		rec.append(createSqlField("deliveryState", int(newMsg.deliveryState)));
 	if (oldMsg.errorText != newMsg.errorText)
 		rec.append(createSqlField("errorText", newMsg.errorText));
-	if (oldMsg.isEdited != newMsg.isEdited)
-		rec.append(createSqlField("isEdited", newMsg.isEdited));
 	if (oldMsg.spoilerHint != newMsg.spoilerHint)
 		rec.append(createSqlField("spoilerHint", newMsg.spoilerHint));
 	if (oldMsg.isSpoiler != newMsg.isSpoiler)
@@ -186,6 +164,9 @@ QSqlRecord MessageDb::createUpdateRecord(const Message &oldMsg, const Message &n
 		rec.append(createSqlField("stanzaId", newMsg.stanzaId));
 	if (oldMsg.fileGroupId != newMsg.fileGroupId) {
 		rec.append(createSqlField("fileGroupId", optionalToVariant(newMsg.fileGroupId)));
+	}
+	if (oldMsg.removed != newMsg.removed) {
+		rec.append(createSqlField("removed", newMsg.removed));
 	}
 
 	return rec;
@@ -217,6 +198,16 @@ QFuture<QVector<Message>> MessageDb::fetchMessages(const QString &accountJid, co
 		emit messagesFetched(messages);
 		return messages;
 	});
+}
+
+QFuture<QVector<File>> MessageDb::fetchFiles(const QString &accountJid, const QString &chatJid)
+{
+	return _fetchFiles(accountJid, chatJid, false);
+}
+
+QFuture<QVector<File>> MessageDb::fetchDownloadedFiles(const QString &accountJid, const QString &chatJid)
+{
+	return _fetchFiles(accountJid, chatJid, true);
 }
 
 QFuture<QVector<Message> > MessageDb::fetchMessagesUntilFirstContactMessage(const QString &accountJid, const QString &chatJid, int index)
@@ -309,7 +300,7 @@ QFuture<MessageDb::MessageResult> MessageDb::fetchMessagesUntilQueryString(const
 			"WHERE timestamp >= "
 			"(SELECT timestamp FROM " DB_VIEW_CHAT_MESSAGES " "
 			"WHERE ((sender = :chatJid AND recipient = :accountJid) OR (sender = :accountJid AND recipient = :chatJid)) AND "
-			"message LIKE :queryString AND "
+			"body LIKE :queryString AND "
 			"timestamp <= "
 			"(SELECT timestamp FROM " DB_VIEW_CHAT_MESSAGES " "
 			"WHERE ((sender = :chatJid AND recipient = :accountJid) OR (sender = :accountJid AND recipient = :chatJid)) "
@@ -505,31 +496,31 @@ QFuture<void> MessageDb::addMessage(const Message &msg, MessageOrigin origin)
 		auto query = createQuery();
 		prepareQuery(
 			query,
-			"INSERT INTO messages (sender, recipient, timestamp, message, id, encryption, "
-			"senderKey, deliveryState, isEdited, isSpoiler, spoilerHint, errorText, replaceId, "
-			"originId, stanzaId, fileGroupId) "
-			"VALUES (:sender, :recipient, :timestamp, :message, :id, :encryption, :senderKey, "
-			":deliveryState, :isEdited, :isSpoiler, :spoilerHint, :errorText, :replaceId, "
-			":originId, :stanzaId, :fileGroupId)"
+			"INSERT INTO messages (sender, recipient, timestamp, body, id, encryption, "
+			"senderKey, deliveryState, isSpoiler, spoilerHint, errorText, replaceId, "
+			"originId, stanzaId, fileGroupId, removed) "
+			"VALUES (:sender, :recipient, :timestamp, :body, :id, :encryption, :senderKey, "
+			":deliveryState, :isSpoiler, :spoilerHint, :errorText, :replaceId, "
+			":originId, :stanzaId, :fileGroupId, :removed)"
 		);
 
 		bindValues(query, {
 			{ u":sender", msg.from },
 			{ u":recipient", msg.to },
 			{ u":timestamp", msg.stamp.toString(Qt::ISODateWithMs) },
-			{ u":message", msg.body },
+			{ u":body", msg.body },
 			{ u":id", msg.id.isEmpty() ? " " : msg.id },
 			{ u":encryption", msg.encryption },
 			{ u":senderKey", msg.senderKey },
 			{ u":deliveryState", int(msg.deliveryState) },
-			{ u":isEdited", msg.isEdited },
 			{ u":isSpoiler", msg.isSpoiler },
 			{ u":spoilerHint", msg.spoilerHint },
 			{ u":errorText", msg.errorText },
 			{ u":replaceId", msg.replaceId },
 			{ u":originId", msg.originId },
 			{ u":stanzaId", msg.stanzaId },
-			{ u":fileGroupId", optionalToVariant(msg.fileGroupId) }
+			{ u":fileGroupId", optionalToVariant(msg.fileGroupId) },
+			{ u":removed", msg.removed }
 		});
 		execQuery(query);
 
@@ -547,6 +538,7 @@ QFuture<void> MessageDb::removeMessages(const QString &, const QString &)
 			execQuery(query, "SELECT fileGroupId FROM messages WHERE fileGroupId IS NOT NULL");
 
 			QVector<qint64> fileIds;
+			reserve(fileIds, query);
 			while (query.next()) {
 				fileIds.append(query.value(0).toLongLong());
 			}
@@ -557,6 +549,70 @@ QFuture<void> MessageDb::removeMessages(const QString &, const QString &)
 		}
 
 		execQuery(query, "DELETE FROM " DB_TABLE_MESSAGES);
+	});
+}
+
+QFuture<void> MessageDb::removeMessage(const QString &senderJid, const QString &recipientJid,
+									   const QString &messageId)
+{
+	return run([this, senderJid, recipientJid, messageId]() {
+		auto query = createQuery();
+
+		execQuery(
+			query,
+			"SELECT * FROM chatMessages "
+			"WHERE id = :messageId "
+			"AND ((sender = :sender AND recipient = :recipient) OR "
+			"(recipient = :sender AND sender = :recipient)) "
+			"LIMIT 1",
+			{{ u":messageId", messageId },
+			 { u":recipient", recipientJid },
+			 { u":sender", senderJid }}
+		);
+
+		auto messages = _fetchMessagesFromQuery(query);
+
+		if (!messages.isEmpty()) {
+			// Set the message's content to NULL and the "removed" flag to true.
+			execQuery(
+				query,
+				"UPDATE messages "
+				"SET body = NULL, spoilerHint = NULL, removed = 1 "
+				"WHERE id = :messageId "
+				"AND ((sender = :sender AND recipient = :recipient) OR "
+				"(recipient = :sender AND sender = :recipient)) ",
+				{{ u":messageId", messageId },
+				 { u":recipient", recipientJid },
+				 { u":sender", senderJid }}
+			);
+
+			// Remove reactions corresponding to the removed message.
+			execQuery(
+				query,
+				"DELETE FROM messageReactions "
+				"WHERE messageId = :messageId "
+				"AND ((messageSender = :sender AND messageRecipient = :recipient) "
+				"OR (messageRecipient = :sender AND messageSender = :recipient)) "
+				"LIMIT 1",
+				{{ u":messageId", messageId },
+				 { u":recipient", recipientJid },
+				 { u":sender", senderJid }}
+			);
+		}
+
+		std::shared_ptr<Message> message {
+			std::make_shared<Message>(_fetchLastMessage(senderJid, recipientJid))
+		};
+
+		// The retrieved last message can be a default-constructed message if the removed
+		// message was the last one of the corresponding chat. In that case, the sender and
+		// recipient JIDs are set in order to relate the message to its chat.
+		if (message->from.isEmpty()) {
+			message->from = senderJid;
+			message->to = recipientJid;
+		}
+
+		emit messageRemoved(message);
 	});
 }
 
@@ -587,15 +643,15 @@ QFuture<void> MessageDb::updateMessage(const QString &id,
 
 			// Replace the old message's values with the updated ones if the message has changed.
 			if (oldMessage != newMessage) {
-				const auto &oldReactions = oldMessage.reactions;
-				if (const auto &newReactions = newMessage.reactions; oldReactions != newReactions) {
+				const auto &oldReactionSenders = oldMessage.reactionSenders;
+				if (const auto &newReactionSenders = newMessage.reactionSenders; oldReactionSenders != newReactionSenders) {
 					// Remove old reactions.
-					for (auto itr = oldReactions.begin(); itr != oldReactions.end(); ++itr) {
+					for (auto itr = oldReactionSenders.begin(); itr != oldReactionSenders.end(); ++itr) {
 						const auto &senderJid = itr.key();
-						const auto reaction = itr.value();
+						const auto &reactionSender = itr.value();
 
-						for (const auto &emoji : reaction.emojis) {
-							if (!newReactions.value(senderJid).emojis.contains(emoji)) {
+						for (const auto &reaction : reactionSender.reactions) {
+							if (!newReactionSenders.value(senderJid).reactions.contains(reaction)) {
 								execQuery(
 									query,
 									"DELETE FROM " DB_TABLE_MESSAGE_REACTIONS " "
@@ -604,38 +660,39 @@ QFuture<void> MessageDb::updateMessage(const QString &id,
 									  { u":messageRecipient", oldMessage.to },
 									  { u":messageId", oldMessage.id },
 									  { u":senderJid", senderJid },
-									  { u":emoji", emoji } }
+									  { u":emoji", reaction.emoji } }
 								);
 							}
 						}
 					}
 
 					// Add new reactions.
-					for (auto itr = newReactions.begin(); itr != newReactions.end(); ++itr) {
+					for (auto itr = newReactionSenders.begin(); itr != newReactionSenders.end(); ++itr) {
 						const auto &senderJid = itr.key();
-						const auto reaction = itr.value();
+						const auto &reactionSender = itr.value();
 
-						for (const auto &emoji : reaction.emojis) {
-							if (!oldReactions.value(senderJid).emojis.contains(emoji)) {
+						for (const auto &reaction : reactionSender.reactions) {
+							if (!oldReactionSenders.value(senderJid).reactions.contains(reaction)) {
 								execQuery(
 									query,
 									"INSERT INTO " DB_TABLE_MESSAGE_REACTIONS " "
-									"(messageSender, messageRecipient, messageId, senderJid, timestamp, emoji) "
-									"VALUES (:messageSender, :messageRecipient, :messageId, :senderJid, :timestamp, :emoji)",
+									"(messageSender, messageRecipient, messageId, senderJid, timestamp, deliveryState, emoji) "
+									"VALUES (:messageSender, :messageRecipient, :messageId, :senderJid, :timestamp, :deliveryState, :emoji)",
 									{ { u":messageSender", oldMessage.from },
 									  { u":messageRecipient", oldMessage.to },
 									  { u":messageId", oldMessage.id },
 									  { u":senderJid", senderJid },
-									  { u":timestamp", reaction.latestTimestamp },
-									  { u":emoji", emoji }}
+									  { u":timestamp", reactionSender.latestTimestamp },
+									  { u":deliveryState", int(reaction.deliveryState) },
+									  { u":emoji", reaction.emoji } }
 								);
 							}
 						}
 					}
-				} else if (auto rec = createUpdateRecord(oldMessage, newMessage); rec.count()) {
+				} else if (auto rec = createUpdateRecord(oldMessage, newMessage); !rec.isEmpty()) {
 					auto &driver = sqlDriver();
 
-					// Create an SQL record with only the differences.
+					// Create an SQL record containing only the differences.
 					execQuery(
 						query,
 						driver.sqlStatement(
@@ -686,31 +743,31 @@ QFuture<Message> MessageDb::addDraftMessage(const Message &msg)
 		auto query = createQuery();
 		prepareQuery(
 			query,
-			"INSERT INTO " DB_TABLE_MESSAGES " (sender, recipient, timestamp, message, id, encryption, "
-			"senderKey, deliveryState, isEdited, isSpoiler, spoilerHint, errorText, replaceId, "
-			"originId, stanzaId, fileGroupId) "
-			"VALUES (:sender, :recipient, :timestamp, :message, :id, :encryption, :senderKey, "
-			":deliveryState, :isEdited, :isSpoiler, :spoilerHint, :errorText, :replaceId, "
-			":originId, :stanzaId, :fileGroupId)"
+			"INSERT INTO " DB_TABLE_MESSAGES " (sender, recipient, timestamp, body, id, encryption, "
+			"senderKey, deliveryState, isSpoiler, spoilerHint, errorText, replaceId, "
+			"originId, stanzaId, fileGroupId, removed) "
+			"VALUES (:sender, :recipient, :timestamp, :body, :id, :encryption, :senderKey, "
+			":deliveryState, :isSpoiler, :spoilerHint, :errorText, :replaceId, "
+			":originId, :stanzaId, :fileGroupId, :removed)"
 		);
 
 		bindValues(query, {
 			{ u":sender", msg.from },
 			{ u":recipient", msg.to },
 			{ u":timestamp", msg.stamp.toString(Qt::ISODateWithMs) },
-			{ u":message", msg.body },
+			{ u":body", msg.body },
 			{ u":id", msg.id },
 			{ u":encryption", msg.encryption },
 			{ u":senderKey", msg.senderKey },
 			{ u":deliveryState", int(msg.deliveryState) },
-			{ u":isEdited", msg.isEdited },
 			{ u":isSpoiler", msg.isSpoiler },
 			{ u":spoilerHint", msg.spoilerHint },
 			{ u":errorText", msg.errorText },
 			{ u":replaceId", msg.replaceId },
 			{ u":originId", msg.originId },
 			{ u":stanzaId", msg.stanzaId },
-			{ u":fileGroupId", optionalToVariant(msg.fileGroupId) }
+			{ u":fileGroupId", optionalToVariant(msg.fileGroupId) },
+			{ u":removed", msg.removed }
 		});
 		execQuery(query);
 
@@ -934,6 +991,7 @@ QVector<File> MessageDb::_fetchFiles(qint64 fileGroupId)
 	execQuery(query);
 
 	QVector<File> files;
+	reserve(files, query);
 	while (query.next()) {
 		auto id = query.value(Id).toLongLong();
 		files << File {
@@ -968,6 +1026,7 @@ QVector<FileHash> MessageDb::_fetchFileHashes(qint64 fileId)
 	execQuery(query);
 
 	QVector<FileHash> hashes;
+	reserve(hashes, query);
 	while (query.next()) {
 		hashes << FileHash {
 			fileId,
@@ -991,6 +1050,7 @@ QVector<HttpSource> MessageDb::_fetchHttpSource(qint64 fileId)
 	execQuery(query);
 
 	QVector<HttpSource> sources;
+	reserve(sources, query);
 	while (query.next()) {
 		sources << HttpSource {
 			fileId,
@@ -1023,6 +1083,7 @@ QVector<EncryptedSource> MessageDb::_fetchEncryptedSource(qint64 fileId)
 	};
 
 	QVector<EncryptedSource> sources;
+	reserve(sources, query);
 	while (query.next()) {
 		sources << EncryptedSource {
 			fileId,
@@ -1039,30 +1100,77 @@ QVector<EncryptedSource> MessageDb::_fetchEncryptedSource(qint64 fileId)
 
 void MessageDb::_fetchReactions(QVector<Message> &messages)
 {
-	enum { SenderJid, Timestamp, Emoji };
+	enum { SenderJid, Timestamp, DeliveryState, Emoji };
 	auto query = createQuery();
 
 	for (auto &message : messages) {
 		execQuery(
 			query,
-			"SELECT senderJid, timestamp, emoji FROM messageReactions "
+			"SELECT senderJid, timestamp, deliveryState, emoji FROM messageReactions "
 			"WHERE messageSender = :messageSender AND messageRecipient = :messageRecipient AND messageId = :messageId",
 			{ { u":messageSender", message.from }, { u":messageRecipient", message.to }, { u":messageId", message.id } }
 		);
 
 		// Iterate over all found emojis.
 		while (query.next()) {
-			auto &reaction = message.reactions[query.value(SenderJid).toString()];
+			auto &reactionSender = message.reactionSenders[query.value(SenderJid).toString()];
 
 			// Use the timestamp of the current emoji as the latest timestamp if the emoji's
 			// timestamp is newer than the latest one.
-			if (const auto timestamp = query.value(Timestamp).toDateTime(); reaction.latestTimestamp < timestamp) {
-				reaction.latestTimestamp = timestamp;
+			if (const auto timestamp = query.value(Timestamp).toDateTime(); reactionSender.latestTimestamp < timestamp) {
+				reactionSender.latestTimestamp = timestamp;
 			}
 
-			reaction.emojis.append(query.value(Emoji).toString());
+			MessageReaction reaction;
+			reaction.deliveryState = MessageReactionDeliveryState::Enum(query.value(DeliveryState).toInt());
+			reaction.emoji = query.value(Emoji).toString();
+
+			reactionSender.reactions.append(reaction);
 		}
 	}
+}
+
+QFuture<QVector<File> > MessageDb::_fetchFiles(const QString &accountJid, const QString &chatJid, bool checkExists)
+{
+	return run([this, accountJid, chatJid, checkExists]() {
+		const QString vice =
+			chatJid.isEmpty()
+				? QStringLiteral("sender = :accountJid")
+				: QStringLiteral("(sender = :accountJid AND recipient = :chatJid)");
+		const QString versa =
+			chatJid.isEmpty()
+				? QStringLiteral("recipient = :accountJid")
+				: QStringLiteral("(sender = :chatJid AND recipient = :accountJid)");
+		auto query = createQuery();
+		prepareQuery(query,
+			"SELECT fileGroupId FROM " DB_VIEW_CHAT_MESSAGES " "
+			"WHERE (" % vice % " OR " % versa % ") AND "
+			"fileGroupId IS NOT NULL");
+		bindValues(query,
+			{
+				{u":accountJid", accountJid},
+				{u":chatJid", chatJid},
+			});
+		execQuery(query);
+
+		QVector<File> files;
+		reserve(files, query);
+		while (query.next()) {
+			auto fetched = _fetchFiles(query.value(0).toLongLong());
+
+			if (checkExists) {
+				fetched.erase(std::remove_if(fetched.begin(),
+						      fetched.end(),
+						      [](const File &file) {
+							      return !QFile::exists(file.localFilePath);
+						      }),
+					fetched.end());
+			}
+
+			files.append(fetched);
+		}
+		return files;
+	});
 }
 
 bool MessageDb::_checkMessageExists(const Message &message)
@@ -1096,11 +1204,16 @@ bool MessageDb::_checkMessageExists(const Message &message)
 	}
 
 	const QString idConditionSql = idChecks.join(u" OR ");
+
+	// By querying DB_TABLE_MESSAGES instead of DB_VIEW_CHAT_MESSAGES and excluding drafts, all sent or received messages are retrieved.
+	// That includes locally removed messages.
+	// It avoids storing messages that were already locally removed again when received via MAM afterwards.
 	const QString querySql =
-		QStringLiteral("SELECT COUNT(*) FROM " DB_VIEW_CHAT_MESSAGES " "
+		QStringLiteral("SELECT COUNT(*) FROM " DB_TABLE_MESSAGES " "
 		               "WHERE (sender = :from AND recipient = :to AND (") %
 		idConditionSql %
-		QStringLiteral(")) ORDER BY timestamp DESC LIMIT " CHECK_MESSAGE_EXISTS_DEPTH_LIMIT);
+		QStringLiteral(")) AND deliveryState != 4 ") %
+		QStringLiteral("ORDER BY timestamp DESC LIMIT " CHECK_MESSAGE_EXISTS_DEPTH_LIMIT);
 
 	auto query = createQuery();
 	execQuery(query, querySql, bindValues);
@@ -1131,5 +1244,67 @@ QFuture<QVector<Message>> MessageDb::fetchPendingMessages(const QString &userJid
 
 		emit pendingMessagesFetched(messages);
 		return messages;
+	});
+}
+
+QFuture<QMap<QString, QMap<QString, MessageReactionSender>>> MessageDb::fetchPendingReactions(const QString &accountJid)
+{
+	return run([this, accountJid]() {
+		enum { MessageSender, MessageId };
+		auto pendingReactionQuery = createQuery();
+
+		execQuery(
+			pendingReactionQuery,
+			"SELECT DISTINCT messageSender, messageId FROM messageReactions "
+			"WHERE senderJid = :senderJid AND "
+			"deliveryState = :deliveryState1 OR deliveryState = :deliveryState2 OR deliveryState = :deliveryState3",
+			{
+				{ u":senderJid", accountJid },
+				{ u":deliveryState1", int(MessageReactionDeliveryState::PendingAddition) },
+				{ u":deliveryState2", int(MessageReactionDeliveryState::PendingRemovalAfterSent) },
+				{ u":deliveryState3", int(MessageReactionDeliveryState::PendingRemovalAfterDelivered) },
+			}
+		);
+
+		// messageSender mapped to messageId mapped to MessageReactionSender
+		QMap<QString, QMap<QString, MessageReactionSender>> reactions;
+
+		// Iterate over all IDs of messages with pending reactions.
+		while (pendingReactionQuery.next()) {
+			enum { Timestamp, DeliveryState, Emoji };
+			const auto messageSender = pendingReactionQuery.value(MessageSender).toString();
+			const auto messageId = pendingReactionQuery.value(MessageId).toString();
+			auto reactionQuery = createQuery();
+
+			execQuery(
+				reactionQuery,
+				"SELECT timestamp, deliveryState, emoji FROM messageReactions "
+				"WHERE messageSender = :messageSender AND messageId = :messageId AND senderJid = :senderJid",
+				{
+					{ u":messageSender", messageSender },
+					{ u":messageId", messageId },
+					{ u":senderJid", accountJid },
+				}
+			);
+
+			// Iterate over all reactions of messages with pending reactions.
+			while (reactionQuery.next()) {
+				auto &reactionSender = reactions[messageSender][messageId];
+
+				// Use the timestamp of the current emoji as the latest timestamp if the emoji's
+				// timestamp is newer than the latest one.
+				if (const auto timestamp = reactionQuery.value(Timestamp).toDateTime(); reactionSender.latestTimestamp < timestamp) {
+					reactionSender.latestTimestamp = timestamp;
+				}
+
+				MessageReaction reaction;
+				reaction.emoji = reactionQuery.value(Emoji).toString();
+				reaction.deliveryState = MessageReactionDeliveryState::Enum(reactionQuery.value(DeliveryState).toInt());
+
+				reactionSender.reactions.append(reaction);
+			}
+		}
+
+		return reactions;
 	});
 }

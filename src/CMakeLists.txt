@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2017 Linus Jahn <lnj@kaidan.im>
+#
+# SPDX-License-Identifier: CC0-1.0
+
 #
 # Sources / Resources
 #
@@ -21,6 +25,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 	CameraImageCapture.h
 	CameraModel.cpp
 	CameraModel.h
+	ChatHintModel.cpp
+	ChatHintModel.h
 	ClientWorker.cpp
 	ClientWorker.h
 	CredentialsGenerator.cpp
@@ -39,6 +45,10 @@ target_sources(${PROJECT_NAME} PRIVATE
 	EmojiModel.h
 	Encryption.h
 	Enums.h
+	FileModel.cpp
+	FileModel.h
+	FileProxyModel.cpp
+	FileProxyModel.h
 	FileProgressCache.cpp
 	FileProgressCache.h
 	FileSharingController.cpp
@@ -83,8 +93,6 @@ target_sources(${PROJECT_NAME} PRIVATE
 	MessageModel.h
 	Notifications.cpp
 	Notifications.h
-	NotificationsMutedWatcher.cpp
-	NotificationsMutedWatcher.h
 	OmemoDb.cpp
 	OmemoDb.h
 	OmemoManager.cpp

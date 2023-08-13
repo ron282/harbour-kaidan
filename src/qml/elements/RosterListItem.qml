@@ -1,32 +1,11 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2017 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2019 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2022 Jonah Brüchert <jbb@kaidan.im>
+// SPDX-FileCopyrightText: 2022 Bhavy Airi <airiragahv@gmail.com>
+// SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
+// SPDX-FileCopyrightText: 2023 Tibor Csötönyi <work@taibsu.de>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick 2.14
 import QtQuick.Layouts 1.14
@@ -41,9 +20,11 @@ UserListItem {
 	property ListView listView
 	property Controls.Menu contextMenu
 	property bool lastMessageIsDraft
+	property alias lastMessageDateTime: lastMessageDateTimeText.text
 	property string lastMessage
 	property int unreadMessages
 	property bool pinned
+	property bool notificationsMuted
 
 	isSelected: {
 		return !Kirigami.Settings.isMobile &&
@@ -56,16 +37,26 @@ UserListItem {
 		spacing: Kirigami.Units.largeSpacing
 		Layout.fillWidth: true
 
-		// name
-		Kirigami.Heading {
-			id: nameText
-			text: name
-			textFormat: Text.PlainText
-			elide: Text.ElideRight
-			maximumLineCount: 1
-			level: 4
-			Layout.fillWidth: true
-			Layout.maximumHeight: Kirigami.Units.gridUnit * 1.5
+		RowLayout {
+			// name
+			Kirigami.Heading {
+				id: nameText
+				text: root.name
+				textFormat: Text.PlainText
+				elide: Text.ElideRight
+				maximumLineCount: 1
+				level: 4
+				Layout.fillWidth: true
+				Layout.maximumHeight: Kirigami.Units.gridUnit * 1.5
+			}
+
+			// last (exchanged/draft) message date/time
+			Text {
+				id: lastMessageDateTimeText
+				text: root.lastMessageDateTime
+				visible: text
+				color: Kirigami.Theme.disabledTextColor
+			}
 		}
 
 		// last message or error status message if available, otherwise not visible
@@ -97,7 +88,20 @@ UserListItem {
 		}
 	}
 
-	onIsSelectedChanged: textColorAnimation.restart()
+	onIsSelectedChanged: {
+		lastMessageDateTimeColorAnimation.restart()
+		textColorAnimation.restart()
+	}
+
+	// fading text colors
+	ColorAnimation {
+		id: lastMessageDateTimeColorAnimation
+		targets: [lastMessageDateTimeText]
+		property: "color"
+		to: root.isSelected ? Kirigami.Theme.disabledTextColor : Kirigami.Theme.highlightedTextColor
+		duration: Kirigami.Units.shortDuration
+		running: false
+	}
 
 	// fading text colors
 	ColorAnimation {
@@ -112,11 +116,10 @@ UserListItem {
 	// right: icon for muted contact
 	// Its size depends on the font's pixel size to be as large as the message counter.
 	Kirigami.Icon {
-		id: mutedIcon
-		source: "audio-volume-muted-symbolic"
+		source: "notifications-disabled-symbolic"
 		Layout.preferredWidth: Kirigami.Theme.defaultFont.pixelSize * 1.3
 		Layout.preferredHeight: Layout.preferredWidth
-		visible: mutedWatcher.muted
+		visible: notificationsMuted
 	}
 
 	// right: icon for pinned chat
@@ -132,7 +135,7 @@ UserListItem {
 	MessageCounter {
 		id: counter
 		count: unreadMessages
-		muted: mutedWatcher.muted
+		muted: notificationsMuted
 	}
 
 	// right: icon for reordering
@@ -155,11 +158,6 @@ UserListItem {
 		}
 
 		onPressAndHold: showContextMenu()
-	}
-
-	NotificationsMutedWatcher {
-		id: mutedWatcher
-		jid: root.jid
 	}
 
 	function showContextMenu() {

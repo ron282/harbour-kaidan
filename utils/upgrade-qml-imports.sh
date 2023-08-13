@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-FileCopyrightText: 2019 Filipe Azevedo <pasnox@gmail.com>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 SCRIPT_DIR=$(dirname "${0}")
 
@@ -18,11 +21,9 @@ set -e
 
 declare -A QT
 QT["QtGraphicalEffects"]="1.14"
-QT["Qt.labs.folderlistmodel"]="2.1"
 QT["QtLocation"]="5.14"
 QT["QtMultimedia"]="5.14"
 QT["QtPositioning"]="5.14"
-QT["QtQml"]="2.14"
 QT["QtQuick"]="2.14"
 QT["QtQuick.Controls"]="2.14"
 QT["QtQuick.Controls.Material"]="2.14"

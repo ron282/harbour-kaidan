@@ -1,32 +1,15 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2017 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2017 Ilya Bizyaev <bizyaev@zoho.com>
+// SPDX-FileCopyrightText: 2019 Jonah Brüchert <jbb@kaidan.im>
+// SPDX-FileCopyrightText: 2019 Xavier <xavi@delape.net>
+// SPDX-FileCopyrightText: 2019 Filipe Azevedo <pasnox@gmail.com>
+// SPDX-FileCopyrightText: 2019 caca hueto <cacahueto@olomono.de>
+// SPDX-FileCopyrightText: 2019 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2020 Yury Gubich <blue@macaw.me>
+// SPDX-FileCopyrightText: 2022 Bhavy Airi <airiragahv@gmail.com>
+// SPDX-FileCopyrightText: 2023 Bhavy Airi <airiraghav@gmail.com>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick 2.14
 import QtQuick.Layouts 1.14
@@ -42,7 +25,7 @@ Kirigami.SwipeListItem {
 
 	property Controls.Menu contextMenu
 	property MessageReactionEmojiPicker reactionEmojiPicker
-	property MessageReactionSenderSheet reactionSenderSheet
+	property MessageReactionDetailsSheet reactionDetailsSheet
 
 	property int modelIndex
 	property string msgId
@@ -65,7 +48,9 @@ Kirigami.SwipeListItem {
 	property string errorText: ""
 	property alias bodyLabel: bodyLabel
 	property var files;
-	property var reactions
+	property var displayedReactions
+	property var detailedReactions
+	property var ownDetailedReactions
 
 	property bool isGroupBegin: {
 		return modelIndex < 1 ||
@@ -84,8 +69,7 @@ Kirigami.SwipeListItem {
 		Kirigami.Action {
 			text: "Add message reaction"
 			icon.name: "smiley-add"
-			// TODO: Remove " && Kaidan.connectionState === Enums.StateConnected" once offline queue for message reactions is implemented
-			visible: !root.isOwn && !Object.keys(root.reactions).length && Kaidan.connectionState === Enums.StateConnected
+			visible: !root.displayedReactions.length
 			onTriggered: {
 				root.reactionEmojiPicker.messageId = root.msgId
 				root.reactionEmojiPicker.open()
@@ -201,31 +185,6 @@ Kirigami.SwipeListItem {
 					ColumnLayout {
 						visible: isSpoiler && isShowingSpoiler || !isSpoiler
 
-						Controls.ToolButton {
-							visible: {
-								switch (root.mediaType) {
-								case Enums.MessageType.MessageUnknown:
-								case Enums.MessageType.MessageText:
-								case Enums.MessageType.MessageGeoLocation:
-									break
-								case Enums.MessageType.MessageImage:
-								case Enums.MessageType.MessageAudio:
-								case Enums.MessageType.MessageVideo:
-								case Enums.MessageType.MessageFile:
-								case Enums.MessageType.MessageDocument:
-									return !transferWatcher.isLoading && root.mediaGetUrl !== ""
-											&& (root.mediaLocation === "" || !MediaUtilsInstance.localFileAvailable(media.mediaSource))
-								}
-
-								return false
-							}
-							text: qsTr("Download")
-							onClicked: {
-								print("Downloading " + mediaGetUrl + "…")
-								Kaidan.client.downloadManager.startDownloadRequested(msgId, mediaGetUrl)
-							}
-						}
-
 						Repeater {
 							model: root.files
 
@@ -275,39 +234,60 @@ Kirigami.SwipeListItem {
 
 					// message reactions (emojis in reaction to this message)
 					Flow {
+						visible: displayedReactionsArea.count
 						spacing: 4
-						Layout.rightMargin: isOwn ? 45 : 30
+						Layout.bottomMargin: 15
 						Layout.maximumWidth: bodyLabel.Layout.maximumWidth
 						Layout.preferredWidth: {
-							if (messageReactionAddition.visible) {
-								return (messageReactionAddition.width + spacing) * (Object.keys(root.reactions).length + 1)
-							} else {
-								return (messageReactionAddition.width + spacing) * Object.keys(root.reactions).length
+							var displayedReactionsWidth = 0
+
+							for (var i = 0; i < displayedReactionsArea.count; i++) {
+								displayedReactionsWidth += displayedReactionsArea.itemAt(i).width
 							}
+
+							return displayedReactionsWidth + (messageReactionAdditionButton.width * 2) + spacing * (displayedReactionsArea.count + 2)
 						}
 
 						Repeater {
-							model: Object.keys(root.reactions)
+							id: displayedReactionsArea
+							model: root.displayedReactions
 
-							MessageReactionDisplay {
-								messageId: root.msgId
-								emoji: modelData
-								isOwnMessage: root.isOwn
-								senderJids: root.reactions[modelData]
-								senderSheet: root.reactionSenderSheet
-								primaryColor: root.isOwn ? primaryBackgroundColor : secondaryBackgroundColor
+							MessageReactionDisplayButton {
 								accentColor: bubble.backgroundColor
+								ownReactionIncluded: modelData.ownReactionIncluded
+								deliveryState: modelData.deliveryState
+								isOwnMessage: root.isOwn
+								text: modelData.count === 1 ? modelData.emoji : modelData.emoji + " " + modelData.count
+								width: smallButtonWidth + (text.length < 3 ? 0 : (text.length - 2) * Kirigami.Theme.defaultFont.pixelSize * 0.6)
+								onClicked: {
+									if (ownReactionIncluded) {
+										if (deliveryState === MessageReactionDeliveryState.PendingRemovalAfterSent ||
+											deliveryState === MessageReactionDeliveryState.PendingRemovalAfterDelivered) {
+											MessageModel.addMessageReaction(root.msgId, modelData.emoji)
+										} else {
+											MessageModel.removeMessageReaction(root.msgId, modelData.emoji)
+										}
+									} else {
+										MessageModel.addMessageReaction(root.msgId, modelData.emoji)
+									}
+								}
 							}
 						}
 
-						MessageReactionAddition {
-							id: messageReactionAddition
-							// TODO: Remove " && Kaidan.connectionState === Enums.StateConnected" once offline queue for message reactions is implemented
-							visible: !root.isOwn && Object.keys(root.reactions).length && Kaidan.connectionState === Enums.StateConnected
+						MessageReactionAdditionButton {
+							id: messageReactionAdditionButton
 							messageId: root.msgId
 							emojiPicker: root.reactionEmojiPicker
-							primaryColor: secondaryBackgroundColor
 							accentColor: bubble.backgroundColor
+						}
+
+						MessageReactionDetailsButton {
+							messageId: root.msgId
+							accentColor: bubble.backgroundColor
+							isOwnMessage: root.isOwn
+							detailedReactions: root.detailedReactions
+							ownDetailedReactions: root.ownDetailedReactions
+							detailsSheet: root.reactionDetailsSheet
 						}
 					}
 

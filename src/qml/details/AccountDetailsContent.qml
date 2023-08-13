@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Melvin Keskin <melvo@olomono.de>
 // SPDX-FileCopyrightText: 2023 Tibor Csötönyi <work@taibsu.de>
+// SPDX-FileCopyrightText: 2023 Bhavy Airi <airiraghav@gmail.com>
+// SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -17,33 +19,195 @@ import "../settings"
 
 DetailsContent {
 	id: root
-	encryptionArea: ColumnLayout {
-		spacing: 0
-
-		Component.onCompleted: {
-			// Retrieve the own devices if they are not loaded yet on a mobile device.
-			if (!root.sheet && MessageModel.currentAccountJid != root.jid) {
-				Kaidan.client.omemoManager.initializeChatRequested(root.jid)
-			}
-
-			passwordVerificationField.initialize()
-			passwordField.initialize()
+	mediaOverview {
+		accountJid: AccountManager.jid
+		chatJid: ""
+	}
+	vCardArea: [
+		FormExpansionButton {
+			id: vCardExpansionButton
+			checked: vCardRepeater.model.unsetEntriesProcessed
+			onCheckedChanged: vCardRepeater.model.unsetEntriesProcessed = checked
 		}
-		Connections {
-			target: root.sheet
+	]
+	vCardRepeater {
+		model: VCardModel {
+			jid: root.jid
+		}
+		delegate: MobileForm.AbstractFormDelegate {
+			id: vCardDelegate
 
-			function onSheetOpenChanged() {
-				if (root.sheet.sheetOpen) {
-					// Retrieve the own devices if they are not loaded yet on a desktop device.
-					if (MessageModel.currentAccountJid != root.jid) {
-						Kaidan.client.omemoManager.initializeChatRequested(root.jid)
+			property bool editing: false
+
+			contentItem: ColumnLayout {
+				Controls.Label {
+					text: model.value ? model.value : qsTr("Empty")
+					color: model.value ? Kirigami.Theme.textColor : Kirigami.Theme.disabledTextColor
+					font.italic: model.value ? false : true
+					wrapMode: Text.WordWrap
+					visible: !vCardDelegate.editing
+					Layout.fillWidth: true
+				}
+
+				RowLayout {
+					visible: vCardDelegate.editing
+
+					Controls.TextField {
+						id: vCardValueField
+						text: model.value
+						Layout.fillWidth: true
+						onAccepted: vCardConfirmationButton.clicked()
 					}
 
-					passwordVerificationField.initialize()
-					passwordField.initialize()
-					passwordChangeErrorMessage.visible = false
-					connectionSettingsErrorMessage.visible = false
+					Button {
+						id: vCardConfirmationButton
+						Controls.ToolTip.text: qsTr("Set value")
+						icon.name: "emblem-ok-symbolic"
+						visible: !vCardBusyIndicator.visible
+						flat: true
+						Layout.preferredWidth: Layout.preferredHeight
+						Layout.preferredHeight: customConnectionSettings.portField.implicitHeight
+						Layout.alignment: Qt.AlignBottom
+						onHoveredChanged: {
+							if (hovered) {
+								flat = false
+							} else {
+								flat = true
+							}
+						}
+						onClicked: {
+							vCardBusyIndicator.visible = true
+							model.value = vCardValueField.text
+							vCardDelegate.editing = false
+							vCardBusyIndicator.visible = false
+						}
+					}
+
+					Controls.BusyIndicator {
+						id: vCardBusyIndicator
+						visible: false
+						Layout.preferredWidth: vCardConfirmationButton.Layout.preferredWidth
+						Layout.preferredHeight: Layout.preferredWidth
+						Layout.alignment: vCardConfirmationButton.Layout.alignment
+					}
 				}
+
+				Controls.Label {
+					text: model.key
+					color: Kirigami.Theme.disabledTextColor
+					font: Kirigami.Theme.smallFont
+					textFormat: Text.PlainText
+					wrapMode: Text.WordWrap
+					Layout.fillWidth: true
+				}
+			}
+			onClicked: {
+				if (!editing) {
+					vCardValueField.forceActiveFocus()
+				}
+
+				editing = !editing
+			}
+		}
+	}
+	rosterGroupArea: ColumnLayout {
+		MobileForm.FormCard {
+			Layout.fillWidth: true
+			contentItem: ColumnLayout {
+				spacing: 0
+
+				MobileForm.FormCardHeader {
+					title: qsTr("Labels")
+				}
+
+				ListView {
+					id: rosterGroupListView
+					model: RosterModel.groups
+					visible: rosterGroupExpansionButton.checked
+					implicitHeight: contentHeight
+					Layout.fillWidth: true
+					delegate: MobileForm.AbstractFormDelegate {
+						id: rosterGroupDelegate
+						width: ListView.view.width
+						onClicked: rosterGroupEditingButton.toggled()
+						contentItem: RowLayout {
+							Controls.Label {
+								id: rosterGroupText
+								text: modelData
+								textFormat: Text.PlainText
+								maximumLineCount: 1
+								elide: Text.ElideRight
+								visible: !rosterGroupTextField.visible
+								Layout.preferredHeight: rosterGroupTextField.height
+								Layout.fillWidth: true
+								leftPadding: Kirigami.Units.smallSpacing * 1.5
+							}
+
+							Controls.TextField {
+								id: rosterGroupTextField
+								text: modelData
+								visible: false
+								Layout.fillWidth: true
+								onAccepted: rosterGroupEditingButton.toggled()
+							}
+
+							Button {
+								id: rosterGroupEditingButton
+								text: qsTr("Change label…")
+								icon.name: "document-edit-symbolic"
+								display: Controls.AbstractButton.IconOnly
+								checked: !rosterGroupText.visible
+								flat: !hovered
+								Controls.ToolTip.text: text
+								// Ensure that the button can be used within "rosterGroupDelegate"
+								// which acts as an overlay to toggle this button when clicked.
+								// Otherwise, this button would be toggled by "rosterGroupDelegate"
+								// and by this button's own visible area at the same time resulting
+								// in resetting the toggling on each click.
+								autoRepeat: true
+								onToggled: {
+									if (rosterGroupText.visible) {
+										rosterGroupTextField.visible = true
+										rosterGroupTextField.forceActiveFocus()
+										rosterGroupTextField.selectAll()
+									} else {
+										rosterGroupTextField.visible = false
+
+										if (rosterGroupTextField.text !== modelData) {
+											RosterModel.updateGroup(modelData, rosterGroupTextField.text)
+										}
+									}
+								}
+							}
+
+							Button {
+								id: rosterGroupRemovalButton
+								text: qsTr("Remove label")
+								icon.name: "edit-delete-symbolic"
+								display: Controls.AbstractButton.IconOnly
+								flat: !rosterGroupDelegate.hovered
+								Controls.ToolTip.text: text
+								onClicked: {
+									rosterGroupTextField.visible = false
+									RosterModel.removeGroup(modelData)
+								}
+							}
+						}
+					}
+				}
+
+				FormExpansionButton {
+					id: rosterGroupExpansionButton
+				}
+			}
+		}
+	}
+	encryptionArea: ColumnLayout {
+		spacing: 0
+		Component.onCompleted: {
+			// Retrieve the own devices if they are not loaded yet.
+			if (MessageModel.currentAccountJid != root.jid) {
+				Kaidan.client.omemoManager.initializeChatRequested(root.jid)
 			}
 		}
 
@@ -119,14 +283,8 @@ DetailsContent {
 		}
 	}
 
-	RosterAddContactSheet {
-		id: contactAdditionSheet
-	}
-
 	MobileForm.FormCard {
 		id: providerArea
-		Layout.fillWidth: true
-		visible: providerUrl  || chatSupportList.length || groupChatSupportList.length
 
 		readonly property string providerUrl: {
 			const domain = root.jid.split('@')[1]
@@ -138,6 +296,8 @@ DetailsContent {
 		readonly property var chatSupportList: providerListModel.providerFromBareJid(root.jid).chatSupport
 		readonly property var groupChatSupportList: providerListModel.providerFromBareJid(root.jid).groupChatSupport
 
+		Layout.fillWidth: true
+		visible: providerUrl  || chatSupportList.length || groupChatSupportList.length
 		contentItem: ColumnLayout {
 			spacing: 0
 
@@ -177,14 +337,14 @@ DetailsContent {
 				visible: providerArea.chatSupportList.length > 0
 				onClicked: {
 					if (providerArea.chatSupportList.length === 1) {
-						if (!contactAdditionSheet.sheetOpen) {
-							contactAdditionSheet.jid = providerArea.chatSupportList[0]
-							contactAdditionSheet.nickname = qsTr("Support")
+						let contactAdditionContainer = openView(contactAdditionDialog, contactAdditionPage)
+						contactAdditionContainer.jid = providerArea.chatSupportList[0]
+						contactAdditionContainer.name = qsTr("Support")
+
+						if (root.sheet) {
 							root.sheet.close()
-							contactAdditionSheet.open()
 						}
-					} else if (!chatSupportSheet.sheetOpen) {
-						root.sheet.close()
+					} else {
 						chatSupportSheet.open()
 					}
 				}
@@ -227,19 +387,24 @@ DetailsContent {
 			MobileForm.AbstractFormDelegate {
 				background: Item {}
 				contentItem: ColumnLayout {
+					Component.onCompleted: {
+						passwordVerificationField.initialize()
+						passwordField.initialize()
+					}
+
 					PasswordField {
 						id: passwordVerificationField
-						labelText: "Current password"
-						placeholderText: "Enter your current password"
+						labelText: qsTr("Current password")
+						placeholderText: qsTr("Enter your current password")
 						invalidHintText: qsTr("Enter correct password")
 						visible: Kaidan.settings.passwordVisibility !== Kaidan.PasswordVisible
 						enabled: !passwordBusyIndicator.visible
-						Layout.rightMargin: passwordChangeConfirmationButton.Layout.preferredWidth + passwordButtonFieldArea.spacing
+						Layout.rightMargin: passwordChangeButton.Layout.preferredWidth + passwordButtonFieldArea.spacing
 						onTextChanged: {
 							valid = text === AccountManager.password
 							toggleHintForInvalidText()
 						}
-						inputField.onAccepted: passwordChangeConfirmationButton.clicked()
+						inputField.onAccepted: passwordChangeButton.clicked()
 
 						function initialize() {
 							showPassword = false
@@ -253,8 +418,8 @@ DetailsContent {
 
 						PasswordField {
 							id: passwordField
-							labelText: passwordVerificationField.visible ? "New password" : "Password"
-							placeholderText: "Enter your new password"
+							labelText: passwordVerificationField.visible ? qsTr("New password") : qsTr("Password")
+							placeholderText: qsTr("Enter your new password")
 							invalidHintText: qsTr("Enter different password to change it")
 							invalidHintMayBeShown: true
 							enabled: !passwordBusyIndicator.visible
@@ -262,11 +427,11 @@ DetailsContent {
 								valid = credentialsValidator.isPasswordValid(text) && text !== AccountManager.password
 								toggleHintForInvalidText()
 							}
-							inputField.onAccepted: passwordChangeConfirmationButton.clicked()
+							inputField.onAccepted: passwordChangeButton.clicked()
 
 							function initialize() {
 								showPassword = false
-								text = passwordVerificationField.visible ? "" : AccountManager.password
+								text = Kaidan.settings.passwordVisibility !== Kaidan.PasswordVisible ? "" : AccountManager.password
 
 								// Avoid showing a hint on initial setting.
 								invalidHint.visible = false
@@ -274,7 +439,7 @@ DetailsContent {
 						}
 
 						Button {
-							id: passwordChangeConfirmationButton
+							id: passwordChangeButton
 							Controls.ToolTip.text: qsTr("Change password")
 							icon.name: "emblem-ok-symbolic"
 							visible: !passwordBusyIndicator.visible
@@ -305,9 +470,9 @@ DetailsContent {
 						Controls.BusyIndicator {
 							id: passwordBusyIndicator
 							visible: false
-							Layout.preferredWidth: passwordChangeConfirmationButton.Layout.preferredWidth
+							Layout.preferredWidth: passwordChangeButton.Layout.preferredWidth
 							Layout.preferredHeight: Layout.preferredWidth
-							Layout.alignment: passwordChangeConfirmationButton.Layout.alignment
+							Layout.alignment: passwordChangeButton.Layout.alignment
 						}
 					}
 
@@ -410,11 +575,11 @@ DetailsContent {
 					RowLayout {
 						CustomConnectionSettings {
 							id: customConnectionSettings
-							confirmationButton: connectionSettingsConfirmationButton
+							confirmationButton: connectionSettingsButton
 						}
 
 						Button {
-							id: connectionSettingsConfirmationButton
+							id: connectionSettingsButton
 							Controls.ToolTip.text: qsTr("Change connection settings")
 							icon.name: "emblem-ok-symbolic"
 							visible: !connectionSettingsBusyIndicator.visible
@@ -453,9 +618,9 @@ DetailsContent {
 						Controls.BusyIndicator {
 							id: connectionSettingsBusyIndicator
 							visible: false
-							Layout.preferredWidth: connectionSettingsConfirmationButton.Layout.preferredWidth
+							Layout.preferredWidth: connectionSettingsButton.Layout.preferredWidth
 							Layout.preferredHeight: Layout.preferredWidth
-							Layout.alignment: connectionSettingsConfirmationButton.Layout.alignment
+							Layout.alignment: connectionSettingsButton.Layout.alignment
 						}
 					}
 

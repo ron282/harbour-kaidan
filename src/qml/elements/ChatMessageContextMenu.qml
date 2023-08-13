@@ -1,32 +1,10 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2020 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2020 Yury Gubich <blue@macaw.me>
+// SPDX-FileCopyrightText: 2021 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2022 Jonah Brüchert <jbb@kaidan.im>
+// SPDX-FileCopyrightText: 2023 Tibor Csötönyi <work@taibsu.de>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick 2.14
 import QtQuick.Controls 2.14 as Controls
@@ -61,8 +39,8 @@ Controls.Menu {
 
 	Controls.MenuItem {
 		text: qsTr("Copy download URL")
-		visible: root.file && root.file.downloadUrl
-		onTriggered: Utils.copyToClipboard(root.file.downloadUrl)
+		visible: root.file && root.file.downloadUrl.toString() !== ""
+		onTriggered: Utils.copyToClipboard(root.file.downloadUrl.toString())
 	}
 
 	Controls.MenuItem {
@@ -87,6 +65,18 @@ Controls.Menu {
 			MessageModel.markMessageAsFirstUnread(message.modelIndex);
 			MessageModel.resetCurrentChat()
 			openChatView()
+		}
+	}
+
+	Controls.MenuItem {
+		text: qsTr("Remove from this device")
+		onTriggered: {
+			root.message.font.italic = true
+			MessageModel.removeMessage(root.message.msgId)
+
+			if (root.file && root.file.localFilePath) {
+				Kaidan.fileSharingController.deleteFile(root.message.msgId, root.file)
+			}
 		}
 	}
 }

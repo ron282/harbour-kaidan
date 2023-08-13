@@ -1,32 +1,10 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2019 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2020 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2020 Yury Gubich <blue@macaw.me>
+// SPDX-FileCopyrightText: 2022 Tibor Csötönyi <dev@taibsu.de>
+// SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
 
@@ -83,6 +61,28 @@ public:
 	 * @return the fetched messages
 	 */
 	QFuture<QVector<Message>> fetchMessages(const QString &accountJid, const QString &chatJid, int index);
+
+	/**
+	 * Fetches shared media from the database.
+	 * If chatJid is empty, all media related to accountJid are fetched.
+	 *
+	 * @param accountJid bare JID of the user's account
+	 * @param chatJid bare Jid of the chat
+	 *
+	 * @return the fetched messages
+	 */
+	QFuture<QVector<File>> fetchFiles(const QString &accountJid, const QString &chatJid);
+
+	/**
+	 * Fetches downloaded shared media from the database.
+	 * If chatJid is empty, all media related to accountJid are fetched.
+	 *
+	 * @param accountJid bare JID of the user's account
+	 * @param chatJid bare Jid of the chat
+	 *
+	 * @return the fetched messages
+	 */
+	QFuture<QVector<File>> fetchDownloadedFiles(const QString &accountJid, const QString &chatJid);
 
 	/**
 	 * Fetches entries until the first message of chatJid from the database and emits
@@ -148,6 +148,16 @@ public:
 	Q_SIGNAL void pendingMessagesFetched(const QVector<Message> &messages);
 
 	/**
+	 * Fetches message reactions marked as pending.
+	 *
+	 * @param accountJid JID of the account whose message reactions are fetched
+	 *
+	 * @return the IDs of the messages mapped to their reactions (JIDs of senders mapped to the
+	 *         senders)
+	 */
+	QFuture<QMap<QString, QMap<QString, MessageReactionSender>>> fetchPendingReactions(const QString &accountJid);
+
+	/**
 	 * Fetches the last message and returns it.
 	 */
 	Message _fetchLastMessage(const QString &user1, const QString &user2);
@@ -199,6 +209,16 @@ public:
 	QFuture<void> removeMessages(const QString &accountJid, const QString &chatJid = {});
 
 	/**
+	 * Removes a chat message locally.
+	 *
+	 * @param senderJid bare JID of the message's sender
+	 * @param recipientJid bare JID of the message's recipient
+	 * @param messageId ID of the message
+	 */
+	QFuture<void> removeMessage(const QString &senderJid, const QString &recipientJid, const QString &messageId);
+	Q_SIGNAL void messageRemoved(std::shared_ptr<Message> message);
+
+	/**
 	 * Loads a message, runs the update lambda and writes it to the DB again.
 	 *
 	 * @param updateMsg Function that changes the message
@@ -247,6 +267,7 @@ private:
 	QVector<EncryptedSource> _fetchEncryptedSource(qint64 fileId);
 
 	void _fetchReactions(QVector<Message> &messages);
+	QFuture<QVector<File>> _fetchFiles(const QString &accountJid, const QString &chatJid, bool checkExists);
 
 	/**
 	 * Checks whether a message already exists in the database

@@ -1,32 +1,16 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2016 geobra <s.g.b@gmx.de>
+// SPDX-FileCopyrightText: 2016 Marzanna <MRZA-MRZA@users.noreply.github.com>
+// SPDX-FileCopyrightText: 2017 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2018 Jonah Brüchert <jbb@kaidan.im>
+// SPDX-FileCopyrightText: 2019 Filipe Azevedo <pasnox@gmail.com>
+// SPDX-FileCopyrightText: 2019 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2019 Robert Maerkisch <zatroxde@protonmail.ch>
+// SPDX-FileCopyrightText: 2020 caca hueto <cacahueto@olomono.de>
+// SPDX-FileCopyrightText: 2020 Mathis Brüchert <mbblp@protonmail.ch>
+// SPDX-FileCopyrightText: 2022 Bhavy Airi <airiragahv@gmail.com>
+// SPDX-FileCopyrightText: 2023 Tibor Csötönyi <work@taibsu.de>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
 
@@ -316,11 +300,6 @@ signals:
 	void avatarChangeSucceeded();
 
 	/**
-	 * Emitted, when a contact was muted/unmuted.
-	 */
-	void notificationsMutedChanged(const QString& jid);
-
-	/**
 	 * Deletes the account data from the client and server.
 	 */
 	void deleteAccountFromClientAndServer();
@@ -349,19 +328,6 @@ public:
 		// currently we only send XMPP URIs
 		addOpenUri(msg);
 	}
-
-	/**
-	 * Returns whether notifications are enabled for the given contact.
-	 */
-	Q_INVOKABLE bool notificationsMuted(const QString& jid);
-
-	/**
-	 * Sets the notifications to muted/unmuted.
-	 *
-	 * @param muted true if notifications should be muted
-	 * @param jid JID of the entity for that notifications should be muted or unmuted
-	 */
-	Q_INVOKABLE void setNotificationsMuted(const QString &jid, bool muted);
 
 private:
 	Notifications *m_notifications;

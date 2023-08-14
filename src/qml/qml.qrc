@@ -15,8 +15,66 @@
         <file>details/DetailsHeader.qml</file>
         <file>details/DetailsPage.qml</file>
         <file>details/DetailsSheet.qml</file>
+        <file>details/MediaOverview.qml</file>
+        <file>elements/Avatar.qml</file>
         <file>elements/BinaryDecisionPage.qml</file>
+        <file>elements/CenteredAdaptiveButton.qml</file>
+        <file>elements/CenteredAdaptiveHighlightedButton.qml</file>
+        <file>elements/CenteredAdaptiveText.qml</file>
+        <file>elements/ChatHintArea.qml</file>
+        <file>elements/ChatMessage.qml</file>
+        <file>elements/ChatMessageContextMenu.qml</file>
+        <file>elements/ChatPageSearchView.qml</file>
+        <file>elements/ChatPageSendingPane.qml</file>
+        <file>elements/ChatSupportSheet.qml</file>
+        <file>elements/ClickableIcon.qml</file>
+        <file>elements/ConfirmationArea.qml</file>
+        <file>elements/ConfirmationPage.qml</file>
+        <file>elements/ContactAdditionContent.qml</file>
+        <file>elements/ContactAdditionDialog.qml</file>
+        <file>elements/ContactAdditionPage.qml</file>
+        <file>elements/DataForm.qml</file>
+        <file>elements/EmojiPicker.qml</file>
+        <file>elements/ExplainedContentPage.qml</file>
+        <file>elements/ExplanationTogglePage.qml</file>
+        <file>elements/FormExpansionButton.qml</file>
+        <file>elements/IconTopButton.qml</file>
+        <file>elements/LoadingArea.qml</file>
+        <file>elements/LoadingStackArea.qml</file>
+        <file>elements/MediaPreview.qml</file>
+        <file>elements/MediaPreviewAudio.qml</file>
+        <file>elements/MediaPreviewImage.qml</file>
+        <file>elements/MediaPreviewLoader.qml</file>
+        <file>elements/MediaPreviewLocation.qml</file>
+        <file>elements/MediaPreviewOther.qml</file>
+        <file>elements/MediaPreviewVideo.qml</file>
+        <file>elements/MessageBackground.qml</file>
+        <file>elements/MessageCounter.qml</file>
+        <file>elements/MessageReactionAdditionButton.qml</file>
+        <file>elements/MessageReactionButton.qml</file>
+        <file>elements/MessageReactionDetailsButton.qml</file>
+        <file>elements/MessageReactionDetailsSheet.qml</file>
+        <file>elements/MessageReactionDisplayButton.qml</file>
+        <file>elements/MessageReactionEmojiPicker.qml</file>
+        <file>elements/NewMedia.qml</file>
+        <file>elements/NewMediaLoader.qml</file>
+        <file>elements/NewMediaLocation.qml</file>
+        <file>elements/NewMediaSheet.qml</file>
+        <file>elements/QrCode.qml</file>
         <file>elements/QrCodeScanner.qml</file>
+        <file>elements/RosterFilteringArea.qml</file>
+        <file>elements/RosterListItem.qml</file>
+        <file>elements/RosterListItemContextMenu.qml</file>
+        <file>elements/SearchBarPage.qml</file>
+        <file>elements/SearchBarPageSearchField.qml</file>
+        <file>elements/SearchPublicGroupChatSheet.qml</file>
+        <file>elements/SelectionMarker.qml</file>
+        <file>elements/SendMediaSheet.qml</file>
+        <file>elements/SubRequestAcceptSheet.qml</file>
+        <file>elements/TextFieldCompleter.qml</file>
+        <file>elements/UrlFormButtonDelegate.qml</file>
+        <file>elements/UserDeviceList.qml</file>
+        <file>elements/UserListItem.qml</file>
         <file>elements/fields/CredentialsField.qml</file>
         <file>elements/fields/Field.qml</file>
         <file>elements/fields/JidField.qml</file>
@@ -49,31 +107,6 @@
         <file>settings/SettingsPage.qml</file>
         <file>settings/SettingsPageBase.qml</file>
         <file>settings/SettingsSheet.qml</file>
-        <file>QrCodeOnboardingPage.qml</file>
-        <file>QrCodePage.qml</file>
-        <file>elements/SubRequestAcceptSheet.qml</file>
-        <file>elements/RosterListItem.qml</file>
-        <file>elements/RosterListItemContextMenu.qml</file>
-        <file>elements/UserListItem.qml</file>
-        <file>RosterPage.qml</file>
-        <file>ChatPage.qml</file>
-        <file>ChatPageBase.qml</file>
-        <file>EmptyChatPage.qml</file>
-        <file>elements/ChatMessage.qml</file>
-        <file>elements/Avatar.qml</file>
-        <file>elements/MessageBackground.qml</file>
-        <file>elements/MessageCounter.qml</file>
-        <file>elements/ChatMessageContextMenu.qml</file>
-        <file>elements/ChatPageSendingPane.qml</file>
-        <file>elements/ClickableIcon.qml</file>
-        <file>elements/MessageReactionEmojiPicker.qml</file>
-        <file>elements/MessageReaction.qml</file>
-        <file>elements/MessageReactionAddition.qml</file>
-        <file>elements/MessageReactionDisplay.qml</file>
-    </qresource>
-    <qresource prefix="/">
-        <file>details/MediaOverview.qml</file>
         <file>elements/SelectablePreview.qml</file>
-        <file>elements/SelectionMarker.qml</file>
     </qresource>
 </RCC>

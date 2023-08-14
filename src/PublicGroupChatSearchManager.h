@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
+// SPDX-FileCopyrightText: 2022 Filipe Azevedo <pasnox@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -16,6 +16,12 @@ class QNetworkRequest;
 class QNetworkReply;
 class QTimer;
 
+#if defined(SFOS)
+#include <chrono>
+#endif
+
+using namespace std::chrono_literals;
+
 class PublicGroupChatSearchManager : public QObject
 {
 	Q_OBJECT
@@ -24,6 +30,11 @@ class PublicGroupChatSearchManager : public QObject
 	Q_PROPERTY(PublicGroupChats cachedGroupChats READ cachedGroupChats NOTIFY groupChatsReceived)
 
 public:
+#if defined(SFOS)
+    static constexpr auto RequestTimeout = 60000;
+#else
+    static constexpr auto RequestTimeout = 60s;
+#endif
 	explicit PublicGroupChatSearchManager(QNetworkAccessManager *manager, QObject *parent = nullptr);
 	explicit PublicGroupChatSearchManager(QObject *parent = nullptr);
 	~PublicGroupChatSearchManager() override;

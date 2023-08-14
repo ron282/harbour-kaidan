@@ -285,7 +285,7 @@ ChatPageBase {
 			spoilerHint: model.spoilerHint
 			errorText: model.errorText
 			files: model.files
-			reactions: model.reactions
+//			reactions: model.reactions
 
 			onMessageEditRequested: {
 				messageToCorrect = id

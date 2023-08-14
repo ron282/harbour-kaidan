@@ -36,9 +36,9 @@ bool RosterItem::operator!=(const RosterItem &o) const
 #endif
 
 RosterItem::RosterItem(const QString &accountJid, const QXmppRosterIq::Item &item, const QDateTime &lastMessageDateTime)
-    : accountJid(accountJid), jid(item.bareJid()), name(item.name()), subscription(item.subscriptionType()), lastMessageDateTime(lastMessageDateTime)
+	: accountJid(accountJid), jid(item.bareJid()), name(item.name()), subscription(item.subscriptionType()), lastMessageDateTime(lastMessageDateTime)
 {
-    const auto rosterGroups = item.groups();
+	const auto rosterGroups = item.groups();
 #if defined(SFOS)
     auto it = rosterGroups.cbegin();
     while (it != rosterGroups.cend()) {
@@ -67,44 +67,44 @@ bool RosterItem::isReceivingPresence() const
 
 bool RosterItem::operator<(const RosterItem &other) const
 {
-    if (pinningPosition == -1 && other.pinningPosition == -1) {
-        if (lastMessageDateTime != other.lastMessageDateTime) {
-            return lastMessageDateTime > other.lastMessageDateTime;
-        }
-        return displayName().toUpper() < other.displayName().toUpper();
-    }
-    return pinningPosition > other.pinningPosition;
+	if (pinningPosition == -1 && other.pinningPosition == -1) {
+		if (lastMessageDateTime != other.lastMessageDateTime) {
+			return lastMessageDateTime > other.lastMessageDateTime;
+		}
+		return displayName().toUpper() < other.displayName().toUpper();
+	}
+	return pinningPosition > other.pinningPosition;
 }
 
 bool RosterItem::operator>(const RosterItem &other) const
 {
-    if (pinningPosition == -1 && other.pinningPosition == -1) {
-        if (lastMessageDateTime != other.lastMessageDateTime) {
-            return lastMessageDateTime < other.lastMessageDateTime;
-        }
-        return displayName().toUpper() > other.displayName().toUpper();
-    }
-    return pinningPosition < other.pinningPosition;
+	if (pinningPosition == -1 && other.pinningPosition == -1) {
+		if (lastMessageDateTime != other.lastMessageDateTime) {
+			return lastMessageDateTime < other.lastMessageDateTime;
+		}
+		return displayName().toUpper() > other.displayName().toUpper();
+	}
+	return pinningPosition < other.pinningPosition;
 }
 
 bool RosterItem::operator<=(const RosterItem &other) const
 {
-    if (pinningPosition == -1 && other.pinningPosition == -1) {
-        if (lastMessageDateTime != other.lastMessageDateTime) {
-            return lastMessageDateTime >= other.lastMessageDateTime;
-        }
-        return displayName().toUpper() <= other.displayName().toUpper();
-    }
-    return pinningPosition >= other.pinningPosition;
+	if (pinningPosition == -1 && other.pinningPosition == -1) {
+		if (lastMessageDateTime != other.lastMessageDateTime) {
+			return lastMessageDateTime >= other.lastMessageDateTime;
+		}
+		return displayName().toUpper() <= other.displayName().toUpper();
+	}
+	return pinningPosition >= other.pinningPosition;
 }
 
 bool RosterItem::operator>=(const RosterItem &other) const
 {
-    if (pinningPosition == -1 && other.pinningPosition == -1) {
-        if (lastMessageDateTime != other.lastMessageDateTime) {
-            return lastMessageDateTime <= other.lastMessageDateTime;
-        }
-        return displayName().toUpper() >= other.displayName().toUpper();
-    }
-    return pinningPosition <= other.pinningPosition;
+	if (pinningPosition == -1 && other.pinningPosition == -1) {
+		if (lastMessageDateTime != other.lastMessageDateTime) {
+			return lastMessageDateTime <= other.lastMessageDateTime;
+		}
+		return displayName().toUpper() >= other.displayName().toUpper();
+	}
+	return pinningPosition <= other.pinningPosition;
 }

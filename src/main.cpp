@@ -1,32 +1,15 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2016 geobra <s.g.b@gmx.de>
+// SPDX-FileCopyrightText: 2017 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2017 Ilya Bizyaev <bizyaev@zoho.com>
+// SPDX-FileCopyrightText: 2017 Jonah Brüchert <jbb@kaidan.im>
+// SPDX-FileCopyrightText: 2019 Filipe Azevedo <pasnox@gmail.com>
+// SPDX-FileCopyrightText: 2019 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2019 Robert Maerkisch <zatroxde@protonmail.ch>
+// SPDX-FileCopyrightText: 2020 Yury Gubich <blue@macaw.me>
+// SPDX-FileCopyrightText: 2022 Mathis Brüchert <mbb@kaidan.im>
+// SPDX-FileCopyrightText: 2023 Tibor Csötönyi <work@taibsu.de>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 #if defined(SFOS)
 #include "../3rdparty/QEmuStringView/qemustringview.h"
 #include "../3rdparty/QImagePainter/qimagepainter.h"
@@ -71,6 +54,7 @@
 #include "AvatarFileStorage.h"
 #include "BitsOfBinaryImageProvider.h"
 #include "CameraModel.h"
+#include "ChatHintModel.h"
 #include "CredentialsGenerator.h"
 #include "CredentialsValidator.h"
 #include "DataFormModel.h"
@@ -78,7 +62,9 @@
 #include "EmojiModel.h"
 #include "Encryption.h"
 #include "Enums.h"
+#include "FileModel.h"
 #include "FileProgressCache.h"
+#include "FileProxyModel.h"
 #include "FileSharingController.h"
 #include "GuiStyle.h"
 #include "HostCompletionModel.h"
@@ -112,7 +98,6 @@
 #include "VCardManager.h"
 #include "VersionManager.h"
 #include "RecentPicturesModel.h"
-#include "NotificationsMutedWatcher.h"
 
 Q_DECLARE_METATYPE(Qt::ApplicationState)
 
@@ -130,6 +115,8 @@ Q_DECLARE_METATYPE(QXmppVersionIq)
 Q_DECLARE_METATYPE(std::function<void()>)
 Q_DECLARE_METATYPE(std::function<void(RosterItem&)>)
 Q_DECLARE_METATYPE(std::function<void(Message&)>)
+
+Q_DECLARE_METATYPE(std::shared_ptr<Message>)
 
 #ifdef STATIC_BUILD
 #include "static_plugins.h"
@@ -306,6 +293,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qRegisterMetaType<QXmppVersionIq>();
 	qRegisterMetaType<QXmppUri>();
 	qRegisterMetaType<QMap<QString, QUrl>>();
+	qRegisterMetaType<std::shared_ptr<Message>>();
 
 	// Enums for c++ member calls using enums
 	qRegisterMetaType<Qt::ApplicationState>();
@@ -331,6 +319,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qRegisterMetaType<ProviderListModel::Role>();
 	qRegisterMetaType<ChatState::State>();
 	qRegisterMetaType<Encryption>();
+	qRegisterMetaType<MessageReactionDeliveryState>();
+	qRegisterMetaType<FileModel::Role>();
+	qRegisterMetaType<FileProxyModel::Mode>();
 
 	// QXmpp
 	qRegisterMetaType<QXmppResultSetReply>();
@@ -445,40 +436,43 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qmlRegisterType<StatusBar>("StatusBar", 0, 1, "StatusBar");
 	qmlRegisterType<EmojiModel>("EmojiModel", 0, 1, "EmojiModel");
 	qmlRegisterType<EmojiProxyModel>("EmojiModel", 0, 1, "EmojiProxyModel");
-    qmlRegisterType<QrCodeScannerFilter>("im.kaidan.kaidan", 1, 0, "QrCodeScannerFilter");
-    qmlRegisterType<VCardModel>("im.kaidan.kaidan", 1, 0, "VCardModel");
-    qmlRegisterType<RosterFilterProxyModel>("im.kaidan.kaidan", 1, 0, "RosterFilterProxyModel");
-    qmlRegisterType<MessageComposition>("im.kaidan.kaidan", 1, 0, "MessageComposition");
-    qmlRegisterType<FileSelectionModel>("im.kaidan.kaidan", 1, 0, "FileSelectionModel");
-    qmlRegisterType<CameraModel>("im.kaidan.kaidan", 1, 0, "CameraModel");
-    qmlRegisterType<AudioDeviceModel>("im.kaidan.kaidan", 1, 0, "AudioDeviceModel");
-    qmlRegisterType<MediaSettingsContainerModel>("im.kaidan.kaidan", 1, 0, "MediaSettingsContainerModel");
-    qmlRegisterType<MediaSettingsResolutionModel>("im.kaidan.kaidan", 1, 0, "MediaSettingsResolutionModel");
-    qmlRegisterType<MediaSettingsQualityModel>("im.kaidan.kaidan", 1, 0, "MediaSettingsQualityModel");
-    qmlRegisterType<MediaSettingsImageCodecModel>("im.kaidan.kaidan", 1, 0, "MediaSettingsImageCodecModel");
-    qmlRegisterType<MediaSettingsAudioCodecModel>("im.kaidan.kaidan", 1, 0, "MediaSettingsAudioCodecModel");
-    qmlRegisterType<MediaSettingsAudioSampleRateModel>("im.kaidan.kaidan", 1, 0, "MediaSettingsAudioSampleRateModel");
-    qmlRegisterType<MediaSettingsVideoCodecModel>("im.kaidan.kaidan", 1, 0, "MediaSettingsVideoCodecModel");
-    qmlRegisterType<MediaSettingsVideoFrameRateModel>("im.kaidan.kaidan", 1, 0, "MediaSettingsVideoFrameRateModel");
-    qmlRegisterType<MediaRecorder>("im.kaidan.kaidan", 1, 0, "MediaRecorder");
-    qmlRegisterType<UserDevicesModel>("im.kaidan.kaidan", 1, 0, "UserDevicesModel");
-    qmlRegisterType<CredentialsGenerator>("im.kaidan.kaidan", 1, 0, "CredentialsGenerator");
-    qmlRegisterType<CredentialsValidator>("im.kaidan.kaidan", 1, 0, "CredentialsValidator");
-    qmlRegisterType<QrCodeGenerator>("im.kaidan.kaidan", 1, 0, "QrCodeGenerator");
-    qmlRegisterType<RegistrationDataFormFilterModel>("im.kaidan.kaidan", 1, 0, "RegistrationDataFormFilterModel");
-    qmlRegisterType<ProviderListModel>("im.kaidan.kaidan", 1, 0, "ProviderListModel");
-    qmlRegisterType<FileProgressWatcher>("im.kaidan.kaidan", 1, 0, "FileProgressWatcher");
-    qmlRegisterType<UserPresenceWatcher>("im.kaidan.kaidan", 1, 0, "UserPresenceWatcher");
-    qmlRegisterType<UserResourcesWatcher>("im.kaidan.kaidan", 1, 0, "UserResourcesWatcher");
-    qmlRegisterType<RosterItemWatcher>("im.kaidan.kaidan", 1, 0, "RosterItemWatcher");
-    qmlRegisterType<RecentPicturesModel>("im.kaidan.kaidan", 1, 0, "RecentPicturesModel");
-    qmlRegisterType<NotificationsMutedWatcher>("im.kaidan.kaidan", 1, 0, "NotificationsMutedWatcher");
+
+	qmlRegisterType<QrCodeScannerFilter>(APPLICATION_ID, 1, 0, "QrCodeScannerFilter");
+	qmlRegisterType<VCardModel>(APPLICATION_ID, 1, 0, "VCardModel");
+	qmlRegisterType<RosterFilterProxyModel>(APPLICATION_ID, 1, 0, "RosterFilterProxyModel");
+	qmlRegisterType<MessageComposition>(APPLICATION_ID, 1, 0, "MessageComposition");
+	qmlRegisterType<FileSelectionModel>(APPLICATION_ID, 1, 0, "FileSelectionModel");
+	qmlRegisterType<CameraModel>(APPLICATION_ID, 1, 0, "CameraModel");
+	qmlRegisterType<AudioDeviceModel>(APPLICATION_ID, 1, 0, "AudioDeviceModel");
+	qmlRegisterType<MediaSettingsContainerModel>(APPLICATION_ID, 1, 0, "MediaSettingsContainerModel");
+	qmlRegisterType<MediaSettingsResolutionModel>(APPLICATION_ID, 1, 0, "MediaSettingsResolutionModel");
+	qmlRegisterType<MediaSettingsQualityModel>(APPLICATION_ID, 1, 0, "MediaSettingsQualityModel");
+	qmlRegisterType<MediaSettingsImageCodecModel>(APPLICATION_ID, 1, 0, "MediaSettingsImageCodecModel");
+	qmlRegisterType<MediaSettingsAudioCodecModel>(APPLICATION_ID, 1, 0, "MediaSettingsAudioCodecModel");
+	qmlRegisterType<MediaSettingsAudioSampleRateModel>(APPLICATION_ID, 1, 0, "MediaSettingsAudioSampleRateModel");
+	qmlRegisterType<MediaSettingsVideoCodecModel>(APPLICATION_ID, 1, 0, "MediaSettingsVideoCodecModel");
+	qmlRegisterType<MediaSettingsVideoFrameRateModel>(APPLICATION_ID, 1, 0, "MediaSettingsVideoFrameRateModel");
+	qmlRegisterType<MediaRecorder>(APPLICATION_ID, 1, 0, "MediaRecorder");
+	qmlRegisterType<UserDevicesModel>(APPLICATION_ID, 1, 0, "UserDevicesModel");
+	qmlRegisterType<CredentialsGenerator>(APPLICATION_ID, 1, 0, "CredentialsGenerator");
+	qmlRegisterType<CredentialsValidator>(APPLICATION_ID, 1, 0, "CredentialsValidator");
+	qmlRegisterType<QrCodeGenerator>(APPLICATION_ID, 1, 0, "QrCodeGenerator");
+	qmlRegisterType<RegistrationDataFormFilterModel>(APPLICATION_ID, 1, 0, "RegistrationDataFormFilterModel");
+	qmlRegisterType<ProviderListModel>(APPLICATION_ID, 1, 0, "ProviderListModel");
+	qmlRegisterType<FileProgressWatcher>(APPLICATION_ID, 1, 0, "FileProgressWatcher");
+	qmlRegisterType<UserPresenceWatcher>(APPLICATION_ID, 1, 0, "UserPresenceWatcher");
+	qmlRegisterType<UserResourcesWatcher>(APPLICATION_ID, 1, 0, "UserResourcesWatcher");
+	qmlRegisterType<RosterItemWatcher>(APPLICATION_ID, 1, 0, "RosterItemWatcher");
+	qmlRegisterType<RecentPicturesModel>(APPLICATION_ID, 1, 0, "RecentPicturesModel");
 	qmlRegisterType<PublicGroupChatSearchManager>("PublicGroupChats", 1, 0, "SearchManager");
 	qmlRegisterType<PublicGroupChatModel>("PublicGroupChats", 1, 0, "Model");
 	qmlRegisterType<PublicGroupChatProxyModel>("PublicGroupChats", 1, 0, "ProxyModel");
-    qmlRegisterType<OmemoWatcher>("im.kaidan.kaidan", 1, 0, "OmemoWatcher");
-    qmlRegisterType<HostCompletionModel>("im.kaidan.kaidan", 1, 0, "HostCompletionModel");
-    qmlRegisterType<HostCompletionProxyModel>("im.kaidan.kaidan", 1, 0, "HostCompletionProxyModel");
+	qmlRegisterType<OmemoWatcher>(APPLICATION_ID, 1, 0, "OmemoWatcher");
+	qmlRegisterType<HostCompletionModel>(APPLICATION_ID, 1, 0, "HostCompletionModel");
+	qmlRegisterType<HostCompletionProxyModel>(APPLICATION_ID, 1, 0, "HostCompletionProxyModel");
+	qmlRegisterType<ChatHintModel>(APPLICATION_ID, 1, 0, "ChatHintModel");
+	qmlRegisterType<FileModel>(APPLICATION_ID, 1, 0, "FileModel");
+	qmlRegisterType<FileProxyModel>(APPLICATION_ID, 1, 0, "FileProxyModel");
 
 	qmlRegisterUncreatableType<QAbstractItemModel>("EmojiModel", 0, 1, "QAbstractItemModel", "Used by proxy models");
 	qmlRegisterUncreatableType<Emoji>("EmojiModel", 0, 1, "Emoji", "Used by emoji models");
@@ -502,14 +496,15 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterUncreatableType<Encryption>("im.kaidan.kaidan", 1, 0, "Encryption", "Cannot create object; only enums defined!");
     qmlRegisterUncreatableType<File>("im.kaidan.kaidan", 1, 0, "File", "Not creatable from QML");
 	qmlRegisterUncreatableType<PublicGroupChat>("PublicGroupChats", 1, 0, "PublicGroupChat", "Used by PublicGroupChatModel");
-#if !defined(SFOS)
-    qmlRegisterUncreatableType<HostCompletionModel>("im.kaidan.kaidan", 1, 0, "HostCompletionModel", "Cannot create object; only enums defined!");
-#endif
+	qmlRegisterUncreatableType<HostCompletionModel>(APPLICATION_ID, 1, 0, "HostCompletionModel", "Cannot create object; only enums defined!");
+	qmlRegisterUncreatableType<MessageReactionDeliveryState>(APPLICATION_ID, 1, 0, "MessageReactionDeliveryState", "Cannot create object; only enums defined!");
+
 #if defined(SFOS)
-    qmlRegisterUncreatableType<ChatState>("im.kaidan.kaidan", 1, 0, "ChatState", "Can't create object; only enums defined!");
-    qmlRegisterUncreatableType<Enums>("im.kaidan.kaidan", 1, 0, "Enums", "Can't create object; only enums defined!");
+    qmlRegisterUncreatableType<ChatState>(APPLICATION_ID, 1, 0, "ChatState", "Can't create object; only enums defined!");
+    qmlRegisterUncreatableType<Enums>(APPLICATION_ID, 1, 0, "Enums", "Can't create object; only enums defined!");
 #else
-    qmlRegisterUncreatableMetaObject(ChatState::staticMetaObject, "im.kaidan.kaidan", 1, 0, "ChatState", "Can't create object; only enums defined!");
+    qmlRegisterUncreatableMetaObject(ChatState::staticMetaObject, APPLICATION_ID, 1, 0, "ChatState", "Can't create object; only enums defined!");
+    qmlRegisterUncreatableMetaObject(Enums::staticMetaObject, APPLICATION_ID, 1, 0, "Enums", "Can't create object; only enums defined!");
 #endif
 
 	qmlRegisterSingletonType<MediaUtils>("MediaUtils", 0, 1, "MediaUtilsInstance", [](QQmlEngine *, QJSEngine *) {

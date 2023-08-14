@@ -1,32 +1,10 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2019 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2019 Filipe Azevedo <pasnox@gmail.com>
+// SPDX-FileCopyrightText: 2022 Jonah Brüchert <jbb@kaidan.im>
+// SPDX-FileCopyrightText: 2022 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2023 Tibor Csötönyi <work@taibsu.de>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "Algorithms.h"
 #include "MediaUtils.h"
@@ -39,12 +17,14 @@
 #include <QXmppOutOfBandUrl.h>
 #include <QXmppThumbnail.h>
 
+#include <QFileInfo>
 #include <QStringBuilder>
 
 #include <QXmppHttpFileSource.h>
 #include <QXmppEncryptedFileSource.h>
 
 #if defined (SFOS)
+#include "QmlUtils.h"
 
 bool FileHash::operator==(const FileHash &o) const
 {
@@ -93,12 +73,19 @@ bool File::operator==(const File &o) const
 
 bool MessageReaction::operator==(const MessageReaction &o) const
 {
-	return latestTimestamp == o.latestTimestamp &&
-			emojis == o.emojis;
+    return deliveryState == o.deliveryState &&
+            emoji == o.emoji;
+}
+
+bool MessageReactionSender::operator==(const MessageReactionSender &other) const
+{
+    return 	latestTimestamp == other.latestTimestamp &&
+            reactions == other.reactions;
 }
 
 bool Message::operator==(const Message &m) const
 {
+#warning FIXME
 	return 
 		id == m.id &&
 		to == m.to &&
@@ -115,11 +102,9 @@ bool Message::operator==(const Message &m) const
 		fileGroupId == m.fileGroupId &&
 		files == m.files &&
 		receiptRequested == m.receiptRequested &&
-		reactions == m.reactions && 
-		encryption == m.encryption &&
+        encryption == m.encryption &&
 		senderKey == m.senderKey && 
 		isOwn == m.isOwn &&
-		isEdited == m.isEdited &&
 		deliveryState == m.deliveryState &&
 		errorText == m.errorText;
 }
@@ -225,6 +210,55 @@ MessageType File::type() const
 #endif
 {
 	return MediaUtils::messageType(mimeType);
+}
+
+QUrl File::localFileUrl() const
+{
+    return localFilePath.isEmpty() ? QUrl() : QUrl::fromLocalFile(localFilePath);
+}
+
+QString File::details() const
+{
+	const auto formattedSize = [this]() {
+		if (size) {
+#if defined(SFOS)
+            return QmlUtils::formattedDataSize(*size);
+#else
+            return QLocale::system().formattedDataSize(*size);
+#endif
+        }
+
+		if (const QFileInfo fileInfo(localFilePath); fileInfo.exists()) {
+#if defined(SFOS)
+            return QmlUtils::formattedDataSize(*size);
+#else
+            return QLocale::system().formattedDataSize(fileInfo.size());
+#endif
+        }
+
+		return QString();
+	}();
+	const auto formattedDateTime = [this]() {
+		if (lastModified.isValid()) {
+			return QLocale::system().toString(lastModified, QObject::tr("dd MMM at hh:mm"));
+		}
+
+		return QString();
+	}();
+
+	if (formattedSize.isEmpty() && formattedDateTime.isEmpty()) {
+		return QObject::tr("No information");
+	}
+
+	if (formattedSize.isEmpty()) {
+		return formattedDateTime;
+	}
+
+	if (formattedDateTime.isEmpty()) {
+		return formattedSize;
+	}
+
+	return QStringLiteral("%1, %2").arg(formattedSize, formattedDateTime);
 }
 
 QXmppMessage Message::toQXmpp() const

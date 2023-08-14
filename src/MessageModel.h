@@ -1,32 +1,12 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2017 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2019 Jonah Brüchert <jbb@kaidan.im>
+// SPDX-FileCopyrightText: 2019 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2019 Yury Gubich <blue@macaw.me>
+// SPDX-FileCopyrightText: 2022 Bhavy Airi <airiragahv@gmail.com>
+// SPDX-FileCopyrightText: 2022 Tibor Csötönyi <dev@taibsu.de>
+// SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
 
@@ -37,6 +17,7 @@
 // Kaidan
 #include "Message.h"
 #include "OmemoWatcher.h"
+#include "PresenceCache.h"
 #include "RosterItemWatcher.h"
 
 class QTimer;
@@ -59,6 +40,40 @@ public:
 };
 
 Q_DECLARE_METATYPE(ChatState::State)
+
+struct DisplayedMessageReaction
+{
+	Q_GADGET
+	Q_PROPERTY(QString emoji MEMBER emoji)
+	Q_PROPERTY(int count MEMBER count)
+	Q_PROPERTY(bool ownReactionIncluded MEMBER ownReactionIncluded)
+	Q_PROPERTY(MessageReactionDeliveryState::Enum deliveryState MEMBER deliveryState)
+
+public:
+	QString emoji;
+	int count;
+	bool ownReactionIncluded;
+	MessageReactionDeliveryState::Enum deliveryState;
+
+	bool operator<(const DisplayedMessageReaction &other) const;
+};
+
+Q_DECLARE_METATYPE(DisplayedMessageReaction)
+
+struct DetailedMessageReaction
+{
+	Q_GADGET
+	Q_PROPERTY(QString senderJid MEMBER senderJid)
+	Q_PROPERTY(QStringList emojis MEMBER emojis)
+
+public:
+	QString senderJid;
+	QStringList emojis;
+
+	bool operator<(const DetailedMessageReaction &other) const;
+};
+
+Q_DECLARE_METATYPE(DetailedMessageReaction)
 
 class MessageModel : public QAbstractListModel
 {
@@ -93,7 +108,9 @@ public:
 		DeliveryStateIcon,
 		DeliveryStateName,
 		Files,
-		Reactions
+		DisplayedReactions,
+		DetailedReactions,
+		OwnDetailedReactions,
 	};
 	Q_ENUM(MessageRoles)
 
@@ -144,8 +161,37 @@ public:
 	void updateLastReadOwnMessageId();
 	Q_INVOKABLE void markMessageAsFirstUnread(int index);
 
+	/**
+	 * Adds a message reaction.
+	 *
+	 * It should only be called if the reaction to be added is not yet stored.
+	 *
+	 * @param messageId ID of the message to react to
+	 * @param emoji emoji in reaction to the message
+	 */
 	Q_INVOKABLE void addMessageReaction(const QString &messageId, const QString &emoji);
+
+	/**
+	 * Removes a message reaction.
+	 *
+	 * It must only be called if the reaction to be removed is already stored.
+	 *
+	 * @param messageId ID of the message to react to
+	 * @param emoji emoji in reaction to the message
+	 */
 	Q_INVOKABLE void removeMessageReaction(const QString &messageId, const QString &emoji);
+
+	/**
+	 * Sends message reactions again in case their delivery failed.
+	 *
+	 * It should only be called if there is at least one message reaction with the deliveryState
+	 * "ErrorOnAddition", "ErrorOnRemovalAfterSent" or "ErrorOnRemovalAfterDelivered".
+	 *
+	 * @param messageId ID of the message to react to
+	 */
+	Q_INVOKABLE void resendMessageReactions(const QString &messageId);
+
+	void sendPendingMessageReactions(const QString &accountJid);
 
 	Q_INVOKABLE bool canCorrectMessage(int index) const;
 
@@ -153,6 +199,13 @@ public:
 	 * Correct the last message
 	 */
 	Q_INVOKABLE void correctMessage(const QString &msgId, const QString &message);
+
+	/**
+	 * Removes a message locally.
+	 * 
+	 * @param messageId ID of the message
+	 */
+	Q_INVOKABLE void removeMessage(const QString &messageId);
 
 	/**
 	 * Searches from the most recent to the oldest message to find a given substring (case insensitive).
@@ -251,6 +304,7 @@ private:
 
 	void handleMessage(Message msg, MessageOrigin origin);
 	void handleChatState(const QString &bareJid, QXmppMessage::State state);
+	void handleMessageRemoved(const QString &senderJid, const QString &recipientJid, const QString &messageId);
 
 	void resetCurrentChat(const QString &accountJid, const QString &chatJid);
 
@@ -279,10 +333,13 @@ private:
 	 */
 	void showMessageNotification(const Message &message, MessageOrigin origin) const;
 
+	void updateMessageReactionsAfterSending(const QString &messageId, const QString &senderJid);
+
 	QVector<Message> m_messages;
 	QString m_currentAccountJid;
 	QString m_currentChatJid;
 	RosterItemWatcher m_rosterItemWatcher;
+	UserResourcesWatcher m_contactResourcesWatcher;
 	OmemoWatcher m_accountOmemoWatcher;
 	OmemoWatcher m_contactOmemoWatcher;
 	QString m_lastReadOwnMessageId;

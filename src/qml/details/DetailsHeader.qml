@@ -76,7 +76,10 @@ PageHeader {
 						displayNameTextField.selectAll()
 					} else {
 						displayNameTextField.visible = false
-						displayNameArea.changeDisplayName(displayNameTextField.text)
+
+						if (displayNameTextField.text !== root.displayName) {
+							root.changeDisplayName(displayNameTextField.text)
+						}
 					}
 				}
 			}
@@ -91,7 +94,7 @@ PageHeader {
                 width: parent.width - displayNameEditingIcon.width
                 leftPadding: Theme.paddingLarge
 				// TODO: Get update of current vCard by using Entity Capabilities
-				onTextChanged: displayNameChangedFunction()
+				onTextChanged: handleDisplayNameChanged()
 
 				MouseArea {
 					anchors.fill: displayNameText

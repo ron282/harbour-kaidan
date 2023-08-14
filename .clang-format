@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2019 Filipe Azevedo <pasnox@gmail.com>
+#
+# SPDX-License-Identifier: CC0-1.0
+
 AccessModifierOffset: -8
 AlignAfterOpenBracket: DontAlign
 AlignConsecutiveAssignments: false
@@ -48,7 +52,7 @@ CompactNamespaces: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ConstructorInitializerIndentWidth: 8
 ContinuationIndentWidth: 8
-Cpp11BracedListStyle: true
+Cpp11BracedListStyle: false
 DerivePointerAlignment: false
 FixNamespaceComments: true
 IncludeBlocks: Preserve

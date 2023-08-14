@@ -41,6 +41,7 @@ CONFIG += QXmppl-devel ZXing
 DEFINES += BOOST_SIGNALS_NO_DEPRECATION_WARNING
 
 
+DEFINES += APPLICATION_ID=\\\"im.kaidan.kaidan\\\"
 DEFINES += APPLICATION_DISPLAY_NAME=\\\"Kaidan\\\"
 DEFINES += APPLICATION_NAME=\\\"harbour-kaidan\\\"
 DEFINES += VERSION_STRING=\\\"0.0.1\\\"
@@ -56,6 +57,7 @@ SOURCES += \
     src/BitsOfBinaryImageProvider.cpp \
     src/CameraImageCapture.cpp \
     src/CameraModel.cpp \
+    src/ChatHintModel.cpp \
     src/ClientWorker.cpp \
     src/CredentialsGenerator.cpp \
     src/CredentialsValidator.cpp \
@@ -64,7 +66,9 @@ SOURCES += \
     src/DataFormModel.cpp \
     src/DiscoveryManager.cpp \
     src/EmojiModel.cpp \
+    src/FileModel.cpp \
     src/FileProgressCache.cpp \
+    src/FileProxyModel.cpp \
     src/FileSharingController.cpp \
     src/HostCompletionProxyModel.cpp \
     src/HostCompletionModel.cpp \
@@ -80,7 +84,6 @@ SOURCES += \
     src/MessageHandler.cpp \
     src/MessageModel.cpp \
     src/Notifications.cpp \
-    src/NotificationsMutedWatcher.cpp \
     src/OmemoCache.cpp \
     src/OmemoDb.cpp \
     src/OmemoManager.cpp \
@@ -133,6 +136,7 @@ HEADERS += \
     src/BitsOfBinaryImageProvider.h \
     src/CameraImageCapture.h \
     src/CameraModel.h \
+    src/ChatHintModel.h \
     src/ClientWorker.h \
     src/CredentialsGenerator.h \
     src/CredentialsValidator.h \
@@ -143,7 +147,9 @@ HEADERS += \
     src/EmojiModel.h \
     src/Encryption.h \
     src/Enums.h \
+    src/FileModel.h \
     src/FileProgressCache.h \
+    src/FileProxyModel.h \
     src/FileSharingController.h \
     src/FutureUtils.h \
     src/Globals.h \
@@ -163,7 +169,6 @@ HEADERS += \
     src/MessageHandler.h \
     src/MessageModel.h \
     src/Notifications.h \
-    src/NotificationsMutedWatcher.h \
     src/OmemoCache.h \
     src/OmemoDb.h \
     src/OmemoManager.h \

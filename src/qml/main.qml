@@ -1,32 +1,15 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2016 geobra <s.g.b@gmx.de>
+// SPDX-FileCopyrightText: 2016 Marzanna <MRZA-MRZA@users.noreply.github.com>
+// SPDX-FileCopyrightText: 2016 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2016 Jonah Brüchert <jbb@kaidan.im>
+// SPDX-FileCopyrightText: 2017 Ilya Bizyaev <bizyaev@zoho.com>
+// SPDX-FileCopyrightText: 2018 Nicolas Fella <nicolas.fella@gmx.de>
+// SPDX-FileCopyrightText: 2019 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2023 Bhavy Airi <airiraghav@gmail.com>
+// SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
+// SPDX-FileCopyrightText: 2023 Mathis Brüchert <mbb@kaidan.im>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
@@ -104,6 +87,8 @@ ApplicationWindow {
     Component {id: emptyChatPage; EmptyChatPage {}}
     Component {id: settingsPage; SettingsPage {}}
     Component {id: qrCodeOnboardingPage; QrCodeOnboardingPage {}}
+    Component {id: contactAdditionPage; ContactAdditionPage {}}
+    Component {id: contactAdditionDialog; ContactAdditionDialog {}}
 
 //	onWideScreenChanged: showRosterPageForNarrowWindow()
 
@@ -121,7 +106,6 @@ ApplicationWindow {
 //			}
 //		}
 //	}
-
 	/**
 	 * Shows a passive notification for a long period.
 	 */
@@ -157,6 +141,34 @@ ApplicationWindow {
 //        popAllPages()
           pageStack.push(rosterPage, {}, PageStackAction.Immediate)
 //        showRosterPageForNarrowWindow()
+	}
+
+	/**
+	 * Creates and opens an overlay (e.g., Kirigami.OverlaySheet or Kirigami.Dialog) on desktop
+	 * devices or a page (e.g., Kirigami.ScrollablePage) on mobile devices.
+	 *
+	 * @param overlayComponent component containing the overlay to be opened
+	 * @param pageComponent component containing the page to be opened
+	 *
+	 * @return the opened page or sheet
+	 */
+	function openView(overlayComponent, pageComponent) {
+		if (Kirigami.Settings.isMobile) {
+			return openPage(pageComponent)
+		} else {
+			return openOverlay(overlayComponent)
+		}
+	}
+
+	function openOverlay(overlayComponent) {
+        var overlay = overlayComponent.createObject(root)
+		overlay.open()
+		return overlay
+	}
+
+	function openPage(pageComponent) {
+		popLayersAboveLowest()
+		return pageStack.layers.push(pageComponent)
 	}
 
 	// Show the rosterPage instead of the emptyChatPage if the window is narrow.

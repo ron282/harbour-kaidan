@@ -9,6 +9,9 @@ import im.kaidan.kaidan 1.0
 
 DetailsHeader {
 	id: root
+
+	property Kirigami.OverlaySheet sheet
+
 	displayName: AccountManager.displayName
 //	avatarAction: Button {
 //		text: qsTr("Change your profile image")
@@ -35,11 +38,11 @@ DetailsHeader {
 		}
 	}
 
-	function displayNameChangeFunction(newDisplayName) {
+	function changeDisplayName(newDisplayName) {
 		Kaidan.client.vCardManager.changeNicknameRequested(newDisplayName)
 	}
 
-	function displayNameChangedFunction() {
+	function handleDisplayNameChanged() {
 		if (Kaidan.connectionState === Enums.StateConnected) {
 			Kaidan.client.vCardManager.clientVCardRequested(root.jid)
 		}

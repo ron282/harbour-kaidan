@@ -1,32 +1,7 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2022 Jonah Brüchert <jbb@kaidan.im>
+// SPDX-FileCopyrightText: 2022 Linus Jahn <lnj@kaidan.im>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "FileSharingController.h"
 
@@ -150,7 +125,7 @@ static QString addUniqueSuffix(const QString &fileName)
 ///
 /// A file extension can be added again by infering it from the mime type if one is needed.
 ///
-static std::optional<QString> sanitizeFilename(QStringView fileName) {
+static std::optional<std::pair<QString, QString>> sanitizeFilename(QStringView fileName) {
 	constexpr std::array bad_chars = {
 #ifdef Q_OS_UNIX
 		// These have special meaning in a file name.
@@ -214,12 +189,22 @@ static std::optional<QString> sanitizeFilename(QStringView fileName) {
 		return {};
 	}
 
+	QString fileExtension;
+	for (auto itr = --filenameParts.end();
+		 itr != relevantPart;
+		 itr--) {
+		if (!itr->isEmpty()) {
+			fileExtension = *itr;
+			break;
+		}
+	}
+
 	auto filename = *relevantPart;
 
 	if (isBadName(filename)) {
 		return {};
 	}
-	return filename;
+	return std::make_pair(filename, fileExtension);
 }
 
 FileSharingController::FileSharingController(QXmppClient *client)
@@ -336,8 +321,8 @@ void FileSharingController::sendMessage(Message &&message, bool encrypt)
 			message.files = files;
 		});
 
-		runOnThread(Kaidan::instance()->client(), [msg = message.toQXmpp()]() mutable {
-			Kaidan::instance()->client()->messageHandler()->send(std::move(msg));
+		runOnThread(Kaidan::instance()->client(), [message = std::move(message)]() mutable {
+			Kaidan::instance()->client()->messageHandler()->sendPendingMessage(std::move(message));
 		});
 	});
 }
@@ -395,7 +380,7 @@ void FileSharingController::downloadFile(const QString &messageId, const File &f
 
 	runOnThread(client, [this, client, messageId, fileId = file.id, fileShare = file.toQXmpp()] {
 		QString dirPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation) +
-						  QDir::separator() + APPLICATION_DISPLAY_NAME + QDir::separator();
+						  QDir::separator() + APPLICATION_DISPLAY_NAME;
 
 		if (auto dir = QDir(dirPath); !dir.exists()) {
 			dir.mkpath(QStringLiteral("."));
@@ -404,11 +389,24 @@ void FileSharingController::downloadFile(const QString &messageId, const File &f
 		// Sanitize file name, if given
 		auto maybeFileName = andThen(fileShare.metadata().filename(), sanitizeFilename);
 
-		const auto dateString = QDateTime::currentDateTime().toString();
-		const auto fileExtension = fileShare.metadata().mediaType()->preferredSuffix();
-
 		// Add fallback file name, so we always have a file name
-		auto filename = maybeFileName.value_or(dateString);
+		auto filename = [&]() {
+			if (maybeFileName) {
+				return maybeFileName->first;
+			}
+			return QDateTime::currentDateTime().toString();
+		}();
+
+		const auto fileExtension = [&]() {
+			auto extension = fileShare.metadata().mediaType()->preferredSuffix();
+			if (!extension.isEmpty()) {
+				return extension;
+			}
+			if (maybeFileName) {
+				return maybeFileName->second;
+			}
+			return QString();
+		}();
 
 		auto makeFileName = [&]() -> QString {
 			return dirPath % QDir::separator() % filename % "." % fileExtension;
@@ -450,7 +448,7 @@ void FileSharingController::downloadFile(const QString &messageId, const File &f
 				auto errorText = std::get<QXmppError>(result).description;
 
 				qDebug() << "[FileSharingController] Couldn't download file:" << errorText;
-				Kaidan::instance()->passiveNotificationRequested(
+				emit Kaidan::instance()->passiveNotificationRequested(
 					tr("Couldn't download file: %1").arg(errorText));
 			} else if (std::holds_alternative<QXmppFileDownload::Downloaded>(result)) {
 				MessageDb::instance()->updateMessage(messageId, [=](Message &message) {

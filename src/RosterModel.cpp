@@ -8,7 +8,6 @@
 // SPDX-FileCopyrightText: 2023 Tibor Csötönyi <work@taibsu.de>
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
-
 #if defined(SFOS)
 #include "../3rdparty/QEmuStringView/qemustringview.h"
 #endif
@@ -52,13 +51,13 @@ RosterModel::RosterModel(QObject *parent)
             this, &RosterModel::replaceItems);
     connect(this, &RosterModel::replaceItemsRequested, RosterDb::instance(), &RosterDb::replaceItems);
 
-    connect(MessageDb::instance(), &MessageDb::messageAdded,
-            this, &RosterModel::handleMessageAdded);
-    connect(MessageDb::instance(), &MessageDb::draftMessageAdded, this, &RosterModel::handleDraftMessageAdded);
-    connect(MessageDb::instance(), &MessageDb::draftMessageUpdated, this, &RosterModel::handleDraftMessageUpdated);
-    connect(MessageDb::instance(), &MessageDb::draftMessageRemoved, this, &RosterModel::handleDraftMessageRemoved);
-    connect(MessageDb::instance(), &MessageDb::draftMessageFetched, this, &RosterModel::handleDraftMessageFetched);
-    connect(MessageDb::instance(), &MessageDb::messageRemoved, this, &RosterModel::handleMessageRemoved);
+	connect(MessageDb::instance(), &MessageDb::messageAdded,
+	        this, &RosterModel::handleMessageAdded);
+	connect(MessageDb::instance(), &MessageDb::draftMessageAdded, this, &RosterModel::handleDraftMessageAdded);
+	connect(MessageDb::instance(), &MessageDb::draftMessageUpdated, this, &RosterModel::handleDraftMessageUpdated);
+	connect(MessageDb::instance(), &MessageDb::draftMessageRemoved, this, &RosterModel::handleDraftMessageRemoved);
+	connect(MessageDb::instance(), &MessageDb::draftMessageFetched, this, &RosterModel::handleDraftMessageFetched);
+	connect(MessageDb::instance(), &MessageDb::messageRemoved, this, &RosterModel::handleMessageRemoved);
 
     connect(AccountManager::instance(), &AccountManager::jidChanged, this, [this] {
         beginResetModel();
@@ -91,60 +90,60 @@ int RosterModel::rowCount(const QModelIndex&) const
 
 QHash<int, QByteArray> RosterModel::roleNames() const
 {
-    QHash<int, QByteArray> roles;
-    roles[AccountJidRole] = "accountJid";
-    roles[JidRole] = "jid";
-    roles[NameRole] = "name";
-    roles[GroupsRole] = "groups";
-    roles[LastMessageDateTimeRole] = "lastMessageDateTime";
-    roles[UnreadMessagesRole] = "unreadMessages";
-    roles[LastMessageRole] = "lastMessage";
-    roles[LastMessageIsDraftRole] = "lastMessageIsDraft";
-    roles[PinnedRole] = "pinned";
-    roles[NotificationsMutedRole] = "notificationsMuted";
-    return roles;
+	QHash<int, QByteArray> roles;
+	roles[AccountJidRole] = "accountJid";
+	roles[JidRole] = "jid";
+	roles[NameRole] = "name";
+	roles[GroupsRole] = "groups";
+	roles[LastMessageDateTimeRole] = "lastMessageDateTime";
+	roles[UnreadMessagesRole] = "unreadMessages";
+	roles[LastMessageRole] = "lastMessage";
+	roles[LastMessageIsDraftRole] = "lastMessageIsDraft";
+	roles[PinnedRole] = "pinned";
+	roles[NotificationsMutedRole] = "notificationsMuted";
+	return roles;
 }
 
 QVariant RosterModel::data(const QModelIndex &index, int role) const
 {
-    if (!hasIndex(index.row(), index.column(), index.parent())) {
-        qWarning() << "Could not get data from roster model." << index << role;
-        return {};
-    }
+	if (!hasIndex(index.row(), index.column(), index.parent())) {
+		qWarning() << "Could not get data from roster model." << index << role;
+		return {};
+	}
 
-    switch (role) {
-    case AccountJidRole:
-        return m_items.at(index.row()).accountJid;
-    case JidRole:
-        return m_items.at(index.row()).jid;
-    case NameRole:
-        return m_items.at(index.row()).name;
-    case GroupsRole:
-        return QVariant::fromValue(m_items.at(index.row()).groups);
-    case LastMessageDateTimeRole: {
-        // "lastMessageDateTime" is used for sorting the roster items.
-        // Thus, each new item has the current date as its default value.
-        // But that date should only be displayed when there is a last (exchanged or draft) message.
-        if (const auto &item = m_items.at(index.row()); !item.lastMessage.isEmpty() || !item.draftMessageId.isEmpty()) {
-            return formattedLastMessageDateTime(m_items.at(index.row()).lastMessageDateTime);
-        }
+	switch (role) {
+	case AccountJidRole:
+		return m_items.at(index.row()).accountJid;
+	case JidRole:
+		return m_items.at(index.row()).jid;
+	case NameRole:
+		return m_items.at(index.row()).name;
+	case GroupsRole:
+		return QVariant::fromValue(m_items.at(index.row()).groups);
+	case LastMessageDateTimeRole: {
+		// "lastMessageDateTime" is used for sorting the roster items.
+		// Thus, each new item has the current date as its default value.
+		// But that date should only be displayed when there is a last (exchanged or draft) message.
+		if (const auto &item = m_items.at(index.row()); !item.lastMessage.isEmpty() || !item.draftMessageId.isEmpty()) {
+			return formattedLastMessageDateTime(m_items.at(index.row()).lastMessageDateTime);
+		}
 
-        // The user interface needs a valid string.
-        // Thus, a null string (i.e., "{}") must not be returned.
-        return QString();
-    }
-    case UnreadMessagesRole:
-        return m_items.at(index.row()).unreadMessages;
-    case LastMessageRole:
-        return m_items.at(index.row()).lastMessage;
-    case LastMessageIsDraftRole:
-        return !m_items.at(index.row()).draftMessageId.isEmpty();
-    case PinnedRole:
-        return m_items.at(index.row()).pinningPosition >= 0;
-    case NotificationsMutedRole:
-        return m_items.at(index.row()).notificationsMuted;
-    }
-    return {};
+		// The user interface needs a valid string.
+		// Thus, a null string (i.e., "{}") must not be returned.
+		return QString();
+	}
+	case UnreadMessagesRole:
+		return m_items.at(index.row()).unreadMessages;
+	case LastMessageRole:
+		return m_items.at(index.row()).lastMessage;
+	case LastMessageIsDraftRole:
+		return !m_items.at(index.row()).draftMessageId.isEmpty();
+	case PinnedRole:
+		return m_items.at(index.row()).pinningPosition >= 0;
+	case NotificationsMutedRole:
+		return m_items.at(index.row()).notificationsMuted;
+	}
+	return {};
 }
 
 bool RosterModel::hasItem(const QString &jid) const
@@ -248,11 +247,11 @@ void RosterModel::setItemEncryption(const QString &, const QString &jid, Encrypt
 
 void RosterModel::setItemEncryption(const QString &, Encryption::Enum encryption)
 {
-    for (const auto &item : std::as_const(m_items)) {
-        emit updateItemRequested(item.jid, [encryption](RosterItem &item) {
-            item.encryption = encryption;
-        });
-    }
+	for (const auto &item : std::as_const(m_items)) {
+		emit updateItemRequested(item.jid, [encryption](RosterItem &item) {
+			item.encryption = encryption;
+		});
+	}
 }
 
 RosterModel::AddContactByUriResult RosterModel::addContactByUri(const QString &uriString)
@@ -320,21 +319,21 @@ void RosterModel::sendPendingReadMarkers(const QString &)
 
 void RosterModel::handleItemsFetched(const QVector<RosterItem> &items)
 {
-    beginResetModel();
-    m_items = items;
-    std::sort(m_items.begin(), m_items.end());
-    endResetModel();
+	beginResetModel();
+	m_items = items;
+	std::sort(m_items.begin(), m_items.end());
+	endResetModel();
 
-    for (const auto &item : std::as_const(m_items)) {
-        RosterItemNotifier::instance().notifyWatchers(item.jid, item);
+	for (const auto &item : std::as_const(m_items)) {
+		RosterItemNotifier::instance().notifyWatchers(item.jid, item);
 
-        if (!item.draftMessageId.isEmpty()) {
-            MessageDb::instance()->fetchDraftMessage(item.draftMessageId);
-        }
-    }
+		if (!item.draftMessageId.isEmpty()) {
+			MessageDb::instance()->fetchDraftMessage(item.draftMessageId);
+		}
+	}
 
-    Q_EMIT accountJidsChanged();
-    Q_EMIT groupsChanged();
+	Q_EMIT accountJidsChanged();
+	Q_EMIT groupsChanged();
 }
 
 void RosterModel::addItem(const RosterItem &item)
@@ -355,84 +354,80 @@ void RosterModel::updateItem(const QString &jid,
             if (m_items.at(i) == item)
                 return;
 
-            // TODO: Uncomment this and see TODO in ContactDetailsContent once fixed in Kirigami Addons.
+			// TODO: Uncomment this and see TODO in ContactDetailsContent once fixed in Kirigami Addons.
 //			auto oldGroups = groups();
 
             m_items.replace(i, item);
 
-            // item was changed: refresh all roles
-            emit dataChanged(index(i), index(i), {});
-            RosterItemNotifier::instance().notifyWatchers(jid, item);
+			// check, if the position of the new item may be different
+			updateItemPosition(i);
 
-            // check, if the position of the new item may be different
-            updateItemPosition(i);
-
-            // TODO: Uncomment this and see TODO in ContactDetailsContent once fixed in Kirigami Addons.
+			// TODO: Uncomment this and see TODO in ContactDetailsContent once fixed in Kirigami Addons.
 //			if (oldGroups != groups()) {
-                Q_EMIT groupsChanged();
+				Q_EMIT groupsChanged();
 //			}
 
-            return;
-        }
-    }
+			return;
+		}
+	}
 }
 
 void RosterModel::replaceItems(const QHash<QString, RosterItem> &items)
 {
-    QVector<RosterItem> newItems;
-    for (auto item : items) {
-        // find old item
-        auto oldItem = std::find_if(
-            m_items.cbegin(),
-            m_items.cend(),
-            [&] (const RosterItem &oldItem) {
-                return oldItem.jid == item.jid;
-            }
-        );
+	QVector<RosterItem> newItems;
+	for (auto item : items) {
+		// find old item
+		auto oldItem = std::find_if(
+			m_items.cbegin(),
+			m_items.cend(),
+			[&] (const RosterItem &oldItem) {
+				return oldItem.jid == item.jid;
+			}
+		);
 
-        // use the old item's values, if found
-        if (oldItem != m_items.cend()) {
-            item.lastMessage = oldItem->lastMessage;
-            item.lastMessageDateTime = oldItem->lastMessageDateTime;
-            item.unreadMessages = oldItem->unreadMessages;
-            item.lastReadOwnMessageId = oldItem->lastReadOwnMessageId;
-            item.lastReadContactMessageId = oldItem->lastReadContactMessageId;
-            item.encryption = oldItem->encryption;
-            item.pinningPosition = oldItem->pinningPosition;
-            item.chatStateSendingEnabled = oldItem->chatStateSendingEnabled;
-            item.readMarkerSendingEnabled = oldItem->readMarkerSendingEnabled;
-            item.notificationsMuted = oldItem->notificationsMuted;
-            item.draftMessageId = oldItem->draftMessageId;
-        }
+		// use the old item's values, if found
+		if (oldItem != m_items.cend()) {
+			item.lastMessage = oldItem->lastMessage;
+			item.lastMessageDateTime = oldItem->lastMessageDateTime;
+			item.unreadMessages = oldItem->unreadMessages;
+			item.lastReadOwnMessageId = oldItem->lastReadOwnMessageId;
+			item.lastReadContactMessageId = oldItem->lastReadContactMessageId;
+			item.encryption = oldItem->encryption;
+			item.pinningPosition = oldItem->pinningPosition;
+			item.chatStateSendingEnabled = oldItem->chatStateSendingEnabled;
+			item.readMarkerSendingEnabled = oldItem->readMarkerSendingEnabled;
+			item.notificationsMuted = oldItem->notificationsMuted;
+			item.draftMessageId = oldItem->draftMessageId;
+		}
 
-        newItems << item;
-    }
+		newItems << item;
+	}
 
-    // replace all items
-    handleItemsFetched(newItems);
+	// replace all items
+	handleItemsFetched(newItems);
 }
 
 void RosterModel::updateLastMessage(
-    QVector<RosterItem>::Iterator &itr, const Message &message,
-    QVector<int> &changedRoles, bool onlyUpdateIfNewer)
+	QVector<RosterItem>::Iterator &itr, const Message &message,
+	QVector<int> &changedRoles, bool onlyUpdateIfNewer)
 {
-    // If desired, only set the new message as the current last message if it is newer than
-    // the current one. Allow using the previous message as the new last message if the current
-    // last message is empty.
-    if (!itr->lastMessage.isEmpty() && (onlyUpdateIfNewer && itr->lastMessageDateTime >= message.stamp)) {
-        return;
-    }
+	// If desired, only set the new message as the current last message if it is newer than
+	// the current one. Allow using the previous message as the new last message if the current
+	// last message is empty.
+	if (!itr->lastMessage.isEmpty() && (onlyUpdateIfNewer && itr->lastMessageDateTime >= message.stamp)) {
+		return;
+	}
 
-    itr->lastMessageDateTime = message.stamp;
+	itr->lastMessageDateTime = message.stamp;
 
-    // The new message is only set as the current last message if they are different and there
-    // is no draft message.
-    if (const auto lastMessage = message.previewText();
-        itr->draftMessageId.isEmpty() && itr->lastMessage != lastMessage)
-    {
-        itr->lastMessage = lastMessage;
-        changedRoles << int(LastMessageRole);
-    }
+	// The new message is only set as the current last message if they are different and there
+	// is no draft message.
+	if (const auto lastMessage = message.previewText();
+		itr->draftMessageId.isEmpty() && itr->lastMessage != lastMessage)
+	{
+		itr->lastMessage = lastMessage;
+		changedRoles << int(LastMessageRole);
+	}
 }
 
 void RosterModel::pinItem(const QString &, const QString &jid)
@@ -464,43 +459,43 @@ void RosterModel::unpinItem(const QString &, const QString &jid)
 
 void RosterModel::reorderPinnedItem(const QString &, const QString &jid, int oldIndex, int newIndex)
 {
-    const auto &itemBeingReordered = m_items.at(oldIndex);
-    const auto pinningPositionDifference = oldIndex - newIndex;
+	const auto &itemBeingReordered = m_items.at(oldIndex);
+	const auto pinningPositionDifference = oldIndex - newIndex;
 
-    const auto oldPinningPosition = itemBeingReordered.pinningPosition;
-    const auto newPinningPosition = oldPinningPosition + pinningPositionDifference;
+	const auto oldPinningPosition = itemBeingReordered.pinningPosition;
+	const auto newPinningPosition = oldPinningPosition + pinningPositionDifference;
 
-    // Do not reorder anything if the item would go out of the range of the pinned items.
-    // That happens when the item is dragged below unpinned items.
-    if (newPinningPosition < 0) {
-        return;
-    }
+	// Do not reorder anything if the item would go out of the range of the pinned items.
+	// That happens when the item is dragged below unpinned items.
+	if (newPinningPosition < 0) {
+		return;
+	}
 
-    // Update the pinning position of the pinned items in between the old and the new pinning
-    // position of the item being reordered.
-    // "items" must be copied since its elements are changed via "updateItemRequested()".
-    const auto items = m_items;
-    for (const auto &item : items)	{
-        if (item.pinningPosition != -1 && item.jid != itemBeingReordered.jid) {
-            const auto pinningPosition = item.pinningPosition;
-            const auto itemMovedUpwards = pinningPositionDifference > 0;
+	// Update the pinning position of the pinned items in between the old and the new pinning
+	// position of the item being reordered.
+	// "items" must be copied since its elements are changed via "updateItemRequested()".
+	const auto items = m_items;
+	for (const auto &item : items)	{
+		if (item.pinningPosition != -1 && item.jid != itemBeingReordered.jid) {
+			const auto pinningPosition = item.pinningPosition;
+			const auto itemMovedUpwards = pinningPositionDifference > 0;
 
-            if (itemMovedUpwards && pinningPosition > oldPinningPosition && pinningPosition <= newPinningPosition) {
-                emit updateItemRequested(item.jid, [](RosterItem &item) {
-                    --item.pinningPosition;
-                });
-            } else if (!itemMovedUpwards && pinningPosition < oldPinningPosition && pinningPosition >= newPinningPosition) {
-                emit updateItemRequested(item.jid, [](RosterItem &item) {
-                    ++item.pinningPosition;
-                });
-            }
-        }
-    }
+			if (itemMovedUpwards && pinningPosition > oldPinningPosition && pinningPosition <= newPinningPosition) {
+				emit updateItemRequested(item.jid, [](RosterItem &item) {
+					--item.pinningPosition;
+				});
+			} else if (!itemMovedUpwards && pinningPosition < oldPinningPosition && pinningPosition >= newPinningPosition) {
+				emit updateItemRequested(item.jid, [](RosterItem &item) {
+					++item.pinningPosition;
+				});
+			}
+		}
+	}
 
-    // Update the pinning position of the reordered item.
-    emit updateItemRequested(jid, [newPinningPosition](RosterItem &item) {
-        item.pinningPosition = newPinningPosition;
-    });
+	// Update the pinning position of the reordered item.
+	emit updateItemRequested(jid, [newPinningPosition](RosterItem &item) {
+		item.pinningPosition = newPinningPosition;
+	});
 }
 
 void RosterModel::setChatStateSendingEnabled(const QString &, const QString &jid, bool chatStateSendingEnabled)
@@ -526,83 +521,83 @@ void RosterModel::setNotificationsMuted(const QString &, const QString &jid, boo
 
 void RosterModel::removeItems(const QString &accountJid, const QString &jid)
 {
-    for (int i = 0; i < m_items.size(); i++) {
-        const RosterItem &item = m_items.at(i);
+	for (int i = 0; i < m_items.size(); i++) {
+		const RosterItem &item = m_items.at(i);
 
-        if (AccountManager::instance()->jid() == accountJid && (item.jid.isEmpty() || item.jid == jid)) {
-            auto oldGroupCount = groups().size();
+		if (AccountManager::instance()->jid() == accountJid && (item.jid.isEmpty() || item.jid == jid)) {
+			auto oldGroupCount = groups().size();
 
-            beginRemoveRows(QModelIndex(), i, i);
-            m_items.remove(i);
-            endRemoveRows();
+			beginRemoveRows(QModelIndex(), i, i);
+			m_items.remove(i);
+			endRemoveRows();
 
-            RosterItemNotifier::instance().notifyWatchers(jid, std::nullopt);
+			RosterItemNotifier::instance().notifyWatchers(jid, std::nullopt);
 
-            if (!accountJids().contains(accountJid)) {
-                Q_EMIT accountJidsChanged();
-            }
+			if (!accountJids().contains(accountJid)) {
+				Q_EMIT accountJidsChanged();
+			}
 
-            if (oldGroupCount < groups().size()) {
-                Q_EMIT groupsChanged();
-            }
+			if (oldGroupCount < groups().size()) {
+				Q_EMIT groupsChanged();
+			}
 
-            return;
-        }
-    }
+			return;
+		}
+	}
 }
 
 void RosterModel::handleMessageAdded(const Message &message, MessageOrigin origin)
 {
-    const auto contactJid = message.isOwn ? message.to : message.from;
-    auto itr = std::find_if(m_items.begin(), m_items.end(), [&contactJid](const RosterItem &item) {
-        return item.jid == contactJid;
-    });
+	const auto contactJid = message.isOwn ? message.to : message.from;
+	auto itr = std::find_if(m_items.begin(), m_items.end(), [&contactJid](const RosterItem &item) {
+		return item.jid == contactJid;
+	});
 
-    // contact not found
-    if (itr == m_items.end())
-        return;
+	// contact not found
+	if (itr == m_items.end())
+		return;
 
-    QVector<int> changedRoles = {
-        int(LastMessageDateTimeRole)
-    };
+	QVector<int> changedRoles = {
+		int(LastMessageDateTimeRole)
+	};
 
-    updateLastMessage(itr, message, changedRoles);
+	updateLastMessage(itr, message, changedRoles);
 
-    // unread messages counter
-    std::optional<int> newUnreadMessages;
-    if (message.isOwn) {
-        // if we sent a message (with another device), reset counter
-        newUnreadMessages = 0;
-    } else {
-        // increase counter if message is new
-        switch (origin) {
-        case MessageOrigin::Stream:
-        case MessageOrigin::UserInput:
-        case MessageOrigin::MamCatchUp:
-            newUnreadMessages = itr->unreadMessages + 1;
-        case MessageOrigin::MamBacklog:
-        case MessageOrigin::MamInitial:
-            break;
-        }
-    }
+	// unread messages counter
+	std::optional<int> newUnreadMessages;
+	if (message.isOwn) {
+		// if we sent a message (with another device), reset counter
+		newUnreadMessages = 0;
+	} else {
+		// increase counter if message is new
+		switch (origin) {
+		case MessageOrigin::Stream:
+		case MessageOrigin::UserInput:
+		case MessageOrigin::MamCatchUp:
+			newUnreadMessages = itr->unreadMessages + 1;
+		case MessageOrigin::MamBacklog:
+		case MessageOrigin::MamInitial:
+			break;
+		}
+	}
 
-    if (newUnreadMessages.has_value()) {
-        itr->unreadMessages = *newUnreadMessages;
-        changedRoles << int(UnreadMessagesRole);
+	if (newUnreadMessages.has_value()) {
+		itr->unreadMessages = *newUnreadMessages;
+		changedRoles << int(UnreadMessagesRole);
 
-        RosterDb::instance()->updateItem(contactJid, [newCount = *newUnreadMessages](RosterItem &item) {
-            item.unreadMessages = newCount;
-        });
-    }
+		RosterDb::instance()->updateItem(contactJid, [newCount = *newUnreadMessages](RosterItem &item) {
+			item.unreadMessages = newCount;
+		});
+	}
 
-    // notify gui
-    const auto i = std::distance(m_items.begin(), itr);
-    const auto modelIndex = index(i);
-    emit dataChanged(modelIndex, modelIndex, changedRoles);
-    RosterItemNotifier::instance().notifyWatchers(itr->jid, *itr);
+	// notify gui
+	const auto i = std::distance(m_items.begin(), itr);
+	const auto modelIndex = index(i);
+	emit dataChanged(modelIndex, modelIndex, changedRoles);
+	RosterItemNotifier::instance().notifyWatchers(itr->jid, *itr);
 
-    // move row to correct position
-    updateItemPosition(i);
+	// move row to correct position
+	updateItemPosition(i);
 }
 
 void RosterModel::handleDraftMessageAdded(const Message &message)
@@ -615,20 +610,20 @@ void RosterModel::handleDraftMessageAdded(const Message &message)
     if (itr == m_items.end())
         return;
 
-    QVector<int> changedRoles = {
-        int(LastMessageDateTimeRole),
-        int(LastMessageRole),
-        int(LastMessageIsDraftRole)
-    };
+	QVector<int> changedRoles = {
+		int(LastMessageDateTimeRole),
+		int(LastMessageRole),
+		int(LastMessageIsDraftRole)
+	};
 
-    const auto lastMessage = message.previewText();
-    itr->lastMessageDateTime = QDateTime::currentDateTimeUtc();
-    itr->draftMessageId = message.id;
-    itr->lastMessage = lastMessage;
+	const auto lastMessage = message.previewText();
+	itr->lastMessageDateTime = QDateTime::currentDateTimeUtc();
+	itr->draftMessageId = message.id;
+	itr->lastMessage = lastMessage;
 
-    RosterDb::instance()->updateItem(itr->jid, [id = message.id](RosterItem &item) {
-        item.draftMessageId = id;
-    });
+	RosterDb::instance()->updateItem(itr->jid, [id = message.id](RosterItem &item) {
+		item.draftMessageId = id;
+	});
 
     // notify gui
     const auto i = std::distance(m_items.begin(), itr);
@@ -643,25 +638,21 @@ void RosterModel::handleDraftMessageUpdated(const Message &message)
         return item.draftMessageId == message.id;
     });
 
-    // contact not found
-    if (itr == m_items.end())
-        return;
+	QVector<int> changedRoles = {
+		int(LastMessageDateTimeRole),
+		int(LastMessageRole),
+		int(LastMessageIsDraftRole)
+	};
 
-    QVector<int> changedRoles = {
-        int(LastMessageDateTimeRole),
-        int(LastMessageRole),
-        int(LastMessageIsDraftRole)
-    };
+	const auto lastMessage = message.previewText();
+	itr->lastMessageDateTime = QDateTime::currentDateTimeUtc();
+	itr->lastMessage = lastMessage;
 
-    const auto lastMessage = message.previewText();
-    itr->lastMessageDateTime = QDateTime::currentDateTimeUtc();
-    itr->lastMessage = lastMessage;
-
-    // notify gui
-    const auto i = std::distance(m_items.begin(), itr);
-    const auto modelIndex = index(i);
-    emit dataChanged(modelIndex, modelIndex, changedRoles);
-    RosterItemNotifier::instance().notifyWatchers(itr->jid, *itr);
+	// notify gui
+	const auto i = std::distance(m_items.begin(), itr);
+	const auto modelIndex = index(i);
+	emit dataChanged(modelIndex, modelIndex, changedRoles);
+	RosterItemNotifier::instance().notifyWatchers(itr->jid, *itr);
 }
 
 void RosterModel::handleDraftMessageRemoved(const QString &id)
@@ -678,20 +669,20 @@ void RosterModel::handleDraftMessageRemoved(const QString &id)
     const Message last = MessageDb::instance()->_fetchLastMessage(accountJid, itr->jid);
     const auto lastMessage = last.previewText();
 
-    QVector<int> changedRoles = {
-        int(LastMessageDateTimeRole),
-        int(LastMessageRole),
-        int(LastMessageIsDraftRole)
-    };
+	QVector<int> changedRoles = {
+		int(LastMessageDateTimeRole),
+		int(LastMessageRole),
+		int(LastMessageIsDraftRole)
+	};
 
-    itr->draftMessageId.clear();
-    itr->lastMessageDateTime = last.stamp;
-    itr->lastMessage = lastMessage;
+	itr->draftMessageId.clear();
+	itr->lastMessageDateTime = last.stamp;
+	itr->lastMessage = lastMessage;
 
-    RosterDb::instance()->updateItem(
-        itr->jid, [](RosterItem &item) {
-        item.draftMessageId.clear();
-    });
+	RosterDb::instance()->updateItem(
+		itr->jid, [](RosterItem &item) {
+		item.draftMessageId.clear();
+	});
 
     // notify gui
     const auto i = std::distance(m_items.begin(), itr);
@@ -735,22 +726,22 @@ void RosterModel::handleMessageRemoved(std::shared_ptr<Message> newLastMessage)
 
 void RosterModel::insertItem(int index, const RosterItem &item)
 {
-    auto newAccountJidAdded = !accountJids().contains(item.accountJid);
-    auto oldGroupCount = groups().size();
+	auto newAccountJidAdded = !accountJids().contains(item.accountJid);
+	auto oldGroupCount = groups().size();
 
-    beginInsertRows(QModelIndex(), index, index);
-    m_items.insert(index, item);
-    endInsertRows();
+	beginInsertRows(QModelIndex(), index, index);
+	m_items.insert(index, item);
+	endInsertRows();
 
-    RosterItemNotifier::instance().notifyWatchers(item.jid, item);
+	RosterItemNotifier::instance().notifyWatchers(item.jid, item);
 
-    if (newAccountJidAdded) {
-        Q_EMIT accountJidsChanged();
-    }
+	if (newAccountJidAdded) {
+		Q_EMIT accountJidsChanged();
+	}
 
-    if (oldGroupCount < groups().size()) {
-        Q_EMIT groupsChanged();
-    }
+	if (oldGroupCount < groups().size()) {
+		Q_EMIT groupsChanged();
+	}
 }
 
 void RosterModel::updateItemPosition(int currentIndex)

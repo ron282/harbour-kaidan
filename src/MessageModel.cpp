@@ -1,32 +1,12 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2017 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2019 Jonah Brüchert <jbb@kaidan.im>
+// SPDX-FileCopyrightText: 2019 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2019 Yury Gubich <blue@macaw.me>
+// SPDX-FileCopyrightText: 2022 Bhavy Airi <airiragahv@gmail.com>
+// SPDX-FileCopyrightText: 2022 Tibor Csötönyi <dev@taibsu.de>
+// SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "MessageModel.h"
 
@@ -64,6 +44,11 @@ constexpr auto TYPING_TIMEOUT = 2s;
 constexpr int MAX_CORRECTION_MESSAGE_COUNT_DEPTH = 20;
 // defines that the message is suitable for correction only if it has ben sent not earlier than N days ago
 constexpr int MAX_CORRECTION_MESSAGE_DAYS_DEPTH = 2;
+
+bool DisplayedMessageReaction::operator<(const DisplayedMessageReaction &other) const
+{
+	return emoji < other.emoji;
+}
 
 MessageModel *MessageModel::s_instance = nullptr;
 
@@ -189,7 +174,9 @@ QHash<int, QByteArray> MessageModel::roleNames() const
 	roles[DeliveryStateIcon] = "deliveryStateIcon";
 	roles[DeliveryStateName] = "deliveryStateName";
 	roles[Files] = "files";
-	roles[Reactions] = "reactions";
+	roles[DisplayedReactions] = "displayedReactions";
+	roles[DetailedReactions] = "detailedReactions";
+	roles[OwnDetailedReactions] = "ownDetailedReactions";
 	return roles;
 }
 
@@ -225,7 +212,7 @@ QVariant MessageModel::data(const QModelIndex &index, int role) const
 	case IsOwn:
 		return msg.isOwn;
 	case IsEdited:
-		return msg.isEdited;
+		return !msg.replaceId.isEmpty();
 	case IsLastRead:
 		// A read marker text is only displayed if the message is the last read message and no
 		// message is received by the contact after it.
@@ -302,27 +289,63 @@ QVariant MessageModel::data(const QModelIndex &index, int role) const
 		return {};
 	case Files:
 		return QVariant::fromValue(msg.files);
-	case Reactions:
-		// emojis mapped to the JIDs of their senders
-		QMap<QString, QVector<QString>> reactionsMap;
+	case DisplayedReactions: {
+		QVector<DisplayedMessageReaction> displayedMessageReactions;
 
-		// Create an appropriate mapping for the user interface.
-		const auto &reactions = msg.reactions;
-		for (auto itr = reactions.begin(); itr != reactions.end(); ++itr) {
-			for (const auto &emoji : std::as_const(itr->emojis)) {
-				auto &senderJids = reactionsMap[emoji];
-				senderJids.append(itr.key());
-				std::sort(senderJids.begin(), senderJids.end());
+		const auto &reactionSenders = msg.reactionSenders;
+		for (auto itr = reactionSenders.begin(); itr != reactionSenders.end(); ++itr) {
+			const auto ownReactionsIterated = itr.key() == m_currentAccountJid;
+
+			for (const auto &reaction : std::as_const(itr->reactions)) {
+				auto reactionItr = std::find_if(displayedMessageReactions.begin(), displayedMessageReactions.end(), [=](const DisplayedMessageReaction &displayedMessageReaction) {
+					return displayedMessageReaction.emoji == reaction.emoji;
+				});
+
+				if (ownReactionsIterated) {
+					if (reactionItr == displayedMessageReactions.end()) {
+						displayedMessageReactions.append({ reaction.emoji, 1, ownReactionsIterated, reaction.deliveryState });
+					} else {
+						reactionItr->count++;
+						reactionItr->ownReactionIncluded = ownReactionsIterated;
+						reactionItr->deliveryState = reaction.deliveryState;
+					}
+				} else {
+					if (reactionItr == displayedMessageReactions.end()) {
+						displayedMessageReactions.append({ reaction.emoji, 1, ownReactionsIterated, {} });
+					} else {
+						reactionItr->count++;
+					}
+				}
 			}
 		}
 
-		// TODO: Find better way to create a QVariantMap to be returned
-		QVariantMap reactionsVariant;
-		for (auto itr = reactionsMap.begin(); itr != reactionsMap.end(); ++itr) {
-			reactionsVariant.insert(itr.key(), { QVariant::fromValue(itr.value()) });
+		std::sort(displayedMessageReactions.begin(), displayedMessageReactions.end());
+
+		return QVariant::fromValue(displayedMessageReactions);
+	}
+	case DetailedReactions: {
+		QVector<DetailedMessageReaction> detailedMessageReactions;
+
+		const auto &reactionSenders = msg.reactionSenders;
+		for (auto itr = reactionSenders.begin(); itr != reactionSenders.end(); ++itr) {
+			// Skip own reactions.
+			if (itr.key() != m_currentAccountJid) {
+				QStringList emojis;
+
+				for (const auto &reaction : std::as_const(itr->reactions)) {
+					emojis.append(reaction.emoji);
+				}
+
+				std::sort(emojis.begin(), emojis.end());
+
+				detailedMessageReactions.append({ itr.key(), emojis });
+			}
 		}
 
-		return reactionsVariant;
+		return QVariant::fromValue(detailedMessageReactions);
+	}
+	case OwnDetailedReactions:
+		return QVariant::fromValue(msg.reactionSenders.value(m_currentAccountJid).reactions);
 	}
 	return {};
 }
@@ -486,10 +509,11 @@ void MessageModel::handleMessageRead(int readMessageIndex)
 
 	Message readContactMessage;
 	int readContactMessageIndex;
+	const auto readMessage = m_messages.at(readMessageIndex);
 
 	// Search for the last read contact message if it is at the top of the chat page list view but
 	// readMessageIndex is of an own message.
-	if (const auto &readMessage = m_messages.at(readMessageIndex); readMessage.isOwn) {
+	if (readMessage.isOwn) {
 		auto isContactMessageRead = false;
 
 		for (int i = readMessageIndex + 1; i != m_messages.size(); ++i) {
@@ -531,13 +555,16 @@ void MessageModel::handleMessageRead(int readMessageIndex)
 			item.lastReadContactMessageId = readMessageId;
 			item.readMarkerPending = readMarkerPending;
 
-			// If the read message is the latest one or lastReadContactMessageId is empty, reset the
-			// counter for unread messages.
+			// If the read message is the latest one, lastReadContactMessageId is empty or the read
+			// message is an own message, reset the counter for unread messages.
 			// lastReadContactMessageId can be empty if there is no contact message stored or the
 			// oldest stored contact message is marked as first unread.
 			// Otherwise, decrease it by the number of contact messages between the read contact
 			// message and the last read contact message.
-			if (readContactMessageIndex == 0 || lastReadContactMessageId.isEmpty()) {
+			if (readContactMessageIndex == 0 ||
+				lastReadContactMessageId.isEmpty() ||
+				readMessage.isOwn)
+			{
 				item.unreadMessages = 0;
 			} else {
 				int readMessageCount = 1;
@@ -626,56 +653,368 @@ void MessageModel::markMessageAsFirstUnread(int index)
 
 void MessageModel::addMessageReaction(const QString &messageId, const QString &emoji)
 {
-	const auto itr = std::find_if(m_messages.begin(), m_messages.end(), [&](const Message &message) {
+	const auto itr = std::find_if(m_messages.cbegin(), m_messages.cend(), [&](const Message &message) {
 		return message.id == messageId;
 	});
 
-	// Add a message reaction if the corresponding message could be found and the reaction is no
-	// duplicate.
-	if (itr != m_messages.end()) {
-		if (auto emojis = itr->reactions.value(m_currentAccountJid).emojis; !emojis.contains(emoji)) {
-			MessageDb::instance()->updateMessage(messageId, [this, emoji](Message &message) {
-				auto &reaction = message.reactions[m_currentAccountJid];
-				reaction.latestTimestamp = QDateTime::currentDateTimeUtc();
-				reaction.emojis.append(emoji);
+	// Update only deliverState if there is already a reaction with the same emoji.
+	// Otherwise, add a new reaction.
+	if (itr != m_messages.cend()) {
+		const auto senderJid = m_currentAccountJid;
+		const auto reactions = itr->reactionSenders.value(senderJid).reactions;
+
+		auto addReaction = [messageId, senderJid, emoji](MessageReactionDeliveryState::Enum deliveryState) -> QFuture<void> {
+			return MessageDb::instance()->updateMessage(messageId, [senderJid, emoji, deliveryState](Message &message) {
+				auto &reactionSender = message.reactionSenders[senderJid];
+				auto &reactions = reactionSender.reactions;
+
+				MessageReaction reaction;
+				reaction.emoji = emoji;
+				reaction.deliveryState = deliveryState;
+
+				reactionSender.latestTimestamp = QDateTime::currentDateTimeUtc();
+				reactions.append(reaction);
+			});
+		};
+
+		const auto reactionItr = std::find_if(reactions.begin(), reactions.end(), [&](const MessageReaction &reaction) {
+			return reaction.emoji == emoji;
+		});
+
+		if (reactionItr != reactions.end()) {
+			MessageDb::instance()->updateMessage(messageId, [senderJid, emoji](Message &message) {
+				auto &reactions = message.reactionSenders[senderJid].reactions;
+
+				const auto itr = std::find_if(reactions.begin(), reactions.end(), [&](const MessageReaction &reaction) {
+					return reaction.emoji == emoji;
+				});
+
+				switch (auto &deliveryState = itr->deliveryState) {
+				case MessageReactionDeliveryState::PendingRemovalAfterSent:
+				case MessageReactionDeliveryState::ErrorOnRemovalAfterSent:
+					deliveryState = MessageReactionDeliveryState::Sent;
+					break;
+				case MessageReactionDeliveryState::PendingRemovalAfterDelivered:
+				case MessageReactionDeliveryState::ErrorOnRemovalAfterDelivered:
+					deliveryState = MessageReactionDeliveryState::Delivered;
+					break;
+				default:
+					break;
+				}
 			});
 
-			emojis.append(emoji);
-			runOnThread(Kaidan::instance()->client()->messageHandler(), [this, messageId, emojis] {
-				Kaidan::instance()->client()->messageHandler()->sendMessageReaction(m_currentChatJid, messageId, emojis);
-			});
+			return;
 		}
+
+		auto future = addReaction(MessageReactionDeliveryState::PendingAddition);
+		await(future, this, [=, this, chatJid = m_currentChatJid]() {
+#if defined(SFOS)
+            if (Enums::ConnectionState(Kaidan::instance()->connectionState()) == Enums::ConnectionState::StateConnected) {
+#else
+                if (ConnectionState(Kaidan::instance()->connectionState()) == Enums::ConnectionState::StateConnected) {
+#endif
+				QVector<QString> emojis;
+
+				for (const auto &reaction : reactions) {
+					switch(reaction.deliveryState) {
+					case MessageReactionDeliveryState::PendingAddition:
+					case MessageReactionDeliveryState::ErrorOnAddition:
+					case MessageReactionDeliveryState::Sent:
+					case MessageReactionDeliveryState::Delivered:
+						emojis.append(reaction.emoji);
+						break;
+					default:
+						break;
+					}
+				}
+
+				emojis.append(emoji);
+
+				runOnThread(Kaidan::instance()->client()->messageHandler(), [chatJid, messageId, emojis] {
+					return Kaidan::instance()->client()->messageHandler()->sendMessageReaction(chatJid, messageId, emojis);
+				}, this, [=, this](QFuture<QXmpp::SendResult> future) {
+					await(future, this, [=, this](QXmpp::SendResult result) {
+						if (const auto error = std::get_if<QXmppError>(&result)) {
+							emit Kaidan::instance()->passiveNotificationRequested(tr("Reaction could not be sent: %1").arg(error->description));
+							addReaction(MessageReactionDeliveryState::ErrorOnAddition);
+						} else {
+							updateMessageReactionsAfterSending(messageId, senderJid);
+						}
+					});
+				});
+			}
+		});
 	}
 }
 
 void MessageModel::removeMessageReaction(const QString &messageId, const QString &emoji)
 {
-	const auto itr = std::find_if(m_messages.begin(), m_messages.end(), [&](const Message &message) {
+	const auto itr = std::find_if(m_messages.cbegin(), m_messages.cend(), [&](const Message &message) {
 		return message.id == messageId;
 	});
 
-	if (itr != m_messages.end()) {
-		MessageDb::instance()->updateMessage(messageId, [this, emoji](Message &message) {
-			auto &reactions = message.reactions;
+	if (itr != m_messages.cend()) {
+		const auto senderJid = m_currentAccountJid;
+		const auto &reactions = itr->reactionSenders.value(senderJid).reactions;
 
-			auto &reaction = reactions[m_currentAccountJid];
-			reaction.latestTimestamp = QDateTime::currentDateTimeUtc();
+		const auto reactionItr = std::find_if(reactions.begin(), reactions.end(), [&](const MessageReaction &reaction) {
+			return reaction.emoji == emoji &&
+				(reaction.deliveryState == MessageReactionDeliveryState::PendingAddition ||
+				 reaction.deliveryState == MessageReactionDeliveryState::ErrorOnAddition);
+		});
 
-			auto &emojis = reaction.emojis;
-			emojis.removeOne(emoji);
+		if (reactionItr != reactions.end()) {
+			MessageDb::instance()->updateMessage(messageId, [senderJid, emoji](Message &message) {
+				auto &reactionSenders = message.reactionSenders;
+				auto &reactions = reactionSenders[senderJid].reactions;
 
-			// Remove the reaction if it has no emojis anymore.
-			if (emojis.isEmpty()) {
-				reactions.remove(m_currentAccountJid);
+				const auto itr = std::find_if(reactions.begin(), reactions.end(), [&](const MessageReaction &reaction) {
+					return reaction.emoji == emoji;
+				});
+
+				switch (itr->deliveryState) {
+				case MessageReactionDeliveryState::PendingAddition:
+				case MessageReactionDeliveryState::ErrorOnAddition:
+					reactions.erase(itr);
+
+					// Remove the reaction sender if it has no reactions anymore.
+					if (reactions.isEmpty()) {
+						reactionSenders.remove(senderJid);
+					}
+
+					break;
+				default:
+					break;
+				}
+			});
+
+			return;
+		}
+
+		auto future = MessageDb::instance()->updateMessage(messageId, [senderJid, emoji](Message &message) {
+			auto &reactionSenders = message.reactionSenders;
+			auto &reactions = reactionSenders[senderJid].reactions;
+
+			const auto itr = std::find_if(reactions.begin(), reactions.end(), [&](const MessageReaction &reaction) {
+				return reaction.emoji == emoji;
+			});
+
+			switch (auto &deliveryState = itr->deliveryState) {
+			case MessageReactionDeliveryState::Sent:
+				deliveryState = MessageReactionDeliveryState::PendingRemovalAfterSent;
+				break;
+			case MessageReactionDeliveryState::Delivered:
+				deliveryState = MessageReactionDeliveryState::PendingRemovalAfterDelivered;
+				break;
+			default:
+				break;
 			}
 		});
 
-		auto emojis = itr->reactions[m_currentAccountJid].emojis;
-		emojis.removeOne(emoji);
-		runOnThread(Kaidan::instance()->client()->messageHandler(), [this, messageId, emojis] {
-			Kaidan::instance()->client()->messageHandler()->sendMessageReaction(m_currentChatJid, messageId, emojis);
+		await(future, this, [=, this, chatJid = m_currentChatJid]() {
+#if defined(SFOS)
+            if (Enums::ConnectionState(Kaidan::instance()->connectionState()) == Enums::ConnectionState::StateConnected) {
+#else
+            if (ConnectionState(Kaidan::instance()->connectionState()) == Enums::ConnectionState::StateConnected) {
+#endif
+            auto &reactionSenders = itr->reactionSenders;
+				auto &reactions = reactionSenders[senderJid].reactions;
+				QVector<QString> emojis;
+
+				for (auto &reaction : reactions) {
+					const auto &storedEmoji = reaction.emoji;
+					const auto deliveryState = reaction.deliveryState;
+
+					switch (deliveryState) {
+					case MessageReactionDeliveryState::PendingAddition:
+					case MessageReactionDeliveryState::ErrorOnAddition:
+					case MessageReactionDeliveryState::Sent:
+					case MessageReactionDeliveryState::Delivered:
+						emojis.append(storedEmoji);
+						break;
+					default:
+						break;
+					}
+				}
+
+				runOnThread(Kaidan::instance()->client()->messageHandler(), [chatJid, messageId, emojis] {
+					return Kaidan::instance()->client()->messageHandler()->sendMessageReaction(chatJid, messageId, emojis);
+				}, this, [=, this](QFuture<QXmpp::SendResult> future) {
+					await(future, this, [=, this](QXmpp::SendResult result) {
+						if (const auto error = std::get_if<QXmppError>(&result)) {
+							emit Kaidan::instance()->passiveNotificationRequested(tr("Reaction could not be sent: %1").arg(error->description));
+
+							MessageDb::instance()->updateMessage(messageId, [senderJid, emoji](Message &message) {
+								auto &reactions = message.reactionSenders[senderJid].reactions;
+
+								const auto itr = std::find_if(reactions.begin(), reactions.end(), [&](const MessageReaction &reaction) {
+									return reaction.emoji == emoji;
+								});
+
+								switch (auto &deliveryState = itr->deliveryState) {
+								case MessageReactionDeliveryState::Sent:
+									deliveryState = MessageReactionDeliveryState::ErrorOnRemovalAfterSent;
+									break;
+								case MessageReactionDeliveryState::Delivered:
+									deliveryState = MessageReactionDeliveryState::ErrorOnRemovalAfterDelivered;
+									break;
+								default:
+									break;
+								}
+							});
+						} else {
+							updateMessageReactionsAfterSending(messageId, senderJid);
+						}
+					});
+				});
+			}
 		});
 	}
+}
+
+void MessageModel::resendMessageReactions(const QString &messageId)
+{
+	const auto itr = std::find_if(m_messages.cbegin(), m_messages.cend(), [&](const Message &message) {
+		return message.id == messageId;
+	});
+
+	if (itr != m_messages.cend()) {
+		const auto senderJid = m_currentAccountJid;
+
+		MessageDb::instance()->updateMessage(messageId, [senderJid](Message &message) {
+			auto &reactionSender = message.reactionSenders[senderJid];
+			reactionSender.latestTimestamp = QDateTime::currentDateTimeUtc();
+
+			for (auto &reaction : reactionSender.reactions) {
+				switch (auto &deliveryState = reaction.deliveryState) {
+				case MessageReactionDeliveryState::ErrorOnAddition:
+					deliveryState = MessageReactionDeliveryState::PendingAddition;
+					break;
+				case MessageReactionDeliveryState::ErrorOnRemovalAfterSent:
+					deliveryState = MessageReactionDeliveryState::PendingRemovalAfterSent;
+					break;
+				case MessageReactionDeliveryState::ErrorOnRemovalAfterDelivered:
+					deliveryState = MessageReactionDeliveryState::PendingRemovalAfterDelivered;
+					break;
+				default:
+					break;
+				}
+			}
+		});
+
+#if defined(SFOS)
+        if (Enums::ConnectionState(Kaidan::instance()->connectionState()) == Enums::ConnectionState::StateConnected) {
+#else
+		if (ConnectionState(Kaidan::instance()->connectionState()) == Enums::ConnectionState::StateConnected) {
+#endif
+            QVector<QString> emojis;
+
+			for (const auto &reaction : itr->reactionSenders.value(m_currentAccountJid).reactions) {
+				if (const auto deliveryState = reaction.deliveryState;
+					deliveryState != MessageReactionDeliveryState::PendingRemovalAfterSent &&
+					deliveryState != MessageReactionDeliveryState::PendingRemovalAfterDelivered &&
+					deliveryState != MessageReactionDeliveryState::ErrorOnRemovalAfterSent &&
+					deliveryState != MessageReactionDeliveryState::ErrorOnRemovalAfterDelivered) {
+					emojis.append(reaction.emoji);
+				}
+			}
+
+			runOnThread(Kaidan::instance()->client()->messageHandler(), [chatJid = m_currentChatJid, messageId, emojis] {
+				return Kaidan::instance()->client()->messageHandler()->sendMessageReaction(chatJid, messageId, emojis);
+			}, this, [=, this](QFuture<QXmpp::SendResult> future) {
+				await(future, this, [=, this](QXmpp::SendResult result) {
+					if (const auto error = std::get_if<QXmppError>(&result)) {
+						emit Kaidan::instance()->passiveNotificationRequested(tr("Reactions could not be sent: %1").arg(error->description));
+
+						MessageDb::instance()->updateMessage(messageId, [senderJid](Message &message) {
+							auto &reactionSender = message.reactionSenders[senderJid];
+							reactionSender.latestTimestamp = QDateTime::currentDateTimeUtc();
+
+							for (auto &reaction : reactionSender.reactions) {
+								switch (auto &deliveryState = reaction.deliveryState) {
+								case MessageReactionDeliveryState::PendingAddition:
+									deliveryState = MessageReactionDeliveryState::ErrorOnAddition;
+									break;
+								case MessageReactionDeliveryState::PendingRemovalAfterSent:
+									deliveryState = MessageReactionDeliveryState::ErrorOnRemovalAfterSent;
+									break;
+								case MessageReactionDeliveryState::PendingRemovalAfterDelivered:
+									deliveryState = MessageReactionDeliveryState::ErrorOnRemovalAfterDelivered;
+									break;
+								default:
+									break;
+								}
+							}
+						});
+					} else {
+						updateMessageReactionsAfterSending(messageId, senderJid);
+					}
+				});
+			});
+		}
+	}
+}
+
+void MessageModel::sendPendingMessageReactions(const QString &accountJid)
+{
+	auto future = MessageDb::instance()->fetchPendingReactions(accountJid);
+	await(future, this, [=, this](QMap<QString, QMap<QString, MessageReactionSender>> reactions) {
+		const auto senderJid = m_currentAccountJid;
+
+		for (auto messageSenderItr = reactions.cbegin(); messageSenderItr != reactions.cend(); ++messageSenderItr) {
+			const auto &reactionSenders = messageSenderItr.value();
+
+			for (auto messageIdItr = reactionSenders.cbegin(); messageIdItr != reactionSenders.cend(); ++messageIdItr) {
+				const auto messageId = messageIdItr.key();
+				QVector<QString> emojis;
+
+				for (const auto &reaction : messageIdItr->reactions) {
+					if (const auto deliveryState = reaction.deliveryState;
+						deliveryState != MessageReactionDeliveryState::PendingRemovalAfterSent &&
+						deliveryState != MessageReactionDeliveryState::PendingRemovalAfterDelivered &&
+						deliveryState != MessageReactionDeliveryState::ErrorOnRemovalAfterSent &&
+						deliveryState != MessageReactionDeliveryState::ErrorOnRemovalAfterDelivered) {
+						emojis.append(reaction.emoji);
+					}
+				}
+
+				runOnThread(Kaidan::instance()->client()->messageHandler(), [chatJid = messageSenderItr.key(), messageId, emojis] {
+					return Kaidan::instance()->client()->messageHandler()->sendMessageReaction(chatJid, messageId, emojis);
+				}, this, [=, this](QFuture<QXmpp::SendResult> future) {
+					await(future, this, [=, this](QXmpp::SendResult result) {
+						if (const auto error = std::get_if<QXmppError>(&result)) {
+							emit Kaidan::instance()->passiveNotificationRequested(tr("Reaction could not be sent: %1").arg(error->description));
+
+							MessageDb::instance()->updateMessage(messageId, [senderJid](Message &message) {
+								auto &reactionSender = message.reactionSenders[senderJid];
+								reactionSender.latestTimestamp = QDateTime::currentDateTimeUtc();
+
+								for (auto &reaction : reactionSender.reactions) {
+									switch (auto &deliveryState = reaction.deliveryState) {
+									case MessageReactionDeliveryState::PendingAddition:
+										deliveryState = MessageReactionDeliveryState::ErrorOnAddition;
+										break;
+									case MessageReactionDeliveryState::PendingRemovalAfterSent:
+										deliveryState = MessageReactionDeliveryState::ErrorOnRemovalAfterSent;
+										break;
+									case MessageReactionDeliveryState::PendingRemovalAfterDelivered:
+										deliveryState = MessageReactionDeliveryState::ErrorOnRemovalAfterDelivered;
+										break;
+									default:
+										break;
+									}
+								}
+							});
+						} else {
+							updateMessageReactionsAfterSending(messageId, senderJid);
+						}
+					});
+				});
+			}
+		}
+
+
+	});
 }
 
 bool MessageModel::canCorrectMessage(int index) const
@@ -780,6 +1119,7 @@ void MessageModel::resetCurrentChat(const QString &accountJid, const QString &ch
 	emit currentChatJidChanged(chatJid);
 
 	m_rosterItemWatcher.setJid(chatJid);
+	m_contactResourcesWatcher.setJid(chatJid);
 	m_accountOmemoWatcher.setJid(accountJid);
 	m_contactOmemoWatcher.setJid(chatJid);
 	m_lastReadOwnMessageId = m_rosterItemWatcher.item().lastReadOwnMessageId;
@@ -933,7 +1273,7 @@ int MessageModel::searchForMessageFromNewToOld(const QString &searchString, int 
 
 	if (foundIndex < m_messages.size()) {
 		for (; foundIndex < m_messages.size(); foundIndex++) {
-			if (m_messages.at(foundIndex).body.contains(searchString, Qt::CaseInsensitive)) {
+			if (foundIndex > -1 && m_messages.at(foundIndex).body.contains(searchString, Qt::CaseInsensitive)) {
 				return foundIndex;
 			}
 		}
@@ -985,7 +1325,7 @@ QXmppMessage::State MessageModel::chatState() const
 
 void MessageModel::sendChatState(QXmppMessage::State state)
 {
-	if (!m_rosterItemWatcher.item().chatStateSendingEnabled) {
+	if (m_contactResourcesWatcher.resourcesCount() == 0 || !m_rosterItemWatcher.item().chatStateSendingEnabled) {
 		return;
 	}
 
@@ -1031,8 +1371,7 @@ void MessageModel::correctMessage(const QString &msgId, const QString &message)
 			msg.id = QXmppUtils::generateStanzaUuid();
 			// Set replaceId only on first correction, so it's always the original id
 			// (`id` is the id of the current edit, `replaceId` is the original id)
-			if (!msg.isEdited) {
-				msg.isEdited = true;
+			if (msg.replaceId.isEmpty()) {
 				msg.replaceId = msgId;
 			}
 			msg.deliveryState = Enums::DeliveryState::Pending;
@@ -1047,7 +1386,7 @@ void MessageModel::correctMessage(const QString &msgId, const QString &message)
 				copy.stamp = QDateTime::currentDateTimeUtc();
 				emit sendCorrectedMessageRequested(copy);
 			}
-		} else if (!msg.isEdited) {
+		} else if (msg.replaceId.isEmpty()) {
 			msg.stamp = QDateTime::currentDateTimeUtc();
 		}
 
@@ -1057,6 +1396,68 @@ void MessageModel::correctMessage(const QString &msgId, const QString &message)
 		MessageDb::instance()->updateMessage(msgId, [msg](Message &localMessage) {
 			localMessage = msg;
 		});
+	}
+}
+
+void MessageModel::removeMessage(const QString &messageId)
+{
+	const auto hasCorrectId = [&messageId](const Message &message) {
+		return message.id == messageId;
+	};
+
+	const Message *const itr = std::find_if(m_messages.begin(), m_messages.end(), hasCorrectId);
+
+	// Update the roster item of the current chat.
+	if (itr != m_messages.cend()) {
+		int readMessageIndex = std::distance(m_messages.cbegin(), itr);
+
+		const QString &lastReadContactMessageId = m_rosterItemWatcher.item().lastReadContactMessageId;
+		const QString &lastReadOwnMessageId = m_rosterItemWatcher.item().lastReadOwnMessageId;
+
+		if (lastReadContactMessageId == messageId || lastReadOwnMessageId == messageId) {
+			handleMessageRead(readMessageIndex);
+
+			// Get the previous message ID if possible.
+			const int newLastReadMessageIndex = readMessageIndex + 1;
+			const bool isNewLastReadMessageIdValid = m_messages.length() >= newLastReadMessageIndex;
+
+			const QString newLastReadMessageId {
+				isNewLastReadMessageIdValid && newLastReadMessageIndex < m_messages.length() ?
+					m_messages.at(newLastReadMessageIndex).id :
+					QString()
+			};
+
+			if (newLastReadMessageId.isEmpty()) {
+				RosterModel::instance()->updateItem(m_currentChatJid, [=](RosterItem &item) {
+					item.lastReadContactMessageId = QString();
+					item.lastReadOwnMessageId = QString();
+					item.lastMessage = QString();
+					item.unreadMessages = 0;
+				});
+			} else {
+				emit RosterModel::instance()->updateItemRequested(m_currentChatJid,
+					[=](RosterItem &item) {
+						if (itr->isOwn) {
+							item.lastReadOwnMessageId = newLastReadMessageId;
+						} else {
+							item.lastReadContactMessageId = newLastReadMessageId;
+						}
+					});
+			}
+		}
+
+		// Remove the message from the database and model.
+
+		MessageDb::instance()->removeMessage(itr->from, itr->to, messageId);
+		updateLastReadOwnMessageId();
+
+		QModelIndex index = createIndex(readMessageIndex, 0);
+
+		beginRemoveRows(QModelIndex(), readMessageIndex, readMessageIndex);
+		m_messages.removeAt(readMessageIndex);
+		endRemoveRows();
+
+		emit dataChanged(index, index);
 	}
 }
 
@@ -1095,7 +1496,7 @@ void MessageModel::showMessageNotification(const Message &message, MessageOrigin
 		const auto accountJid = AccountManager::instance()->jid();
 		const auto chatJid = message.from;
 
-		bool userMuted = Kaidan::instance()->notificationsMuted(chatJid);
+		bool userMuted = m_rosterItemWatcher.item().notificationsMuted;
 		bool chatActive =
 				isChatCurrentChat(accountJid, chatJid) &&
 				QGuiApplication::applicationState() == Qt::ApplicationActive;
@@ -1104,6 +1505,40 @@ void MessageModel::showMessageNotification(const Message &message, MessageOrigin
 			Notifications::instance()->sendMessageNotification(accountJid, chatJid, message.id, message.body);
 		}
 	}
+}
+
+void MessageModel::updateMessageReactionsAfterSending(const QString &messageId, const QString &senderJid)
+{
+	MessageDb::instance()->updateMessage(messageId, [senderJid](Message &message) {
+		auto &reactionSenders = message.reactionSenders;
+		auto &reactionSender = message.reactionSenders[senderJid];
+		reactionSender.latestTimestamp = QDateTime::currentDateTimeUtc();
+		auto &reactions = reactionSender.reactions;
+
+		for (auto itr = reactions.begin(); itr != reactions.end();) {
+			switch (auto &deliveryState = itr->deliveryState) {
+			case MessageReactionDeliveryState::PendingAddition:
+			case MessageReactionDeliveryState::ErrorOnAddition:
+				deliveryState = MessageReactionDeliveryState::Sent;
+				++itr;
+				break;
+			case MessageReactionDeliveryState::PendingRemovalAfterSent:
+			case MessageReactionDeliveryState::PendingRemovalAfterDelivered:
+			case MessageReactionDeliveryState::ErrorOnRemovalAfterSent:
+			case MessageReactionDeliveryState::ErrorOnRemovalAfterDelivered:
+				itr = reactions.erase(itr);
+				break;
+			default:
+				++itr;
+				break;
+			}
+		}
+
+		// Remove the reaction sender if it has no reactions anymore.
+		if (reactions.isEmpty()) {
+			reactionSenders.remove(senderJid);
+		}
+	});
 }
 
 bool MessageModel::mamLoading() const

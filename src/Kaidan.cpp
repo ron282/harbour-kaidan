@@ -1,36 +1,18 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2016 geobra <s.g.b@gmx.de>
+// SPDX-FileCopyrightText: 2016 Marzanna <MRZA-MRZA@users.noreply.github.com>
+// SPDX-FileCopyrightText: 2017 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2019 Filipe Azevedo <pasnox@gmail.com>
+// SPDX-FileCopyrightText: 2019 Jonah Brüchert <jbb@kaidan.im>
+// SPDX-FileCopyrightText: 2019 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2019 Robert Maerkisch <zatrox@kaidan.im>
+// SPDX-FileCopyrightText: 2022 Bhavy Airi <airiragahv@gmail.com>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 #if defined(SFOS)
 #include <QDebug>
 #include "../3rdparty/QEmuStringView/qemustringview.h"
 #endif
+
 #include "Kaidan.h"
 
 // Qt
@@ -51,7 +33,6 @@
 #include "MessageDb.h"
 #include "Notifications.h"
 #include "RosterDb.h"
-#include "Settings.h"
 #include "FileSharingController.h"
 
 Kaidan *Kaidan::s_instance;
@@ -149,17 +130,6 @@ void Kaidan::setConnectionError(ClientWorker::ConnectionError error)
 	}
 }
 
-bool Kaidan::notificationsMuted(const QString &jid)
-{
-	return m_caches->settings->notificationsMuted(jid);
-}
-
-void Kaidan::setNotificationsMuted(const QString &jid, bool muted)
-{
-	m_caches->settings->setNotificationsMuted(jid, muted);
-	emit notificationsMutedChanged(jid);
-}
-
 void Kaidan::addOpenUri(const QString &uri)
 {
 	// Do not open XMPP URIs for group chats (e.g., "xmpp:kaidan@muc.kaidan.im?join") as long as Kaidan does not support that.
@@ -189,13 +159,13 @@ quint8 Kaidan::logInByUri(const QString &uri)
 
 	QXmppUri parsedUri(uri);
 
-	if (!CredentialsValidator::isAccountJidValid(parsedUri.jid())) {
+	if (!CredentialsValidator::isUserJidValid(parsedUri.jid())) {
 #if defined(SFOS)
-		return quint8(Enums::LoginByUriState::InvalidLoginUri);
+        return quint8(Enums::LoginByUriState::InvalidLoginUri);
 #else
-		return quint8(LoginByUriState::InvalidLoginUri);
+        return quint8(LoginByUriState::InvalidLoginUri);
 #endif
-	}
+    }
 
 	AccountManager::instance()->setJid(parsedUri.jid());
 

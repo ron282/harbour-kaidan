@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
+// SPDX-FileCopyrightText: 2022 Filipe Azevedo <pasnox@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -22,7 +22,6 @@
 
 Q_LOGGING_CATEGORY(publicGroupChat_search, "public-group-chat.search", QtMsgType::QtWarningMsg)
 
-#define THROTTLER_TIMEOUT 1000 * 60
 #define NEXT_TIMEOUT 0
 
 PublicGroupChatSearchManager::PublicGroupChatSearchManager(QNetworkAccessManager *manager, QObject *parent)
@@ -150,8 +149,8 @@ void PublicGroupChatSearchManager::replyFinished(QNetworkReply *reply)
 
 		if (statusCode == 429) {
 			qCDebug(publicGroupChat_search, "Search request long throttled");
-			m_throttler->start(THROTTLER_TIMEOUT);
-			return;
+            m_throttler->start(RequestTimeout);
+            return;
 		}
 
 		qCWarning(publicGroupChat_search, "Search request error: %s", qUtf8Printable(reply->errorString()));

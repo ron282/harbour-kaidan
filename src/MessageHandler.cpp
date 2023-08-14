@@ -1,32 +1,12 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2017 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2019 Jonah Brüchert <jbb@kaidan.im>
+// SPDX-FileCopyrightText: 2019 Filipe Azevedo <pasnox@gmail.com>
+// SPDX-FileCopyrightText: 2020 Yury Gubich <blue@macaw.me>
+// SPDX-FileCopyrightText: 2020 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2020 caca hueto <cacahueto@olomono.de>
+// SPDX-FileCopyrightText: 2022 Bhavy Airi <airiragahv@gmail.com>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "MessageHandler.h"
 // std
@@ -185,7 +165,7 @@ void MessageHandler::handleMessage(const QXmppMessage &msg, MessageOrigin origin
 		return;
 	}
 
-	if (msg.body().isEmpty() && msg.outOfBandUrl().isEmpty()) {
+	if (msg.body().isEmpty() && msg.outOfBandUrl().isEmpty() && msg.sharedFiles().isEmpty()) {
 		return;
 	}
 
@@ -232,7 +212,6 @@ void MessageHandler::handleMessage(const QXmppMessage &msg, MessageOrigin origin
 	if (msg.replaceId().isEmpty()) {
 		MessageDb::instance()->addMessage(message, origin);
 	} else {
-		message.isEdited = true;
 		message.id.clear();
 		MessageDb::instance()->updateMessage(msg.replaceId(), [message](Message &m) {
 			// replace completely
@@ -303,7 +282,7 @@ void MessageHandler::sendCorrectedMessage(Message msg)
 	});
 }
 
-void MessageHandler::sendMessageReaction(const QString &chatJid, const QString &messageId, const QVector<QString> &emojis)
+QFuture<QXmpp::SendResult> MessageHandler::sendMessageReaction(const QString &chatJid, const QString &messageId, const QVector<QString> &emojis)
 {
 	QXmppMessageReaction reaction;
 	reaction.setMessageId(messageId);
@@ -311,10 +290,12 @@ void MessageHandler::sendMessageReaction(const QString &chatJid, const QString &
 
 	QXmppMessage message;
 	message.setTo(chatJid);
+	message.setStamp(QDateTime::currentDateTimeUtc());
 	message.addHint(QXmppMessage::Store);
 	message.setReaction(reaction);
+	message.setReceiptRequested(true);
 
-	send(std::move(message));
+	return send(std::move(message));
 }
 
 void MessageHandler::handleConnected()
@@ -331,7 +312,7 @@ void MessageHandler::sendPendingMessage(Message message)
 		// if the message is a pending edition of the existing in the history message
 		// I need to send it with the most recent stamp
 		// for that I'm gonna copy that message and update in the copy just the stamp
-		if (message.isEdited) {
+		if (!message.replaceId.isEmpty()) {
 			message.stamp = QDateTime::currentDateTimeUtc();
 		}
 
@@ -573,32 +554,41 @@ bool MessageHandler::handleReaction(const QXmppMessage &message, const QString &
 {
 	if (const auto receivedReaction = message.reaction()) {
 		MessageDb::instance()->updateMessage(message.reaction()->messageId(), [senderJid, receivedEmojis = receivedReaction->emojis(), receivedTimestamp = message.stamp()](Message &m) {
-			auto &reaction = m.reactions[senderJid];
+			auto &reactionSenders = m.reactionSenders;
+			auto &reactionSender = reactionSenders[senderJid];
 
 			// Process only newer reactions.
-			if (reaction.latestTimestamp.isNull() || reaction.latestTimestamp < receivedTimestamp) {
-				reaction.latestTimestamp = receivedTimestamp;
-				auto &emojis = reaction.emojis;
+			if (reactionSender.latestTimestamp.isNull() || reactionSender.latestTimestamp < receivedTimestamp) {
+				reactionSender.latestTimestamp = receivedTimestamp;
+				auto &reactions = reactionSender.reactions;
 
 				// Add new reactions.
 				for (const auto &receivedEmoji : std::as_const(receivedEmojis)) {
-					if (!emojis.contains(receivedEmoji)) {
-						emojis.append(receivedEmoji);
+					const auto reactionNew = std::none_of(reactions.begin(), reactions.end(), [&](const MessageReaction &reaction) {
+						return reaction.emoji == receivedEmoji;
+					});
+
+					if (reactionNew) {
+						MessageReaction reaction;
+						reaction.emoji = receivedEmoji;
+
+						reactionSender.latestTimestamp = QDateTime::currentDateTimeUtc();
+						reactions.append(reaction);
 					}
 				}
 
 				// Remove existing reactions.
-				for (auto itr = emojis.begin(); itr != emojis.end();) {
-					if (!receivedEmojis.contains(*itr)) {
-						emojis.erase(itr);
+				for (auto itr = reactions.begin(); itr != reactions.end();) {
+					if (!receivedEmojis.contains(itr->emoji)) {
+						reactions.erase(itr);
 					} else {
 						++itr;
 					}
 				}
 
-				// Remove an empty reaction.
-				if (emojis.isEmpty()) {
-					m.reactions.remove(senderJid);
+				// Remove the reaction sender if it has no reactions anymore.
+				if (reactions.isEmpty()) {
+					reactionSenders.remove(senderJid);
 				}
 			}
 		});

@@ -1,32 +1,9 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2020 Mathis Brüchert <mbblp@protonmail.ch>
+// SPDX-FileCopyrightText: 2020 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2023 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2023 Bhavy Airi <airiraghav@gmail.com>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
@@ -49,10 +26,10 @@ ExplanationTogglePage {
 
     title: qsTr("Scan QR codes")
     explanationArea.visible: Kaidan.settings.qrCodePageExplanationVisible
-    explanationToggleButton.text: explanationToggleButton.checked ? qsTr("Show explanation") : qsTr("Scan QR codes")
-    explanationToggleButton.checked: !Kaidan.settings.qrCodePageExplanationVisible
+    primaryButton.text: primaryButton.checked ? qsTr("Show explanation") : qsTr("Scan QR codes")
+    primaryButton.checked: !Kaidan.settings.qrCodePageExplanationVisible
 
-    explanationToggleButton.onClicked: {
+    primaryButton.onClicked: {
         if (Kaidan.settings.qrCodePageExplanationVisible) {
             // Hide the explanation when this page is opened again in the future.
             Kaidan.settings.qrCodePageExplanationVisible = false
@@ -66,10 +43,8 @@ ExplanationTogglePage {
 
     secondaryButton.visible: false
 
-    explanation: SilicaGridView {
-        flow: applicationWindow().wideScreen ? GridLayout.LeftToRight : GridLayout.TopToBottom
+    explanation: Column {
 
-        Column {
             CenteredAdaptiveText {
                 text: {
                     if (root.isForOwnDevices) {
@@ -84,60 +59,51 @@ ExplanationTogglePage {
                 source: Utils.getResourcePath(root.isForOwnDevices ? "images/qr-code-scan-own-1.svg" : "images/qr-code-scan-1.svg")
                 sourceSize: Qt.size(860, 860)
                 fillMode: Image.PreserveAspectFit
-                //FIXME mipmap: true
-                anchors.fill: parent
-                //Layout.fillHeight: true
-                //Layout.fillWidth: true
+                anchors {
+                    right: parent.right
+                    left: parent.left
+                }
             }
-        }
 
         Separator {
-//            Layout.fillWidth: applicationWindow().wideScreen ? false : true
-//            Layout.fillHeight: !Layout.fillWidth
-            anchors.topMargin: applicationWindow().wideScreen ? parent.height * 0.1 : parent.height * 0.01
-            anchors.bottomMargin: Layout.topMargin
-            anchors.leftMargin: applicationWindow().wideScreen ? parent.width * 0.01 : parent.width * 0.1
-            anchors.rightMargin: Layout.leftMargin
         }
 
-        Column {
-            CenteredAdaptiveText {
-                text: {
-                    if (root.isForOwnDevices) {
-                        return qsTr("Step 2: Scan with your other device <b>this device's</b> QR code")
-                    }
-                    return qsTr("Step 2: your contact scan <b>your</b> QR code")
+        CenteredAdaptiveText {
+            text: {
+                if (root.isForOwnDevices) {
+                    return qsTr("Step 2: Scan with your other device <b>this device's</b> QR code")
                 }
-                scaleFactor: 1.5
+                return qsTr("Step 2: Let your contact scan <b>your</b> QR code")
             }
+            scaleFactor: 1.5
+        }
 
-            Image {
-                source: Utils.getResourcePath(root.isForOwnDevices ? "images/qr-code-scan-own-2.svg" : "images/qr-code-scan-2.svg")
-                sourceSize: Qt.size(860, 860)
-                fillMode: Image.PreserveAspectFit
-                //FIXME Layout.fillHeight: true
-                //FIXME Layout.fillWidth: true
+        Image {
+            source: Utils.getResourcePath(root.isForOwnDevices ? "images/qr-code-scan-own-2.svg" : "images/qr-code-scan-2.svg")
+            sourceSize: Qt.size(860, 860)
+            fillMode: Image.PreserveAspectFit
+            anchors {
+                right: parent.right
+                left: parent.left
             }
         }
     }
 
-    content: SilicaGridView {
+    content: Column {
         anchors.centerIn: parent
-        flow: applicationWindow().wideScreen ? GridLayout.LeftToRight : GridLayout.TopToBottom
         visible: !Kaidan.settings.qrCodePageExplanationVisible
         width: applicationWindow().wideScreen ? parent.width : Math.min(largeButtonWidth, parent.width, parent.height * 0.48)
         height: applicationWindow().wideScreen ? Math.min(parent.height, parent.width * 0.48) : parent.height
 
         QrCodeScanner {
             id: scanner
-            //FIXME Layout.preferredWidth: applicationWindow().wideScreen ? parent.width * 0.48 : parent.width
-            //FIXME Layout.preferredHeight: applicationWindow().wideScreen ? parent.height : Layout.preferredWidth
+            width: parent.width
 
             // Use the data from the decoded QR code.
             filter.onScanningSucceeded: {
                 if (isAcceptingResult) {
                     isBusy = true
-                    processTrust = true
+                    var processTrust = true
 
                     // Try to add a contact.
                     if (!root.isOnlyForTrustDecisions) {
@@ -156,7 +122,7 @@ ExplanationTogglePage {
 
                     // Try to authenticate or distrust keys.
                     if (processTrust) {
-                        expectedJid = ""
+                        var expectedJid = ""
                         if (root.isOnlyForTrustDecisions) {
                             expectedJid = root.isForOwnDevices ? AccountManager.jid : root.contactJid
                         }
@@ -201,48 +167,18 @@ ExplanationTogglePage {
                 onTriggered: scanner.isAcceptingResult = true
             }
 
-            Item {
+            LoadingArea {
+                description: root.isOnlyForTrustDecisions ? qsTr("Making trust decisions…") : qsTr("Adding contact…")
                 anchors.centerIn: parent
-
-                // background of loadingArea
-                Rectangle {
-                    anchors.fill: loadingArea
-                    anchors.margins: -8
-                    radius: roundedCornersRadius
-                    color: Kirigami.Theme.backgroundColor
-                    opacity: 0.9
-                    visible: loadingArea.visible
-                }
-
-                Column {
-                    id: loadingArea
-                    anchors.centerIn: parent
-                    visible: scanner.isBusy
-
-                    BusyIndicator {
-                        anchors.horizontalCenter: parent
-                    }
-
-                    Label {
-                        text: "<i>" + root.isOnlyForTrustDecisions ? qsTr("Making trust decisions…") : qsTr("Adding contact…") + "</i>"
-                        color: Kirigami.Theme.textColor
-                    }
-                }
+                visible: scanner.isBusy
             }
         }
 
         Separator {
-            //Layout.fillWidth: !applicationWindow().wideScreen
-            //Layout.fillHeight: !Layout.fillWidth
-            anchors.topMargin: applicationWindow().wideScreen ? parent.height * 0.1 : parent.height * 0.01
-            anchors.bottomMargin: Layout.topMargin
-            anchors.leftMargin: applicationWindow().wideScreen ? parent.width * 0.01 : parent.width * 0.1
-            anchors.rightMargin: Layout.leftMargin
         }
 
         QrCode {
-            //FIXME Layout.preferredWidth: applicationWindow().wideScreen ? parent.width * 0.48 : parent.width
-            //FIXME Layout.preferredHeight: applicationWindow().wideScreen ? parent.height : Layout.preferredWidth
+            width: parent.width
         }
     }
 

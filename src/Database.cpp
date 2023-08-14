@@ -1,32 +1,13 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2017 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2019 Xavier <xavi@delape.net>
+// SPDX-FileCopyrightText: 2020 Yury Gubich <blue@macaw.me>
+// SPDX-FileCopyrightText: 2020 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2022 Bhavy Airi <airiragahv@gmail.com>
+// SPDX-FileCopyrightText: 2023 Sergey Smirnykh <sergey.smirnykh@siborgium.xyz>
+// SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
+// SPDX-FileCopyrightText: 2023 Tibor Csötönyi <work@taibsu.de>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "Database.h"
 
@@ -66,8 +47,8 @@ using namespace SqlUtils;
 	}
 
 // Both need to be updated on version bump:
-#define DATABASE_LATEST_VERSION 27
-#define DATABASE_CONVERT_TO_LATEST_VERSION() DATABASE_CONVERT_TO_VERSION(27)
+#define DATABASE_LATEST_VERSION 34
+#define DATABASE_CONVERT_TO_LATEST_VERSION() DATABASE_CONVERT_TO_VERSION(34)
 
 #define SQL_BOOL "BOOL"
 #define SQL_BOOL_NOT_NULL "BOOL NOT NULL"
@@ -343,7 +324,7 @@ void Database::loadDatabaseInfo()
 void Database::saveDatabaseInfo()
 {
 	if (d->version <= DbOldVersion || d->version > DATABASE_LATEST_VERSION) {
-		qFatal("[database] Fatal error: Attempted to save invalid db version number.");
+		qFatal("[Database] Fatal error: Attempted to save invalid db version number.");
 	}
 
 	QSqlRecord updateRecord;
@@ -375,13 +356,15 @@ bool Database::needToConvert()
 
 void Database::convertDatabase()
 {
-	qDebug() << "[database] Converting database to latest version from version" << d->version;
 	transaction();
 
-	if (d->version == DbNotCreated)
+	if (d->version == DbNotCreated) {
+		qDebug() << "[Database] Creating new database with latest version" << DATABASE_LATEST_VERSION;
 		createNewDatabase();
-	else
+	} else {
+		qDebug() << "[Database] Converting database from version" << d->version << "to latest version" << DATABASE_LATEST_VERSION;
 		DATABASE_CONVERT_TO_LATEST_VERSION();
+	}
 
 	saveDatabaseInfo();
 	commit();
@@ -418,6 +401,7 @@ void Database::createNewDatabase()
 		query,
 		SQL_CREATE_TABLE(
 			DB_TABLE_ROSTER,
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
 			SQL_ATTRIBUTE(jid, SQL_TEXT_NOT_NULL)
 			SQL_ATTRIBUTE(name, SQL_TEXT)
 			SQL_ATTRIBUTE(subscription, SQL_INTEGER)
@@ -430,22 +414,23 @@ void Database::createNewDatabase()
 			SQL_ATTRIBUTE(chatStateSendingEnabled, SQL_BOOL)
 			SQL_ATTRIBUTE(readMarkerSendingEnabled, SQL_BOOL)
 			SQL_ATTRIBUTE(draftMessageId, SQL_TEXT)
-            SQL_ATTRIBUTE(notificationsMuted, SQL_BOOL)
-            "FOREIGN KEY(draftMessageId) REFERENCES " DB_TABLE_MESSAGES " (id)"
+			SQL_ATTRIBUTE(notificationsMuted, SQL_BOOL)
+			"PRIMARY KEY(accountJid, jid),"
+			"FOREIGN KEY(draftMessageId) REFERENCES " DB_TABLE_MESSAGES " (id)"
 		)
 	);
-    execQuery(
-        query,
-        SQL_CREATE_TABLE(
-            DB_TABLE_ROSTER_GROUPS,
-            SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(chatJid, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(name, SQL_TEXT_NOT_NULL)
-            "PRIMARY KEY(accountJid, chatJid, name),"
-            "FOREIGN KEY(accountJid) REFERENCES " DB_TABLE_ROSTER " (accountJid),"
-            "FOREIGN KEY(chatJid) REFERENCES " DB_TABLE_ROSTER " (jid)"
-        )
-    );
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			DB_TABLE_ROSTER_GROUPS,
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(chatJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(name, SQL_TEXT_NOT_NULL)
+			"PRIMARY KEY(accountJid, chatJid, name),"
+			"FOREIGN KEY(accountJid) REFERENCES " DB_TABLE_ROSTER " (accountJid),"
+			"FOREIGN KEY(chatJid) REFERENCES " DB_TABLE_ROSTER " (jid)"
+		)
+	);
 
 	// messages
 	execQuery(
@@ -455,12 +440,11 @@ void Database::createNewDatabase()
 			SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
 			SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
 			SQL_ATTRIBUTE(timestamp, SQL_TEXT)
-			SQL_ATTRIBUTE(message, SQL_TEXT)
+			SQL_ATTRIBUTE(body, SQL_TEXT)
 			SQL_ATTRIBUTE(id, SQL_TEXT)
 			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
 			SQL_ATTRIBUTE(senderKey, SQL_BLOB)
 			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
-			SQL_ATTRIBUTE(isEdited, SQL_BOOL)
 			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
 			SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
 			SQL_ATTRIBUTE(errorText, SQL_TEXT)
@@ -468,8 +452,8 @@ void Database::createNewDatabase()
 			SQL_ATTRIBUTE(originId, SQL_TEXT)
 			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
 			SQL_ATTRIBUTE(fileGroupId, SQL_INTEGER)
-            SQL_ATTRIBUTE(removed, SQL_BOOL_NOT_NULL)
-            "FOREIGN KEY(sender) REFERENCES " DB_TABLE_ROSTER " (jid),"
+			SQL_ATTRIBUTE(removed, SQL_BOOL_NOT_NULL)
+			"FOREIGN KEY(sender) REFERENCES " DB_TABLE_ROSTER " (jid),"
 			"FOREIGN KEY(recipient) REFERENCES " DB_TABLE_ROSTER " (jid)"
 		)
 	);
@@ -534,9 +518,10 @@ void Database::createNewDatabase()
 			SQL_ATTRIBUTE(messageRecipient, SQL_TEXT_NOT_NULL)
 			SQL_ATTRIBUTE(messageId, SQL_TEXT_NOT_NULL)
 			SQL_ATTRIBUTE(senderJid, SQL_TEXT_NOT_NULL)
-			SQL_ATTRIBUTE(timestamp, SQL_INTEGER)
 			SQL_ATTRIBUTE(emoji, SQL_TEXT_NOT_NULL)
-			"PRIMARY KEY(messageSender, messageRecipient, messageId, senderJid, timestamp, emoji)"
+			SQL_ATTRIBUTE(timestamp, SQL_INTEGER)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			"PRIMARY KEY(messageSender, messageRecipient, messageId, senderJid, emoji)"
 		)
 	);
 
@@ -640,8 +625,10 @@ void Database::createNewDatabase()
 		)
 	);
 
-	execQuery(query, "CREATE VIEW " DB_VIEW_CHAT_MESSAGES " AS SELECT * FROM " DB_TABLE_MESSAGES " WHERE deliveryState != 4");
-	execQuery(query, "CREATE VIEW " DB_VIEW_DRAFT_MESSAGES " AS SELECT * FROM " DB_TABLE_MESSAGES " WHERE deliveryState = 4");
+	execQuery(query, "CREATE VIEW " DB_VIEW_CHAT_MESSAGES " AS SELECT * FROM " DB_TABLE_MESSAGES
+					 " WHERE deliveryState != 4 AND removed != 1");
+	execQuery(query, "CREATE VIEW " DB_VIEW_DRAFT_MESSAGES " AS SELECT * FROM " DB_TABLE_MESSAGES
+					 " WHERE deliveryState = 4");
 
 	d->version = DATABASE_LATEST_VERSION;
 }

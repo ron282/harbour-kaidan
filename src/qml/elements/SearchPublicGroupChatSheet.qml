@@ -1,4 +1,5 @@
-// SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
+// SPDX-FileCopyrightText: 2022 Filipe Azevedo <pasnox@gmail.com>
+// SPDX-FileCopyrightText: 2023 Melvin Keskin <melvo@olomono.de>
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -167,7 +168,9 @@ DockedPanel {
 				}
 			}
 
-			Item {
+			LoadingArea {
+				id: loadingArea
+				description: qsTr("Downloading…")
 				anchors.centerIn: parent
 
 				// background of loadingArea

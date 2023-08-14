@@ -1,11 +1,10 @@
 // SPDX-FileCopyrightText: 2023 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-// import org.kde.kirigami 2.19 as Kirigami
-// import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
 
 import im.kaidan.kaidan 1.0
 
@@ -341,7 +340,7 @@ DetailsContent {
 				width: parent.width
 			}
 		}
-	}
+	}    
 
     RosterItemWatcher {
         id: contactWatcher
@@ -380,12 +379,13 @@ DetailsContent {
         TextSwitch {
             text: qsTr("Incoming messages")
             description: qsTr("Show notification and play sound on message arrival")
-            checked: !mutedWatcher.muted
-            onCheckedChanged: mutedWatcher.muted = !mutedWatcher.muted
+            checked: !contactWatcher.item.notificationsMuted
 
-            NotificationsMutedWatcher {
-                id: mutedWatcher
-                jid: root.jid
+            onCheckedChanged: {
+                RosterModel.setNotificationsMuted(
+                    MessageModel.currentAccountJid,
+                    MessageModel.currentChatJid,
+                    !checked)
             }
         }
 

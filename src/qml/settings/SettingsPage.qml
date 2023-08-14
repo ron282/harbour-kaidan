@@ -33,12 +33,16 @@
 import QtQuick 2.2
 import Sailfish.Silica 1.0
 
-SilicaFlickable {
+Page {
+    SilicaFlickable {
+        anchors.fill: parent
+        contentHeight: column.height
 
-//	topPadding: 0
-//	bottomPadding: 0
-//	leftPadding: 0
-//	rightPadding: 0
+    //	topPadding: 0
+    //	bottomPadding: 0
+    //	leftPadding: 0
+    //	rightPadding: 0
 
-	SettingsContent {}
+        SettingsContent {}
+    }
 }

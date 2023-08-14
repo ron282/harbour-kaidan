@@ -61,7 +61,7 @@ SilicaControl {
         }
 
         Column {
-            visible: mediaOverview.totalFilesCount
+//            visible: mediaOverview.totalFilesCount
             width: parent.width
             spacing: 0
 

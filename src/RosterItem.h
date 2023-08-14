@@ -1,32 +1,10 @@
-/*
- *  Kaidan - A user-friendly XMPP client for every device!
- *
- *  Copyright (C) 2016-2023 Kaidan developers and contributors
- *  (see the LICENSE file for a full list of copyright authors)
- *
- *  Kaidan is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  In addition, as a special exception, the author of Kaidan gives
- *  permission to link the code of its release with the OpenSSL
- *  project's "OpenSSL" library (or with modified versions of it that
- *  use the same license as the "OpenSSL" library), and distribute the
- *  linked executables. You must obey the GNU General Public License in
- *  all respects for all of the code used other than "OpenSSL". If you
- *  modify this file, you may extend this exception to your version of
- *  the file, but you are not obligated to do so.  If you do not wish to
- *  do so, delete this exception statement from your version.
- *
- *  Kaidan is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: 2019 Linus Jahn <lnj@kaidan.im>
+// SPDX-FileCopyrightText: 2022 Melvin Keskin <melvo@olomono.de>
+// SPDX-FileCopyrightText: 2022 Bhavy Airi <airiragahv@gmail.com>
+// SPDX-FileCopyrightText: 2022 Jonah Brüchert <jbb@kaidan.im>
+// SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
 
@@ -40,90 +18,104 @@
  */
 struct RosterItem
 {
-	Q_GADGET
+    Q_GADGET
 public:
-	Q_PROPERTY(QString jid MEMBER jid)
-	Q_PROPERTY(QString name MEMBER name)
-	Q_PROPERTY(QString displayName READ displayName CONSTANT)
-	Q_PROPERTY(bool sendingPresence READ isSendingPresence CONSTANT)
-	Q_PROPERTY(bool receivingPresence READ isReceivingPresence CONSTANT)
-	Q_PROPERTY(int unreadMessageCount MEMBER unreadMessages)
-	Q_PROPERTY(bool chatStateSendingEnabled MEMBER chatStateSendingEnabled)
-	Q_PROPERTY(bool readMarkerSendingEnabled MEMBER readMarkerSendingEnabled)
-
-#if defined(SFOS)	
-	RosterItem() {} 
-#else
-	RosterItem() = default;
-#endif	
-	RosterItem(const QXmppRosterIq::Item &item, const QDateTime &dateTime = QDateTime::currentDateTimeUtc());
-
-	QString displayName() const;
-
-	bool isSendingPresence() const;
-	bool isReceivingPresence() const;
+    Q_PROPERTY(QString accountJid MEMBER jid)
+    Q_PROPERTY(QString jid MEMBER jid)
+    Q_PROPERTY(QString name MEMBER name)
+    Q_PROPERTY(QString displayName READ displayName CONSTANT)
+    Q_PROPERTY(bool sendingPresence READ isSendingPresence CONSTANT)
+    Q_PROPERTY(bool receivingPresence READ isReceivingPresence CONSTANT)
+    Q_PROPERTY(QVector<QString> groups MEMBER groups)
+    Q_PROPERTY(int unreadMessageCount MEMBER unreadMessages)
+    Q_PROPERTY(bool chatStateSendingEnabled MEMBER chatStateSendingEnabled)
+    Q_PROPERTY(bool readMarkerSendingEnabled MEMBER readMarkerSendingEnabled)
+    Q_PROPERTY(bool notificationsMuted MEMBER notificationsMuted)
 
 #if defined(SFOS)
-	bool operator==(const RosterItem &other) const;
-	bool operator!=(const RosterItem &other) const;
+    RosterItem() {}
 #else
-	bool operator==(const RosterItem &other) const = default;
-	bool operator!=(const RosterItem &other) const = default;
+    RosterItem() = default;
+#endif
+    RosterItem(const QString &accountJid, const QXmppRosterIq::Item &item, const QDateTime &lastMessageDateTime = QDateTime::currentDateTimeUtc());
+
+    QString displayName() const;
+
+    bool isSendingPresence() const;
+    bool isReceivingPresence() const;
+
+#if defined(SFOS)
+    bool operator==(const RosterItem &other) const;
+    bool operator!=(const RosterItem &other) const;
+#else
+    bool operator==(const RosterItem &other) const = default;
+    bool operator!=(const RosterItem &other) const = default;
 #endif
 
-	bool operator<(const RosterItem &other) const;
-	bool operator>(const RosterItem &other) const;
-	bool operator<=(const RosterItem &other) const;
-	bool operator>=(const RosterItem &other) const;
+    bool operator<(const RosterItem &other) const;
+    bool operator>(const RosterItem &other) const;
+    bool operator<=(const RosterItem &other) const;
+    bool operator>=(const RosterItem &other) const;
 
-	// JID of the contact.
-	QString jid;
+    // JID of the account that has this item.
+    QString accountJid;
 
-	// Name of the contact.
-	QString name;
+    // JID of the contact.
+    QString jid;
 
-	// Type of this roster item's presence subscription.
-	QXmppRosterIq::Item::SubscriptionType subscription = QXmppRosterIq::Item::NotSet;
+    // Name of the contact.
+    QString name;
 
-	// End-to-end encryption used for this roster item.
-#if defined(SFOS)
+    // Type of this roster item's presence subscription.
+    QXmppRosterIq::Item::SubscriptionType subscription = QXmppRosterIq::Item::NotSet;
+
+    // Roster groups (i.e., labels) used for filtering (e.g., "Family", "Friends" etc.).
+    QVector<QString> groups;
+
+    // End-to-end encryption used for this roster item.
+#if defined(WITH_OMEMO_V03)
     Encryption::Enum encryption = Encryption::Omemo0;
 #else
     Encryption::Enum encryption = Encryption::Omemo2;
 #endif
-	// Number of messages unread by the user.
-	int unreadMessages = 0;
 
-	// Last activity of the conversation, e.g. an incoming message.
-	// This is used to sort the contacts on the roster page.
-	QDateTime lastExchanged = QDateTime::currentDateTimeUtc();
+    // Number of messages unread by the user.
+    int unreadMessages = 0;
 
-	// Last message of the conversation.
-	QString lastMessage;
+    // Last activity of the conversation, e.g., when the last message was exchanged or a draft
+    // stored.
+    // This is used to display the date and to sort the contacts on the roster page´.
+    QDateTime lastMessageDateTime = QDateTime::currentDateTimeUtc();
 
-	// Last message i.e read by the receiver.
-	QString lastReadOwnMessageId;
+    // Last message of the conversation.
+    QString lastMessage;
 
-	// Last message i.e read by the user.
-	QString lastReadContactMessageId;
-	
-	// Draft message i.e written by the user but not yet sent.
-	QString draftMessageId;
+    // Last message i.e read by the receiver.
+    QString lastReadOwnMessageId;
 
-	// Whether a read marker for lastReadContactMessageId is waiting to be sent.
-	bool readMarkerPending = false;
+    // Last message i.e read by the user.
+    QString lastReadContactMessageId;
 
-	// Position within the pinned items.
-	// The higher the number, the higher the item is at the top of the pinned items.
-	// The first pinned item has the position 0.
-	// -1 is used for unpinned items.
-	int pinningPosition = -1;
+    // Draft message i.e written by the user but not yet sent.
+    QString draftMessageId;
 
-	// Whether chat states are sent to this roster item.
-	bool chatStateSendingEnabled = true;
+    // Whether a read marker for lastReadContactMessageId is waiting to be sent.
+    bool readMarkerPending = false;
 
-	// Whether read markers are sent to this roster item.
-	bool readMarkerSendingEnabled = true;
+    // Position within the pinned items.
+    // The higher the number, the higher the item is at the top of the pinned items.
+    // The first pinned item has the position 0.
+    // -1 is used for unpinned items.
+    int pinningPosition = -1;
+
+    // Whether chat states are sent to this roster item.
+    bool chatStateSendingEnabled = true;
+
+    // Whether read markers are sent to this roster item.
+    bool readMarkerSendingEnabled = true;
+
+    // Whether notifications are muted.
+    bool notificationsMuted = false;
 };
 
 Q_DECLARE_METATYPE(RosterItem)

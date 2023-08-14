@@ -37,11 +37,11 @@ import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
 
-Item {
+BackgroundItem {
 	id: backgroundRoot
 
 	property QtObject message
-	property color color: message.isOwn ? rightMessageBubbleColor : primaryBackgroundColor
+//	property color color: message.isOwn ? rightMessageBubbleColor : primaryBackgroundColor
     property int tailSize: Theme.paddingLarge
 	property bool showTail: true
 	property alias dummy: dummy
@@ -49,7 +49,7 @@ Item {
 
 	clip: true
 
-	Item {
+/*	Item {
 		id: tailBase
 		clip: true
 		visible: false
@@ -63,7 +63,7 @@ Item {
 			right: mainBG.left
 		}
 		Rectangle {
-			color: backgroundRoot.color
+            color: backgroundRoot.color
 
 			anchors.fill: parent
 			anchors.topMargin: 4
@@ -88,7 +88,7 @@ Item {
 			anchors.rightMargin: backgroundRoot.tailSize
 
 			width: backgroundRoot.tailSize * 3
-			color: "black"
+//			color: "black"
 		}
 	}
 	Rectangle {
@@ -98,18 +98,22 @@ Item {
 		anchors.fill: parent
 		anchors.leftMargin: backgroundRoot.tailSize
 	}
+*/
 
     Row {
 		id: metaInfo
 		anchors {
 			bottom: parent.bottom
-			right: mainBG.right
-            margins: Theme.paddingSmall
+//			right: mainBG.right
+            right: message.isOwn ? parent.right : undefined
+            left: message.isOwn ? undefined : parent.left
+//          margins: Theme.paddingSmall
 		}
 
         Label {
 			id: timestamp
-			opacity: 0.5
+            //opacity: 0.5
+            font.pixelSize: Theme.fontSizeTiny
 			text: Qt.formatDateTime(message.dateTime, "hh:mm")
 
 			MouseArea {
@@ -125,18 +129,19 @@ Item {
 		}
 
         Icon {
-            source: backgroundRoot.message.encryption === Encryption.NoEncryption ? "image://theme/icon-m-warning" : "image://theme/icon-m-device-lock"
+            visible: backgroundRoot.message.encryption == Encryption.NoEncryption
+            source: "image://theme/icon-s-outline-secure"
             width: Theme.iconSizeSmall
             height: width
 		}
 
-        Icon {
-			// TODO: Use "security-low-symbolic" for distrusted, "security-medium-symbolic" for automatically trusted and "security-high-symbolic" for authenticated
-            source: backgroundRoot.message.isTrusted ? "image://theme/icon-m-device-lock" : "image://theme/icon-m-warning"
-			visible: backgroundRoot.message.encryption !== Encryption.NoEncryption
-            width: Theme.iconSizeSmall
-            height: width
-		}
+//        Icon {
+//			// TODO: Use "security-low-symbolic" for distrusted, "security-medium-symbolic" for automatically trusted and "security-high-symbolic" for authenticated
+//            source: backgroundRoot.message.isTrusted ? "image://theme/icon-s-installed" : "image://theme/icon-s-warning"
+//			visible: backgroundRoot.message.encryption !== Encryption.NoEncryption
+//            width: Theme.iconSizeSmall
+//            height: width
+//		}
 
 		Image {
 			visible: message.isOwn
@@ -162,7 +167,7 @@ Item {
 	}
 
     Label {
-		id: dummy
-		text: "⠀"
-	}
+        id: dummy
+        text: "⠀"
+    }
 }

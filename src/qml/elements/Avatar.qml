@@ -33,25 +33,24 @@ import Sailfish.Silica 1.0
 import im.kaidan.kaidan 1.0
 
 
-Image {
-    id: img
+BackgroundItem {
+    id: root
     property string jid
-    property string  name
-    source: jid ? Kaidan.avatarStorage.getAvatarUrl(jid) : "image://theme/icon-m-contact"
-    fillMode: Image.PreserveAspectCrop;
-    antialiasing: true;
-    height: parent.height
-    width: height
+    property string name
+    width: parent.height
+    height: width
 
-    signal clicked()
-
-    MouseArea {
-        id: mousearea
+    Image {
+        id: img
+        source: Kaidan.avatarStorage.getAvatarUrl(jid)
+        visible: source != ""
+        fillMode: Image.PreserveAspectCrop;
+        antialiasing: true;
         anchors.fill: parent
     }
-
-    Component.onCompleted: {
-        mousearea.clicked.connect(clicked)
+    Icon {
+        source: "image://theme/icon-m-contact"
+        visible: !img.visible
+        anchors.fill: parent
     }
 }
-

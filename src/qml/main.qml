@@ -63,7 +63,7 @@ ApplicationWindow {
 	}
 
 	// radius for using rounded corners
-	readonly property int roundedCornersRadius: Theme.itemSizeSmall * 1.5
+    readonly property int roundedCornersRadius: Theme.itemSizeExtraSmall * 1.1
 
 	readonly property int largeButtonWidth: Theme.buttonWidthLarge
 	readonly property int smallButtonWidth: Theme.buttonWidthSmall

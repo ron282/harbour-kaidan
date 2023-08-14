@@ -28,10 +28,10 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 import QtQuick 2.2
-// import QtQuick.Controls 2.14 as Controls
 import Sailfish.Silica 1.0
-// import org.kde.kirigami 2.19 as Kirigami
 import im.kaidan.kaidan 1.0
+// import QtQuick.Controls 2.14 as Controls
+// import org.kde.kirigami 2.19 as Kirigami
 // import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
 
 /**
@@ -40,33 +40,24 @@ import im.kaidan.kaidan 1.0
  * It is used on a new layer on mobile and inside of a Sheet on desktop.
  */
 Column {
-	//FIXME Layout.fillHeight: true
+    id: mainColumn
 
-	SilicaFlickable {
-		width: parent.width
-        contentHeight: mainColumn.height
+    PageHeader {
+        id: header
+        title: qsTr("Settings")
+    }
 
-        ColumnView {
-            id: mainColumn
+    Button {
+        text: qsTr("Multimedia Settings")
+        //FIXME description: qsTr("Configure photo, video and audio recording settings")
+        onClicked: pageStack.push("qrc:/qml/settings/MultimediaSettings.qml")
+        icon.source: "emblem-system-symbolic"
+    }
 
-            PageHeader {
-                id: header
-                title: qsTr("Settings")
-            }
-
-			Button {
-				text: qsTr("Multimedia Settings")
-				//FIXME description: qsTr("Configure photo, video and audio recording settings")
-				onClicked: stack.push("qrc:/qml/settings/MultimediaSettings.qml")
-				icon.source: "emblem-system-symbolic"
-			}
-
-			Button {
-				text: qsTr("About Kaidan")
-				//FIXME description: qsTr("Learn about the current Kaidan version, view the source code and contribute")
-				onClicked: stack.push("qrc:/qml/settings/AboutPage.qml")
-				icon.source: "help-about-symbolic"
-			}
-		}
-	}
+    Button {
+        text: qsTr("About Kaidan")
+        //FIXME description: qsTr("Learn about the current Kaidan version, view the source code and contribute")
+        onClicked: pageStack.push("qrc:/qml/settings/AboutPage.qml")
+        icon.source: "help-about-symbolic"
+    }
 }

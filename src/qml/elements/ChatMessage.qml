@@ -45,7 +45,7 @@ ListItem {
 	property string senderJid
 	property string senderName
 	property string chatName
-	property bool isOwn: true
+    property bool isOwn: true
 	property int encryption
 	property bool isTrusted
 	property string messageBody
@@ -71,8 +71,7 @@ ListItem {
 	signal messageEditRequested(string id, string body)
 	signal quoteRequested(string body)
 
-    contentHeight: messageArea.height + (isGroupBegin ? Theme.paddingLarge : Theme.paddingSmall)
-    width: parent.width
+    contentHeight: messageArea.height + (isGroupBegin ? Theme.paddingLarge : 0)
     menu: contextMenu
 
 /*	actions: [
@@ -91,77 +90,91 @@ ListItem {
 	]
 */
 
+    anchors {
+        left: parent.left;
+        right: parent.right;
+//        margins: Theme.paddingSmall;
+    }
 
     Rectangle {
-        id: shadow;
-        color: "white";
-        radius: 3;
-        opacity: (!isOwn ? 0.05 : 0.15);
-        antialiasing: true;
+        id: shadow
+        color: "white"
+//      radius: 3
+        opacity: (!isOwn ? 0.05 : 0.15)
+        antialiasing: true
         anchors {
-            fill: messageArea;
+            fill: messageArea
+//            margins: -Theme.paddingSmall
         }
     }
 
     Column {
-		id: messageArea
-        width: parent.width * 0.85
-//		spacing: -5
-
+        id: messageArea
         // Own messages are on the right, others on the left side.
         anchors {
-            left: (isOwn ? parent.left : undefined);
-            right: (!isOwn ? parent.right : undefined);
-            margins: Theme.paddingSmall;
-            verticalCenter: parent.verticalCenter;
-        }
+            left: (!isOwn ? parent.left : undefined)
+            right: (isOwn ? parent.right : undefined)
+            leftMargin: (!isOwn ? Theme.paddingSmall : undefined)
+            rightMargin: (isOwn ? Theme.paddingSmall : undefined)
+            verticalCenter: parent.verticalCenter
+      }
         Row {
-            height: bubble.height
-			Item {
+            // Own messages are on the right, others on the left side.
+            layoutDirection: isOwn ? Qt.RightToLeft : Qt.LeftToRight
+            spacing: Theme.paddingMedium
+            width: root.width - Theme.iconSizeMedium - Theme.paddingMedium
+
+            Item {
                 id: avatarItem
-				visible: !isOwn
-                width: Theme.iconSizeSmall
+                visible: !isOwn
+//                Layout.alignment: Qt.AlignHCenter | Qt.AlignBottom
+                anchors.top: parent.top
+                height: Theme.iconSizeMedium
+                width: isOwn ? 0 : Theme.iconSizeMedium
 				Avatar {
 					id: avatar
-					visible: !isOwn && isGroupBegin
+                    visible: !isOwn /*&& isGroupBegin*/
 					anchors.fill: parent
 					jid: root.senderJid
 					name: root.senderName
 				}
 			}
 
-			// message bubble
+            // message bubble
             BackgroundItem {
-				id: bubble
-                width: messageArea.width - avatarItem.width
+                id: bubble
+
+                width: messageArea.width - avatarItem.width - Theme.paddingSmall
                 height: content.height
 
 //                readonly property string paddingText: {
 //					"⠀".repeat(Math.ceil(background.metaInfoWidth / background.dummy.implicitWidth))
 //				}
 
-                readonly property alias backgroundColor: bubbleBackground.color
+//                readonly property alias backgroundColor: bubbleBackground.color
 
                 MessageBackground {
-					id: bubbleBackground
-					message: root
-					showTail: !isOwn && isGroupBegin
+                    id: bubbleBackground
+                    message: root
+                    showTail: !isOwn && isGroupBegin
+                    anchors.fill: parent
 
-					MouseArea {
-						anchors.fill: parent
+                    MouseArea {
+                        anchors.fill: parent
 
-						onClicked: {
-							if (mouse.button === Qt.RightButton)
+                        onClicked: {
+                            if (mouse.button === Qt.RightButton)
                                 showContextMenu()
-						}
+                        }
 
-						onPressAndHold: showContextMenu()
-					}
-				}
+                        onPressAndHold: showContextMenu()
+                    }
+                }
 
                 Column {
 					id: content
-                    width: parent.width
+                    anchors.left: parent.left
+                    anchors.right: parent.right
 
                     Row {
 						id: spoilerHintRow
@@ -255,7 +268,11 @@ ListItem {
                         text: Utils.formatMessage(messageBody) // + bubble.paddingText
                         textFormat: Text.StyledText
                         wrapMode: Text.Wrap
-                        width: parent.width;
+                        font.family: Theme.fontFamilyHeading
+                        font.pixelSize: Theme.fontSizeMedium
+                        color: isOwn ? Theme.highlightColor: Theme.primaryColor
+                        anchors.right : isOwn ? parent.right : undefined
+                        width: isOwn ? parent.width - Theme.paddingMedium : parent.width - Theme.paddingMedium - Theme.iconSizeMedium
                         onLinkActivated: Qt.openUrlExternally(link)
                     }
                     Separator {
@@ -320,8 +337,8 @@ ListItem {
 
                         width: parent.width;
                         visible: text.length
-                        color: Theme.secondaryColor
-						font.italic: true
+                        color: isOwn ? Theme.highlightColor: Theme.primaryColor
+                        font.italic: true
                         font.pixelSize: Theme.fontSizeTiny
                         anchors.bottomMargin: Theme.paddingSmall
                     }
@@ -332,7 +349,11 @@ ListItem {
 						id: errorLabel
 						text: qsTr(errorText)
                         width: parent.width;
-                        color: Theme.secondaryColor
+                        color: isOwn ? Theme.highlightColor: Theme.primaryColor
+                        font.pixelSize: Theme.fontSizeTiny
+                    }
+                    Label {
+                        text: " "
                         font.pixelSize: Theme.fontSizeTiny
                     }
 				}
@@ -351,18 +372,17 @@ ListItem {
             text: qsTr("%1 has read up to this point").arg(chatName)
             font.pixelSize: Theme.fontSizeTiny
         }
-
-        /**
-         * Shows a context menu (if available) for this message.
-         *
-         * That is especially the case when this message is an element of the ChatPage.
-         */
-        function showContextMenu() {
-            if (contextMenu) {
-                contextMenu.file = null
-                contextMenu.message = this
-                contextMenu.popup()
-            }
+    }
+    /**
+     * Shows a context menu (if available) for this message.
+     *
+     * That is especially the case when this message is an element of the ChatPage.
+     */
+    function showContextMenu() {
+        if (contextMenu) {
+            contextMenu.file = null
+            contextMenu.message = this
+            contextMenu.popup()
         }
     }
 }

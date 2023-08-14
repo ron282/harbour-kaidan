@@ -32,6 +32,9 @@
 
 // Qt
 #include <QObject>
+#if defined(SFOS)
+#include <QStringList>
+#endif
 // QXmpp
 class QXmppClient;
 class QXmppRosterManager;
@@ -54,6 +57,14 @@ public:
 	void subscribeToPresence(const QString &contactJid);
 	void acceptSubscriptionToPresence(const QString &contactJid);
 	void refuseSubscriptionToPresence(const QString &contactJid);
+
+#if defined(SFOS)
+    void updateGroups(const QString &jid, const QString &name, const QStringList &groups = {});
+    Q_SIGNAL void updateGroupsRequested(const QString &jid, const QString &name, const QStringList &groups);
+#else
+    void updateGroups(const QString &jid, const QString &name, const QVector<QString> &groups = {});
+    Q_SIGNAL void updateGroupsRequested(const QString &jid, const QString &name, const QVector<QString> &groups);
+#endif
 
 signals:
 	/**
@@ -95,4 +106,5 @@ private:
 	AvatarFileStorage *m_avatarStorage;
 	VCardManager *m_vCardManager;
 	QXmppRosterManager *m_manager;
+    bool m_isItemBeingChanged = false;
 };

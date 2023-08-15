@@ -271,19 +271,19 @@ QString MediaUtils::newMediaIconName(Enums::MessageType hint)
 	switch (hint) {
 	case Enums::MessageType::MessageImage:
 #if defined(SFOS)
-        return QStringLiteral("image://theme/icon-m-browser-camera");
+        return QStringLiteral("image://theme/icon-m-file-image");
 #else
         return QStringLiteral("camera-photo-symbolic");
 #endif
     case Enums::MessageType::MessageVideo:
 #if defined(SFOS)
-        return QStringLiteral("image://theme/icon-m-video");
+        return QStringLiteral("image://theme/icon-m-file-video");
 #else
         return QStringLiteral("camera-video-symbolic");
 #endif
     case Enums::MessageType::MessageAudio:
 #if defined(SFOS)
-        return QStringLiteral("image://theme/icon-m-browser-microphone");
+        return QStringLiteral("image://theme/icon-m-file-audio");
 #else
 		return QStringLiteral("audio-input-microphone-symbolic");
 #endif
@@ -294,9 +294,19 @@ QString MediaUtils::newMediaIconName(Enums::MessageType hint)
         return QStringLiteral("mark-location-symbolic");
 #endif
     case Enums::MessageType::MessageText:
-	case Enums::MessageType::MessageFile:
+#if defined(SFOS)
+        return QStringLiteral("image://theme/icon-m-file-formatted-dark");
+#else
+        break;
+#endif
+    case Enums::MessageType::MessageFile:
 	case Enums::MessageType::MessageDocument:
-	case Enums::MessageType::MessageUnknown:
+#if defined(SFOS)
+        return QStringLiteral("image://theme/icon-m-file-document-dark");
+#else
+        break;
+#endif
+    case Enums::MessageType::MessageUnknown:
 		break;
 	}
 

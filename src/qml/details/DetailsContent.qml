@@ -19,8 +19,8 @@ SilicaControl {
     property DockedPanel sheet
     property string jid
 	property alias qrCodePage: qrCodePage
-//    property alias mediaOverview: mediaOverview
-//  property alias mediaOverviewExpansionButton: mediaOverviewExpansionButton
+    property alias mediaOverview: mediaOverview
+    property alias mediaOverviewExpansionButton: mediaOverviewExpansionButton
 //  property alias vCardArea: vCardArea.data
     property alias vCardRepeater: vCardRepeater
     property alias rosterGroupArea: rosterGroupZone.data
@@ -62,7 +62,7 @@ SilicaControl {
         }
 
         Column {
-//            visible: mediaOverview.totalFilesCount
+            visible: mediaOverview.totalFilesCount
             width: parent.width
             spacing: 0
 
@@ -70,23 +70,29 @@ SilicaControl {
                 text: qsTr("Media")
             }
 
-//            MediaOverview {
-//                id: mediaOverview
-//                visible: mediaOverviewExpansionButton.checked
-//                width: parent.width
-//            }
+            MediaOverview {
+                id: mediaOverview
+                visible: mediaOverviewExpansionButton.checked
+                width: parent.width
+            }
 
-//				FormExpansionButton {
-//					id: mediaOverviewExpansionButton
-//					onCheckedChanged: {
-//						if (checked) {
-//							mediaOverview.selectionMode = false
-//							mediaOverview.tabBarCurrentIndex = 0
-//							mediaOverview.loadDownloadedFiles()
-//						}
-//					}
-//				}
-//			}
+            Button {
+                id: mediaOverviewExpansionButton
+                property bool checked : false
+                anchors {
+                    right: parent.right
+                }
+                text: qsTr("View all media")
+                icon.source: checked ? "image://theme/icon-m-enter-close" : "image://theme/icon-m-enter-accept"
+                onClicked: {
+                    checked = !checked
+                    if (checked) {
+                        mediaOverview.selectionMode = false
+                        mediaOverview.tabBarCurrentIndex = 0
+                        mediaOverview.loadDownloadedFiles()
+                    }
+                }
+            }
         }
 
         Column {

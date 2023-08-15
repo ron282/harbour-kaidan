@@ -39,7 +39,7 @@ PageHeader {
             jid: chatItemWatcher.item.jid
             name: chatItemWatcher.item.displayName
             smooth: true;
-            onClicked: contactDetailsSheet.show()
+            onClicked: pageStack.push(contactDetailsSheet)
         }
     }
     Rectangle {

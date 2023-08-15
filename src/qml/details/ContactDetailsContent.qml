@@ -15,10 +15,10 @@ DetailsContent {
 
 	property bool isChatWithOneself: MessageModel.currentAccountJid === jid
 
-//    mediaOverview {
-//        accountJid: MessageModel.currentAccountJid
-//        chatJid: MessageModel.currentChatJid
-//    }
+    mediaOverview {
+        accountJid: MessageModel.currentAccountJid
+        chatJid: MessageModel.currentChatJid
+    }
 
     vCardRepeater {
         itemHeight: Theme.itemSizeMedium * 2
@@ -68,7 +68,7 @@ DetailsContent {
         TextField {
             id: rosterGroupField
             placeholderText: qsTr("New label")
-            enabled: !rosterGroupBusyIndicator.visible
+            enabled: !rosterGroupBusyIndicator.running
             width: parent.width
 //                      onAccepted: rosterGroupAdditionButton.clicked()
 
@@ -76,16 +76,16 @@ DetailsContent {
                 id: rosterGroupAdditionButton
                 icon.source: "image://theme/icon-splus-add"
                 enabled: rosterGroupField.text.length
-                visible: !rosterGroupBusyIndicator.visible
+                visible: !rosterGroupBusyIndicator.running
                 onClicked: {
                     var groups = []
 
-                    groups = chatItemWatcher.item.groups
+                    groups = chatItemWatcher.item.groupsList
 
                     if (groups.indexOf(rosterGroupField.text) !== -1) {
                         rosterGroupField.text = ""
                     } else if (enabled) {
-                        rosterGroupBusyIndicator.visible = true
+                        rosterGroupBusyIndicator.running = true
 
                         groups.push(rosterGroupField.text)
                         Kaidan.client.rosterManager.updateGroupsRequested(root.jid, chatItemWatcher.item.name, groups)
@@ -95,6 +95,12 @@ DetailsContent {
                         rosterGroupField.forceActiveFocus()
                     }
                 }
+            }
+
+            BusyLabel {
+                text: qsTr("updating labels...")
+                anchors.fill: colRoster
+                id: rosterGroupBusyIndicator
             }
 
             Connections {
@@ -107,17 +113,12 @@ DetailsContent {
                     }
                 }
             }
-            BusyIndicator {
-                id: rosterGroupBusyIndicator
-                visible: false
-                anchors.fill: parent
-            }
 
             Connections {
                 target: RosterModel
 
                 function onGroupsChanged() {
-                    rosterGroupBusyIndicator.visible = false
+                    rosterGroupBusyIndicator.running = false
                     rosterGroupField.forceActiveFocus()
                 }
             }
@@ -133,10 +134,10 @@ DetailsContent {
                 TextSwitch {
                     id: rosterGroupDelegate
                     text: modelData
-                    checked: contactWatcher.item.groups.includes(modelData)
+                    checked: contactWatcher.item.groupsList.includes(modelData)
                     width: parent.width
                     onCheckedChanged:  {
-                        groups = contactWatcher.item.groups
+                        var groups = contactWatcher.item.groupsList
 
                         if (checked) {
                             groups.push(modelData)
@@ -156,7 +157,7 @@ DetailsContent {
                         // Update the "checked" value of "rosterGroupDelegate" as a work
                         // around because "MobileForm.FormSwitchDelegate" does not listen to
                         // changes of "contactWatcher.item.groups".
-                        rosterGroupDelegate.checked = contactWatcher.item.groups.includes(modelData)
+                        rosterGroupDelegate.checked = contactWatcher.item.groupsList.includes(modelData)
                     }
                 }
             }
@@ -326,7 +327,8 @@ DetailsContent {
 		}
 	}
 
-    Dialog {
+    Component {
+        Dialog {
 		id: qrCodeDialog
     //	z: 1000
 
@@ -341,6 +343,7 @@ DetailsContent {
 			}
 		}
 	}    
+    }
 
     RosterItemWatcher {
         id: contactWatcher

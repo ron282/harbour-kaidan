@@ -27,7 +27,10 @@ public:
 	Q_PROPERTY(bool sendingPresence READ isSendingPresence CONSTANT)
 	Q_PROPERTY(bool receivingPresence READ isReceivingPresence CONSTANT)
 	Q_PROPERTY(QVector<QString> groups MEMBER groups)
-	Q_PROPERTY(int unreadMessageCount MEMBER unreadMessages)
+#if defined(SFOS)
+    Q_PROPERTY(QStringList groupsList READ readGroups)
+#endif
+    Q_PROPERTY(int unreadMessageCount MEMBER unreadMessages)
 	Q_PROPERTY(bool chatStateSendingEnabled MEMBER chatStateSendingEnabled)
 	Q_PROPERTY(bool readMarkerSendingEnabled MEMBER readMarkerSendingEnabled)
 	Q_PROPERTY(bool notificationsMuted MEMBER notificationsMuted)
@@ -57,7 +60,11 @@ public:
 	bool operator<=(const RosterItem &other) const;
 	bool operator>=(const RosterItem &other) const;
 
-	// JID of the account that has this item.
+#if defined(SFOS)
+    QStringList readGroups();
+#endif
+
+    // JID of the account that has this item.
 	QString accountJid;
 
 	// JID of the contact.

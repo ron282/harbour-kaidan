@@ -33,6 +33,16 @@ bool RosterItem::operator!=(const RosterItem &o) const
     return !(*this == o);
 }
 
+QStringList RosterItem::readGroups()
+{
+    QStringList retVal;
+    auto it = groups.cbegin();
+    while (it != groups.cend()) {
+        retVal.append(*it);
+        ++it;
+    }
+    return retVal;
+}
 #endif
 
 RosterItem::RosterItem(const QString &accountJid, const QXmppRosterIq::Item &item, const QDateTime &lastMessageDateTime)

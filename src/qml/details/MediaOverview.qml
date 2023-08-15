@@ -11,7 +11,7 @@ import im.kaidan.kaidan 1.0
 
 import "../elements"
 
-SilicaControl {
+BackgroundItem {
     id: root
 
     property alias accountJid: fileModel.accountJid
@@ -21,14 +21,10 @@ SilicaControl {
     readonly property alias totalFilesCount: fileModel.rowCount
     readonly property alias visibleFilesCount: fileProxyModel.rowCount
 
-//    leftPadding: 0
-//    topPadding: 0
-//    rightPadding: 0
-//    bottomPadding: 0
     Component.onCompleted: loadDownloadedFiles()
     SilicaGridView {
         implicitHeight: contentHeight
-//        boundsMovement: Flickable.StopAtBounds
+
         cellWidth: {
             switch (root.tabBarCurrentIndex) {
             case 0:
@@ -46,117 +42,68 @@ SilicaControl {
             case 1:
                 return cellWidth
             case 2:
-                return Kirigami.Units.largeSpacing * 8
+                return Theme.iconSizeLarge
             }
 
             return 0
         }
         header: Column {
-            width: GridView.view.width
-            height: implicitHeight
-            spacing: 0
-
             ButtonLayout {
                 id: tabBar
                 visible: !root.selectionMode
-//                spacing: 0
-
-                TextSwitch {
+                width: parent.width
+                height: Theme.itemSizeMedium
+                columnSpacing: 0
+                Switch {
                     id: imagesTab
-//                  checkable: true
                     width: tabBar.width / 3
-                    Label {
-                        text: qsTr("Images")
-                        wrapMode: Text.Wrap
-                        horizontalAlignment: Controls.Label.AlignHCenter
-                        font.bold: parent.checked
+                    iconSource: "image://theme/icon-m-file-image"
+                    checked: true
+                    automaticCheck: false
+                    onClicked: {
+                        tabBarCurrentIndex = 0
+                        imageTab.checked = true
+                        videoTab.checked = false
+                        otherTab.checked = false
                     }
                 }
-
-                Separator {
-                    id: imagesVideosTabSeparator
-                    width: parent.width
-                }
-
-                TextSwitch {
-                    id: videosTab
-//                  checkable: true
+                Switch {
+                    id: videoTab
                     width: tabBar.width / 3
-                    Label {
-                        text: qsTr("Videos")
-                        wrapMode: Text.Wrap
-                        horizontalAlignment: Controls.Label.AlignHCenter
-                        font.bold: parent.checked
+                    iconSource: "image://theme/icon-m-file-video"
+                    automaticCheck: false
+                    onClicked: {
+                        tabBarCurrentIndex = 1
+                        imageTab.checked = false
+                        videoTab.checked = true
+                        otherTab.checked = false
                     }
                 }
-
-                Separator {
-                    id: videosOtherTabSeparator
-                    width: parent.width
-                }
-
-                TextSwitch {
+                Switch {
                     id: otherTab
-//                  checkable: true
                     width: tabBar.width / 3
-                    Label {
-                        text: qsTr("Other")
-                        wrapMode: Text.Wrap
-                        horizontalAlignment: Controls.Label.AlignHCenter
-                        font.bold: parent.checked
+                    iconSource: "image://theme/icon-m-file-other-dark"
+                    automaticCheck: false
+                    onClicked: {
+                        tabBarCurrentIndex = 2
+                        videoTab.checked = false
+                        imageTab.checked = false
+                        otherTab.checked = true
                     }
                 }
-
-                ButtonGroup {
-                    id: tabBarGroup
-                    buttons: [
-                        imagesTab,
-                        videosTab,
-                        otherTab
-                    ]
-                    onCheckedButtonChanged: {
-                        switch (checkedButton) {
-                        case buttons[0]:
-                            root.tabBarCurrentIndex = 0
-                            break
-                        case buttons[1]:
-                            root.tabBarCurrentIndex = 1
-                            break
-                        case buttons[2]:
-                            root.tabBarCurrentIndex = 2
-                            break
-                        default:
-                            root.tabBarCurrentIndex = -1
-                            break
-                        }
-                    }
-                }
-
-                Binding {
-                    target: tabBarGroup
-                    property: "checkedButton"
-                    value: {
-                        if (root.tabBarCurrentIndex < 0 || root.tabBarCurrentIndex >= tabBarGroup.buttons.length) {
-                            return null
-                        }
-
-                        return tabBarGroup.buttons[root.tabBarCurrentIndex]
-                    }
-                }
-            }
+           }
 
             // tool bar for actions on selected media
             Row {
                 visible: root.selectionMode
-//                Layout.minimumHeight: tabBar.height
-//                Layout.maximumHeight: Layout.minimumHeight
-//                Layout.rightMargin: Kirigami.Units.largeSpacing
+                anchors {
+                    right: parent.right
+                    left: parent.left
+                }
 
                 IconButton {
                     id: iconClear
-                    icon.source: "image:/theme/icon-m-back"
-//                    implicitWidth: Kirigami.Units.iconSizes.small
-//                    implicitHeight: implicitWidth
+                    icon.source: "image://theme/icon-s-checkmark"
                     onClicked: {
                         root.selectionMode = false
                         fileProxyModel.clearChecked()
@@ -165,14 +112,13 @@ SilicaControl {
 
                 Label {
                     text: qsTr("%1/%2 selected").arg(fileProxyModel.checkedCount).arg(fileProxyModel.rowCount)
-                    horizontalAlignment: Qt.AlignLeft
                     width: parent.width - iconClear.width - iconCheckAll.width - iconDeleteChecked.width
                 }
 
                 IconButton {
                     id: iconCheckAll
                     visible: fileProxyModel.checkedCount !== fileProxyModel.rowCount
-                    icon.source: "edit-select-all-symbolic"
+                    icon.source: "image:/theme/icon-s-group-chat"
                     onClicked: {
                         fileProxyModel.checkAll()
                     }
@@ -180,54 +126,12 @@ SilicaControl {
 
                 IconButton {
                     id: iconDeleteChecked
-                    icon.source: "edit-delete-symbolic"
+                    icon.source: "image:/theme/icon-s-decline"
                     onClicked: {
                         fileProxyModel.deleteChecked()
                         root.selectionMode = false
                     }
                 }
-            }
-
-            // regular separator
-            Separator {
-//                implicitHeight: Theme.paddingSmall
-                width: parent.width
-            }
-
-            // colored marker for current tab selection partly covering the regular separator
-            Separator {
-//                color: Kirigami.Theme.highlightColor
-                visible: !root.selectionMod
-                width: parent.width
-//                Layout.topMargin: - implicitHeight
-/*                Layout.leftMargin: {
-                    if (imagesTab.checked) {
-                        return 0
-                    }
-
-                    if (videosTab.checked) {
-                        return imagesTab.width
-                    }
-
-                    if (otherTab.checked ) {
-                        return imagesTab.width + imagesVideosTabSeparator.width + videosTab.width
-                    }
-                }
-*/
-/*               Layout.rightMargin: {
-                    if (otherTab.checked) {
-                        return 0
-                    }
-
-                    if (videosTab.checked ) {
-                        return otherTab.width
-                    }
-
-                    if (imagesTab.checked ) {
-                        return videosTab.width + videosOtherTabSeparator.width + otherTab.width
-                    }
-                }
-*/
             }
         }
         model: FileProxyModel {
@@ -247,14 +151,14 @@ SilicaControl {
             sourceModel: FileModel {
                 id: fileModel
             }
-            onFilesDeleted: (files, errors) => {
-                if (errors.length > 0) {
-                    passiveNotification(qsTr("Not all files could be deleted:\n%1").arg(errors[0]))
-                    console.warn("Not all files could be deleted:", errors)
-                }
+//            onFilesDeleted: (files, errors) => {
+//                if (errors.length > 0) {
+//                    passiveNotification(qsTr("Not all files could be deleted:\n%1").arg(errors[0]))
+//                    console.warn("Not all files could be deleted:", errors)
+//                }
 
-                root.loadDownloadedFiles()
-            }
+//                root.loadDownloadedFiles()
+//            }
         }
         delegate: {
             switch (root.tabBarCurrentIndex) {
@@ -374,57 +278,40 @@ SilicaControl {
         Component {
             id: otherDelegate
 
-            Controls.ItemDelegate {
+            BackgroundItem {
                 id: control
                 implicitWidth: GridView.view.cellWidth
                 implicitHeight: GridView.view.cellHeight
-                autoExclusive: false
-                checkable: root.selectionMode
-                checked: checkable && model.checkState === Qt.Checked
-                topPadding: Kirigami.Units.largeSpacing
-                bottomPadding: topPadding
-                contentItem: MouseArea {
+//                autoExclusive: false
+//                checkable: root.selectionMode
+//                checked: checkable && model.checkState === Qt.Checked
+//                topPadding: Theme.paddingLarge
+//                bottomPadding: topPadding
+                  MouseArea {
                     id: selectionArea
                     hoverEnabled: true
                     acceptedButtons: Qt.NoButton
 
-                    GridLayout {
+                    SilicaGridView {
                         anchors.fill: parent
 
-                        Kirigami.Icon {
+                        Icon {
                             source: model.file.mimeTypeIcon
-                            color: Kirigami.Theme.backgroundColor
-                            Layout.row: 0
-                            Layout.column: 0
-                            Layout.rowSpan: 2
-                            Layout.leftMargin: parent.columnSpacing
-                            Layout.preferredWidth: parent.height * .8
-                            Layout.preferredHeight: Layout.preferredWidth
                         }
 
-                        Controls.Label {
+                        Label {
                             text: model.file.name
                             elide: Qt.ElideRight
                             font.bold: true
-                            Layout.row: 0
-                            Layout.column: 1
-                            Layout.fillWidth: true
                         }
 
-                        Controls.Label {
+                        Label {
                             text: model.file.details
-                            Layout.row: 1
-                            Layout.column: 1
-                            Layout.fillWidth: true
                         }
 
                         SelectionMarker {
                             visible: selectionArea.containsMouse || checked
                             checked: control.checked
-                            Layout.row: 0
-                            Layout.column: 2
-                            Layout.rowSpan: 2
-                            Layout.rightMargin: parent.columnSpacing * 2
                             onClicked: {
                                 root.selectionMode = true
                                 model.checkState = checkState
@@ -434,9 +321,9 @@ SilicaControl {
                         }
                     }
                 }
-                onToggled: {
-                    model.checkState = checked ? Qt.Checked : Qt.Unchecked
-                }
+//                onToggled: {
+//                    model.checkState = checked ? Qt.Checked : Qt.Unchecked
+//                }
                 onClicked: {
                     if (root.selectionMode) {
                         if (fileProxyModel.checkedCount === 0) {

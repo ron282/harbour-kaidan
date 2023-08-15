@@ -20,12 +20,6 @@ BackgroundItem {
 	id: root
     width: parent.width
 
-//	background: Kirigami.ShadowedRectangle {
-//		shadow.color: Qt.darker(color, 1.2)
-//		shadow.size: 4
-//		color: Kirigami.Theme.backgroundColor
-//	}
-
 	property QtObject chatPage
 	property alias messageArea: messageArea
 	property int lastMessageLength: 0
@@ -62,7 +56,6 @@ BackgroundItem {
                 width: parent.width - closeSpoilerIcon.width
 				placeholderText: qsTr("Spoiler hint")
                 wrapMode: TextEdit.Wrap
-				// background: Item {}
 			}
 
             IconButton {
@@ -71,8 +64,6 @@ BackgroundItem {
                 icon.source: "image://theme/icon-m-close"
                 width: Theme.iconSizeMedium
                 height: Theme.iconSizeMedium
-                ////FIXME display: Controls.Button.IconOnly
-                ////FIXME flat: true
 
 				onClicked: {
 					composition.isSpoiler = false
@@ -113,9 +104,6 @@ BackgroundItem {
 				placeholderText: MessageModel.isOmemoEncryptionEnabled ? qsTr("Compose <b>encrypted</b> message") : qsTr("Compose <b>unencrypted</b> message")
 				// background: Item {}
 				wrapMode: TextEdit.Wrap
-//              anchors.leftMargin: Style.isMaterial ? 6 : 0
-//              anchors.rightMargin: Style.isMaterial ? 6 : 0
-//              anchors.bottomMargin: Style.isMaterial ? -8 : 0
                 width: getMessageAreaWidth(parent.width)
 
                 function getMessageAreaWidth(w) {
@@ -126,7 +114,6 @@ BackgroundItem {
                     return w;
                 }
 
-//				verticalAlignment: TextEdit.AlignVCenter
 				state: "compose"
 
 				onTextChanged: {
@@ -195,7 +182,7 @@ BackgroundItem {
                 id: voiceIcon
                 icon.source: MediaUtilsInstance.newMediaIconName(Enums.MessageAudio)
                 visible: messageArea.text === ""
-                opacity: visible ? 1 : 0
+                width: Theme.iconSizeMedium
                 Behavior on opacity {
                     NumberAnimation {}
                 }
@@ -207,11 +194,10 @@ BackgroundItem {
             // file sharing button
             ClickableIcon {
                 id: shareIcon
+                width: Theme.iconSizeMedium
                 icon.source: "image://theme/icon-m-attach"
-//                anchors.right: parent.right
 
                 visible: messageArea.text === ""
-                opacity: visible ? 1 : 0
                 Behavior on opacity {
                     NumberAnimation {}
                 }
@@ -344,9 +330,8 @@ BackgroundItem {
             ClickableIcon {
 				id: sendButton
 				visible: messageArea.text !== ""
-				opacity: visible ? 1 : 0
-//               anchors.right: parent.right
-				Behavior on opacity {
+                width: Theme.iconSizeMedium
+                Behavior on opacity {
 					NumberAnimation {}
 				}
                 icon.source: {

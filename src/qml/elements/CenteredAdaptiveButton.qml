@@ -11,7 +11,8 @@ import im.kaidan.kaidan 1.0
 /**
  * This is a centered button having an adjustable label and fitting its parent's width.
  */
-IconTextSwitch {
+Button {
+    property bool checked: false
     anchors.horizontalCenter: parent.horizontalCenter
     width: parent.width
 }

@@ -5,7 +5,6 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-// import org.kde.kirigami 2.19 as Kirigami
 
 import im.kaidan.kaidan 1.0
 

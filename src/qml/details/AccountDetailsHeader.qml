@@ -3,16 +3,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick 2.2
-// import org.kde.kirigami 2.19 as Kirigami
+import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
 
 DetailsHeader {
 	id: root
 
-	property Kirigami.OverlaySheet sheet
+    property Page sheet
 
-	displayName: AccountManager.displayName
+    displayName: AccountManager.displayName
 //	avatarAction: Button {
 //		text: qsTr("Change your profile image")
 //		icon.source: "image://theme/icon-m-camera"

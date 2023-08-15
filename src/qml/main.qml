@@ -62,9 +62,9 @@ ApplicationWindow {
 	// Global and Contextual Drawers
 	// It is initialized as invisible.
 	// That way, it does not pop up for a moment before the startPage is opened.
-//	globalDrawer: GlobalDrawer {
-//		enabled: false
-//	}
+//    globalDrawer: GlobalDrawer {
+//        enabled: false
+//    }
 
 //	contextDrawer: Kirigami.ContextDrawer {
 //		id: contextDrawer
@@ -77,6 +77,7 @@ ApplicationWindow {
 
     // components for all main pages
 	Component {id: startPage; StartPage {}}
+    Component {id: globalDrawer; GlobalDrawer {}}
     Component {id: registrationLoginDecisionPage; RegistrationLoginDecisionPage {}}
     Component {id: registrationDecisionPage; RegistrationDecisionPage {}}
     Component {id: automaticRegistrationPage; AutomaticRegistrationPage {}}
@@ -139,6 +140,7 @@ ApplicationWindow {
 
 //        popLayersAboveLowest()
 //        popAllPages()
+//          pageStack.push(globalDrawer, {}, PageStackAction.Immediate)
           pageStack.push(rosterPage, {}, PageStackAction.Immediate)
 //        showRosterPageForNarrowWindow()
 	}

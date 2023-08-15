@@ -60,7 +60,7 @@ Page {
 				if (isGroupChatSupportSheet) {
 					Qt.openUrlExternally("xmpp:" + modelData + "?join")
 				} else {
-					let contactAdditionContainer = openView(contactAdditionDialog, contactAdditionPage)
+                    var contactAdditionContainer = openView(contactAdditionDialog, contactAdditionPage)
 					contactAdditionContainer.jid = modelData
 					contactAdditionContainer.name = chatName
 				}

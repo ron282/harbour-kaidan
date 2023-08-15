@@ -7,9 +7,6 @@
 import QtQuick 2.2
 import Sailfish.Silica 1.0
 import im.kaidan.kaidan 1.0
-// import QtQuick.Controls 2.14 as Controls
-// import org.kde.kirigami 2.19 as Kirigami
-// import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
 
 /**
  * The settings page contains options to configure Kaidan.
@@ -28,13 +25,13 @@ Column {
         text: qsTr("Multimedia Settings")
         //FIXME description: qsTr("Configure photo, video and audio recording settings")
         onClicked: pageStack.push("qrc:/qml/settings/MultimediaSettings.qml")
-        icon.source: "emblem-system-symbolic"
+        icon.source: "image://theme/icon-m-setting"
     }
 
     Button {
         text: qsTr("About Kaidan")
         //FIXME description: qsTr("Learn about the current Kaidan version, view the source code and contribute")
         onClicked: pageStack.push("qrc:/qml/settings/AboutPage.qml")
-        icon.source: "help-about-symbolic"
+        icon.source: "image://theme/icon-m-about"
     }
 }

@@ -12,13 +12,10 @@ import Sailfish.Silica 1.0
 Page {
     SilicaFlickable {
         anchors.fill: parent
-        contentHeight: column.height
+        contentHeight: content.height
 
-    //	topPadding: 0
-    //	bottomPadding: 0
-    //	leftPadding: 0
-    //	rightPadding: 0
-
-        SettingsContent {}
+        SettingsContent {
+            id: content
+        }
     }
 }

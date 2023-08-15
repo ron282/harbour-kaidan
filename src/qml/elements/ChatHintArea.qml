@@ -2,9 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
 
@@ -35,7 +34,7 @@ Rectangle {
 		// When this item is removed from the model (i.e., it has the index -1), it is set to be
 		// finally removed from the user interface as soon as it is completely collapsed.
 		if (index === -1 && height === 0) {
-			ListView.delayRemove = false
+            SilicaListView.delayRemove = false
 		}
 	}
 
@@ -45,7 +44,7 @@ Rectangle {
 		}
 	}
 
-	ColumnLayout {
+    Column {
 		id: contentArea
 		anchors.left: root.left
 		anchors.right: root.right
@@ -54,19 +53,20 @@ Rectangle {
 		Rectangle {
 			height: 3
 			color: Kirigami.Theme.highlightColor
-			Layout.fillWidth: true
-		}
+            anchors.left: parent.left
+            anchors.right: parent.right
+        }
 
 		// middle: chat hint
-		ColumnLayout {
-			Layout.margins: Kirigami.Units.largeSpacing
+        Column {
+            anchors.margins: Theme.paddingLarge
 
 			LoadingStackArea {
 				id: loadingStackArea
 				loadingArea.background.visible: false
 				loadingArea.description: root.loadingDescription
 
-				ColumnLayout {
+                Column {
 					visible: root.text
 
 					CenteredAdaptiveText {
@@ -75,12 +75,12 @@ Rectangle {
 					}
 				}
 
-				RowLayout {
+                Row {
 					visible: root.buttons.length
-					Layout.alignment: Qt.AlignHCenter
-					Layout.maximumWidth: largeButtonWidth * root.buttons.length + spacing
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: Theme.buttonWidthLarge * root.buttons.length + spacing
 
-					Repeater {
+                    SilicaGridView {
 						id: buttonArea
 						model: root.buttons
 						delegate: CenteredAdaptiveButton {
@@ -93,10 +93,7 @@ Rectangle {
 		}
 
 		// bottom: colored separator
-		Rectangle {
-			height: 3
-			color: Kirigami.Theme.highlightColor
-			Layout.fillWidth: true
+        Separator {
 		}
 	}
 }

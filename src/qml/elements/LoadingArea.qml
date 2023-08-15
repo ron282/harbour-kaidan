@@ -11,27 +11,12 @@ Item {
 	property alias background: background
 	property alias description: description.text
 
-	Rectangle {
-		id: background
-		anchors.fill: content
-		anchors.margins: -8
-		radius: roundedCornersRadius
-		color: primaryBackgroundColor
-		opacity: 0.9
-	}
+    Rectangle {
+        id: background
+    }
 
-    Column {
-		id: content
-		anchors.centerIn: parent
-
-        BusyIndicator {
-            anchors.fill: parent
-		}
-
-        Label {
-			id: description
-			text: qsTr("Loading…")
-			font.italic: true
-		}
-	}
+    BusyLabel {
+        id: description
+        text: qsTr("Loading…")
+    }
 }

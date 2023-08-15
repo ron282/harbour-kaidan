@@ -230,10 +230,10 @@ DetailsContent {
 
                 return ""
             }
-/*			icon.source: {
+/*            icon.source: {
                 if (!MessageModel.usableOmemoDevices.length) {
 					if (accountOmemoWatcher.distrustedOmemoDevices.length) {
-                        return "image://theme/icon-m-device-lock"
+                        return "image://theme/icon-m-vpn"
 					} else if (ownResourcesWatcher.resourcesCount > 1) {
                         return "image://theme/icon-m-warning"
 					} else if (root.isChatWithOneself) {
@@ -292,7 +292,7 @@ DetailsContent {
                         return qsTr("Scan the QR code of your <b>contact</b> to enable encryption")
                     }
 
-                    return qsTr("Your <b>contact</b> doesn't use OMEMO 2")
+                    return qsTr("Your <b>contact</b> doesn't use OMEMO")
                 } else if (contactOmemoWatcher.authenticatableOmemoDevices.length) {
                     if (contactOmemoWatcher.authenticatableOmemoDevices.length === contactOmemoWatcher.distrustedOmemoDevices.length) {
                         return qsTr("Scan the QR codes of your <b>contact's</b> devices to encrypt for them")
@@ -340,6 +340,7 @@ DetailsContent {
 				jid: root.jid
                 height:  Screen.height * 0.5 // Math.min(parent.height, Screen.height * 0.5)
 				width: parent.width
+                anchors.verticalCenter: parent.verticalCenter
 			}
 		}
 	}    

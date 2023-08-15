@@ -32,7 +32,17 @@ Page {
             anchors.horizontalCenter: parent.horizontalCenter
         }
 
-        Button {
+        CenteredAdaptiveText {
+            text: "Kaidan"
+            scaleFactor: 6
+        }
+
+        CenteredAdaptiveText {
+            text: qsTr("Enjoy free communication on every device!")
+            scaleFactor: 2
+        }
+
+        CenteredAdaptiveHighlightedButton {
             id: startButton
             text: qsTr("Let's start")
             onClicked: pageStack.push(qrCodeOnboardingPage)

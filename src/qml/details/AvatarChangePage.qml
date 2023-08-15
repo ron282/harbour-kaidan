@@ -5,13 +5,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick 2.2
-// import QtQuick.Controls 2.14 as Controls
 import Sailfish.Silica 1.0
-// import QtQuick.Dialogs 1.3 as QQD
-import QtGraphicalEffects 1.14
-
-// import org.kde.kirigami 2.19 as Kirigami
-// import org.kde.kquickimageeditor 1.0 as KQuickImageEditor
 import Sailfish.Pickers 1.0
 
 import im.kaidan.kaidan 1.0

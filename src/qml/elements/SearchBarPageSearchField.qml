@@ -2,18 +2,18 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.14
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
 
 /**
  * This is the search field of the SearchBarPage for filtering a list.
  */
-Kirigami.SearchField {
+TextField {
 	id: root
 
-	property ListView listView
+    property SilicaListView listView
 
 	onTextChanged: listView.model.setFilterFixedString(text.toLowerCase())
 	Keys.onEscapePressed: text = ""

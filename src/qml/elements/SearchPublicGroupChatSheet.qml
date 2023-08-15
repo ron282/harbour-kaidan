@@ -4,14 +4,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick 2.2
-// import QtQuick.Controls 2.14 as Controls
 import Sailfish.Silica 1.0
-// import org.kde.kirigami 2.19 as Kirigami
 
 import im.kaidan.kaidan 1.0
 import PublicGroupChats 1.0 as PublicGroupChats
 
-DockedPanel {
+Page {
 	id: root
 
 	function requestAll() {
@@ -19,59 +17,41 @@ DockedPanel {
 		groupChatsManager.requestAll();
 	}
 
-	parent: applicationWindow().overlay
-	header: SectionHeader {
-		text: qsTr("Search public groups (%1)")
-				.arg("%1/%2".arg(groupChatsProxy.count).arg(groupChatsModel.count))
-
-		wrapMode: Text.WordWrap
-	}
-
-	onSheetOpenChanged: {
-		if (sheetOpen) {
-			root.forceActiveFocus();
-			root.requestAll();
-		} else {
-			filterField.clear();
-		}
-	}
-
-	Column {
-		enabled: !groupChatsManager.isRunning
-
-		TextField {
-			id: filterField
-
-			// selectByMouse: true
-			placeholderText: qsTr("Search…")
-
-			onTextChanged: {
-				groupChatsProxy.setFilterWildcard(text);
-			}
-			onActiveFocusChanged: {
-				// Force the active focus when it is lost.
-				// That is needed because the active focus is changed to EmptyChatPage or RosterPage
-				// after opening the public group chat search while being offline (i.e., group chats
-				// are not loaded and loadingArea is not shown) for unknown reasons.
-				if (!activeFocus && root.sheetOpen) {
-					forceActiveFocus()
-				}
-			}
-
-			width: parent.width
-		}
-
-		ListView {
+        SilicaListView {
 			id: groupChatsField
 
-			clip: true
+            header: 	Column {
+                enabled: !groupChatsManager.isRunning
+
+                PageHeader {
+                    title: qsTr("Search public groups (%1)")
+                            .arg("%1/%2".arg(groupChatsProxy.count).arg(groupChatsModel.count))
+
+                    wrapMode: Text.WordWrap
+                }
+
+                TextField {
+                    id: filterField
+
+                    // selectByMouse: true
+                    placeholderText: qsTr("Search…")
+
+                    onTextChanged: {
+                        groupChatsProxy.setFilterWildcard(text);
+                    }
+
+                    width: parent.width
+                }
+            }
+
+            clip: true
 			model: PublicGroupChats.ProxyModel {
 				id: groupChatsProxy
 
 				filterCaseSensitivity: Qt.CaseInsensitive
-				filterRole: PublicGroupChats.Model.CustomRole.GlobalSearch
+                filterRole: PublicGroupChats.Model.GlobalSearch
 				sortCaseSensitivity: Qt.CaseInsensitive
-				sortRole: PublicGroupChats.Model.CustomRole.Users
+                sortRole: PublicGroupChats.Model.Users
 				sourceModel: PublicGroupChats.Model {
 					id: groupChatsModel
 
@@ -83,11 +63,8 @@ DockedPanel {
 				}
 			}
 
-			Controls.ScrollBar.vertical: Controls.ScrollBar {
-			}
-
-			delegate: Controls.SwipeDelegate {
-				width: ListView.view.width - ListView.view.Controls.ScrollBar.vertical.width
+            delegate: BackgroundItem {
+                width: SilicaListView.view.width
 
 				 Row {
 					spacing: 12
@@ -98,15 +75,12 @@ DockedPanel {
 							height: width
 							jid: model.address
 							name: model.name
-							iconSource: "group"
+//							iconSource: "group"
 						}
 
 						Row {
 							Icon {
 								source: "group"
-
-								//FIXME Layout.preferredWidth: Kirigami.Units.iconSizes.small
-								// //FIXME Layout.preferredHeight: Layout.preferredWidth
 							}
 
 							Label {
@@ -173,51 +147,24 @@ DockedPanel {
 				description: qsTr("Downloading…")
 				anchors.centerIn: parent
 
-				// background of loadingArea
-				Rectangle {
-					anchors.fill: loadingArea
-					anchors.margins: -8
-					radius: roundedCornersRadius
-					color: Kirigami.Theme.backgroundColor
-					opacity: 0.9
-					visible: loadingArea.visible
-				}
-
 				Column {
-					id: loadingArea
+                    id: loadingAreaCol
 					anchors.centerIn: parent
 					visible: groupChatsManager.isRunning
-					onVisibleChanged: root.forceActiveFocus()
 
-					BusyIndicator {
-						anchors.horizontalCenter: parent
-					}
-
-					Label {
-						text: "<i>" + qsTr("Loading…") + "</i>"
-						color: Kirigami.Theme.textColor
-					}
+                    BusyLabel {
+                        text: "<i>" + qsTr("Loading…") + "</i>"
+                    }
 				}
 			}
 
-			Item {
+            BackgroundItem {
 				visible: errorLabel.text
 
 				anchors {
 					fill: parent
 				}
 
-				// background of errorArea
-				Rectangle {
-					radius: roundedCornersRadius
-					color: Kirigami.Theme.backgroundColor
-					opacity: 0.9
-
-					anchors {
-						fill: errorArea
-						margins: -8
-					}
-				}
 
 				Column {
 					id: errorArea
@@ -230,18 +177,12 @@ DockedPanel {
 
 					Row {
 						Icon {
-							source: "error"
-
-							//FIXME Layout.preferredWidth: Kirigami.Units.iconSizes.medium
-							// //FIXME Layout.preferredHeight: Layout.preferredWidth
+                            source: "image://theme/icon-splus-error"
 						}
 
 						Label {
 							id: errorLabel
-
 							wrapMode: Label.WrapAtWordBoundaryOrAnywhere
-							color: Kirigami.Theme.textColor
-
 							width: parent.width
 						}
 
@@ -254,20 +195,10 @@ DockedPanel {
 						onClicked: {
 							root.requestAll();
 						}
-
-						// Layout.alignment: Qt.AlignCenter
 					}
 				}
 			}
 
 			width: parent.width
-			//FIXME Layout.minimumHeight: 300
-		}
-	}
-
-	function forceActiveFocus() {
-		if (!Kirigami.Settings.isMobile && !loadingArea.visible) {
-			filterField.forceActiveFocus()
-		}
-	}
+        }
 }

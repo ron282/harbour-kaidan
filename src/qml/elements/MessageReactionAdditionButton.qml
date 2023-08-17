@@ -3,10 +3,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import QtQuick.Controls 2.14 as Controls
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
 
@@ -20,10 +18,9 @@ MessageReactionButton {
 	property MessageReactionEmojiPicker emojiPicker
 
 	primaryColor: secondaryBackgroundColor
-	contentItem: Kirigami.Icon {
-		source: "smiley-add"
-	}
-	onClicked: {
+    icon.source: "image://theme/icon-m-toy"
+
+    onClicked: {
 		emojiPicker.messageId = root.messageId
 		emojiPicker.open()
 	}

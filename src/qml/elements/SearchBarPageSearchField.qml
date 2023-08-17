@@ -13,6 +13,14 @@ import im.kaidan.kaidan 1.0
 TextField {
 	id: root
 
+    anchors.left: parent.left
+    anchors.right: parent.right
+
+    leftItem: Icon {
+        source: "image://theme/icon-m-search"
+        anchors.top: parent.top
+    }
+
     property SilicaListView listView
 
 	onTextChanged: listView.model.setFilterFixedString(text.toLowerCase())

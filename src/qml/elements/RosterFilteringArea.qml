@@ -2,40 +2,37 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.14
-import QtQuick.Controls 2.14 as Controls
-import QtQuick.Layouts 1.14
-import org.kde.kirigami 2.19 as Kirigami
-import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
 
 /**
  * Used to filter the displayed roster items.
  */
-ColumnLayout {
+Column {
 	id: root
 
 	property RosterFilterProxyModel rosterFilterProxyModel
 
 	spacing: 0
 
-	ListView {
+    SilicaListView {
 		id: accountListView
 		model: RosterModel.accountJids
 		implicitWidth: 570
 		implicitHeight: contentHeight
-		Layout.fillWidth: true
-		header: MobileForm.FormCard {
-			width: ListView.view.width
-			Kirigami.Theme.colorSet: Kirigami.Theme.Window
-			contentItem: MobileForm.FormSwitchDelegate {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        header: BackgroundItem {
+            width: SilicaListView.view.width
+            TextSwitch {
 				id: accountFilteringSwitch
 				text: qsTr("Filter by accounts")
 				description: qsTr("Show only chats of selected accounts")
 				enabled: checked
 				checked: root.rosterFilterProxyModel.selectedAccountJids.length
-				onToggled: root.rosterFilterProxyModel.selectedAccountJids = []
+                onCheckedChanged: root.rosterFilterProxyModel.selectedAccountJids = []
 
 				// TODO: Remove this once fixed in Kirigami Addons.
 				// Add a connection as a work around to reset the switch because
@@ -44,18 +41,18 @@ ColumnLayout {
 				Connections {
 					target: root.rosterFilterProxyModel
 
-					function onSelectedAccountJidsChanged() {
+                    onSelectedAccountJidsChanged: {
 						accountFilteringSwitch.checked = root.rosterFilterProxyModel.selectedAccountJids.length
 					}
 				}
 			}
 		}
-		delegate: MobileForm.FormSwitchDelegate {
+        delegate: TextSwitch {
 			id: accountDelegate
 			text: modelData
 			checked: root.rosterFilterProxyModel.selectedAccountJids.includes(modelData)
-			width: ListView.view.width
-			onToggled: {
+            width: SilicaListView.view.width
+            onCheckedChanged: {
 				if(checked) {
 					root.rosterFilterProxyModel.selectedAccountJids.push(modelData)
 				} else {
@@ -70,7 +67,7 @@ ColumnLayout {
 			Connections {
 				target: root.rosterFilterProxyModel
 
-				function onSelectedAccountJidsChanged() {
+                onSelectedAccountJidsChanged: {
 					accountDelegate.checked = root.rosterFilterProxyModel.selectedAccountJids.includes(modelData)
 				}
 			}
@@ -79,10 +76,10 @@ ColumnLayout {
 		Connections {
 			target: RosterModel
 
-			function onAccountJidsChanged() {
+            onAccountJidsChanged: {
 				// Remove selected account JIDs that have been removed from the main model.
 				const selectedAccountJids = root.rosterFilterProxyModel.selectedAccountJids
-				for (let i = 0; i < selectedAccountJids.length; i++) {
+                for (var i = 0; i < selectedAccountJids.length; i++) {
 					if (!RosterModel.accountJids.includes(selectedAccountJids[i])) {
 						root.rosterFilterProxyModel.selectedAccountJids.splice(i, 1)
 					}
@@ -91,28 +88,26 @@ ColumnLayout {
 		}
 	}
 
-	Kirigami.Separator {
-		visible: !Kirigami.Settings.isMobile
-		implicitHeight: Kirigami.Units.smallSpacing
-		Layout.fillWidth: true
+    Separator {
+        visible: false
 	}
 
-	ListView {
+    SilicaListView {
 		id: groupListView
 		model: RosterModel.groups
 		implicitWidth: 570
 		implicitHeight: contentHeight
-		Layout.fillWidth: true
-		header: MobileForm.FormCard {
-			width: ListView.view.width
-			Kirigami.Theme.colorSet: Kirigami.Theme.Window
-			contentItem: MobileForm.FormSwitchDelegate {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        header: BackgroundItem {
+            width: SilicaListView.view.width
+            TextSwitch {
 				id: groupFilteringSwitch
 				text: qsTr("Filter by labels")
 				description: qsTr("Show only chats with selected labels")
 				enabled: checked
 				checked: root.rosterFilterProxyModel.selectedGroups.length
-				onToggled: root.rosterFilterProxyModel.selectedGroups = []
+                onCheckedChanged: root.rosterFilterProxyModel.selectedGroups = []
 
 				// TODO: Remove this once fixed in Kirigami Addons.
 				// Add a connection as a work around to reset the switch because
@@ -121,18 +116,18 @@ ColumnLayout {
 				Connections {
 					target: root.rosterFilterProxyModel
 
-					function onSelectedGroupsChanged() {
+                    onSelectedGroupsChanged: {
 						groupFilteringSwitch.checked = root.rosterFilterProxyModel.selectedGroups.length
 					}
 				}
 			}
 		}
-		delegate: MobileForm.FormSwitchDelegate {
+        delegate: TextSwitch {
 			id: groupDelegate
 			text: modelData
 			checked: root.rosterFilterProxyModel.selectedGroups.includes(modelData)
-			width: ListView.view.width
-			onToggled: {
+            width: SilicaListView.view.width
+            onCheckedChanged: {
 				if (checked) {
 					root.rosterFilterProxyModel.selectedGroups.push(modelData)
 				} else {
@@ -147,7 +142,7 @@ ColumnLayout {
 			Connections {
 				target: root.rosterFilterProxyModel
 
-				function onSelectedGroupsChanged() {
+                onSelectedGroupsChanged: {
 					groupDelegate.checked = root.rosterFilterProxyModel.selectedGroups.includes(modelData)
 				}
 			}
@@ -156,12 +151,12 @@ ColumnLayout {
 		Connections {
 			target: RosterModel
 
-			function onGroupsChanged() {
+            onGroupsChanged: {
 				// Remove selected groups that have been removed from the main model.
 				const selectedGroups = root.rosterFilterProxyModel.selectedGroups
-				for (let i = 0; i < selectedGroups.length; i++) {
+                for (var i = 0; i < selectedGroups.length; i++) {
 					const selectedGroup = selectedGroups[i]
-					if (!RosterModel.groups.includes(selectedGroups[i])) {
+                    if (!RosterModel.groupsList.includes(selectedGroups[i])) {
 						root.rosterFilterProxyModel.selectedGroups.splice(i, 1)
 					}
 				}

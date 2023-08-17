@@ -3,34 +3,16 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import QtQuick.Controls 2.14 as Controls
-import org.kde.kirigami 2.19 as Kirigami
-import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 /**
  * Used to expand and collapse form entries.
  */
-MobileForm.AbstractFormDelegate {
+Button {
 	id: root
-	leftPadding: 0
-	rightPadding: 0
-	checkable: true
-	contentItem: RowLayout {
-		Item {
-			Layout.fillWidth: true
-		}
-
-		Kirigami.Icon {
-			source: root.checked ? "go-up-symbolic" : "go-down-symbolic"
-			implicitWidth: Kirigami.Units.iconSizes.small
-			implicitHeight: implicitWidth
-		}
-
-		Item {
-			Layout.fillWidth: true
-		}
-	}
-	Layout.fillWidth: true
+    property boo checkable: true
+    icon.source: root.checked ? "image://theme/icon-m-up" : "image://theme/icon-m-up"
+    width: Theme.iconSizeSmall
+    height: width
 }

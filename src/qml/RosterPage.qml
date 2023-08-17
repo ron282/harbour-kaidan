@@ -21,43 +21,67 @@ import "elements"
 Page {
     id: root
 
-    SilicaListView {
-        id: rosterListView
+    Component {
+        id: rosterFilteringDialog
 
-        anchors.fill: parent
-        VerticalScrollDecorator { flickable: rosterListView }
+        Dialog {
+            DialogHeader {
+                title: qsTr("Filter")
+            }
 
-         PullDownMenu {
-            MenuItem {
-                id: searchAction
-                text: qsTr("Search contacts")
-                onClicked: {
-                    searchField.forceActiveFocus()
-                    searchField.selectAll()
+            RosterFilteringArea {
+                rosterFilterProxyModel: filterModel
+            }
+        }
+    }
+
+    Component {
+        id: rosterFilteringPage
+
+        Page {
+            SilicaFlickable {
+                PageHeader {
+                    title: qsTr("Filter")
+                }
+
+                RosterFilteringArea {
+                    rosterFilterProxyModel: filterModel
                 }
             }
         }
+    }
 
-        header:
-            Column {
-                width: parent.width
-                PageHeader {
-                        title: {
-                            Kaidan.connectionState === Enums.StateConnecting ? qsTr("Connecting…") :
-                            Kaidan.connectionState === Enums.StateDisconnected ? qsTr("Offline") :
-                            qsTr("Contacts")
-                        }
+    SilicaListView {
+        id: rosterListView
+        PullDownMenu {
+                MenuItem {
+                    text: qsTr("Settings")
+                    onClicked: {
+                        pageStack.push(globalDrawer)
+                    }
                 }
-                SearchField
-                {
-                    id: searchField
-                    //FIXME focusSequence: ""
-                    width: parent.width
-                    height: Theme.itemSizeLarge
-                    onVisibleChanged: text = ""
-                    onTextChanged: filterModel.setFilterFixedString(text.toLowerCase())
+                MenuItem {
+                    text: qsTr("Search")
+                    visible: isSearchActionShown
+                    onClicked: {
+                        toggleSearchBar()
+                    }
                 }
             }
+
+        header:
+            PageHeader {
+                title: {
+                    Kaidan.connectionState === Enums.StateConnecting ? qsTr("Connecting…") :
+                    Kaidan.connectionState === Enums.StateDisconnected ? qsTr("Offline") :
+                    qsTr("Contacts")
+                }
+            }
+
+
+        anchors.fill: parent
+
+        VerticalScrollDecorator { flickable: rosterListView }
 
         model: RosterFilterProxyModel {
             id: filterModel
@@ -75,47 +99,38 @@ Page {
             jid: model ? model.jid : ""
             name: model ? (model.name ? model.name : model.jid) : ""
             lastMessage: model ? model.lastMessage : ""
-            lastMessageIsDraft: model ? model.draftId : false
+            lastMessageIsDraft: model ? model.lastMessageIsDraft : false
             unreadMessages: model ? model.unreadMessages : 0
             pinned: model ? model.pinned : false
+            notificationsMuted: model ? model.notificationsMuted : false
             contentHeight: Theme.itemSizeLarge;
             onClicked: {
                 // Open the chatPage only if it is not yet open.
-//                if (!isSelected || !wideScreen) {
-//                    Kaidan.openChatPageRequested(accountJid, jid)
-//                }
-
-                MessageModel.setCurrentChat(accountJid, jid)
-
-                // Close all pages (especially the chat page) except the roster page.
-                while (pageStack.depth > 1) {
-                    pageStack.pop()
+                if (!isSelected) {
+                    Kaidan.openChatPageRequested(accountJid, jid)
                 }
-
-                popLayersAboveLowest()
-                pageStack.push(chatPage)
             }
         }
 
         Connections {
             target: Kaidan
 
-            function onOpenChatPageRequested(accountJid, chatJid) {
+            onOpenChatPageRequested: {
                 console.log("[roster.qml] onOpenChatPageRequested")
-//                if (Kirigami.Settings.isMobile) {
+/*                if (true) {
                     toggleSearchBar()
-//				} else {
-//					searchField.text = ""
-//				}
+                } else {
+                    searchField.text = ""
+                }
+*/
+/*                for (var i = 0; i < pageStack.items.length; ++i) {
+                    var page = pageStack.items[i];
 
-//				for (let i = 0; i < pageStack.items.length; ++i) {
-//					let page = pageStack.items[i];
-//
-//					if (page instanceof ChatPage) {
-//						page.saveDraft();
-//					}
-//				}
-
+                    if (page instanceof ChatPage) {
+                        page.saveDraft();
+                    }
+                }
+*/
                 MessageModel.setCurrentChat(accountJid, chatJid)
 
                 // Close all pages (especially the chat page) except the roster page.
@@ -127,23 +142,5 @@ Page {
                 pageStack.push(chatPage)
             }
         }
-    }
-
-    /**
-     * Opens the chat page for the chat JID currently set in the message model.
-     *
-     * @param accountJid JID of the account for that the chat page is opened
-     * @param chatJid JID of the chat for that the chat page is opened
-     */
-    function openChatPage(accountJid, chatJid) {
-        console.log("[rosterpage.qml] OpenChatPage called")
-
-        MessageModel.setCurrentChat(accountJid, chatJid)
-
-        pageStack.push(chatPage, {})
-    }
-
-    Component.onCompleted: {
-        console.log("[openChatPageterpage.qml] Roster Page completed")
     }
 }

@@ -20,9 +20,8 @@ MessageReactionButton {
 	property MessageReactionDetailsSheet detailsSheet
 
 	primaryColor: isOwnMessage ? primaryBackgroundColor : secondaryBackgroundColor
-    contentItem: Icon {
-        source: "image://theme/icon-m-add"
-	}
+    icon.source: "image://theme/icon-m-add"
+
 	onClicked: {
 		detailsSheet.messageId = messageId
 		detailsSheet.isOwnMessage = isOwnMessage

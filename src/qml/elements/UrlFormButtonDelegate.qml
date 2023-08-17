@@ -17,6 +17,7 @@ Row {
     width: parent.width
     property alias url: valbut.label
     property alias icon: icon.source
+    property alias text: valbut.label
     property alias description: valbut.description
 
     Icon {

@@ -70,7 +70,7 @@ DetailsContent {
             placeholderText: qsTr("New label")
             enabled: !rosterGroupBusyIndicator.running
             width: parent.width
-//                      onAccepted: rosterGroupAdditionButton.clicked()
+//          onAccepted: rosterGroupAdditionButton.clicked()
 
             rightItem: IconButton {
                 id: rosterGroupAdditionButton
@@ -96,73 +96,71 @@ DetailsContent {
                     }
                 }
             }
-
             BusyLabel {
                 text: qsTr("updating labels...")
-                anchors.fill: colRoster
+                anchors.fill: parent
                 id: rosterGroupBusyIndicator
             }
+        }
 
-            Connections {
-                target: rosterGroupListView
+        Connections {
+            target: rosterGroupListView
 
-                function onVisibleChanged() {
-                    if (rosterGroupListView.visible) {
-                        rosterGroupField.text = ""
-                        rosterGroupField.forceActiveFocus()
-                    }
-                }
-            }
-
-            Connections {
-                target: RosterModel
-
-                function onGroupsChanged() {
-                    rosterGroupBusyIndicator.running = false
+            onVisibleChanged: {
+                if (rosterGroupListView.visible) {
+                    rosterGroupField.text = ""
                     rosterGroupField.forceActiveFocus()
                 }
+            }
+        }
+
+        Connections {
+            target: RosterModel
+
+            onGroupsChanged: {
+                rosterGroupBusyIndicator.running = false
+                rosterGroupField.forceActiveFocus()
             }
         }
 
         ColumnView {
             id: rosterGroupListView
             model: RosterModel.groups
-//          visible: rosterGroupExpansionButton.checked
+            visible: true // rosterGroupExpansionButton.checked
             itemHeight: Theme.itemSizeSmall
-            delegate: BackgroundItem {
+            delegate: TextSwitch {
+                id: rosterGroupDelegate
+                text: modelData
+                checked: contactWatcher.item.groupsList.includes(modelData)
+                width: parent.width
                 height: Theme.itemSizeSmall
-                TextSwitch {
-                    id: rosterGroupDelegate
-                    text: modelData
-                    checked: contactWatcher.item.groupsList.includes(modelData)
-                    width: parent.width
-                    onCheckedChanged:  {
-                        var groups = contactWatcher.item.groupsList
+                onCheckedChanged:  {
+                    var groups = contactWatcher.item.groupsList
 
-                        if (checked) {
-                            groups.push(modelData)
-                        } else {
-                            groups.splice(groups.indexOf(modelData), 1)
-                        }
-
-                        Kaidan.client.rosterManager.updateGroupsRequested(root.jid, contactWatcher.item.name, groups)
-                     }
-                }
-
-                // TODO: Remove this and see TODO in RosterModel once fixed in Kirigami Addons.
-                Connections {
-                    target: RosterModel
-
-                    function onGroupsChanged() {
-                        // Update the "checked" value of "rosterGroupDelegate" as a work
-                        // around because "MobileForm.FormSwitchDelegate" does not listen to
-                        // changes of "contactWatcher.item.groups".
-                        rosterGroupDelegate.checked = contactWatcher.item.groupsList.includes(modelData)
+                    if (checked) {
+                        groups.push(modelData)
+                    } else {
+                        groups.splice(groups.indexOf(modelData), 1)
                     }
+
+                    Kaidan.client.rosterManager.updateGroupsRequested(root.jid, contactWatcher.item.name, groups)
+                }
+            }
+
+            // TODO: Remove this and see TODO in RosterModel once fixed in Kirigami Addons.
+            Connections {
+                target: RosterModel
+
+                onGroupsChanged: {
+                    // Update the "checked" value of "rosterGroupDelegate" as a work
+                    // around because "MobileForm.FormSwitchDelegate" does not listen to
+                    // changes of "contactWatcher.item.groups".
+                    rosterGroupDelegate.checked = contactWatcher.item.groupsList.includes(modelData)
                 }
             }
         }
     }
+
     encryptionArea: Column {
         width: parent.width
 		spacing: 0

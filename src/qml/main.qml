@@ -15,6 +15,7 @@ import QtQuick 2.2
 import Sailfish.Silica 1.0
 //import StatusBar 0.1
 import im.kaidan.kaidan 1.0
+import org.nemomobile.notifications 1.0
 
 
 import "elements"
@@ -27,13 +28,10 @@ ApplicationWindow {
 
     property bool wideScreen: false
     readonly property ChatPage currentChatPage: {
-        return pageStack.find(function(p){
-            p instanceof ChatPage
+        return pageStack.find(function(p) {
+            return p instanceof ChatPage
         });
-
-        return null;
     }
-
 
 	property bool currentDraftSaved: false
 
@@ -90,6 +88,7 @@ ApplicationWindow {
     Component {id: qrCodeOnboardingPage; QrCodeOnboardingPage {}}
     Component {id: contactAdditionPage; ContactAdditionPage {}}
     Component {id: contactAdditionDialog; ContactAdditionDialog {}}
+    Component {id: messageNotification; Notification {}}
 
 //	onWideScreenChanged: showRosterPageForNarrowWindow()
 
@@ -124,9 +123,8 @@ ApplicationWindow {
 
 	function openStartPage() {
 //		globalDrawer.enabled = false
-
-        popLayersAboveLowest()
-        popAllPages()
+//      popLayersAboveLowest()
+//      popAllPages()
         pageStack.push(startPage)
 	}
 
@@ -140,7 +138,7 @@ ApplicationWindow {
 
 //        popLayersAboveLowest()
 //        popAllPages()
-//          pageStack.push(globalDrawer, {}, PageStackAction.Immediate)
+//        pageStack.push(globalDrawer, {}, PageStackAction.Immediate)
           pageStack.push(rosterPage, {}, PageStackAction.Immediate)
 //        showRosterPageForNarrowWindow()
 	}
@@ -155,7 +153,7 @@ ApplicationWindow {
 	 * @return the opened page or sheet
 	 */
 	function openView(overlayComponent, pageComponent) {
-		if (Kirigami.Settings.isMobile) {
+        if (true) {
 			return openPage(pageComponent)
 		} else {
 			return openOverlay(overlayComponent)
@@ -169,8 +167,8 @@ ApplicationWindow {
 	}
 
 	function openPage(pageComponent) {
-		popLayersAboveLowest()
-		return pageStack.layers.push(pageComponent)
+        //popLayersAboveLowest()
+        return pageStack.push(pageComponent)
 	}
 
 	// Show the rosterPage instead of the emptyChatPage if the window is narrow.
@@ -211,7 +209,7 @@ ApplicationWindow {
     Connections {
 		target: Kaidan
 
-		function onRaiseWindowRequested() {
+        onRaiseWindowRequested: {
             console.log("[main.qml] onRaiseWindowRequested")
 			if (!root.active) {
 				root.raise()
@@ -219,17 +217,17 @@ ApplicationWindow {
 			}
 		}
 
-		function onPassiveNotificationRequested(text) {
+        onPassiveNotificationRequested: {
             console.log("[main.qml] onPassiveNotificationRequested")
 			passiveNotification(text)
 		}
 
-		function onCredentialsNeeded() {
+        onCredentialsNeeded: {
             console.log("[main.qml] onCredentialsNeeded")
 			openStartPage()
 		}
 
-		function onOpenChatViewRequested() {
+        onOpenChatViewRequested: {
             console.log("[main.qml] onOpenChatViewRequested")
 			openChatView()
 		}

@@ -12,7 +12,7 @@ import Sailfish.Silica 1.0
  * This sheet is used on desktop systems instead of a new layer. It doesn't
  * fill the complete width, so it looks a bit nicer on large screens.
  */
-Page {
+Dialog {
 	id: settingsSheet
 
     SettingsContent {}

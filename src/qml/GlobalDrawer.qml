@@ -35,16 +35,22 @@ Page {
         AccountDetailsPage {}
     }
 
-    SearchPublicGroupChatSheet {
+    Component {
         id: searchPublicGroupChatSheet
+        SearchPublicGroupChatSheet {}
     }
-
-    SettingsSheet {
+    Component {
         id: settingsSheet
+        SettingsSheet {}
     }
 
     Column {
         spacing: Theme.paddingLarge
+        width: parent.width
+
+        PageHeader {
+            title: qsTr("Settings")
+        }
 
         SectionHeader {
             text: qsTr("Accounts")
@@ -52,69 +58,91 @@ Page {
 
         ColumnView {
             model: [ AccountManager.jid ]
+            itemHeight: Theme.iconSizeMedium + Theme.itemSizeSmall*2
+            width: parent.width
 
-            delegate: Column {
-                spacing: 0
+            delegate:
+                Column {
+                    spacing: 0
 
-                Row {
-                    id: accountArea
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.margins: Theme.horizontalPageMargin
 
-                    Avatar {
-                        jid: AccountManager.jid
-                        name: AccountManager.displayName
-                        width: Theme.iconSizeMedium
-                    }
-
-                    ValueButton {
+                    Row {
+                        id: accountArea
+                        width: parent.width
+                        height: Theme.iconSizeMedium
                         property bool disconnected: Kaidan.connectionState === Enums.StateDisconnected
                         property bool connected: Kaidan.connectionState === Enums.StateConnected
-
-                        label: AccountManager.displayName
-                        value: Kaidan.connectionStateText
-                        valueColor: connected ? Theme.highlightColor: Theme.primaryColor
-
-                        onClicked: {
-                            root.close()
-                            openViewFromGlobalDrawer(accountDetailsSheet, accountDetailsPage)
+                        Avatar {
+                            jid: AccountManager.jid
+                            name: AccountManager.displayName
+                            width: Theme.iconSizeMedium
+                            height: width
                         }
-                    }
-                    Switch {
-                        checked: !accountArea.disconnected
-                        onCheckedChanged: accountArea.disconnected ? Kaidan.logIn() : Kaidan.logOut()
-                    }
-               }
+                        TextSwitch {
+                            width: parent.width - 2*Theme.iconSizeMedium
+                            text: AccountManager.displayName
+                            description: Kaidan.connectionStateText
+//                            valueColor: accountArea.connected ? Theme.highlightColor: Theme.primaryColor
+                            checked: !accountArea.disconnected
+                            onCheckedChanged: accountArea.disconnected ? Kaidan.logIn() : Kaidan.logOut()
+                        }
+                        IconButton {
+                            icon.source: "image://theme/icon-m-edit"
+                            onClicked: {
+                                openViewFromGlobalDrawer(accountDetailsSheet, accountDetailsPage)
+                            }
+                        }
+                    } // Row
 
-                Label {
-                    id: errorMessage
-                    visible: Kaidan.connectionError
-                    text: Kaidan.connectionError ? Utils.connectionErrorMessage(Kaidan.connectionError) : ""
-                    font.bold: true
-                    wrapMode: Text.WordWrap
-                }
-                }
-            }
-        }
+                    Label {
+                        id: errorMessage
+                        width: parent.width
+                        visible: Kaidan.connectionError
+                        text: Kaidan.connectionError ? Utils.connectionErrorMessage(Kaidan.connectionError) : ""
+                        color: Theme.errorColor
+                        wrapMode: Text.WordWrap
+                    }
+                } // Column
+        } // ColumnView
 
         SectionHeader {
             text: qsTr("Actions")
         }
 
         Button {
+            anchors {
+                left: parent.left
+                right: parent.right
+                margins: Theme.horizontalPageMargin
+            }
             text: qsTr("Add contact by QR code")
             icon.source: "image://theme/icon-m-qr"
             onClicked: {
                 root.close()
-                pageStack.layers.push(qrCodePage)
+                pageStack.push(qrCodePage)
             }
         }
 
         Button {
+            anchors {
+                left: parent.left
+                right: parent.right
+                margins: Theme.horizontalPageMargin
+            }
             text: qsTr("Add contact by chat address")
             icon.source: "image://theme/icon-m-new"
             onClicked: openContactAdditionView()
         }
 
         Button {
+            anchors {
+                left: parent.left
+                right: parent.right
+                margins: Theme.horizontalPageMargin
+            }
             id: publicGroupChatSearchButton
             text: qsTr("Search public groups")
             icon.source: "image://theme/icon-m-search"
@@ -125,8 +153,15 @@ Page {
         }
 
         Button {
+            anchors {
+                left: parent.left
+                right: parent.right
+                margins: Theme.horizontalPageMargin
+            }
             text: qsTr("Invite friends")
             icon.source: "image://theme/icon-s-invitation"
+            icon.height: Theme.iconSizeMedium
+            icon.width: Theme.iconSizeMedium
             onClicked: {
                 Utils.copyToClipboard(Utils.invitationUrl(AccountManager.jid))
                 passiveNotification(qsTr("Invitation link copied to clipboard"))
@@ -134,24 +169,42 @@ Page {
         }
 
         Button{
+            anchors {
+                left: parent.left
+                right: parent.right
+                margins: Theme.horizontalPageMargin
+            }
             text: qsTr("Switch device")
             icon.source: "image://theme/icon-m-device"
             onClicked: {
-                root.close()
-                pageStack.layers.push("AccountTransferPage.qml")
+                pageStack.push("AccountTransferPage.qml")
             }
         }
 
         Button {
-            text: qsTr("Settings")
-            icon.source: "image://theme/icon-m-setting"
-            onClicked: {
-                root.close()
-
-                if (pageStack.layers.depth < 2)
-                    pageStack.layers.push(settingsPage)
+            anchors {
+                left: parent.left
+                right: parent.right
+                margins: Theme.horizontalPageMargin
             }
+            text: qsTr("Multimedia Settings")
+            //FIXME description: qsTr("Configure photo, video and audio recording settings")
+            onClicked: pageStack.push("qrc:/qml/settings/MultimediaSettings.qml")
+            icon.source: "image://theme/icon-m-setting"
         }
+
+        Button {
+            anchors {
+                left: parent.left
+                right: parent.right
+                margins: Theme.horizontalPageMargin
+            }
+            text: qsTr("About Kaidan")
+            //FIXME description: qsTr("Learn about the current Kaidan version, view the source code and contribute")
+            onClicked: pageStack.push("qrc:/qml/settings/AboutPage.qml")
+            icon.source: "image://theme/icon-m-about"
+        }
+    }
 
     onStatusChanged: {
         if (Kaidan.connectionState === Enums.StateConnected) {
@@ -173,19 +226,18 @@ Page {
     }
 
     function openViewFromGlobalDrawer(overlayComponent, pageComponent) {
-        root.close()
         return openView(overlayComponent, pageComponent)
     }
 
     Connections {
         target: Kaidan
 
-        function onCredentialsNeeded() {
+        onCredentialsNeeded: {
             accountDetailsSheet.close()
             close()
         }
 
-        function onXmppUriReceived(uri) {
+        onXmppUriReceived: {
             const xmppUriPrefix = "xmpp:"
             openContactAdditionView().jid = uri.substr(xmppUriPrefix.length)
         }

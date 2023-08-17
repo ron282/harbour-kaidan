@@ -16,10 +16,11 @@ Page {
 	id: root
 
     property SilicaListView listView
-	property SearchBarPageSearchField searchField
+    property PullDownMenu pullDownMenu
+    property SearchBarPageSearchField searchField
 	property bool isSearchActionShown: true
 
-    listView.pullDownMenu : PullDownMenu {
+    pullDownMenu : PullDownMenu {
         MenuItem {
 			text: qsTr("Search")
 			visible: isSearchActionShown
@@ -32,51 +33,25 @@ Page {
 	Component {
 		id: mobileSearchBarComponent
 
-            Column {
-				id: contentArea
-				width: parent.width - 30
-				anchors.centerIn: parent
-				spacing: 10
-
-				SearchBarPageSearchField {
-					listView: root.listView
-                    anchors {
-                        right: parent.right
-                        left: parent.left
-                    }
-
-					Component.onCompleted: {
-						root.searchField = this
-					}
-				}
-			}
-
-            Separator {
-
+        SearchBarPageSearchField {
+            id: searchField
+            listView: root.listView
+            anchors {
+                right: parent.right
+                left: parent.left
             }
-
-			function open() {
-				searchField.forceActiveFocus()
-				active = true
-			}
-
-			function close() {
-				active = false
-			}
-		}
-	}
+        }
+    }
 
 	function toggleSearchBar() {
         if (listView.header) {
-			searchField.text = ""
-            listView.header.close()
+            searchField.visible = false
 		} else {
-            listView.header = mobileSearchBarComponent.createObject()
-            listView.header.open()
+            searchField.visible = true
 		}
 	}
 
 	function resetSearchBar() {
-        listView.header = null
-	}
+        searchField.visible = false
+    }
 }

@@ -9,24 +9,26 @@ import Sailfish.Silica 1.0
 import im.kaidan.kaidan 1.0
 
 
-BackgroundItem {
+Image {
     id: root
+    signal clicked
     property string jid
     property string name
     width: parent.height
     height: width
 
-    Image {
-        id: img
-        source: Kaidan.avatarStorage.getAvatarUrl(jid)
-        visible: source != ""
-        fillMode: Image.PreserveAspectCrop;
-        antialiasing: true;
-        anchors.fill: parent
-    }
+    source: Kaidan.avatarStorage.getAvatarUrl(jid)
+    fillMode: Image.PreserveAspectCrop;
+    antialiasing: true;
+
     Icon {
         source: "image://theme/icon-m-contact"
-        visible: !img.visible
+        visible: root.status != Image.Ready
         anchors.fill: parent
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        onClicked: root.clicked()
     }
 }

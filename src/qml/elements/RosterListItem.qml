@@ -15,22 +15,24 @@ import im.kaidan.kaidan 1.0
 UserListItem {
 	id: root
 
-	property ListView listView
-    property ContextMenu contextMenu
+    property SilicaListView listView
+    property alias contextMenu: root.menu
     property bool lastMessageIsDraft
-	property string lastMessage
+    property alias lastMessageDateTime: lastMessageDateTimeText.text
+    property string lastMessage
 	property int unreadMessages
 	property bool pinned
     property bool notificationsMuted
 
 	isSelected: {
-        return MessageModel.currentAccountJid === accountJid &&
+        return false &&
+               MessageModel.currentAccountJid === accountJid &&
                MessageModel.currentChatJid === jid
 	}
 
 	// middle
     Column {
-        spacing: Theme.paddingLarge
+        spacing: Theme.paddingSmall
         anchors {
             left: avatar.right;
             right: parent.right
@@ -40,70 +42,100 @@ UserListItem {
 
 		// name
         Row {
-            width: parent.width
+            anchors.left: parent.left
+            anchors.right: parent.right
             Label  {
                 id: nameText
-                text: name
+                text: root.name
                 textFormat: Text.PlainText
                 elide: Text.ElideRight
                 maximumLineCount: 1
                 width: parent.width - mutedIcon.width - pinnedIcon.width - counter.width
                 font.pixelSize: Theme.fontSizeMedium;
             }
-            // right: icon for muted contact
-            // Its size depends on the font's pixel size to be as large as the message counter.
-            Icon {
-                id: mutedIcon
-                source: "image://theme/icon-m-speaker-mute"
-                width: Theme.iconSizeSmall
-                height: width
-                visible: mutedWatcher.muted
-            }
-
-            // right: icon for pinned chat
-            // Its size depends on the font's pixel size to be as large as the message counter.
-            Icon {
-                id: pinnedIcon
-                source: "image://theme/icon-m-asterisk"
-                width: Theme.iconSizeSmall
-                height: width
-                visible: pinned
-            }
-
-            // right: unread message counter
-            MessageCounter {
-                id: counter
-                count: unreadMessages
-                muted: mutedWatcher.muted
+            // last (exchanged/draft) message date/time
+            Label {
+                id: lastMessageDateTimeText
+                text: root.lastMessageDateTime
+                visible: text
             }
         }
-		// last message or error status message if available, otherwise not visible
         Row {
-            id: layout
-			visible: lastMessageText.text
-            width: parent.width
+            visible: lastMessageText.text
+            anchors.left: parent.left
+            anchors.right: parent.right
 
             Label {
-				id: draft
-				visible: lastMessageIsDraft
-                font.pixelSize: Theme.fontSizeSmall
-				textFormat: Text.PlainText
-				text: qsTr("Draft:")
-			}
-
-            Label {
-				id: lastMessageText
-                width: layout.width - draft.width - layout.spacing
-				elide: Text.ElideRight
-				maximumLineCount: 1
-				text: Utils.removeNewLinesFromString(lastMessage)
-				textFormat: Text.PlainText
-                font.pixelSize: Theme.fontSizeSmall
+                id: draft
+                visible: lastMessageIsDraft
+                textFormat: Text.PlainText
+                text: qsTr("Draft:")
+                font {
+                    weight: Font.Light
+                    italic: true
+                }
             }
-		}
-	}
 
+            Label {
+                id: lastMessageText
+                elide: Text.ElideRight
+                width: parent.width - draft.width
+                maximumLineCount: 1
+                text: Utils.removeNewLinesFromString(lastMessage)
+                textFormat: Text.PlainText
+                font.weight: Font.Light
+            }
+        }
+    }
+
+    Column {
+        anchors.right: parent.right
+        anchors.top: parent.top
+        width: Theme.iconSizeSmall
+        // right: icon for muted contact
+        // Its size depends on the font's pixel size to be as large as the message counter.
+        Icon {
+            id: mutedIcon
+            source: "image://theme/icon-m-speaker-mute"
+            width: Theme.iconSizeSmall
+            height: width
+            visible: notificationsMuted
+        }
+
+        // right: icon for pinned chat
+        // Its size depends on the font's pixel size to be as large as the message counter.
+        Icon {
+            id: pinnedIcon
+            source: "image://theme/icon-m-asterisk"
+            width: Theme.iconSizeSmall
+            height: width
+            visible: pinned
+        }
+
+        // right: unread message counter
+        MessageCounter {
+            id: counter
+            count: unreadMessages
+            muted: notificationsMuted
+        }
+    }
+
+ /*   MouseArea {
+        parent: root
+        anchors.fill: parent
+        acceptedButtons: Qt.RightButton
+
+        onClicked: {
+            if (mouse.button === Qt.RightButton) {
+                showContextMenu()
+            }
+        }
+
+        onPressAndHold: showContextMenu()
+    }
+*/
     function showContextMenu() {
+        console.log("[RosterListItem.qml] showContextMenu")
         if (contextMenu) {
             root.menu = contextMenu
             contextMenu.item = root

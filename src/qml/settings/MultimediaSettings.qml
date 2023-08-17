@@ -11,7 +11,6 @@ import QtMultimedia 5.6 as Multimedia
 
 import im.kaidan.kaidan 1.0
 import MediaUtils 0.1
-// import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
 
 SettingsPageBase {
 	id: root
@@ -36,14 +35,14 @@ SettingsPageBase {
 				spacing: 0
 
 				SectionHeader {
-					title: qsTr("Select Sources")
+                    text: qsTr("Select Sources")
 				}
 
-				MobileForm.FormComboBoxDelegate {
+                ComboBox {
 					id: camerasComboBox
-					text: qsTr('Camera')
-					displayMode: MobileForm.FormComboBoxDelegate.Dialog
-					dialog:Controls.Menu {
+                    label: qsTr('Camera')
+//					displayMode: MobileForm.FormComboBoxDelegate.Dialog
+                    ContextMenu {
 						z:60000
 						width: parent.width
 
@@ -53,7 +52,7 @@ SettingsPageBase {
 							model: recorder.cameraModel
 							onObjectAdded: camerasMenu.insertItem(index, object)
 							onObjectRemoved: camerasMenu.removeItem(object)
-							delegate: Controls.MenuItem {
+                            delegate: MenuItem {
 								property string description
 								property string camera
 								text: description
@@ -64,14 +63,14 @@ SettingsPageBase {
 						}
 					}
 
-					displayText: camerasInstanciator.model.currentCamera.description
+//					displayText: camerasInstanciator.model.currentCamera.description
 					width: parent.width
 				}
-				MobileForm.FormComboBoxDelegate {
+                ComboBox {
 					id: audioInputsComboBox
-					displayMode: MobileForm.FormComboBoxDelegate.Dialog
+//					displayMode: MobileForm.FormComboBoxDelegate.Dialog
 
-					text: qsTr('Audio Input')
+                    label: qsTr('Audio Input')
 					dialog:Controls.Menu {
 						z:60000
 						width: parent.width
@@ -160,8 +159,7 @@ SettingsPageBase {
 					}
 				}
 
-				Kirigami.Separator {
-					//FIXME Layout.fillHeight: true
+                Separator {
 				}
 				BackgroundItem {
 					width: parent.width
@@ -178,8 +176,7 @@ SettingsPageBase {
 						}
 					}
 				}
-				Kirigami.Separator {
-					//FIXME Layout.fillHeight: true
+                Separator {
 				}
 				BackgroundItem {
 					width: parent.width

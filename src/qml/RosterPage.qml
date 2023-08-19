@@ -62,7 +62,7 @@ Page {
                 }
                 MenuItem {
                     text: qsTr("Search")
-                    visible: isSearchActionShown
+//                  visible: isSearchActionShown
                     onClicked: {
                         toggleSearchBar()
                     }

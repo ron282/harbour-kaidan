@@ -4,19 +4,13 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-// import org.kde.kirigami 2.19 as Kirigami
 
-SilicaFlickable {
+Page {
 	id: root
 
-	default property alias __data: mainArea.data
+//	default property alias __data: mainArea.data
 
-    //FIXME leftPadding: 0
-    //FIXME rightPadding: 0
-    //FIXME Kirigami.Theme.colorSet: Kirigami.Theme.Window
-    contentWidth: parent.width
-    contentHeight: mainArea.height
-	Column {
-		id: mainArea
-	}
+//	Column {
+//		id: mainArea
+//	}
 }

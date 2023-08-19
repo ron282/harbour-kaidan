@@ -11,123 +11,126 @@ import im.kaidan.kaidan 1.0
 
 import "../elements"
 
-PageHeader {
-	id: root
+Row {
+    id: root
+    spacing: Theme.paddingSmall
 
-	property string jid
-	property string displayName
+//    default property alias __data: mainArea.data
+    property string jid
+    property string displayName
+    property Button avatarAction
 
-    title: displayName
+    anchors {
+        left: parent.left
+        right: parent.right
+        leftMargin: Theme.horizontalPageMargin
+        rightMargin: Theme.horizontalPageMargin
+        top: parent.top
+    }
 
-//    property Button avatarAction
-
-//    anchors.topMargin:  0
-//    anchors.bottomMargin: 0
-//    anchors.leftMargin: Theme.paddingLarge* 2
-//    anchors.rightMargin: anchors.leftMargin
-
+    height: Theme.itemSizeLarge
 
     SilicaItem {
-        parent: root.extraContent
         height: Theme.iconSizeMedium
+        width: Theme.iconSizeMedium
         anchors {
-            leftMargin: Theme.paddingMedium
             verticalCenter: parent.verticalCenter
         }
         Avatar {
-            id: avatar
-            jid: chatItemWatcher.item.jid
-            name: chatItemWatcher.item.displayName
+            jid: root.jid
+            name: root.displayName
             smooth: true;
-            onClicked: pageStack.push(contactDetailsSheet)
+            onClicked: root.avatarAction.clicked()
+
+            MouseArea {
+                anchors.fill: parent
+                Button {
+                    id: avatarActionHoverImage
+                    icon.source: root.avatarAction.icon.source
+                    width: parent.width / 2
+                    height: width
+                    anchors.centerIn: parent
+                    visible:  root.avatarAction.enabled
+                }
+            }
         }
     }
-    Rectangle {
-            z: -1;
-            color: "black";
-            opacity: 0.35;
-            anchors.fill: parent;
+
+    Row {
+        id: displayNameArea
+        height: Theme.iconSizeMedium
+
+        width: parent.width - Theme.iconSizeMedium - Theme.paddingSmall
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: Theme.paddingSmall
+
+        IconButton {
+            id: displayNameEditingButton
+            anchors.verticalCenter: parent.verticalCenter
+            icon.source: "image://theme/icon-m-edit"
+            width: Theme.iconSizeMedium
+            onClicked: {
+                if (displayNameText.visible) {
+                    displayNameTextField.visible = true
+                    displayNameText.visible = false
+                    displayNameTextField.forceActiveFocus()
+                    displayNameTextField.selectAll()
+                } else {
+                    displayNameTextField.visible = false
+                    displayNameText.visible = true
+
+                    if (displayNameTextField.text !== root.displayName) {
+                        root.changeDisplayName(displayNameTextField.text)
+                    }
+                }
+            }
+        }
+
+        Label {
+            id: displayNameText
+            text: root.displayName
+            textFormat: Text.PlainText
+            font.family: Theme.fontFamilyHeading
+            font.pixelSize: Theme.fontSizeLarge
+            maximumLineCount: 1
+            elide: Text.ElideRight
+            visible: !displayNameTextField.visible
+            horizontalAlignment: Text.AlignRight
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width - Theme.iconSizeMedium - Theme.paddingSmall
+            // TODO: Get update of current vCard by using Entity Capabilities
+                onTextChanged: handleDisplayNameChanged()
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: displayNameEditingButton.clicked()
+            }
+        }
+
+        TextField {
+            id: displayNameTextField
+            text: displayNameText.text
+            font.family: Theme.fontFamilyHeading
+            font.pixelSize: Theme.fontSizeLarge
+            font.underline: false
+            horizontalAlignment: Text.AlignRight
+            anchors.verticalCenter: displayNameText.top
+            anchors.verticalCenterOffset:  displayNameTextField.textVerticalCenterOffset + 10
+            width: parent.width - Theme.iconSizeMedium - Theme.paddingSmall
+            visible: false
+        }
+    }
+    Label {
+        id: jidLabel
+        anchors.bottom: parent.bottom
+        width: parent.width - Theme.iconSizeMedium - Theme.paddingSmall - 2*Theme.horizontalPageMargin
+        text: root.jid
+        color: Theme.secondaryColor
+        textFormat: Text.PlainText
+        font.pixelSize: Theme.fontSizeTiny
+        maximumLineCount: 1
+        elide: Text.ElideRight
+        horizontalAlignment: Text.AlignRight
     }
 }
 
-/*    Row {
-		id: mainArea
-        parent: root.extraContent
-        anchors.leftMargin: Theme.paddingMedium
-
-        Avatar {
-            jid: root.jid
-            name: root.displayName
-
-            // TODO: Make icon also visible when the cursor is on it directly after opening this page
-        }
-
-        Row {
-			id: displayNameArea
-			spacing: 0
-
-            IconButton {
-				id: displayNameEditingIcon
-                icon.source: "image://theme/icon-s-edit"
-				onClicked: {
-					if (displayNameText.visible) {
-						displayNameTextField.visible = true
-						displayNameTextField.forceActiveFocus()
-						displayNameTextField.selectAll()
-					} else {
-						displayNameTextField.visible = false
-
-						if (displayNameTextField.text !== root.displayName) {
-							root.changeDisplayName(displayNameTextField.text)
-						}
-					}
-				}
-			}
-
-            Label {
-                id: displayNameText
-				text: root.displayName
-                textFormat: Text.PlainText
-				maximumLineCount: 1
-				elide: Text.ElideRight
-				visible: !displayNameTextField.visible
-                width: parent.width - displayNameEditingIcon.width
-                leftPadding: Theme.paddingLarge
-				// TODO: Get update of current vCard by using Entity Capabilities
-				onTextChanged: handleDisplayNameChanged()
-
-				MouseArea {
-					anchors.fill: displayNameText
-					onClicked: displayNameEditingIcon.clicked(Qt.LeftButton)
-				}
-			}
-
-            TextField {
-				id: displayNameTextField
-				text: displayNameText.text
-				visible: false
-//                anchors.leftMargin: Theme.paddingLarge
-                width: parent.width - displayNameEditingIcon.width
-                //FIXME onAccepted: {
-                //	displayNameArea.changeDisplayName(text)
-                //	visible = false
-                //}
-			}
-
-			function changeDisplayName(newDisplayName) {
-				if (newDisplayName !== root.displayName) {
-					root.displayNameChangeFunction(newDisplayName)
-				}
-			}
-		}
-
-        Label {
-			text: root.jid
-			textFormat: Text.PlainText
-			maximumLineCount: 1
-			elide: Text.ElideRight
-            width: parent.width
-//          anchors.leftMargin: displayNameTextField.anchors.leftMargin
-		}
-	}
-}*/

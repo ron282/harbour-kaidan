@@ -5,9 +5,6 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-// import QtQuick.Controls 2.14 as Controls
-// import org.kde.kirigami 2.19 as Kirigami
-// import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
 
 import im.kaidan.kaidan 1.0
 
@@ -19,19 +16,17 @@ DetailsContent {
     id: root
 
     rosterGroupArea: Column {
-        spacing: 0
         SectionHeader {
             text: qsTr("Labels")
         }
         ColumnView {
             id: rosterGroupListView
             model: RosterModel.groups
-            visible: rosterGroupExpansionButton.checked
-            implicitHeight: contentHeight
-            width: parent.width
+            visible: true // rosterGroupExpansionButton.checked
+            itemHeight: Theme.itemSizeSmall
             delegate: BackgroundItem {
                 id: rosterGroupDelegate
-                width: ListView.view.width
+                width: parent.width
                 onClicked: rosterGroupEditingButton.toggled()
                 Row {
                     Label {
@@ -42,35 +37,27 @@ DetailsContent {
                         elide: Text.ElideRight
                         visible: !rosterGroupTextField.visible
                         height: rosterGroupTextField.height
-                        width: parent.width
+                        width: parent.width - 2*Theme.iconSizeMedium
                         leftPadding: Theme.paddingSmall
                     }
-
                     TextField {
                         id: rosterGroupTextField
                         text: modelData
                         visible: false
-                        width: parent.width
+                        width: parent.width - 2*Theme.iconSizeMedium
 //                        onAccepted: rosterGroupEditingButton.toggled()
                     }
-
                     IconButton {
                         id: rosterGroupEditingButton
-//                        text: qsTr("Change label…")
-                        icon.source: "document-edit-symbolic"
-//                      display: Controls.AbstractButton.IconOnly
+                        icon.source: "image://theme/icon-s-edit"
                         visible: !rosterGroupText.visible
 //                      checked: !rosterGroupText.visible
-//                      flat: !hovered
-//                      Controls.ToolTip.text: text
                         // Ensure that the button can be used within "rosterGroupDelegate"
                         // which acts as an overlay to toggle this button when clicked.
                         // Otherwise, this button would be toggled by "rosterGroupDelegate"
                         // and by this button's own visible area at the same time resulting
                         // in resetting the toggling on each click.
-//                      autoRepeat: true
                         onClicked: {
-//                      onToggled: {
                             if (rosterGroupText.visible) {
                                 rosterGroupTextField.visible = true
                                 rosterGroupTextField.forceActiveFocus()
@@ -84,14 +71,9 @@ DetailsContent {
                             }
                         }
                     }
-
                     IconButton {
                         id: rosterGroupRemovalButton
-//                      text: qsTr("Remove label")
-                        icon.source: "image://theme/icon-m-delete"
-//                      display: Controls.AbstractButton.IconOnly
-//                      flat: !rosterGroupDelegate.hovered
-//                      Controls.ToolTip.text: text
+                        icon.source: "image://theme/icon-splus-delete"
                         onClicked: {
                             rosterGroupTextField.visible = false
                             RosterModel.removeGroup(modelData)
@@ -102,7 +84,7 @@ DetailsContent {
         }
     }
     encryptionArea: Column {
-        spacing: 0
+        width: parent.width
 
         Component.onCompleted: {
             // Retrieve the own devices if they are not loaded yet on a mobile device.
@@ -116,7 +98,7 @@ DetailsContent {
         Connections {
             target: root.sheet
 
-            function onSheetOpenChanged() {
+            onSheetOpenChanged: {
                 if (root.sheet.sheetOpen) {
                     // Retrieve the own devices if they are not loaded yet on a desktop device.
                     if (MessageModel.currentAccountJid != root.jid) {
@@ -140,9 +122,9 @@ DetailsContent {
             text: qsTr("Encryption")
         }
 
-        TextSwitch {
-            text: qsTr("OMEMO 0")
-            //FIXME description: qsTr("End-to-end encryption with OMEMO 0 ensures that nobody else than you and your chat partners can read or modify the data you exchange.")
+        IconTextSwitch {
+            text: qsTr("OMEMO")
+            description: qsTr("End-to-end encryption with OMEMO 0 ensures that nobody else than you and your chat partners can read or modify the data you exchange.")
             checked: Kaidan.settings.encryption === Encryption.Omemo0
             // The switch is toggled by setting the user's preference on using encryption.
             // Note that 'checked' has already the value after the button is clicked.
@@ -158,19 +140,24 @@ DetailsContent {
         }
 
         Button {
+            preferredWidth: Theme.buttonWidthLarge
+            anchors.horizontalCenter: parent.horizontalCenter
             text: {
                 if (!omemoWatcher.usableOmemoDevices.length) {
                     if (omemoWatcher.distrustedOmemoDevices.length) {
-                        return qsTr("Scan the QR codes of <b>your</b> devices to encrypt for them")
+                        return qsTr("Scan <b>your</b> devices")
+//                        return qsTr("Scan the QR codes of <b>your</b> devices to encrypt for them")
                     } else if (ownResourcesWatcher.resourcesCount > 1) {
-                        return qsTr("<b>Your</b> other devices don't use OMEMO 0")
+                        return qsTr("<b>Not used on your</b> other devices")
                     }
                 } else if (omemoWatcher.authenticatableOmemoDevices.length) {
                     if (omemoWatcher.authenticatableOmemoDevices.length === omemoWatcher.distrustedOmemoDevices.length) {
-                        return qsTr("Scan the QR codes of <b>your</b> devices to encrypt for them")
+                        return qsTr("Scan <b>your</b> devices")
+//                        return qsTr("Scan the QR codes of <b>your</b> devices to encrypt for them")
                     }
 
-                    return qsTr("Scan the QR codes of <b>your</b> devices for maximum security")
+                    return qsTr("Scan <b>your</b> devices")
+//                  return qsTr("Scan the QR codes of <b>your</b> devices for maximum security")
                 }
 
                 return ""
@@ -178,23 +165,23 @@ DetailsContent {
             icon.source: {
                 if (!omemoWatcher.usableOmemoDevices.length) {
                     if (omemoWatcher.distrustedOmemoDevices.length) {
-                        return "image://theme/icon-m-device-lock"
+                        return "image://theme/icon-m-qr"
                     } else if (ownResourcesWatcher.resourcesCount > 1) {
                         return "image://theme/icon-m-warning"
                     }
                 } else if (omemoWatcher.authenticatableOmemoDevices.length) {
                     if (omemoWatcher.authenticatableOmemoDevices.length === omemoWatcher.distrustedOmemoDevices.length) {
-                        return "image://theme/icon-m-warning"
+                        return "image://theme/icon-m-qr"
                     }
 
-                    return "image://theme/icon-m-device-lock"
+                    return "image://theme/icon-m-qr"
                 }
 
                 return ""
             }
             visible: text
             enabled: omemoWatcher.authenticatableOmemoDevices.length
-            onClicked: pageStack.layers.push(qrCodePage, { isForOwnDevices: true })
+            onClicked: pageStack.push(qrCodePage, { isForOwnDevices: true })
 
             UserResourcesWatcher {
                 id: ownResourcesWatcher
@@ -203,463 +190,403 @@ DetailsContent {
         }
     }
 
-    RosterAddContactSheet {
+    Component {
         id: contactAdditionSheet
+        RosterAddContactSheet {
+
+        }
     }
 
-    SilicaFlickable {
-        id: providerArea
-        width: parent.width
-        visible: providerUrl  || chatSupportList.length || groupChatSupportList.length
+     Column {
+         id: providerArea
+         width: parent.width
+         visible: providerUrl  || chatSupportList.length || groupChatSupportList.length
 
-        readonly property string providerUrl: {
-            const domain = root.jid.split('@')[1]
-            const provider = providerListModel.provider(domain)
+         readonly property string providerUrl: {
+             const domain = root.jid.split('@')[1]
+             const provider = providerListModel.provider(domain)
 
-            return providerListModel.chooseWebsite(provider.websites)
+             return providerListModel.chooseWebsite(provider.websites)
+         }
+
+         readonly property var chatSupportList: providerListModel.providerFromBareJid(root.jid).chatSupportList
+         readonly property var groupChatSupportList: providerListModel.providerFromBareJid(root.jid).groupChatSupportList
+
+        ProviderListModel {
+            id: providerListModel
         }
 
-        readonly property var chatSupportList: providerListModel.providerFromBareJid(root.jid).chatSupport
-        readonly property var groupChatSupportList: providerListModel.providerFromBareJid(root.jid).groupChatSupport
+        ChatSupportSheet {
+            id: chatSupportSheet
+            chatSupportList: providerArea.chatSupportList
+        }
 
-         Column {
-            spacing: 0
+        SectionHeader {
+            text: qsTr("Provider")
+        }
 
-            ProviderListModel {
-                id: providerListModel
+        ValueButton {
+            value: qsTr("Visit website")
+            description: qsTr("Open your provider's website in a web browser")
+            visible: providerArea.providerUrl
+            onClicked: Qt.openUrlExternally(providerArea.providerUrl)
+        }
+
+        ValueButton {
+            value: qsTr("Copy website address")
+            description: qsTr("Copy your provider's web address to the clipboard")
+            visible: providerArea.providerUrl
+            onClicked: {
+                Utils.copyToClipboard(providerArea.providerUrl)
+                passiveNotification(qsTr("Website address copied to clipboard"))
             }
+        }
 
-            ChatSupportSheet {
-                id: chatSupportSheet
-                chatSupportList: providerArea.chatSupportList
-            }
-
-            SectionHeader {
-                text: qsTr("Provider")
-            }
-
-            Button {
-                text: qsTr("Visit website")
-                //FIXME description: qsTr("Open your provider's website in a web browser")
-                visible: providerArea.providerUrl
-                onClicked: Qt.openUrlExternally(providerArea.providerUrl)
-            }
-
-            Button {
-                text: qsTr("Copy website address")
-                //FIXME description: qsTr("Copy your provider's web address to the clipboard")
-                visible: providerArea.providerUrl
-                onClicked: {
-                    Utils.copyToClipboard(providerArea.providerUrl)
-                    passiveNotification(qsTr("Website address copied to clipboard"))
+        ValueButton {
+            value: qsTr("Open support chat")
+            description: qsTr("Start chat with your provider's support contact")
+            visible: providerArea.chatSupportList.length > 0
+            onClicked: {
+                if (providerArea.chatSupportList.length === 1) {
+                    if (!contactAdditionSheet.sheetOpen) {
+                        contactAdditionSheet.jid = providerArea.chatSupportList[0]
+                        contactAdditionSheet.nickname = qsTr("Support")
+                        root.sheet.close()
+                        contactAdditionSheet.open()
+                    }
+                } else if (!chatSupportSheet.sheetOpen) {
+                    root.sheet.close()
+                    chatSupportSheet.open()
                 }
             }
+        }
 
-            Button {
-                text: qsTr("Open support chat")
-                //FIXME description: qsTr("Start chat with your provider's support contact")
-                visible: providerArea.chatSupportList.length > 0
-                onClicked: {
-                    if (providerArea.chatSupportList.length === 1) {
-                        if (!contactAdditionSheet.sheetOpen) {
-                            contactAdditionSheet.jid = providerArea.chatSupportList[0]
-                            contactAdditionSheet.nickname = qsTr("Support")
-                            root.sheet.close()
-                            contactAdditionSheet.open()
-                        }
-                    } else if (!chatSupportSheet.sheetOpen) {
-                        root.sheet.close()
+        ValueButton {
+            value: qsTr("Open support group")
+            description: qsTr("Join your provider's public support group")
+            visible: providerArea.groupChatSupportList.length > 0
+            onClicked: {
+                if (providerArea.groupChatSupportList.length === 1) {
+                    Qt.openUrlExternally(Utils.groupChatUri(providerArea.groupChatSupportList[0]))
+                } else {
+                    chatSupportSheet.isGroupChatSupportSheet = true
+
+                    if (!chatSupportSheet.sheetOpen) {
                         chatSupportSheet.open()
                     }
                 }
             }
-
-            Button {
-                text: qsTr("Open support group")
-                //FIXME description: qsTr("Join your provider's public support group")
-                visible: providerArea.groupChatSupportList.length > 0
-                onClicked: {
-                    if (providerArea.groupChatSupportList.length === 1) {
-                        Qt.openUrlExternally(Utils.groupChatUri(providerArea.groupChatSupportList[0]))
-                    } else {
-                        chatSupportSheet.isGroupChatSupportSheet = true
-
-                        if (!chatSupportSheet.sheetOpen) {
-                            chatSupportSheet.open()
-                        }
-                    }
-                }
-            }
         }
     }
 
-    SilicaFlickable {
+
+
+     Column {
         visible: Kaidan.serverFeaturesCache.inBandRegistrationSupported
         width: parent.width
 
-         Column {
-            spacing: 0
+        SectionHeader {
+            text: qsTr("Password Change")
+        }
 
-            SectionHeader {
-                text: qsTr("Password Change")
+        TextArea {
+            width: parent.width
+            readOnly: true
+            font.pixelSize: Theme.fontSizeExtraSmall
+            color: Theme.secondaryColor
+            text: qsTr("Change your password. You need to enter the new password on all your other devices!")
+        }
+
+        PasswordField {
+            id: passwordVerificationField
+            label: qsTr("Current password")
+            placeholderText: "Enter your current password"
+            // invalidHintText: qsTr("Enter correct password")
+            visible: true // Kaidan.settings.passwordVisibility !== Kaidan.PasswordVisible
+            enabled: !passwordBusyIndicator.visible
+            onTextChanged: {
+                valid = text === AccountManager.password
+                toggleHintForInvalidText()
             }
+            EnterKey.onClicked: passwordChangeConfirmationButton.clicked()
 
-            Label {
-                text: qsTr("Change your password. You need to enter the new password on all your other devices!")
+            function initialize() {
+//                          showPassword = false
+//                          invalidHintMayBeShown = false
+                text = ""
             }
+       }
+        PasswordField {
+            property bool valid: false
+            label: passwordVerificationField.visible ? qsTr("New password") : qsTr("Password")
+            id: passwordField
+            placeholderText: "Enter your new password"
+            //invalidHintText: qsTr("Enter different password to change it")
+            //invalidHintMayBeShown: true
+            enabled: !passwordBusyIndicator.visible
+            onTextChanged: {
+                valid = credentialsValidator.isPasswordValid(text) && text !== AccountManager.password
+//                              toggleHintForInvalidText()
+            }
+            EnterKey.onClicked: passwordChangeConfirmationButton.clicked()
 
-            BackgroundItem {
-                // background: Item {}
-                 Column {
-                    TextField {
-                        text: qsTr("Current password")
-                    }
+            function initialize() {
+//                              showPassword = false
+                text = passwordVerificationField.visible ? "" : AccountManager.password
 
-                    PasswordField {
-                        id: passwordVerificationField
-                        placeholderText: "Enter your current password"
-                        // invalidHintText: qsTr("Enter correct password")
-                        visible: Kaidan.settings.passwordVisibility !== Kaidan.PasswordVisible
-                        enabled: !passwordBusyIndicator.visible
-                        anchors.rightMargin: passwordChangeConfirmationButton.Layout.preferredWidth + passwordButtonFieldArea.spacing
-                        onTextChanged: {
-                            valid = text === AccountManager.password
-                            toggleHintForInvalidText()
-                        }
-                        EnterKey.onClicked: passwordChangeConfirmationButton.clicked()
-
-                        function initialize() {
-                            showPassword = false
-                            invalidHintMayBeShown = false
-                            text = ""
-                        }
-                    }
-
-                    Row {
-                        id: passwordButtonFieldArea
-
-                        TextField {
-                            text: passwordVerificationField.visible ? qStr("New password") : qStr("Password")
-                        }
-
-                        PasswordField {
-                            id: passwordField
-                            placeholderText: "Enter your new password"
-                            //invalidHintText: qsTr("Enter different password to change it")
-                            //invalidHintMayBeShown: true
-                            enabled: !passwordBusyIndicator.visible
-                            onTextChanged: {
-                                valid = credentialsValidator.isPasswordValid(text) && text !== AccountManager.password
-                                toggleHintForInvalidText()
-                            }
-                            EnterKey.onClicked: passwordChangeConfirmationButton.clicked()
-
-                            function initialize() {
-                                showPassword = false
-                                text = passwordVerificationField.visible ? "" : AccountManager.password
-
-                                // Avoid showing a hint on initial setting.
-                                invalidHint.visible = false
-                            }
-                        }
-
-                        Button {
-                            id: passwordChangeConfirmationButton
-                            //FIXME Controls.ToolTip.text: qsTr("Change password")
-                            icon.source: "image://theme/icon-m-enter-accept"
-                            visible: !passwordBusyIndicator.visible
-                            //FIXME flat: true
-                            //FIXME Layout.preferredWidth: // Layout.preferredHeight
-                            // //FIXME Layout.preferredHeight: passwordField.inputField.implicitHeight
-                            // Layout.alignment: passwordField.invalidHint.visible ? Qt.AlignVCenter : Qt.AlignBottom
-                            onHoveredChanged: {
-                                if (hovered) {
-                                    flat = false
-                                } else {
-                                    flat = true
-                                }
-                            }
-                            onClicked: {
-                                if (passwordVerificationField.visible && !passwordVerificationField.valid) {
-                                    passwordVerificationField.forceActiveFocus()
-                                } else if (!passwordField.valid) {
-                                    passwordField.forceActiveFocus()
-                                    passwordField.toggleHintForInvalidText()
-                                } else {
-                                    passwordBusyIndicator.visible = true
-                                    Kaidan.client.registrationManager.changePasswordRequested(passwordField.text)
-                                }
-                            }
-                        }
-
-                        BusyIndicator {
-                            id: passwordBusyIndicator
-                            visible: false
-                            //FIXME Layout.preferredWidth: passwordChangeConfirmationButton.Layout.preferredWidth
-                            // //FIXME Layout.preferredHeight: Layout.preferredWidth
-                            // Layout.alignment: passwordChangeConfirmationButton.Layout.alignment
-                        }
-                    }
-
-                    Label {
-                        id: passwordChangeErrorMessage
-                        visible: false
-                        font.bold: true
-                        wrapMode: Text.WordWrap
-                        padding: 10
-                        width: parent.width
-                        Rectangle {
-                            color: Kirigami.Theme.negativeBackgroundColor
-                            radius: roundedCornersRadius
-                        }
-                    }
-
-                    Connections {
-                        target: Kaidan
-
-                        function onPasswordChangeFailed(errorMessage) {
-                            passwordBusyIndicator.visible = false
-                            passwordChangeErrorMessage.visible = true
-                            passwordChangeErrorMessage.text = qsTr("Failed to change password: %1").arg(errorMessage)
-                        }
-
-                        function onPasswordChangeSucceeded() {
-                            passwordBusyIndicator.visible = false
-                            passwordChangeErrorMessage.visible = false
-                            passiveNotification(qsTr("Password changed successfully"))
-                        }
+                // Avoid showing a hint on initial setting.
+//                              invalidHint.visible = false
+            }
+            CredentialsValidator {
+                id: credentialsValidator
+            }
+            rightItem: IconButton {
+                id: passwordChangeConfirmationButton
+                icon.source: "image://theme/icon-splus-right"
+                visible: !passwordBusyIndicator.visible
+                width: icon.width + 2*Theme.paddingMedium
+                height: icon.height
+                onClicked: {
+                    if (passwordVerificationField.visible && !passwordVerificationField.valid) {
+                        passwordVerificationField.forceActiveFocus()
+                    } else if (!passwordField.valid) {
+                        passwordField.forceActiveFocus()
+//                          passwordField.toggleHintForInvalidText()
+                    } else {
+                        passwordBusyIndicator.visible = true
+                        Kaidan.client.registrationManager.changePasswordRequested(passwordField.text)
                     }
                 }
+            }
+
+            BusyIndicator {
+                id: passwordBusyIndicator
+                anchors.fill: parent
+                visible: false
+            }
+        }
+
+        Label {
+            id: passwordChangeErrorMessage
+            visible: false
+            font.bold: true
+            wrapMode: Text.WordWrap
+            width: parent.width
+            Rectangle {
+                color: Theme.errorColor
+//                          radius: roundedCornersRadius
+            }
+        }
+
+        Connections {
+            target: Kaidan
+
+            onPasswordChangeFailed : {
+                passwordBusyIndicator.visible = false
+                passwordChangeErrorMessage.visible = true
+                passwordChangeErrorMessage.text = qsTr("Failed to change password: %1").arg(errorMessage)
+            }
+
+            onPasswordChangeSucceeded: {
+                passwordBusyIndicator.visible = false
+                passwordChangeErrorMessage.visible = false
+                passiveNotification(qsTr("Password changed successfully"))
             }
         }
     }
 
-    SilicaFlickable {
+     Column {
         visible: Kaidan.settings.passwordVisibility !== Kaidan.PasswordInvisible
         width: parent.width
 
-         Column {
-            spacing: 0
+        SectionHeader {
+            text: qsTr("Password Security")
+        }
 
-            SectionHeader {
-                text: qsTr("Password Security")
+        TextArea {
+            readOnly: true
+            width: parent.width
+            font.pixelSize: Theme.fontSizeExtraSmall
+            color: Theme.secondaryColor
+            text: qsTr("Configure this device to not expose your password for changing it or switching to another device. If you want to change your password or use your account on another device later, <b>consider storing the password somewhere else. This cannot be undone!</b>")
+        }
+
+        Button {
+            text: qsTr("Don't show password as text")
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: Kaidan.settings.passwordVisibility === Kaidan.PasswordVisible
+            //description: qsTr("Allow to add additional devices using the login QR code but never show the password")
+            icon.source: "image://theme/icon-splus-hide-password"
+            onClicked: {
+                Kaidan.settings.passwordVisibility = Kaidan.PasswordVisibleQrOnly
+                passwordField.initialize()
             }
+        }
 
-            Label {
-                text: qsTr("Configure this device to not expose your password for changing it or switching to another device. If you want to change your password or use your account on another device later, <b>consider storing the password somewhere else. This cannot be undone!</b>")
-            }
+        Button {
+            text: qsTr("Don't expose password")
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: Kaidan.settings.passwordVisibility !== Kaidan.PasswordInvisible
+            //FIXME description: qsTr("Neither allow to add additional devices using the login QR code nor show the password")
+            icon.source: "image://theme/icon-s-outline-secure"
+            onClicked: {
+                const oldPasswordVisibility = Kaidan.settings.passwordVisibility
+                Kaidan.settings.passwordVisibility = Kaidan.PasswordInvisible
 
-            Button {
-                text: qsTr("Don't show password as text")
-                visible: Kaidan.settings.passwordVisibility === Kaidan.PasswordVisible
-                //FIXME description: qsTr("Allow to add additional devices using the login QR code but never show the password")
-                icon.source: "image://theme/icon-splus-hide-password"
-                onClicked: {
-                    Kaidan.settings.passwordVisibility = Kaidan.PasswordVisibleQrOnly
+                // Do not initialize passwordField when the password is already hidden.
+                if (oldPasswordVisibility === Kaidan.PasswordVisible) {
                     passwordField.initialize()
                 }
             }
+        }
+    }
 
+     Column {
+        width: parent.width
+
+        SectionHeader {
+            text: qsTr("Connection")
+        }
+
+        TextArea {
+            width: parent.width
+            readOnly: true
+            font.pixelSize: Theme.fontSizeExtraSmall
+            color: Theme.secondaryColor
+            text: qsTr("Configure the hostname and port to connect to (empty fields for default values)")
+        }
+        Row {
+            width: parent.width
+            CustomConnectionSettings {
+                id: customConnectionSettings
+                confirmationButton: connectionSettingsConfirmationButton
+            }
             Button {
-                text: qsTr("Don't expose password in any way")
-                visible: Kaidan.settings.passwordVisibility !== Kaidan.PasswordInvisible
-                //FIXME description: qsTr("Neither allow to add additional devices using the login QR code nor show the password")
-                icon.source: "security-high-symbolic"
+                id: connectionSettingsConfirmationButton
+                icon.source: "image://theme/icon-m-enter-accept"
+                visible: !connectionSettingsBusyIndicator.visible
+                // Layout.alignment: Qt.AlignBottom
                 onClicked: {
-                    const oldPasswordVisibility = Kaidan.settings.passwordVisibility
-                    Kaidan.settings.passwordVisibility = Kaidan.PasswordInvisible
+                    if (customConnectionSettings.hostField.text === AccountManager.host && customConnectionSettings.portField.value === AccountManager.port) {
+                        connectionSettingsErrorMessage.text = qsTr("Enter different connection settings to change them")
+                        connectionSettingsErrorMessage.visible = true
+                    } else {
+                        connectionSettingsBusyIndicator.visible = true
 
-                    // Do not initialize passwordField when the password is already hidden.
-                    if (oldPasswordVisibility === Kaidan.PasswordVisible) {
-                        passwordField.initialize()
+                        // Reset the error message in case of previous button clicking without changed entered settings.
+                        if (Kaidan.connectionError === ClientWorker.NoError) {
+                            connectionSettingsErrorMessage.visible = false
+                        }
+
+                        if (Kaidan.connectionState === Enums.StateDisconnected) {
+                            connectionSettings.logIn()
+                        } else {
+                            Kaidan.logOut()
+                        }
+                    }
+                }
+            }
+
+            BusyIndicator {
+                id: connectionSettingsBusyIndicator
+                visible: false
+            }
+        }
+
+        Label {
+            id: connectionSettingsErrorMessage
+            visible: false
+            font.bold: true
+            wrapMode: Text.WordWrap
+            padding: 10
+            width: parent.width
+            Rectangle {
+                color: Theme.errorColor
+//                          radius: roundedCornersRadius
+            }
+        }
+
+        Connections {
+            target: Kaidan
+
+            onConnectionErrorChanged: {
+                // Skip connection error changes not invoked via connectionSettings by checking whether connectionSettingsBusyIndicator is visible.
+                if (Kaidan.connectionError === ClientWorker.NoError) {
+                    connectionSettingsErrorMessage.visible = false
+                } else {
+                    connectionSettingsErrorMessage.visible = true
+                    connectionSettingsErrorMessage.text = qsTr("Connection settings could not be changed: %1").arg(Utils.connectionErrorMessage(Kaidan.connectionError))
+                }
+            }
+
+            onConnectionStateChanged: {
+                // Skip connection state changes not invoked via connectionSettings by checking whether connectionSettingsBusyIndicator is visible.
+                if (connectionSettingsBusyIndicator.visible) {
+                    if (Kaidan.connectionState === Enums.StateDisconnected) {
+                        if (Kaidan.connectionError === ClientWorker.NoError) {
+                            connectionSettings.logIn()
+                        } else {
+                            connectionSettingsBusyIndicator.visible = false
+                        }
+                    } else if (Kaidan.connectionState === Enums.StateConnected) {
+                        connectionSettingsBusyIndicator.visible = false
+                        passiveNotification(qsTr("Connection settings changed"))
                     }
                 }
             }
         }
-    }
 
-    SilicaFlickable {
+        function logIn() {
+            AccountManager.host = customConnectionSettings.hostField.text
+            AccountManager.port = customConnectionSettings.portField.value
+            Kaidan.logIn()
+        }
+
+     }
+
+     Column {
         width: parent.width
 
-         Column {
-            spacing: 0
+        SectionHeader {
+            text: qsTr("Removal")
+        }
 
-            SectionHeader {
-                text: qsTr("Connection")
-            }
+        IconTextSwitch {
+            id: removalButton
+            text: qsTr("Remove from Kaidan")
+            description: qsTr("Remove account from this app. Back up your credentials and chat history if needed!")
+            icon.source: "image://theme/icon-m-delete"
+            onCheckedChanged: contactRemovalCorfirmationButton.visible = !contactRemovalCorfirmationButton.visible
+        }
 
-            Label {
-                text: qsTr("Configure the hostname and port to connect to (empty fields for default values)")
-            }
-
-            BackgroundItem {
-                // background: Item {}
-                 Column {
-                    id: connectionSettings
-
-                    Row {
-                        CustomConnectionSettings {
-                            id: customConnectionSettings
-                            confirmationButton: connectionSettingsConfirmationButton
-                        }
-
-                        Button {
-                            id: connectionSettingsConfirmationButton
-                            //FIXME Controls.ToolTip.text: qsTr("Change connection settings")
-                            icon.source: "emblem-ok-symbolic"
-                            visible: !connectionSettingsBusyIndicator.visible
-                            //FIXME flat: true
-                            //FIXME Layout.preferredWidth: // Layout.preferredHeight
-                            // //FIXME Layout.preferredHeight: customConnectionSettings.portField.implicitHeight
-                            // Layout.alignment: Qt.AlignBottom
-                            onHoveredChanged: {
-                                if (hovered) {
-                                    flat = false
-                                } else {
-                                    flat = true
-                                }
-                            }
-                            onClicked: {
-                                if (customConnectionSettings.hostField.text === AccountManager.host && customConnectionSettings.portField.value === AccountManager.port) {
-                                    connectionSettingsErrorMessage.text = qsTr("Enter different connection settings to change them")
-                                    connectionSettingsErrorMessage.visible = true
-                                } else {
-                                    connectionSettingsBusyIndicator.visible = true
-
-                                    // Reset the error message in case of previous button clicking without changed entered settings.
-                                    if (Kaidan.connectionError === ClientWorker.NoError) {
-                                        connectionSettingsErrorMessage.visible = false
-                                    }
-
-                                    if (Kaidan.connectionState === Enums.StateDisconnected) {
-                                        connectionSettings.logIn()
-                                    } else {
-                                        Kaidan.logOut()
-                                    }
-                                }
-                            }
-                        }
-
-                        BusyIndicator {
-                            id: connectionSettingsBusyIndicator
-                            visible: false
-                            //FIXME Layout.preferredWidth: connectionSettingsConfirmationButton.Layout.preferredWidth
-                            // //FIXME Layout.preferredHeight: Layout.preferredWidth
-                            // Layout.alignment: connectionSettingsConfirmationButton.Layout.alignment
-                        }
-                    }
-
-                    Label {
-                        id: connectionSettingsErrorMessage
-                        visible: false
-                        font.bold: true
-                        wrapMode: Text.WordWrap
-                        padding: 10
-                        width: parent.width
-                        Rectangle {
-                            color: Kirigami.Theme.negativeBackgroundColor
-                            radius: roundedCornersRadius
-                        }
-                    }
-
-                    Connections {
-                        target: Kaidan
-
-                        function onConnectionErrorChanged() {
-                            // Skip connection error changes not invoked via connectionSettings by checking whether connectionSettingsBusyIndicator is visible.
-                            if (Kaidan.connectionError === ClientWorker.NoError) {
-                                connectionSettingsErrorMessage.visible = false
-                            } else {
-                                connectionSettingsErrorMessage.visible = true
-                                connectionSettingsErrorMessage.text = qsTr("Connection settings could not be changed: %1").arg(Utils.connectionErrorMessage(Kaidan.connectionError))
-                            }
-                        }
-
-                        function onConnectionStateChanged() {
-                            // Skip connection state changes not invoked via connectionSettings by checking whether connectionSettingsBusyIndicator is visible.
-                            if (connectionSettingsBusyIndicator.visible) {
-                                if (Kaidan.connectionState === Enums.StateDisconnected) {
-                                    if (Kaidan.connectionError === ClientWorker.NoError) {
-                                        connectionSettings.logIn()
-                                    } else {
-                                        connectionSettingsBusyIndicator.visible = false
-                                    }
-                                } else if (Kaidan.connectionState === Enums.StateConnected) {
-                                    connectionSettingsBusyIndicator.visible = false
-                                    passiveNotification(qsTr("Connection settings changed"))
-                                }
-                            }
-                        }
-                    }
-
-                    function logIn() {
-                        AccountManager.host = customConnectionSettings.hostField.text
-                        AccountManager.port = customConnectionSettings.portField.value
-                        Kaidan.logIn()
-                    }
-                }
+        Button {
+            id: contactRemovalCorfirmationButton
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: qsTr("Confirm")
+            visible: false
+            onClicked: {
+                visible = false
+                removalButton.enabled = false
+                Kaidan.deleteAccountFromClient()
             }
         }
-    }
+        IconTextSwitch {
+            id: deletionButton
+            text: qsTr("Delete completely")
+            description: qsTr("Delete account from provider. You will not be able to use your account again!")
+            icon.source: "image://theme/icon-m-delete"
+            onCheckedChanged: contactDeletionCorfirmationButton.visible = !contactDeletionCorfirmationButton.visible
+        }
 
-    SilicaFlickable {
-        width: parent.width
-
-         Column {
-            spacing: 0
-
-            SectionHeader {
-                text: qsTr("Removal")
-            }
-
-            Column {
-                spacing: 0
-
-                IconTextSwitch {
-                    id: removalButton
-                    text: qsTr("Remove from Kaidan")
-                    //FIXME description: qsTr("Remove account from this app. Back up your credentials and chat history if needed!")
-                    icon.source: "image://theme/icon-s-edit"
-                    // checkable: true
-                    onCheckedChanged: contactRemovalCorfirmationButton.visible = !contactRemovalCorfirmationButton.visible
-                }
-
-                Button {
-                    id: contactRemovalCorfirmationButton
-                    text: qsTr("Confirm")
-                    visible: false
-                    anchors.leftMargin: Kirigami.Units.largeSpacing * 6
-                    onClicked: {
-                        visible = false
-                        removalButton.enabled = false
-                        Kaidan.deleteAccountFromClient()
-                    }
-                }
-            }
-
-            Column {
-                spacing: 0
-
-                IconTextSwitch {
-                    id: deletionButton
-                    text: qsTr("Delete completely")
-                    //FIXME description: qsTr("Delete account from provider. You will not be able to use your account again!")
-                    icon.source: "image://theme/icon-s-edit"
-                    // checkable: true
-                    onCheckedChanged: contactDeletionCorfirmationButton.visible = !contactDeletionCorfirmationButton.visible
-                }
-
-                Button {
-                    id: contactDeletionCorfirmationButton
-                    text: qsTr("Confirm")
-                    visible: false
-                    anchors.leftMargin: Kirigami.Units.largeSpacing * 6
-                    onClicked: {
-                        visible = false
-                        removalButton.enabled = false
-                        Kaidan.deleteAccountFromClientAndServer()
-                    }
-                }
+        Button {
+            id: contactDeletionCorfirmationButton
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: qsTr("Confirm")
+            visible: false
+            onClicked: {
+                visible = false
+                removalButton.enabled = false
+//                    Kaidan.deleteAccountFromClientAndServer()
             }
         }
     }

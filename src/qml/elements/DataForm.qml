@@ -41,6 +41,7 @@ Column {
     Column {
 		ColumnView {
             id: columnView
+            itemHeight: Theme.itemSizeMedium
 			model: root.model
 			delegate: Column {
 				visible: model.type !== DataFormModel.HiddenField

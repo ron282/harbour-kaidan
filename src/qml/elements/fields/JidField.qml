@@ -16,10 +16,10 @@ import ".."
 CredentialsField {
 	id: root
 
-    labelText: qsTr("Chat address")
+    label: qsTr("Chat address")
     placeholderText: qsTr("user@example.org")
     inputMethodHints: Qt.ImhEmailCharactersOnly // | Qt.ImhPreferLowercase | TextFieldCompleter.inputMethodHints
-    invalidHintText: qsTr("The chat address must have the form <b>username@server</b>")
+//  invalidHintText: qsTr("The chat address must have the form <b>username@server</b>")
     text: AccountManager.jid
 //	completionRole: "display"
 //	completionModel: HostCompletionProxyModel {
@@ -29,7 +29,7 @@ CredentialsField {
 
 	// Validate the entered JID and show a hint if it is not valid.
     onTextChanged: {
-//        valid = credentialsValidator.isAccountJidValid(text)
+        valid = credentialsValidator.isAccountJidValid(text)
 //      toggleHintForInvalidText()
     }
 }

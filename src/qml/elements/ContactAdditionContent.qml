@@ -45,31 +45,23 @@ ConfirmationArea {
 	}
 	loadingArea.description: qsTr("Adding contact…")
 
-	JidField {
-		id: jidField
-		text: ""
-//		inputField.onAccepted: valid ? nameField.forceActiveFocus() : forceActiveFocus()
-        anchors {
-            left: parent.left
-            right: parent.right
+    contentArea: Column {
+        width: parent.width
+        JidField {
+            id: jidField
+            text: ""
+        //		inputField.onAccepted: valid ? nameField.forceActiveFocus() : forceActiveFocus()
+            anchors {
+                left: parent.left
+                right: parent.right
+            }
         }
-    }
 
-    TextField {
-		id: nameField
-        label: qsTr("Name (optional):")
-		inputMethodHints: Qt.ImhPreferUppercase
-//		inputField.onAccepted: messageField.forceActiveFocus()
-        anchors {
-            left: parent.left
-            right: parent.right
-        }
-	}
-
-    Column {
-        Label {
-			text: qsTr("Message (optional):")
-			textFormat: Text.PlainText
+        TextField {
+            id: nameField
+            label: qsTr("Name (optional):")
+            inputMethodHints: Qt.ImhPreferUppercase
+        //		inputField.onAccepted: messageField.forceActiveFocus()
             anchors {
                 left: parent.left
                 right: parent.right
@@ -77,14 +69,15 @@ ConfirmationArea {
         }
 
         TextArea {
-			id: messageField
-			placeholderText: qsTr("Hello, I'm…")
-			inputMethodHints: Qt.ImhPreferUppercase
-			wrapMode: TextEdit.Wrap
+            id: messageField
+            label: qsTr("Message (optional):")
+            placeholderText: qsTr("Hello, I'm…")
+            inputMethodHints: Qt.ImhPreferUppercase
+            wrapMode: TextEdit.Wrap
             anchors {
                 left: parent.left
                 right: parent.right
             }
-		}
-	}
+        }
+    }
 }

@@ -134,7 +134,7 @@ Page {
 		function onAvatarChangeSucceeded() {
 			busyIndicator.visible = false
 			// TODO: Show error message if changing did not succeed
-			pageStack.layers.pop()
+            pageStack.pop()
 		}
 	}
 }

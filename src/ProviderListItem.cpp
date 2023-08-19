@@ -366,3 +366,33 @@ bool ProviderListItem::operator==(const ProviderListItem& other) const
 {
 	return d == other.d;
 }
+
+#if defined(SFOS)
+QStringList ProviderListItem::chatSupportList() const
+{
+    QStringList retVal;
+
+    auto it = d->chatSupport.pickBySystemLocale().cbegin();
+
+    while(it != d->chatSupport.pickBySystemLocale().cend())
+    {
+        retVal.append(*it);
+        ++it;
+    }
+    return retVal;
+}
+
+QStringList ProviderListItem::groupChatSupportList() const
+{
+    QStringList retVal;
+
+    auto it = d->groupChatSupport.pickBySystemLocale().cbegin();
+
+    while(it != d->groupChatSupport.pickBySystemLocale().cend())
+    {
+        retVal.append(*it);
+        ++it;
+    }
+    return retVal;
+}
+#endif

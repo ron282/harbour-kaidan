@@ -14,12 +14,13 @@ DetailsContent {
 	id: root
 
 	property bool isChatWithOneself: MessageModel.currentAccountJid === jid
-
+/*
     mediaOverview {
         accountJid: MessageModel.currentAccountJid
         chatJid: MessageModel.currentChatJid
     }
-
+*/
+/*
     vCardRepeater {
         itemHeight: Theme.itemSizeMedium * 2
 
@@ -28,7 +29,7 @@ DetailsContent {
         }
         delegate: BackgroundItem {
             id: vCardDelegate
-//          background: Item {}
+
             Column {
                 width: parent.width
                 Label {
@@ -55,7 +56,7 @@ DetailsContent {
             }
         }
     }
-
+*/
     rosterGroupArea: Column {
         id: colRoster
         width: parent.width
@@ -63,8 +64,6 @@ DetailsContent {
         SectionHeader {
             text: qsTr("Labels")
         }
-
-
         TextField {
             id: rosterGroupField
             placeholderText: qsTr("New label")
@@ -250,7 +249,7 @@ DetailsContent {
 */
             visible: label
 			enabled: accountOmemoWatcher.authenticatableOmemoDevices.length
-			onClicked: pageStack.layers.push(qrCodePage, { isForOwnDevices: true })
+            onClicked: pageStack.push(qrCodePage, { isForOwnDevices: true })
 
 			UserResourcesWatcher {
 				id: ownResourcesWatcher
@@ -348,7 +347,7 @@ DetailsContent {
         id: contactWatcher
         jid: root.jid
     }
-
+/*
     extraContentArea: Column {
         spacing: 0
         width: parent.width
@@ -464,5 +463,5 @@ DetailsContent {
                 Kaidan.client.rosterManager.removeContactRequested(jid)
             }
         }
-    }
+    }*/
 }

@@ -16,7 +16,7 @@ SilicaControl {
 	id: root
 
     default property alias __data: mainArea.data
-    property DockedPanel sheet
+    property Page sheet
     property string jid
 	property alias qrCodePage: qrCodePage
     property alias mediaOverview: mediaOverview
@@ -64,7 +64,6 @@ SilicaControl {
         Column {
             visible: mediaOverview.totalFilesCount
             width: parent.width
-            spacing: 0
 
             SectionHeader {
                 text: qsTr("Media")
@@ -120,7 +119,6 @@ SilicaControl {
 
         Column {
             visible: deviceRepeater.count
-            spacing: 0
 
             SectionHeader {
                 text: qsTr("Connected Devices")

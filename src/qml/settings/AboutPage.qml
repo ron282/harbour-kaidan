@@ -7,11 +7,10 @@ import "../elements"
 
 SettingsPageBase {
 
-	implicitHeight: layout.implicitHeight
-	implicitWidth: layout.implicitWidth
-
     SilicaFlickable {
         width: parent.width
+        contentWidth: parent.width;
+        contentHeight: Screen.height*2
 
         Column {
            spacing: 0
@@ -74,7 +73,7 @@ SettingsPageBase {
             UrlFormButtonDelegate {
                 text: qsTr("View source code")
                 description: qsTr("View Kaidan's source code online and contribute to the project")
-                icon.source: "image://theme/icon-m-search-on-page"
+                icon: "image://theme/icon-m-search-on-page"
                 url: Utils.applicationSourceCodeUrl
             }
             Label {

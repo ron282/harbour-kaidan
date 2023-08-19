@@ -12,8 +12,6 @@ DetailsSheet {
 
     property string jid
 
-//	parent: applicationWindow().overlay
-
     ContactDetailsHeader {
         id: header
 		jid: root.jid
@@ -21,12 +19,12 @@ DetailsSheet {
 
     SilicaFlickable {
         anchors.top: header.bottom
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
         anchors.right: parent.right
-
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
         contentHeight: Screen.height*2
         contentWidth: parent.width
+        clip: true
 
         ContactDetailsContent {
             sheet: root

@@ -3,6 +3,7 @@
         <file>LoginPage.qml</file>
         <file>StartPage.qml</file>
         <file>GlobalDrawer.qml</file>
+        <file>AccountTransferPage.qml</file>
         <file>details/AccountDetailsContent.qml</file>
         <file>details/AccountDetailsHeader.qml</file>
         <file>details/AccountDetailsPage.qml</file>
@@ -109,8 +110,5 @@
         <file>settings/SettingsPageBase.qml</file>
         <file>settings/SettingsSheet.qml</file>
         <file>elements/SelectablePreview.qml</file>
-    </qresource>
-    <qresource prefix="/">
-        <file>GlobalDrawer.qml</file>
     </qresource>
 </RCC>

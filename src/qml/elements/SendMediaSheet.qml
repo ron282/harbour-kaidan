@@ -68,9 +68,9 @@ DockedPanel {
 	}
 
 	Column {
-        anchors.horizontalCenter: parent
-        anchors.topMargin: Theme.paddingSmall
-        anchors.bottomMargin: Theme.paddingSmall
+//        anchors.horizontalCenter: parent
+//        anchors.topMargin: Theme.paddingSmall
+//        anchors.bottomMargin: Theme.paddingSmall
         Label {
 			text: qsTr("Choose files")
 			visible: fileList.count === 0
@@ -79,6 +79,7 @@ DockedPanel {
 		// List of selected files
 		ColumnView {
 			id: fileList
+            itemHeight: Theme.itemSizeLarge
 			model: root.composition.fileSelectionModel
 
             delegate: ListItem {

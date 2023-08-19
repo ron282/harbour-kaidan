@@ -53,56 +53,42 @@ Page {
 	 */
 	property bool useMarginsForContent: true
 
-	Item {
-		id: contentArea
-		anchors.fill: parent
-		anchors.margins: useMarginsForContent ? 20 : 0
-		anchors.bottomMargin: useMarginsForContent ? parent.height - buttonArea.y : 0
-	}
+    PageHeader {
+        id: header
+    }
 
-	// background of overlay
-	Rectangle {
-		z: 1
-		anchors.fill: overlay
-		anchors.margins: -8
-		radius: roundedCornersRadius
-        color: Theme.backgroundColor
-		opacity: 0.90
-		visible: explanationArea.visible
-	}
+    SilicaGridView {
+        id: contentArea
+        anchors.fill: parent
+        anchors.margins: useMarginsForContent ? Theme.paddingSmall : 0
+        anchors.bottomMargin: useMarginsForContent ? parent.height - buttonArea.y : 0
+    }
 
     Column {
-		id: overlay
-		z: 2
-		anchors.margins: 18
-		anchors.top: parent.top
-		anchors.left: parent.left
-		anchors.right: parent.right
-		anchors.bottom: parent.bottom
+        id: explanationArea
+        spacing: 0
+        width: parent.width
+        anchors.top: header.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: Theme.horizontalPageMargin
+        anchors.rightMargin: Theme.horizontalPageMargin
+    }
 
-        PageHeader {
-            id: header
+    Column {
+        id: buttonArea
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Theme.paddingSmall
+        width: parent.width
+        spacing: Theme.paddingLarge
+
+        CenteredAdaptiveHighlightedButton {
+            id: primaryButton
         }
 
-        Grid {
-			id: explanationArea
-            width: parent.width
-            height: parent.height
-		}
-
-        Column {
-			id: buttonArea
-            anchors.bottom: parent.bottom
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: Theme.buttonWidthLarge
-
-			CenteredAdaptiveHighlightedButton {
-				id: primaryButton
-			}
-
-			CenteredAdaptiveButton {
-				id: secondaryButton
-			}
-		}
-	}
+        CenteredAdaptiveButton {
+            id: secondaryButton
+        }
+    }
 }

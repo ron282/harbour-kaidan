@@ -11,8 +11,10 @@ import im.kaidan.kaidan 1.0
 /**
  * This is the base for fields which are used to enter credentials.
  */
-Field {
+TextField {
     id: fieldValue
+    property bool valid: false
+    property alias labelText: fieldValue.label
     CredentialsValidator {
         id: credentialsValidator
     }

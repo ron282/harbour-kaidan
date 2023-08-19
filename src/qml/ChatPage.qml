@@ -59,6 +59,7 @@ ChatPageBase {
     PageHeader {
         id: ph
         title: chatItemWatcher.item.displayName
+
         SilicaItem {
             parent: ph.extraContent
             height: Theme.iconSizeMedium
@@ -74,6 +75,7 @@ ChatPageBase {
                 onClicked: contactDetailsSheet.show()
             }
         }
+
         Rectangle {
                 z: -1;
                 color: "black";
@@ -83,6 +85,7 @@ ChatPageBase {
         ChatPageSearchView {
             id: searchBar
         }
+
     }
 
 	// Message search bar
@@ -92,6 +95,7 @@ ChatPageBase {
 		id: chatItemWatcher
 		jid: MessageModel.currentChatJid
 	}
+
     ContactDetailsSheet {
 		id: contactDetailsSheet
 		jid: MessageModel.currentChatJid
@@ -105,7 +109,7 @@ ChatPageBase {
 		}
 	}
 
-	SendMediaSheet {
+    SendMediaSheet {
 		id: sendMediaSheet
 		composition: sendingPane.composition
 		chatPage: parent
@@ -207,7 +211,7 @@ ChatPageBase {
 		Connections {
 			target: MessageModel
 
-/*			function onMessageFetchingFinished() {
+            onMessageFetchingFinished: {
 				// Skip the case when messages are fetched after the initial fetching because this
 				// function positioned the view at firstUnreadContactMessageIndex and that is close
 				// to the end of the loaded messages.
@@ -230,8 +234,8 @@ ChatPageBase {
 					}
 				}
 			}
-*/
-			function onMessageSearchFinished(queryStringMessageIndex) {
+
+            onMessageSearchFinished: {
 				if (queryStringMessageIndex !== -1) {
 					messageListView.currentIndex = queryStringMessageIndex
 				}
@@ -243,7 +247,7 @@ ChatPageBase {
 		Connections {
 			target: Qt.application
 
-			function onStateChanged(state) {
+            onStateChanged: {
 				// Send a read marker once the application becomes active if a message has been received while the application was not active.
 				if (state === Qt.ApplicationActive) {
 					messageListView.handleMessageRead()
@@ -261,7 +265,7 @@ ChatPageBase {
 		}
 
 
-		delegate: ChatMessage {
+        delegate: ChatMessage {
             contextMenu: ChatMessageContextMenu {
             }
 //			reactionEmojiPicker: root.messageReactionEmojiPicker
@@ -304,7 +308,7 @@ ChatPageBase {
 
                 sendingPane.messageArea.insert(0, quotedText)
 			}
-		}
+        }
 
 		// Everything is upside down, looks like a footer
         header: Column {

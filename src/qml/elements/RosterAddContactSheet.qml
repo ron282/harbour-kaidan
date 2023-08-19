@@ -38,7 +38,7 @@ import "fields"
 Dialog {
 	property string jid: ""
 	property string nickname: ""
-	parent: applicationWindow().overlay
+//	parent: applicationWindow().overlay
     DialogHeader
     {
         title: qsTr("Add new contact")
@@ -70,14 +70,10 @@ Dialog {
         spacing: Theme.paddingMedium
         Label {
 			visible: true
-			//FIXME Layout.preferredWidth: 400
 			width: parent.width
-            // type: Kirigami.MessageType.Information
-
 			text:  qsTr("This will also send a request to access the " +
 						"presence of the contact.")
 		}
-
 		Label {
 			text: qsTr("Jabber-ID:")
 		}
@@ -96,25 +92,23 @@ Dialog {
 			width: parent.width
 			text: nickname
 		}
-
 		Label {
 			text: qsTr("Optional message:")
 			textFormat: Text.PlainText
 			width: parent.width
 		}
-        TextArea {
+/*        TextArea {
 			id: msgField
 			width: parent.width
-            //FIXME Layout.minimumHeight: Kirigami.Units.gridUnit * 4
 			placeholderText: qsTr("Tell your chat partner who you are.")
             wrapMode: TextArea.Wrap
-            // selectByMouse: true
 		}
+*/
 	}
 
 	function clearInput() {
 		jid = "";
 		nickname = "";
-		msgField.text = "";
+//		msgField.text = "";
 	}
 }

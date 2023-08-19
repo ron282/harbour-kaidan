@@ -185,7 +185,7 @@ ApplicationWindow {
 	function popLayers(countOfLayersToPop) {
         for (i = 0; i < countOfLayersToPop; i++)
             pageStack.pop()
-            pageStack.layers.pop()
+            pageStack.pop()
 	}
 
 	/**

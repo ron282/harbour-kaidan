@@ -15,6 +15,7 @@ import im.kaidan.kaidan 1.0
  */
 Row {
     width: parent.width
+    height: Theme.iconSizeMedium
     property alias url: valbut.label
     property alias icon: icon.source
     property alias text: valbut.label

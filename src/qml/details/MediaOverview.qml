@@ -118,7 +118,7 @@ BackgroundItem {
                 IconButton {
                     id: iconCheckAll
                     visible: fileProxyModel.checkedCount !== fileProxyModel.rowCount
-                    icon.source: "image:/theme/icon-s-group-chat"
+                    icon.source: "image://theme/icon-s-group-chat"
                     onClicked: {
                         fileProxyModel.checkAll()
                     }
@@ -126,7 +126,7 @@ BackgroundItem {
 
                 IconButton {
                     id: iconDeleteChecked
-                    icon.source: "image:/theme/icon-s-decline"
+                    icon.source: "image://theme/icon-s-decline"
                     onClicked: {
                         fileProxyModel.deleteChecked()
                         root.selectionMode = false
@@ -160,7 +160,7 @@ BackgroundItem {
 //                root.loadDownloadedFiles()
 //            }
         }
-        delegate: {
+        delegate: Item {/*
             switch (root.tabBarCurrentIndex) {
             case 0:
                 return imageDelegate
@@ -170,7 +170,7 @@ BackgroundItem {
                 return otherDelegate
             }
 
-            return null
+            return null*/
         }
 
         Component {

@@ -12,25 +12,28 @@ import im.kaidan.kaidan 1.0
 import "../elements"
 import "../elements/fields"
 
-Row {
+Column {
 	property alias hostField: hostField
 	property alias portField: portField
+    width: parent.width
 
 	// The type Item is used because the type Button does not work for buttons of type RoundButton.
-	property Item confirmationButton
+    property IconButton confirmationButton
 
-	Field {
+    TextField {
 		id: hostField
-		labelText: qsTr("Hostname:")
+        width: parent.width
+        label: qsTr("Hostname:")
+        labelVisible: true
 		placeholderText: "xmpp.example.org"
 		text: AccountManager.host
 		inputMethodHints: Qt.ImhUrlCharactersOnly
-		invalidHintText: qsTr("The hostname must not contain blank spaces")
-		invalidHintMayBeShown: true
+//		invalidHintText: qsTr("The hostname must not contain blank spaces")
+//		invalidHintMayBeShown: true
 
 		onTextChanged: {
-			valid = !text.match(/\s/);
-			toggleHintForInvalidText()
+//			valid = !text.match(/\s/);
+//			toggleHintForInvalidText()
 		}
 
 		// Focus the portField on confirmation.
@@ -44,25 +47,20 @@ Row {
 		}
 	}
 
-	Column {
-		// Position this field on top even if hostField.invalidHintText is shown.
-		// Layout.alignment: Qt.AlignCenter
+    Slider {
+        id: portField
+        width: parent.width
+        label: qsTr("Port")
+        minimumValue: AccountManager.portAutodetect
+        maximumValue: 65535
+        value: AccountManager.port
+        valueText: value
+        stepSize: 1
 
-		Label {
-			text: qsTr("Port:")
-		}
-
-        Slider {
-			id: portField
-            minimumValue: AccountManager.portAutodetect
-            maximumValue: 65535
-			value: AccountManager.port
-
-            property string textFromValue: value === AccountManager.portAutodetect ? "" : value
-				// By returning the value without taking the locale into account, no digit grouping is applied.
-				// Example: For a port number of "one thousand" the text "1000" instead of "1,000" is returned.
-		}
-	}
+        property string textFromValue: value === AccountManager.portAutodetect ? "" : value
+            // By returning the value without taking the locale into account, no digit grouping is applied.
+            // Example: For a port number of "one thousand" the text "1000" instead of "1,000" is returned.
+    }
 
 	function forceActiveFocus() {
 		hostField.forceActiveFocus()

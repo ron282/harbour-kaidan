@@ -12,10 +12,12 @@ import Sailfish.Silica 1.0
 Label {
 	// factor to scale the text
 	property double scaleFactor: 1
+    width: parent.width
+    maximumLineCount: 2
     anchors.horizontalCenter: parent.horizontalCenter
 
     horizontalAlignment: Text.AlignHCenter
 	wrapMode: Text.WordWrap
-	elide: Text.ElideRight
+    elide: Text.ElideRight
     font.pixelSize: Theme.fontSizeMedium * scaleFactor
 }

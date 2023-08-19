@@ -45,7 +45,6 @@ Page {
     }
 
     Column {
-        spacing: Theme.paddingLarge
         width: parent.width
 
         PageHeader {
@@ -82,12 +81,16 @@ Page {
                             height: width
                         }
                         TextSwitch {
+                            automaticCheck: false
                             width: parent.width - 2*Theme.iconSizeMedium
                             text: AccountManager.displayName
                             description: Kaidan.connectionStateText
 //                            valueColor: accountArea.connected ? Theme.highlightColor: Theme.primaryColor
                             checked: !accountArea.disconnected
-                            onCheckedChanged: accountArea.disconnected ? Kaidan.logIn() : Kaidan.logOut()
+                            onClicked: {
+                                checked: !checked
+                                accountArea.disconnected ? Kaidan.logIn() : Kaidan.logOut()
+                            }
                         }
                         IconButton {
                             icon.source: "image://theme/icon-m-edit"
@@ -103,106 +106,89 @@ Page {
                         visible: Kaidan.connectionError
                         text: Kaidan.connectionError ? Utils.connectionErrorMessage(Kaidan.connectionError) : ""
                         color: Theme.errorColor
+                        font.pixelSize: Theme.fontSizeTiny
                         wrapMode: Text.WordWrap
                     }
                 } // Column
         } // ColumnView
 
-        SectionHeader {
-            text: qsTr("Actions")
-        }
+        Column {
+            width: parent.width
+            spacing: Theme.paddingLarge
 
-        Button {
-            anchors {
-                left: parent.left
-                right: parent.right
-                margins: Theme.horizontalPageMargin
+            SectionHeader {
+                text: qsTr("Actions")
             }
-            text: qsTr("Add contact by QR code")
-            icon.source: "image://theme/icon-m-qr"
-            onClicked: {
-                root.close()
-                pageStack.push(qrCodePage)
-            }
-        }
 
-        Button {
-            anchors {
-                left: parent.left
-                right: parent.right
-                margins: Theme.horizontalPageMargin
+            Button {
+                width:Theme.buttonWidthLarge
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: qsTr("Add contact by QR code")
+                icon.source: "image://theme/icon-m-qr"
+                onClicked: {
+                    pageStack.push(qrCodePage)
+                }
             }
-            text: qsTr("Add contact by chat address")
-            icon.source: "image://theme/icon-m-new"
-            onClicked: openContactAdditionView()
-        }
 
-        Button {
-            anchors {
-                left: parent.left
-                right: parent.right
-                margins: Theme.horizontalPageMargin
+            Button {
+                width:Theme.buttonWidthLarge
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: qsTr("Add contact by address")
+                icon.source: "image://theme/icon-m-new"
+                onClicked: openContactAdditionView()
             }
-            id: publicGroupChatSearchButton
-            text: qsTr("Search public groups")
-            icon.source: "image://theme/icon-m-search"
-            onClicked: {
-                root.close()
-                searchPublicGroupChatSheet.open()
-            }
-        }
 
-        Button {
-            anchors {
-                left: parent.left
-                right: parent.right
-                margins: Theme.horizontalPageMargin
+            Button {
+                width:Theme.buttonWidthLarge
+                anchors.horizontalCenter: parent.horizontalCenter
+                id: publicGroupChatSearchButton
+                text: qsTr("Search public groups")
+                icon.source: "image://theme/icon-m-search"
+                onClicked: {
+                    pageStack.push(searchPublicGroupChatSheet)
+                }
             }
-            text: qsTr("Invite friends")
-            icon.source: "image://theme/icon-s-invitation"
-            icon.height: Theme.iconSizeMedium
-            icon.width: Theme.iconSizeMedium
-            onClicked: {
-                Utils.copyToClipboard(Utils.invitationUrl(AccountManager.jid))
-                passiveNotification(qsTr("Invitation link copied to clipboard"))
-            }
-        }
 
-        Button{
-            anchors {
-                left: parent.left
-                right: parent.right
-                margins: Theme.horizontalPageMargin
+            Button {
+                width:Theme.buttonWidthLarge
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: qsTr("Invite friends")
+                icon.source: "image://theme/icon-s-invitation"
+                icon.height: Theme.iconSizeMedium
+                icon.width: Theme.iconSizeMedium
+                onClicked: {
+                    Utils.copyToClipboard(Utils.invitationUrl(AccountManager.jid))
+                    passiveNotification(qsTr("Invitation link copied to clipboard"))
+                }
             }
-            text: qsTr("Switch device")
-            icon.source: "image://theme/icon-m-device"
-            onClicked: {
-                pageStack.push("AccountTransferPage.qml")
-            }
-        }
 
-        Button {
-            anchors {
-                left: parent.left
-                right: parent.right
-                margins: Theme.horizontalPageMargin
+            Button{
+                width:Theme.buttonWidthLarge
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: qsTr("Switch device")
+                icon.source: "image://theme/icon-m-device"
+                onClicked: {
+                    pageStack.push("AccountTransferPage.qml")
+                }
             }
-            text: qsTr("Multimedia Settings")
-            //FIXME description: qsTr("Configure photo, video and audio recording settings")
-            onClicked: pageStack.push("qrc:/qml/settings/MultimediaSettings.qml")
-            icon.source: "image://theme/icon-m-setting"
-        }
 
-        Button {
-            anchors {
-                left: parent.left
-                right: parent.right
-                margins: Theme.horizontalPageMargin
+            Button {
+                width:Theme.buttonWidthLarge
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: qsTr("Multimedia Settings")
+                //FIXME description: qsTr("Configure photo, video and audio recording settings")
+                onClicked: pageStack.push("qrc:/qml/settings/MultimediaSettings.qml")
+                icon.source: "image://theme/icon-m-setting"
             }
-            text: qsTr("About Kaidan")
-            //FIXME description: qsTr("Learn about the current Kaidan version, view the source code and contribute")
-            onClicked: pageStack.push("qrc:/qml/settings/AboutPage.qml")
-            icon.source: "image://theme/icon-m-about"
+
+            Button {
+                width:Theme.buttonWidthLarge
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: qsTr("About Kaidan")
+                //FIXME description: qsTr("Learn about the current Kaidan version, view the source code and contribute")
+                onClicked: pageStack.push("qrc:/qml/settings/AboutPage.qml")
+                icon.source: "image://theme/icon-m-about"
+            }
         }
     }
 

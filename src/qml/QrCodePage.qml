@@ -52,17 +52,13 @@ ExplanationTogglePage {
                     }
                     return qsTr("Step 1: Scan your <b>contact's</b> QR code")
                 }
-                scaleFactor: 1.5
             }
 
             Image {
                 source: Utils.getResourcePath(root.isForOwnDevices ? "images/qr-code-scan-own-1.svg" : "images/qr-code-scan-1.svg")
-                sourceSize: Qt.size(860, 860)
+                sourceSize: Qt.size(Screen.width-2*Theme.horizontalPageMargin, Screen.width-2*Theme.horizontalPageMargin)
                 fillMode: Image.PreserveAspectFit
-                anchors {
-                    right: parent.right
-                    left: parent.left
-                }
+                anchors.horizontalCenter: parent.horizontalCenter
             }
 
         Separator {
@@ -75,25 +71,22 @@ ExplanationTogglePage {
                 }
                 return qsTr("Step 2: Let your contact scan <b>your</b> QR code")
             }
-            scaleFactor: 1.5
         }
 
         Image {
             source: Utils.getResourcePath(root.isForOwnDevices ? "images/qr-code-scan-own-2.svg" : "images/qr-code-scan-2.svg")
-            sourceSize: Qt.size(860, 860)
+            sourceSize: Qt.size(Screen.width-2*Theme.horizontalPageMargin, Screen.width-2*Theme.horizontalPageMargin)
             fillMode: Image.PreserveAspectFit
-            anchors {
-                right: parent.right
-                left: parent.left
-            }
+            anchors.horizontalCenter: parent.horizontalCenter
         }
     }
 
     content: Column {
-        anchors.centerIn: parent
         visible: !Kaidan.settings.qrCodePageExplanationVisible
-        width: applicationWindow().wideScreen ? parent.width : Math.min(largeButtonWidth, parent.width, parent.height * 0.48)
-        height: applicationWindow().wideScreen ? Math.min(parent.height, parent.width * 0.48) : parent.height
+        width: parent.width
+        height: parent.height
+//        width: applicationWindow().wideScreen ? parent.width : Math.min(largeButtonWidth, parent.width, parent.height * 0.48)
+//        height: applicationWindow().wideScreen ? Math.min(parent.height, parent.width * 0.48) : parent.height
 
         QrCodeScanner {
             id: scanner
@@ -163,7 +156,7 @@ ExplanationTogglePage {
             // timer to accept the result again after an invalid URI was scanned
             Timer {
                 id: resetAcceptResultTimer
-                interval: Kirigami.Units.veryLongDuration * 4
+                interval: 1000 * 4
                 onTriggered: scanner.isAcceptingResult = true
             }
 

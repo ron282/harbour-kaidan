@@ -8,6 +8,7 @@
 
 #if defined(SFOS)
 #include <QString>
+#include <QStringList>
 #include <QMap>
 #include <QVector>
 #include <QUrl>
@@ -32,7 +33,10 @@ public:
 	Q_PROPERTY(QMap<QString, QUrl> websites READ websites CONSTANT)
 	Q_PROPERTY(QVector<QString> chatSupport READ chatSupport CONSTANT)
 	Q_PROPERTY(QVector<QString> groupChatSupport READ groupChatSupport CONSTANT)
-
+#if defined(SFOS)
+    Q_PROPERTY(QStringList chatSupportList READ chatSupportList CONSTANT)
+    Q_PROPERTY(QStringList groupChatSupportList READ groupChatSupportList CONSTANT)
+#endif
 	static ProviderListItem fromJson(const QJsonObject &object);
 
 	ProviderListItem(bool isCustomProvider = false);
@@ -74,13 +78,15 @@ public:
 
 	QVector<QString> chatSupport() const;
 #if defined(SFOS)
-	void setChatSupport(QMap<QString, QVector<QString>> &&chatSupport);
+    QStringList chatSupportList() const;
+    void setChatSupport(QMap<QString, QVector<QString>> &&chatSupport);
 #else
 	void setChatSupport(std::unordered_map<QString, QVector<QString>> &&chatSupport);
 #endif
 	QVector<QString> groupChatSupport() const;
 #if defined(SFOS)
-	void setGroupChatSupport(QMap<QString, QVector<QString>> &&groupChatSupport);
+    QStringList groupChatSupportList() const;
+    void setGroupChatSupport(QMap<QString, QVector<QString>> &&groupChatSupport);
 #else
 	void setGroupChatSupport(std::unordered_map<QString, QVector<QString>> &&groupChatSupport);
 #endif

@@ -13,11 +13,11 @@ DetailsHeader {
     property Page sheet
 
     displayName: AccountManager.displayName
-//	avatarAction: Button {
-//		text: qsTr("Change your profile image")
-//		icon.source: "image://theme/icon-m-camera"
-//		onTriggered: pageStack.push(avatarChangePage)
-//	}
+    avatarAction: Button {
+        text: qsTr("Change your profile image")
+        icon.source: "image://theme/icon-m-file-vcard"
+        onClicked: pageStack.push(avatarChangePage)
+    }
 
 	Component {
 		id: avatarChangePage

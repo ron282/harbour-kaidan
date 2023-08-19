@@ -13,6 +13,7 @@ import im.kaidan.kaidan 1.0
  */
 Button {
     property bool checked: false
+    property bool checkable: false
     anchors.horizontalCenter: parent.horizontalCenter
-    width: parent.width
+    width: Theme.buttonWidthLarge
 }

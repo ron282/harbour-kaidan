@@ -21,16 +21,16 @@ Dialog {
 
 	ContactAdditionContent {
 		id: content
-		jidField.inputField.onActiveFocusChanged: {
+//		jidField.inputField.onActiveFocusChanged: {
 			// The active focus is taken by another item after opening.
 			// Thus, it must be forced again.
-			if (!jidField.inputField.activeFocus && !nameField.inputField.activeFocus && !messageField.activeFocus) {
-				jidField.forceActiveFocus()
-				jidField.invalidHintMayBeShown = false
-			} else {
-				jidField.invalidHintMayBeShown = true
-			}
-		}
+//			if (!jidField.inputField.activeFocus && !nameField.inputField.activeFocus && !messageField.activeFocus) {
+//				jidField.forceActiveFocus()
+//				jidField.invalidHintMayBeShown = false
+//			} else {
+//				jidField.invalidHintMayBeShown = true
+//			}
+//		}
 	}
 
 	Connections {

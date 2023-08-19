@@ -78,6 +78,7 @@ DockedPanel {
 			visible: emojiView.model.group !== Emoji.Group.Invalid
 
 			ColumnView {
+                itemHeight: Theme.itemSizeMedium
 				model: ListModel {
                     id: emojiModel
 				}

@@ -63,7 +63,7 @@ Page {
 				case Enums.Connecting:
 					break
 				case Enums.PasswordNeeded:
-					pageStack.layers.push(loginPage)
+                    pageStack.push(loginPage)
 					break
 				case Enums.InvalidLoginUri:
 					acceptResult = false

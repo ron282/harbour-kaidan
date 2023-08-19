@@ -38,7 +38,7 @@ Column {
 
 		CenteredAdaptiveText {
 			id: description
-			lineHeight: 1.5
+//			lineHeight: 1.5
 		}
 	}
 }

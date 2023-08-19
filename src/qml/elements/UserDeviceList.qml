@@ -12,6 +12,7 @@ import im.kaidan.kaidan 1.0
 ColumnView {
 	property string userJid
 
+    itemHeight: Theme.itemSizeMedium
 	model: UserDevicesModel {
 		jid: userJid
 	}

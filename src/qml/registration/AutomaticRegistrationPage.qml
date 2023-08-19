@@ -121,7 +121,7 @@ RegistrationPage {
 
 		function onConnectionErrorChanged() {
 			removeLoadingView()
-			pageStack.layers.pop()
+            pageStack.pop()
 		}
 	}
 
@@ -206,6 +206,6 @@ RegistrationPage {
 	 */
 	function popLayerIfNoCustomFormFieldsAvailable() {
 		if (!customFormFieldsAvailable())
-			pageStack.layers.pop()
+            pageStack.pop()
 	}
 }

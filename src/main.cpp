@@ -98,6 +98,9 @@
 #include "VCardManager.h"
 #include "VersionManager.h"
 #include "RecentPicturesModel.h"
+#if defined(SFOS)
+#include "Settings.h"
+#endif
 
 Q_DECLARE_METATYPE(Qt::ApplicationState)
 
@@ -257,7 +260,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qputenv("GST_PLUGIN_SYSTEM_PATH_1_0", gstreamerPluginsPath.toLocal8Bit());
 	qputenv("GST_PLUGIN_SCANNER_1_0", QString::fromLatin1("%1/gst-plugin-scanner").arg(gstreamerPluginsPath).toLocal8Bit());
 #endif // APPIMAGE
-
+#if defined(SFOS)
+    qRegisterMetaType<Settings*>("Settings*");
+#endif
 	// register qMetaTypes
 	qRegisterMetaType<ProviderListItem>();
 	qRegisterMetaType<RosterItem>();

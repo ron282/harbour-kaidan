@@ -8,12 +8,12 @@ import Sailfish.Silica 1.0
 /**
  * This is used for actions without instantaneous results.
  */
-BackgroundItem {
-	default property alias __data: contentArea.data
+Column {
+    property alias contentArea: contentAreaZone.data
 	property alias loadingArea: loadingArea
 
     Column {
-		id: contentArea
+        id: contentAreaZone
         spacing: Theme.paddingLarge* 2
 	}
 

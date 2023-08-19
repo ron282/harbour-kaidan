@@ -11,13 +11,13 @@ import "../elements"
 DetailsHeader {
 	id: root
     displayName: contactWatcher.item.displayName
-/*    Button {
-		text: qsTr("Maximize avatar")
-        icon.source: "image://theme/icon-m-device"
-		enabled: Kaidan.avatarStorage.getAvatarUrl(jid)
+    avatarAction: Button {
+        text: qsTr("Maximize avatar")
+        icon.source: "image://theme/icon-m-scale"
+        enabled: Kaidan.avatarStorage.getAvatarUrl(jid)
         onClicked: Qt.openUrlExternally(Kaidan.avatarStorage.getAvatarUrl(jid))
-	}
-*/
+    }
+
     RosterItemWatcher {
 		id: contactWatcher
 		jid: root.jid

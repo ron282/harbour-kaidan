@@ -5,18 +5,9 @@
 import QtQuick 2.2
 import Sailfish.Silica 1.0
 
-Item {
-	id: root
+BusyLabel {
+    property alias description: description.text
 
-	property alias background: background
-	property alias description: description.text
-
-    Rectangle {
-        id: background
-    }
-
-    BusyLabel {
-        id: description
-        text: qsTr("Loading…")
-    }
+    id: description
+    text: qsTr("Loading…")
 }

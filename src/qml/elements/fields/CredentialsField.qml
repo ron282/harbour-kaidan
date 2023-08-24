@@ -15,6 +15,7 @@ TextField {
     id: fieldValue
     property bool valid: false
     property alias labelText: fieldValue.label
+    property alias credentialsValidator: credentialsValidator
     CredentialsValidator {
         id: credentialsValidator
     }

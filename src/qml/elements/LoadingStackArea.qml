@@ -12,21 +12,26 @@ Column {
     property alias contentArea: contentAreaZone.data
 	property alias loadingArea: loadingArea
 
+    anchors.top: parent.top
+    anchors.topMargin: Theme.itemSizeLarge
+    width: parent.width
+
     Column {
         id: contentAreaZone
-        spacing: Theme.paddingLarge* 2
+        width: parent.width
 	}
 
 	LoadingArea {
 		id: loadingArea
-		background.color: secondaryBackgroundColor
+        anchors.fill: parent
+//		background.color: secondaryBackgroundColor
 	}
 
 	function showLoadingView() {
-		currentIndex = 1
+        loadingArea.running = true
 	}
 
 	function hideLoadingView() {
-		currentIndex = 0
-	}
+        loadingArea.running = false
+    }
 }

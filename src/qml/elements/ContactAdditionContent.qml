@@ -49,35 +49,28 @@ ConfirmationArea {
         width: parent.width
         JidField {
             id: jidField
+            height: Theme.itemSizeLarge
             text: ""
         //		inputField.onAccepted: valid ? nameField.forceActiveFocus() : forceActiveFocus()
-            anchors {
-                left: parent.left
-                right: parent.right
-            }
+            width: parent.width
         }
 
         TextField {
             id: nameField
-            label: qsTr("Name (optional):")
+            label: qsTr("Name (optional)")
+            height: Theme.itemSizeLarge
             inputMethodHints: Qt.ImhPreferUppercase
         //		inputField.onAccepted: messageField.forceActiveFocus()
-            anchors {
-                left: parent.left
-                right: parent.right
-            }
+            width: parent.width
         }
 
         TextArea {
             id: messageField
-            label: qsTr("Message (optional):")
+            label: qsTr("Message (optional)")
+            width: parent.width
             placeholderText: qsTr("Hello, I'm…")
             inputMethodHints: Qt.ImhPreferUppercase
             wrapMode: TextEdit.Wrap
-            anchors {
-                left: parent.left
-                right: parent.right
-            }
         }
     }
 }

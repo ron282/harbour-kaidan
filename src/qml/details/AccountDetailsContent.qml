@@ -289,9 +289,12 @@ DetailsContent {
             text: qsTr("Password Change")
         }
 
-        TextArea {
+        Label {
             width: parent.width
-            readOnly: true
+            maximumLineCount: 10
+            elide: Text.ElideRight
+            anchors.leftMargin: Theme.horizontalPageMargin
+            anchors.rightMargin: Theme.horizontalPageMargin
             font.pixelSize: Theme.fontSizeExtraSmall
             color: Theme.secondaryColor
             text: qsTr("Change your password. You need to enter the new password on all your other devices!")
@@ -403,8 +406,8 @@ DetailsContent {
             text: qsTr("Password Security")
         }
 
-        TextArea {
-            readOnly: true
+        Label {
+            maximumLineCount: 10
             width: parent.width
             font.pixelSize: Theme.fontSizeExtraSmall
             color: Theme.secondaryColor
@@ -448,9 +451,9 @@ DetailsContent {
             text: qsTr("Connection")
         }
 
-        TextArea {
+        Label {
             width: parent.width
-            readOnly: true
+            maximumLineCount: 10
             font.pixelSize: Theme.fontSizeExtraSmall
             color: Theme.secondaryColor
             text: qsTr("Configure the hostname and port to connect to (empty fields for default values)")

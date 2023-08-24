@@ -19,6 +19,13 @@ Page {
 	Component.onCompleted: content.jidField.forceActiveFocus()
 
 	ContactAdditionContent {
-		id: content
-	}
+        id: content
+    }
+    Connections {
+        target: Kaidan
+
+        function onOpenChatPageRequested(accountJid, chatJid) {
+            pageStack.pop(rosterPage, PageStackAction.Immediate)
+        }
+    }
 }

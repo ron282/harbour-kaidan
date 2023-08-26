@@ -347,7 +347,7 @@ DetailsContent {
         id: contactWatcher
         jid: root.jid
     }
-/*
+
     extraContentArea: Column {
         spacing: 0
         width: parent.width
@@ -456,12 +456,13 @@ DetailsContent {
             id: contactRemovalCorfirmButton
             text: qsTr("Confirm")
             visible: false
-            anchors.leftMargin: Theme.horizontalPageMargin
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: Theme.buttonWidthMedium
             onClicked: {
                 visible = false
                 removalButton.enabled = false
                 Kaidan.client.rosterManager.removeContactRequested(jid)
             }
         }
-    }*/
+    }
 }

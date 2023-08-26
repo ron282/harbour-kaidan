@@ -134,10 +134,10 @@ Page {
                 MessageModel.setCurrentChat(accountJid, chatJid)
 
                 // Close all pages (especially the chat page) except the roster page.
-                while (pageStack.depth > 1) {
+/*                while (pageStack.depth > 1) {
                     pageStack.pop()
                 }
-
+*/
                 popLayersAboveLowest()
                 pageStack.push(chatPage)
             }

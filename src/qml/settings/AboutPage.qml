@@ -8,12 +8,14 @@ import "../elements"
 SettingsPageBase {
 
     SilicaFlickable {
-        width: parent.width
+        anchors.fill: parent
         contentWidth: parent.width;
-        contentHeight: Screen.height*2
+        contentHeight: col.height
 
         Column {
-           spacing: 0
+           id: col
+           width: parent.width - 2*Theme.horizontalPageMargin
+           anchors.horizontalCenter: parent.horizontalCenter
 
            PageHeader {
                 title: qsTr("About Kaidan")
@@ -85,8 +87,8 @@ SettingsPageBase {
 
             Label {
                 text: "License"
-                font: Kirigami.Theme.smallFont
-                color: Kirigami.Theme.secondaryColor
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryColor
                 wrapMode: Text.WordWrap
                 width: parent.width
             }
@@ -99,8 +101,8 @@ SettingsPageBase {
 
             Label {
                 text: "Copyright"
-                font: Kirigami.Theme.smallFont
-                color: Kirigami.Theme.secondaryColor
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryColor
                 wrapMode: Text.WordWrap
                 width: parent.width
             }

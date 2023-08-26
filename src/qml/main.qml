@@ -123,8 +123,8 @@ ApplicationWindow {
 
 	function openStartPage() {
 //		globalDrawer.enabled = false
-//      popLayersAboveLowest()
-//      popAllPages()
+        popLayersAboveLowest()
+        popAllPages()
         pageStack.push(startPage)
 	}
 
@@ -136,11 +136,12 @@ ApplicationWindow {
 
 //		globalDrawer.enabled = true
 
-//        popLayersAboveLowest()
-//        popAllPages()
-//        pageStack.push(globalDrawer, {}, PageStackAction.Immediate)
+          popLayersAboveLowest()
+          popAllPages()
+          console.log("[main.qml] pageStack.push(rosterPage)")
+
           pageStack.push(rosterPage, {}, PageStackAction.Immediate)
-//        showRosterPageForNarrowWindow()
+          showRosterPageForNarrowWindow()
 	}
 
 	/**
@@ -174,7 +175,7 @@ ApplicationWindow {
 	// Show the rosterPage instead of the emptyChatPage if the window is narrow.
 	function showRosterPageForNarrowWindow() {
 //        if (pageStack.depth < 2 && pageStack.currentItem instanceof EmptyChatPage && !wideScreen)
-//            pageStack.goBack()
+//            pageStack.navigateBack(PageStackAction.Immediate)
 	}
 
 	/**
@@ -184,29 +185,26 @@ ApplicationWindow {
 	 */
 	function popLayers(countOfLayersToPop) {
         for (i = 0; i < countOfLayersToPop; i++)
-            pageStack.pop()
-            pageStack.pop()
+            pageStack.pop(null, PageStackAction.Immediate)
 	}
 
 	/**
 	 * Pops all layers except the layer with index 0 from the page stack.
 	 */
 	function popLayersAboveLowest() {
-//        while (pageStack.depth > 1)
-//            pageStack.pop()
-//        while (pageStack.layers.depth > 1)
-//            pageStack.layers.pop()
+        while (pageStack.depth > 1)
+            pageStack.pop(null, PageStackAction.Immediate)
 	}
 
 	/**
 	 * Pops all pages from the page stack.
 	 */
 	function popAllPages() {
-        while (pageStack.depth > 0)
-            pageStack.pop()
-	}
+        pageStack.clear()
+    }
 
     Connections {
+
 		target: Kaidan
 
         onRaiseWindowRequested: {
@@ -247,12 +245,14 @@ ApplicationWindow {
     }
 
 	Component.onCompleted: {
+        console.log("[main.qml] onComponentCompleted")
         HostCompletionModel.rosterModel = RosterModel;
         //HostCompletionModel.aggregateKnownProviders();
 
 		if (AccountManager.loadConnectionData()) {
 			openChatView()
-			// Announce that the user interface is ready and the application can start connecting.
+            console.log("[main.qml] Kaidan.logIn()")
+            // Announce that the user interface is ready and the application can start connecting.
             Kaidan.logIn()
 		} else {
 			openStartPage()

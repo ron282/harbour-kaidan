@@ -15,8 +15,8 @@ import im.kaidan.kaidan 1.0
  */
 Row {
     width: parent.width
-    height: Theme.iconSizeMedium
-    property alias url: valbut.label
+    height: Math.max(valbut.height, Theme.iconSizeMedium)
+    property string url
     property alias icon: icon.source
     property alias text: valbut.label
     property alias description: valbut.description
@@ -24,6 +24,7 @@ Row {
     Icon {
         id: icon
         width: Theme.iconSizeMedium
+        anchors.top: parent.top
     }
     ValueButton {
         id: valbut
@@ -35,6 +36,7 @@ Row {
         id: but
         width: Theme.iconSizeMedium
         icon.source: "image://theme/icon-m-clipboard"
+        anchors.top: parent.top
         onClicked: Utils.copyToClipboard(url)
    }
 }

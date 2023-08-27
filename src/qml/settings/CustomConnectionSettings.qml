@@ -47,15 +47,15 @@ Column {
 		}
 	}
 
-    Slider {
+    TextField {
         id: portField
         width: parent.width
+        text: textFromValue
         label: qsTr("Port")
-        minimumValue: AccountManager.portAutodetect
-        maximumValue: 65535
-        value: AccountManager.port
-        valueText: value
-        stepSize: 1
+        inputMethodHints: Qt.ImhDigitsOnly
+        acceptableInput: { text == "" || (text >= 0 && text < 65535) }
+
+        property int value
 
         property string textFromValue: value === AccountManager.portAutodetect ? "" : value
             // By returning the value without taking the locale into account, no digit grouping is applied.

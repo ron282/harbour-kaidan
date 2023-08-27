@@ -25,6 +25,7 @@ DetailsPage {
         AccountDetailsContent {
             jid: AccountManager.jid
             width: parent.width
+            anchors.leftMargin: Theme.horizontalPageMargin
         }
     }
 }

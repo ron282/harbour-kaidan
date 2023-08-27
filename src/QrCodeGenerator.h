@@ -12,9 +12,9 @@
 
 #if defined(SFOS)
 #include <QImage>
+#include <QQuickImageProvider>
 #endif
 class QImage;
-
 class QrCodeGenerator : public QObject
 {
 	Q_OBJECT
@@ -55,6 +55,10 @@ public:
 	 * @param contactJid bare JID of the contact
 	 */
 	Q_INVOKABLE static QImage generateContactTrustMessageQrCode(int edgePixelCount, const QString &contactJid);
+
+#if defined(SFOS)
+    Q_INVOKABLE static QUrl imageToUrl(const QImage& image);
+#endif
 
 private:
 	/**

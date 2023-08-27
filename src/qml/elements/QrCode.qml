@@ -20,31 +20,29 @@ import im.kaidan.kaidan 1.0
  * If a JID is provided, that JID is used for the URI.
  * Otherwise, the own JID is used.
  */
-Icon {
-	source: {
+Image {
+    property bool isForLogin: false
+    property string jid
+
+    fillMode: Image.PreserveAspectFit
+
+    source: {
 		if (width > 0) {
 			if (isForLogin) {
                 console.log("[QrCode.qml]: generateLoginUriQrCode")
-                return qrCodeGenerator.generateLoginUriQrCode(width)
+                return qrCodeGenerator.imageToUrl(qrCodeGenerator.generateLoginUriQrCode(width))
 			} else if (jid) {
                 console.log("[QrCode.qml]: generateContactTrustMessageQrCode")
-				return qrCodeGenerator.generateContactTrustMessageQrCode(width, jid)
+                return qrCodeGenerator.imageToUrl(qrCodeGenerator.generateContactTrustMessageQrCode(width, jid))
 			} else {
                 console.log("[QrCode.qml]: generateOwnTrustMessageQrCode")
-                return qrCodeGenerator.generateOwnTrustMessageQrCode(width)
+                return qrCodeGenerator.imageToUrl(qrCodeGenerator.generateOwnTrustMessageQrCode(width))
 			}
 		}
-        else {
-            console.log("[QrCode.qml]: width=0")
-        }
-		return ""
 	}
 
-	property bool isForLogin: false
-	property string jid
-
 	QrCodeGenerator {
-		id: qrCodeGenerator
+		id: qrCodeGenerator  
 	}
 
 	Connections {

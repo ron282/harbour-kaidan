@@ -21,6 +21,8 @@ import "elements"
 Page {
     id: root
 
+    anchors.bottomMargin: dockedPanel().visibleSize
+
     Component {
         id: rosterFilteringDialog
 
@@ -78,8 +80,9 @@ Page {
                 }
             }
 
-
-        anchors.fill: parent
+        anchors {
+            fill: parent
+        }
 
         VerticalScrollDecorator { flickable: rosterListView }
 

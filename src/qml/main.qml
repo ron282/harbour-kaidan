@@ -60,9 +60,18 @@ ApplicationWindow {
 	// Global and Contextual Drawers
 	// It is initialized as invisible.
 	// That way, it does not pop up for a moment before the startPage is opened.
-//    globalDrawer: GlobalDrawer {
+    property Item _dockedPanel
+
+    bottomMargin: _dockedPanel ? _dockedPanel.visibleSize : 0
+
+//  globalDrawer: GlobalDrawer {
 //        enabled: false
-//    }
+//  }
+
+    function dockedPanel() {
+        if (!_dockedPanel) _dockedPanel = globalDrawer.createObject(contentItem)
+        return _dockedPanel
+    }
 
 //	contextDrawer: Kirigami.ContextDrawer {
 //		id: contextDrawer
@@ -122,7 +131,8 @@ ApplicationWindow {
     }
 
 	function openStartPage() {
-//		globalDrawer.enabled = false
+//        globalDrawer.open = false
+        dockedPanel().hide()
         popLayersAboveLowest()
         popAllPages()
         pageStack.push(startPage)
@@ -134,14 +144,14 @@ ApplicationWindow {
 	function openChatView() {
         console.log("[main.qml] OpenChatView called")
 
-//		globalDrawer.enabled = true
+//        globalDrawer.open = true
+        dockedPanel().show()
 
-          popLayersAboveLowest()
-          popAllPages()
-          console.log("[main.qml] pageStack.push(rosterPage)")
+        popLayersAboveLowest()
+        popAllPages()
 
-          pageStack.push(rosterPage, {}, PageStackAction.Immediate)
-          showRosterPageForNarrowWindow()
+        pageStack.push(rosterPage, {}, PageStackAction.Immediate)
+        showRosterPageForNarrowWindow()
 	}
 
 	/**

@@ -14,8 +14,12 @@ import "elements"
 import "details"
 import "settings"
 
-Page {
+DockedPanel {
     id: root
+    z: 1
+    dock: Dock.Bottom
+    width: parent.width
+    height: mainCol.height
 
     Component {
         id: qrCodePage
@@ -45,11 +49,12 @@ Page {
     }
 
     Column {
+        id: mainCol
         width: parent.width
 
-        PageHeader {
-            title: qsTr("Settings")
-        }
+ //       PageHeader {
+ //           title: qsTr("Settings")
+ //       }
 
         SectionHeader {
             text: qsTr("Accounts")
@@ -57,7 +62,7 @@ Page {
 
         ColumnView {
             model: [ AccountManager.jid ]
-            itemHeight: Theme.iconSizeMedium + Theme.itemSizeSmall*2
+            itemHeight: Theme.iconSizeMedium + Theme.itemSizeSmall
             width: parent.width
 
             delegate:
@@ -111,19 +116,23 @@ Page {
                     }
                 } // Column
         } // ColumnView
+    }
 
-        Column {
-            width: parent.width
-            spacing: Theme.paddingLarge
+//    Column {
+//        width: parent.width
+//        spacing: Theme.paddingLarge
 
-            SectionHeader {
+    PushUpMenu {
+
+        SectionHeader {
                 text: qsTr("Actions")
-            }
+        }
 
+        ButtonLayout {
             Button {
                 width:Theme.buttonWidthLarge
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: qsTr("Add contact by QR code")
+                text : qsTr("Add contact by QR code")
                 icon.source: "image://theme/icon-m-qr"
                 onClicked: {
                     pageStack.push(qrCodePage)
@@ -192,7 +201,8 @@ Page {
         }
     }
 
-    onStatusChanged: {
+    onExpandedChanged: {
+        //onStatusChanged: {
         if (Kaidan.connectionState === Enums.StateConnected) {
             // Request the user's current vCard which contains the user's nickname.
             Kaidan.client.vCardManager.clientVCardRequested()

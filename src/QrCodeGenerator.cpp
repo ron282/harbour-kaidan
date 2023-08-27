@@ -27,8 +27,21 @@
 #define COLOR_TABLE_INDEX_FOR_WHITE 0
 #define COLOR_TABLE_INDEX_FOR_BLACK 1
 
+#if defined(SFOS)
+#include <QBuffer>
+QUrl QrCodeGenerator::imageToUrl(const QImage& image)
+{
+    QByteArray byteArray;
+    QBuffer buffer(&byteArray);
+    buffer.open(QIODevice::WriteOnly);
+    image.save(&buffer, "png");
+    QString base64 = QString::fromUtf8(byteArray.toBase64());
+    return QString("data:image/png;base64,") + base64;
+}
+#endif
+
 QrCodeGenerator::QrCodeGenerator(QObject *parent)
-	: QObject(parent)
+: QObject(parent)
 {
 }
 

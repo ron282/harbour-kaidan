@@ -290,11 +290,9 @@ DetailsContent {
         }
 
         Label {
-            width: parent.width
-            maximumLineCount: 10
-            elide: Text.ElideRight
-            anchors.leftMargin: Theme.horizontalPageMargin
-            anchors.rightMargin: Theme.horizontalPageMargin
+            width: parent.width - 2*Theme.horizontalPageMargin
+            leftPadding: Theme.horizontalPageMargin
+            wrapMode: Text.WordWrap
             font.pixelSize: Theme.fontSizeExtraSmall
             color: Theme.secondaryColor
             text: qsTr("Change your password. You need to enter the new password on all your other devices!")
@@ -407,10 +405,11 @@ DetailsContent {
         }
 
         Label {
-            maximumLineCount: 10
-            width: parent.width
+            wrapMode: Text.WordWrap
+            width: parent.width - 2*Theme.horizontalPageMargin
             font.pixelSize: Theme.fontSizeExtraSmall
             color: Theme.secondaryColor
+            leftPadding: Theme.horizontalPageMargin
             text: qsTr("Configure this device to not expose your password for changing it or switching to another device. If you want to change your password or use your account on another device later, <b>consider storing the password somewhere else. This cannot be undone!</b>")
         }
 
@@ -452,8 +451,9 @@ DetailsContent {
         }
 
         Label {
-            width: parent.width
-            maximumLineCount: 10
+            width: parent.width - 2*Theme.horizontalPageMargin
+            leftPadding: Theme.horizontalPageMargin
+            wrapMode: Text.WordWrap
             font.pixelSize: Theme.fontSizeExtraSmall
             color: Theme.secondaryColor
             text: qsTr("Configure the hostname and port to connect to (empty fields for default values)")

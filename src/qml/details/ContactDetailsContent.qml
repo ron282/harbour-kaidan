@@ -325,8 +325,8 @@ DetailsContent {
 	}
 
     Component {
+        id: qrCodeDialog
         Dialog {
-		id: qrCodeDialog
     //	z: 1000
 
          Column {
@@ -337,7 +337,6 @@ DetailsContent {
 				jid: root.jid
                 height:  Screen.height * 0.5 // Math.min(parent.height, Screen.height * 0.5)
 				width: parent.width
-                anchors.verticalCenter: parent.verticalCenter
 			}
 		}
 	}    
@@ -360,7 +359,7 @@ DetailsContent {
             label: qsTr("Show QR code")
             description: qsTr("Share this contact's chat address via QR code")
 //            icon.source: "image://theme/icon-m-qr"
-            onClicked: qrCodeDialog.open()
+            onClicked: pageStack.push(qrCodeDialog)
         }
 
         ValueButton {

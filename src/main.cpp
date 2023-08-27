@@ -411,7 +411,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 		QIcon::setThemeName("breeze");
 	}
     QQmlApplicationEngine engine;
-
 	engine.addImageProvider(QLatin1String(BITS_OF_BINARY_IMAGE_PROVIDER_NAME), BitsOfBinaryImageProvider::instance());
 
     // QtQuickControls2 Style
@@ -428,6 +427,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
 	QApplication::setStyle(QStringLiteral("breeze"));
 #endif
+#else
+    view->engine()->addImageProvider(QLatin1String(BITS_OF_BINARY_IMAGE_PROVIDER_NAME), BitsOfBinaryImageProvider::instance());
 #endif
 
 	// QML type bindings
@@ -543,7 +544,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #if defined(SFOS)
     view->setSource(SailfishApp::pathTo("qml/main.qml"));
     view->showFullScreen();
-
 #else
     engine.load(QUrl("qrc:/qml/main.qml"));
 	if (engine.rootObjects().isEmpty())

@@ -399,6 +399,7 @@ DetailsContent {
      Column {
         visible: Kaidan.settings.passwordVisibility !== Kaidan.PasswordInvisible
         width: parent.width
+        spacing: Theme.paddingLarge
 
         SectionHeader {
             text: qsTr("Password Security")

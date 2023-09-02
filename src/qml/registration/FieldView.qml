@@ -11,7 +11,9 @@ import "../elements/fields"
 /**
  * This view is the base for views containing fields.
  */
-BackgroundItem {
+Column {
+
+    width: parent.width
 
     property alias descriptionText : fieldDesc.text
     property alias imageSource: fieldIcon.source

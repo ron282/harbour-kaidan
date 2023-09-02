@@ -21,7 +21,7 @@ Page {
     anchors.topMargin: 0
     anchors.bottomMargin: 0
 
-    property alias title: header.title
+    property alias title: pageHeader.title
 
     /**
 	 * area containing the explanation displayed while the content is not displayed
@@ -54,41 +54,59 @@ Page {
 	property bool useMarginsForContent: true
 
     PageHeader {
-        id: header
+        id: pageHeader
     }
 
-    SilicaGridView {
+    Column {
         id: contentArea
-        anchors.fill: parent
-        anchors.margins: useMarginsForContent ? Theme.paddingSmall : 0
+        spacing: 0
+        width: parent.width
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.leftMargin: useMarginsForContent ?  Theme.horizontalPageMargin : 0
+        anchors.rightMargin: useMarginsForContent ?  Theme.horizontalPageMargin : 0
         anchors.bottomMargin: useMarginsForContent ? parent.height - buttonArea.y : 0
     }
 
-    Column {
-        id: explanationArea
-        spacing: 0
-        width: parent.width
-        anchors.top: header.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.leftMargin: Theme.horizontalPageMargin
-        anchors.rightMargin: Theme.horizontalPageMargin
+
+    // background of overlay
+    Rectangle {
+        z: 1
+        anchors.fill: overlay
+        color: "white"
+        opacity: 0.10
+        visible: explanationArea.visible
     }
 
-    Column {
-        id: buttonArea
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: Theme.paddingSmall
-        width: parent.width
-        spacing: Theme.paddingLarge
+    SilicaItem {
+        id: overlay
 
-        CenteredAdaptiveHighlightedButton {
-            id: primaryButton
+        anchors.fill: parent
+
+        Column {
+            id: explanationArea
+            spacing: 0
+            width: parent.width
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: Theme.horizontalPageMargin
+            anchors.rightMargin: Theme.horizontalPageMargin
         }
 
-        CenteredAdaptiveButton {
-            id: secondaryButton
+        Column {
+            id: buttonArea
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: Theme.paddingLarge
+            width: parent.width
+            spacing: Theme.paddingLarge
+
+            CenteredAdaptiveHighlightedButton {
+                id: primaryButton
+            }
+
+            CenteredAdaptiveButton {
+                id: secondaryButton
+            }
         }
     }
 }

@@ -44,22 +44,24 @@ ExplanationTogglePage {
     secondaryButton.visible: false
 
     explanation: Column {
+        width: parent.width - 2*Theme.horizontalPageMargin
+        anchors.horizontalCenter: parent.horizontalCenter
 
-            CenteredAdaptiveText {
-                text: {
-                    if (root.isForOwnDevices) {
-                        return qsTr("Step 1: Scan your <b>other device's</b> QR code")
-                    }
-                    return qsTr("Step 1: Scan your <b>contact's</b> QR code")
+        CenteredAdaptiveText {
+            text: {
+                if (root.isForOwnDevices) {
+                    return qsTr("Step 1: Scan your <b>other device's</b> QR code")
                 }
+                return qsTr("Step 1: Scan your <b>contact's</b> QR code")
             }
+        }
 
-            Image {
-                source: Utils.getResourcePath(root.isForOwnDevices ? "images/qr-code-scan-own-1.svg" : "images/qr-code-scan-1.svg")
-                sourceSize: Qt.size(Screen.width-2*Theme.horizontalPageMargin, Screen.width-2*Theme.horizontalPageMargin)
-                fillMode: Image.PreserveAspectFit
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
+        Image {
+            source: Utils.getResourcePath(root.isForOwnDevices ? "images/qr-code-scan-own-1.svg" : "images/qr-code-scan-1.svg")
+            sourceSize: Qt.size(Screen.width-2*Theme.horizontalPageMargin, Screen.width-2*Theme.horizontalPageMargin)
+            fillMode: Image.PreserveAspectFit
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
 
         Separator {
         }
@@ -83,14 +85,17 @@ ExplanationTogglePage {
 
     content: Column {
         visible: !Kaidan.settings.qrCodePageExplanationVisible
-        width: parent.width
-        height: parent.height
-//        width: applicationWindow().wideScreen ? parent.width : Math.min(largeButtonWidth, parent.width, parent.height * 0.48)
+        anchors.horizontalCenter: parent.horizontalCenter
+//        width: applicationWindow().wideScreen ? parent.width : Math.min(Theme.buttonWidthLarge, parent.width, parent.height * 0.48)
 //        height: applicationWindow().wideScreen ? Math.min(parent.height, parent.width * 0.48) : parent.height
+        width: Theme.buttonWidthLarge
+        height: parent.height
+        spacing: Theme.paddingLarge
 
         QrCodeScanner {
             id: scanner
             width: parent.width
+            height: parent.width
 
             // Use the data from the decoded QR code.
             filter.onScanningSucceeded: {
@@ -172,6 +177,7 @@ ExplanationTogglePage {
 
         QrCode {
             width: parent.width
+            height: parent.width
         }
     }
 

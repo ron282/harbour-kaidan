@@ -14,12 +14,13 @@ import "../elements"
 /**
  * This is the base for views of the swipe view.
  */
-Column {
+Page {
+    width: parent.width
 	property alias descriptionText: description.text
 	property alias contentArea: contentArea
 	property string imageSource
 
-    SilicaGridView {
+    Column {
 		id: contentArea
         anchors.horizontalCenter: parent
         //FIXME Layout.maximumWidth: largeButtonWidth

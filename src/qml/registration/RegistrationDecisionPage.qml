@@ -11,29 +11,25 @@ import im.kaidan.kaidan 1.0
  * This page is used for deciding between the automatic or manual registration.
  */
 Page {
-        Column {
-            anchors.top: parent.top
-            width: parent.width
-            spacing: Theme.paddingLarge
+    PageHeader {
+        title: qsTr("Register")
+    }
 
-            PageHeader {
-                title: qsTr("Register")
-            }
+    Column {
+        width: parent.width
+        spacing: Theme.paddingLarge
+        anchors.verticalCenter: parent.verticalCenter
 
         Button {
             anchors.horizontalCenter: parent.horizontalCenter
-//            icon: Image {
-//                source: Utils.getResourcePath("images/onboarding/automatic-registration.svg")
-//            }
+//          icon.source: Utils.getResourcePath("images/onboarding/automatic-registration.svg")
             text: qsTr("Generate an account automatically")
             onClicked: pageStack.push(automaticRegistrationPage)
         }
 
         Button {
             anchors.horizontalCenter: parent.horizontalCenter
-//            icon: Image {
-//                source: Utils.getResourcePath("images/onboarding/manual-registration.svg")
-//            }
+//          icon.source: Utils.getResourcePath("images/onboarding/manual-registration.svg")
             text: qsTr("Create an account manually")
             onClicked: pageStack.push(manualRegistrationPage)
         }

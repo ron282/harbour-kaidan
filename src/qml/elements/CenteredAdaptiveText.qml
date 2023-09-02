@@ -13,7 +13,6 @@ Label {
 	// factor to scale the text
 	property double scaleFactor: 1
     width: parent.width
-    maximumLineCount: 2
     anchors.horizontalCenter: parent.horizontalCenter
 
     horizontalAlignment: Text.AlignHCenter

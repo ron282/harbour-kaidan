@@ -17,55 +17,55 @@ SettingsPageBase {
 
 	property string title: qsTr("Multimedia Settings")
 
-	implicitHeight: layout.implicitHeight
-	implicitWidth: layout.implicitWidth
-	MediaRecorder {
-		id: recorder
-	}
+    implicitHeight: layout.implicitHeight
+    implicitWidth: layout.implicitWidth
+    MediaRecorder {
+        id: recorder
+    }
 
-	Column {
-		id: layout
+    Column {
+        id: layout
 
-		//FIXME Layout.preferredWidth: 600
-		anchors.fill: parent
+        //FIXME Layout.preferredWidth: 600
+        anchors.fill: parent
 
-		SilicaFlickable {
-			width: parent.width
-			 Column {
-				spacing: 0
+        SilicaFlickable {
+            width: parent.width
+             Column {
+                spacing: 0
 
-				SectionHeader {
+                SectionHeader {
                     text: qsTr("Select Sources")
-				}
+                }
 
                 ComboBox {
-					id: camerasComboBox
+                    id: camerasComboBox
                     label: qsTr('Camera')
 //					displayMode: MobileForm.FormComboBoxDelegate.Dialog
                     ContextMenu {
-						z:60000
-						width: parent.width
+                        z:60000
+                        width: parent.width
 
-						id: camerasMenu
-						Instantiator {
-							id: camerasInstanciator
-							model: recorder.cameraModel
-							onObjectAdded: camerasMenu.insertItem(index, object)
-							onObjectRemoved: camerasMenu.removeItem(object)
+                        id: camerasMenu
+                        Instantiator {
+                            id: camerasInstanciator
+                            model: recorder.cameraModel
+                            onObjectAdded: camerasMenu.insertItem(index, object)
+                            onObjectRemoved: camerasMenu.removeItem(object)
                             delegate: MenuItem {
-								property string description
-								property string camera
-								text: description
-								onClicked: {
-									recorder.mediaSettings.camera = camera
-								}
-							}
-						}
-					}
+                                property string description
+                                property string camera
+                                text: description
+                                onClicked: {
+                                    recorder.mediaSettings.camera = camera
+                                }
+                            }
+                        }
+                    }
 
 //					displayText: camerasInstanciator.model.currentCamera.description
-					width: parent.width
-				}
+                    width: parent.width
+                }
                 ComboBox {
 					id: audioInputsComboBox
 //					displayMode: MobileForm.FormComboBoxDelegate.Dialog
@@ -105,7 +105,7 @@ SettingsPageBase {
 				SectionHeader {
 					title: qsTr("Video Output")
 				}
-				Controls.ItemDelegate {
+                Controls.ItemDelegate {
 					id: item
 					width: parent.width
 					//FIXME Layout.fillHeight: true
@@ -132,7 +132,7 @@ SettingsPageBase {
 					}
 				}
 			}
-		}
+        }
 		Item {
 			//FIXME Layout.fillHeight: true
 		}

@@ -21,7 +21,7 @@ import "elements"
 Page {
     id: root
 
-    anchors.bottomMargin: dockedPanel().visibleSize
+//    anchors.bottomMargin: dockedPanel().visibleSize
 
     Component {
         id: rosterFilteringDialog
@@ -53,22 +53,35 @@ Page {
         }
     }
 
+    Component {
+        id: qrCodePage
+
+        QrCodePage {}
+    }
+
+
     SilicaListView {
         id: rosterListView
         PullDownMenu {
                 MenuItem {
-                    text: qsTr("Settings")
+                    text: qsTr("Add contact by QR code")
                     onClicked: {
-                        pageStack.push(globalDrawer)
+                        pageStack.push(qrCodePage)
                     }
                 }
                 MenuItem {
-                    text: qsTr("Search")
-//                  visible: isSearchActionShown
+                    text: qsTr("Add contact by address")
                     onClicked: {
-                        toggleSearchBar()
+                        pageStack.push(contactAdditionPage)
                     }
                 }
+//                MenuItem {
+//                    text: qsTr("Search")
+//                  visible: isSearchActionShown
+//                    onClicked: {
+//                        toggleSearchBar()
+//                    }
+//                }
             }
 
         header:
@@ -131,17 +144,17 @@ Page {
 
                     if (page instanceof ChatPage) {
                         page.saveDraft();
-                    }
+
                 }
 */
                 MessageModel.setCurrentChat(accountJid, chatJid)
 
                 // Close all pages (especially the chat page) except the roster page.
-/*                while (pageStack.depth > 1) {
-                    pageStack.pop()
+                while (pageStack.depth > 2) {
+                    pageStack.navigateBack(PageStackAction.Immediate)
                 }
-*/
-                popLayersAboveLowest()
+//                popLayersAboveLowest()
+
                 pageStack.push(chatPage)
             }
         }

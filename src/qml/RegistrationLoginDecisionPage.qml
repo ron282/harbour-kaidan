@@ -22,15 +22,18 @@ Page {
         spacing: Theme.paddingLarge
 
         Button {
+            visible: false
             text: qsTr("Register a new account")            
-            icon.source: Utils.getResourcePath("images/onboarding/registration.svg")
+//          icon.source: Utils.getResourcePath("images/onboarding/registration.svg")
+            height: Theme.iconSizeLarge
             anchors.horizontalCenter: parent.horizontalCenter
             onClicked: pageStack.push(registrationDecisionPage)
         }
 
         Button {
             text: qsTr("Use an existing account")
-            icon.source: Utils.getResourcePath("images/onboarding/login.svg")
+//          icon.source: Utils.getResourcePath("images/onboarding/login.svg")
+            height: Theme.iconSizeLarge
             anchors.horizontalCenter: parent.horizontalCenter
             onClicked: pageStack.push(loginPage)
         }

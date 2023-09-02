@@ -31,7 +31,7 @@ FieldView {
 
 	Column {
 		parent: contentArea
-		spacing: Kirigami.Units.largeSpacing
+        spacing: Theme.paddingLarge
 
 		Label {
 			text: qsTr("Provider")

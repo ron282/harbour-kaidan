@@ -34,12 +34,12 @@ Page {
 
         CenteredAdaptiveText {
             text: "Kaidan"
-            scaleFactor: 6
+            scaleFactor: 5
         }
 
         CenteredAdaptiveText {
             text: qsTr("Enjoy free communication on every device!")
-            scaleFactor: 2
+            scaleFactor: 1
         }
 
         CenteredAdaptiveHighlightedButton {

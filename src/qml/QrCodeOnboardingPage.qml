@@ -16,35 +16,35 @@ import "elements"
 Page {
 	id: root
 
+    PageHeader {
+        title: qsTr("Scan QR code")
+    }
+
     Column {
-            id: column
+        id: column
 
-            anchors.verticalCenter: parent.verticalCenter
-            width: parent.width
-            spacing: Theme.paddingLarge
+        anchors.verticalCenter: parent.verticalCenter
+        width: parent.width
+        spacing: Theme.paddingLarge
 
-            PageHeader {
-                title: qsTr("Scan QR code")
-            }
-
-            Button {
-                text: qsTr("Scan QR code")
-                anchors.horizontalCenter: parent.horizontalCenter
-                onClicked: {
-                    if (!scanner.cameraEnabled) {
-                        scanner.camera.start()
-                        scanner.cameraEnabled = true
-                    }
+        Button {
+            text: qsTr("Scan QR code")
+            anchors.horizontalCenter: parent.horizontalCenter
+            onClicked: {
+                if (!scanner.cameraEnabled) {
+                    scanner.camera.start()
+                    scanner.cameraEnabled = true
                 }
             }
-            Button {
-                text: qsTr("Continue without QR code")
-                anchors.horizontalCenter: parent.horizontalCenter
-                onClicked: {
-                    pageStack.push(registrationLoginDecisionPage)
-                }
+        }
+        Button {
+            text: qsTr("Continue without QR code")
+            anchors.horizontalCenter: parent.horizontalCenter
+            onClicked: {
+                pageStack.push(registrationLoginDecisionPage)
             }
-       }
+        }
+    }
 
     QrCodeScanner {
 		id: scanner
@@ -68,7 +68,7 @@ Page {
 				case Enums.InvalidLoginUri:
 					acceptResult = false
 					resetAcceptResultTimer.start()
-					showPassiveNotification(qsTr("This QR code is not a valid login QR code."), Kirigami.Units.veryLongDuration * 4)
+                    showPassiveNotification(qsTr("This QR code is not a valid login QR code."), 4)
 				}
 			}
 		}

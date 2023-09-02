@@ -97,7 +97,7 @@ QString Kaidan::connectionStateText() const
 	case Enums::ConnectionState::StateDisconnected:
 		return tr("Offline");
 	}
-	return {};
+    return {};
 }
 
 void Kaidan::setConnectionState(Enums::ConnectionState connectionState)

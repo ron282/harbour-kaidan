@@ -11,11 +11,7 @@ import Sailfish.Silica 1.0
  *
  * It is displayed during network interaction.
  */
-ViewPlaceholder {
-  text: qsTr("Requesting the server…")
-
-    BusyIndicator {
-        anchors.centerIn: parent
-        size: BusyIndicatorSize.Large
-	}
+BusyLabel {
+    text: qsTr("Requesting the server…")
+    running: true
 }

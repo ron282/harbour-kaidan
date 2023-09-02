@@ -20,6 +20,7 @@ View {
 
     Column {
 		parent: contentArea
+        width: parent.width
 
 		CenteredAdaptiveHighlightedButton {
 			text: qsTr("Open registration web page")

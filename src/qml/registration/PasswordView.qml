@@ -16,6 +16,7 @@ import "../elements/fields"
  * This view is used for entering a password.
  */
 Column {
+    width: parent.width
     Label {
         text: qsTr("Your password is used to log in to your account.\nIf you don't enter a password, the randomly generated and already displayed one is used.\nDon't use passwords you're already using somewhere else!")
     }

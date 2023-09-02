@@ -5,6 +5,8 @@
 import QtQuick 2.2
 import Sailfish.Silica 1.0
 
+import im.kaidan.kaidan 1.0
+
 Page {
 	id: root
 

@@ -39,6 +39,7 @@ Image {
                 return qrCodeGenerator.imageToUrl(qrCodeGenerator.generateOwnTrustMessageQrCode(width))
 			}
 		}
+        return ""
 	}
 
 	QrCodeGenerator {

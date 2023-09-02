@@ -19,7 +19,7 @@ import "elements"
  * It enables the user to log in on another device.
  */
 ExplainedContentPage {
-    title: qsTr("Transfer account to another device")
+    title: qsTr("Switch account")
 
     primaryButton.text: primaryButton.checked ? qsTr("Hide QR code") : qsTr("Show as QR code")
     primaryButton.checkable: true
@@ -58,48 +58,48 @@ ExplainedContentPage {
         }
     ]
 
-    explanation: CenteredAdaptiveText {
-        text: qsTr("Scan the QR code or enter the credentials as text on another device to log in on it.\n\nAttention:\nNever show this QR code to anyone else. It would allow unlimited access to your account!")
-        verticalAlignment: Text.AlignVCenter
-        scaleFactor: 1.5
+
+    explanation: Column {
+        width: parent.width
+        CenteredAdaptiveText {
+            text: qsTr("Scan the QR code or enter the credentials as text on another device to log in on it.\n\nAttention:\nNever show this QR code to anyone else. It would allow unlimited access to your account!")
+            //verticalAlignment: Text.AlignVCenter
+            //scaleFactor: 1.5
+        }
     }
 
-    content: Item {
-        anchors.fill: parent
+    content: Column {
+        width: parent.width
 
         QrCode {
             id: qrCode
-            width: Math.min(largeButtonWidth, parent.width, parent.height)
+            width: Theme.buttonWidthLarge
             height: width
-            anchors.centerIn: parent
+            anchors.horizontalCenter: parent.horizontalCenter
             isForLogin: true
         }
 
-        BackgroundItem {
+        Column {
             id: plainText
-            anchors.centerIn: parent
+            width: parent.width
+            anchors.horizontalCenter: parent.horizontalCenter
 
-            Row {
-                DetailItem {
-                    label: qsTr("Chat address:")
-                    value: AccountManager.jid
-                    width: parent.width - Theme.iconSizeMedium
-                }
-
-                IconButton {
+            TextField {
+                label: qsTr("Chat address")
+                text: AccountManager.jid
+                readOnly: true
+                rightItem: IconButton {
                     icon.source: "image://theme/icon-m-clipboard"
                     onClicked: Utils.copyToClipboard(AccountManager.jid)
                 }
             }
 
-            Row {
-                DetailItem {
-                    label: qsTr("Password:")
-                    visible: Kaidan.settings.passwordVisibility === Kaidan.PasswordVisible
-                    value: AccountManager.password
-                }
-
-                IconButton {
+            TextField {
+                label: qsTr("Password")
+                visible: Kaidan.settings.passwordVisibility === Kaidan.PasswordVisible
+                text: AccountManager.password
+                readOnly: true
+                rightItem: IconButton {
                     icon.source: "image://theme/icon-m-clipboard"
                     onClicked: Utils.copyToClipboard(AccountManager.password)
                 }

@@ -33,7 +33,7 @@ Item {
 		}
 
 		Component.onCompleted: {
-//			filter.setCameraDefaultVideoFormat(camera);
+ //           filter.setCameraDefaultVideoFormat(camera);
 		}
 	}
 
@@ -52,19 +52,20 @@ Item {
 		anchors.fill: parent
 		fillMode: VideoOutput.PreserveAspectCrop
 		source: camera
-		autoOrientation: true
-//		filters: [filter]
+        autoOrientation: false
+        orientation: 0
+        filters: [filter]
 	}
 
 	// hint for camera issues
-/*
-	Kirigami.InlineMessage {
+
+    Label {
 		visible: cameraEnabled && text !== ""
-		icon.source: "camera-video-symbolic"
-		type: Kirigami.MessageType.Warning
+        // icon.source: "camera-video-symbolic"
+        // type: Kirigami.MessageType.Warning
 		anchors.centerIn: parent
-		width: Math.min(largeButtonWidth, parent.width)
-		height: Math.min(60, parent.height)
+        width: Math.min(Theme.buttonWidthLarge, parent.width)
+        height: parent.height
 
 		text: {
 			switch (camera.availability) {
@@ -81,5 +82,4 @@ Item {
 			}
 		}
 	}
-*/
 }

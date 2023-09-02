@@ -132,7 +132,7 @@ ApplicationWindow {
 
 	function openStartPage() {
 //        globalDrawer.open = false
-        dockedPanel().hide()
+//        dockedPanel().hide()
         popLayersAboveLowest()
         popAllPages()
         pageStack.push(startPage)
@@ -145,12 +145,14 @@ ApplicationWindow {
         console.log("[main.qml] OpenChatView called")
 
 //        globalDrawer.open = true
-        dockedPanel().show()
+//        dockedPanel().show()
 
         popLayersAboveLowest()
         popAllPages()
 
-        pageStack.push(rosterPage, {}, PageStackAction.Immediate)
+        pageStack.push(globalDrawer, {}, PageStackAction.Immediate)
+        pageStack.pushAttached(rosterPage, {}, PageStackAction.Immediate)
+        pageStack.navigateForward(PageStackAction.Immediate)
         showRosterPageForNarrowWindow()
 	}
 
@@ -195,15 +197,15 @@ ApplicationWindow {
 	 */
 	function popLayers(countOfLayersToPop) {
         for (i = 0; i < countOfLayersToPop; i++)
-            pageStack.pop(null, PageStackAction.Immediate)
+            pageStack.navigateBack(PageStackAction.Immediate)
 	}
 
 	/**
 	 * Pops all layers except the layer with index 0 from the page stack.
 	 */
 	function popLayersAboveLowest() {
-        while (pageStack.depth > 1)
-            pageStack.pop(null, PageStackAction.Immediate)
+        while (pageStack.depth > 2)
+            pageStack.navigateBack(PageStackAction.Immediate)
 	}
 
 	/**

@@ -6,6 +6,7 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
+import QtQml.Models 2.2
 
 import im.kaidan.kaidan 1.0
 
@@ -41,6 +42,7 @@ RegistrationPage {
 	password: passwordView ? passwordView.text : ""
 
     SlideshowView {
+        id: swipeView
         width: parent.width
 
 //			interactive: !loadingViewActive
@@ -57,29 +59,27 @@ RegistrationPage {
 				lastIndex = currentIndex
 			}
 
-			DisplayNameView {
-				id: displayNameView
-			}
+            ObjectModel { id: viewsModel
+                DisplayNameView { id: displayNameView }
+                ProviderView { id: providerView }
+            }
+            model : viewsModel
 
-			ProviderView {
-				id: providerView
-			}
-
-			// All dynamically loaded views are inserted here when needed.
-		}
+            // All dynamically loaded views are inserted here when needed.
+    }
 
 		NavigationBar {
 			id: navigationBar
 		}
 
-	Component {id: webRegistrationViewComponent; WebRegistrationView {}}
+    Component {id: webRegistrationViewComponent; WebRegistrationView {}}
 	Component {id: loadingViewComponent; LoadingView {}}
 	Component {id: usernameViewComponent; UsernameView {}}
 	Component {id: passwordViewComponent; PasswordView {}}
 	Component {id: customFormViewComponent; CustomFormViewManualRegistration {}}
 	Component {id: resultViewComponent; ResultView {}}
 
-	Component.onCompleted: addDynamicallyLoadedInBandRegistrationViews()
+    Component.onCompleted: addDynamicallyLoadedInBandRegistrationViews()
 
 	Connections {
 		target: Kaidan
@@ -94,14 +94,18 @@ RegistrationPage {
 			formModel = dataFormModel
 			formFilterModel.sourceModel = dataFormModel
 
-            indexToInsert = loadingView.Controls.SwipeView.index
+            indexToInsert = swipeView.index
 
 			// There are three cases here:
 			//
 			// 1. The provider did not include a "username" field.
 			// The username view needs to be removed.
 			if (!formModel.hasUsernameField()) {
-				swipeView.removeItem(usernameView)
+                for(i=0; i<viewsModel.count; i++)
+                    if(viewsModel.get(i) instanceof UsernameView) {
+                        viewsModel.remove(i)
+                        break
+                    }
 			// 2. The provider did include a "username" field, but the provider selected before did not include it and the username view has been removed.
 			// The view needs to be added again.
 			} else if (!usernameView) {
@@ -113,7 +117,11 @@ RegistrationPage {
 
 			// Same logic as for the username view. See above.
 			if (!formModel.hasPasswordField()) {
-				swipeView.removeItem(passwordView)
+                for(i=0; i<viewsModel.count; i++)
+                    if(viewsModel.get(i) instanceof PasswordView) {
+                        viewsModel.remove(i)
+                        break
+                    }
 			} else if (!passwordView) {
 				addPasswordView(++indexToInsert)
 			} else {
@@ -122,8 +130,12 @@ RegistrationPage {
 
 			// Same logic as for the username view. See above.
 			if (!customFormFieldsAvailable()) {
-				swipeView.removeItem(customFormView)
-			} else if (!customFormView) {
+                for(i=0; i<viewsModel.count; i++)
+                    if(viewsModel.get(i) instanceof CustomFormView) {
+                        viewsModel.remove(i)
+                        break
+                    }
+            } else if (!customFormView) {
 				addCustomFormView(++indexToInsert)
 			} else {
 				indexToInsert++
@@ -133,7 +145,7 @@ RegistrationPage {
 			// Depending on the error, the swipe view jumps to a particular view (see onRegistrationFailed).
 			if (registrationErrorOccurred)
 				registrationErrorOccurred = false
-			else if (providerView.Controls.SwipeView.isPreviousItem)
+            else if (swipeView.model[swipeView.index-1] instanceof ProviderView)
 				jumpToNextView()
 
 			removeLoadingView()
@@ -271,7 +283,10 @@ RegistrationPage {
 	 * Adds the dynamically loaded views used for the In-Band Registration to the swipe view.
 	 */
 	function addDynamicallyLoadedInBandRegistrationViews() {
-        indexToInsert = providerView.Controls.SwipeView.index
+        indexToinsert=0
+        for(indexToinsert=1; indexToinsert<viewsModel.count; indexToinsert++)
+            if(viewsModel.get(indexToinsert-1) instanceof ProviderView)
+                break
 
 		addUsernameView(++indexToInsert)
 		addPasswordView(++indexToInsert)
@@ -295,15 +310,19 @@ RegistrationPage {
 	 */
 	function addLoadingView(index) {
 		loadingView = loadingViewComponent.createObject(swipeView)
-		swipeView.insertItem(index, loadingView)
+        swipeView.insert(index, loadingView)
 	}
 
 	/**
 	 * Removes the loading view from the swipe view after jumping to the next page.
 	 */
 	function removeLoadingView() {
-		swipeView.removeItem(loadingView)
-	}
+        for(i=0; i<swipeView.count; i++)
+            if(swipeView.get(i) instanceof LoadingView) {
+                swipeView.remove(i)
+                break
+            }
+    }
 
 	/**
 	 * Adds the username view to the swipe view.
@@ -312,7 +331,7 @@ RegistrationPage {
 	 */
 	function addUsernameView(index) {
 		usernameView = usernameViewComponent.createObject(swipeView)
-		swipeView.insertItem(index, usernameView)
+        swipeView.insert(index, usernameView)
 	}
 
 	/**
@@ -322,7 +341,7 @@ RegistrationPage {
 	 */
 	function addPasswordView(index) {
 		passwordView = passwordViewComponent.createObject(swipeView)
-		swipeView.insertItem(index, passwordView)
+        swipeView.insert(index, passwordView)
 	}
 
 	/**
@@ -332,7 +351,7 @@ RegistrationPage {
 	 */
 	function addCustomFormView(index) {
 		customFormView = customFormViewComponent.createObject(swipeView)
-		swipeView.insertItem(index, customFormView)
+        swipeView.insert(index, customFormView)
 	}
 
 	/**
@@ -342,21 +361,21 @@ RegistrationPage {
 	 */
 	function addResultView(index) {
 		resultView = resultViewComponent.createObject(swipeView)
-		swipeView.insertItem(index, resultView)
+        swipeView.insert(index, resultView)
 	}
 
 	/**
 	 * Jumps to the previous view.
 	 */
 	function jumpToPreviousView() {
-		swipeView.decrementCurrentIndex()
+        swipeView.currentIndex--
 	}
 
 	/**
 	 * Jumps to the next view.
 	 */
 	function jumpToNextView() {
-		swipeView.incrementCurrentIndex()
+        swipeView.currentIndex++
 	}
 
 	/**
@@ -365,7 +384,7 @@ RegistrationPage {
 	 * @param view view to be jumped to
 	 */
 	function jumpToView(view) {
-		swipeView.setCurrentIndex(view.Controls.SwipeView.index)
+        swipeView.currentItem = view
 	}
 
 	/**

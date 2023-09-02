@@ -38,8 +38,6 @@ RegistrationPage {
 	}
 
     Column {
-		anchors.fill: parent
-
         SlideshowView {
 			id: stackView
 			clip: true

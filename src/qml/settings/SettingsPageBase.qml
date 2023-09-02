@@ -7,5 +7,9 @@ import QtQuick 2.2
 import Sailfish.Silica 1.0
 
 Page {
-	property string title
+    property alias title : pageHeader.title
+
+    PageHeader {
+        id: pageHeader
+    }
 }

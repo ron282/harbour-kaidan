@@ -11,9 +11,11 @@ import im.kaidan.kaidan 1.0
 /**
  * This is a centered button having an adjustable label and fitting its parent's width.
  */
-Button {
-    property bool checked: false
-    property bool checkable: false
+IconTextSwitch {
+    id: root
+    property bool checkable
     anchors.horizontalCenter: parent.horizontalCenter
     width: Theme.buttonWidthLarge
+    signal clicked
+    onCheckedChanged: clicked()
 }

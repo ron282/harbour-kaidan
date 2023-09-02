@@ -14,12 +14,10 @@ import "elements"
 import "details"
 import "settings"
 
-DockedPanel {
+Page {
     id: root
     z: 1
-    dock: Dock.Bottom
     width: parent.width
-    height: mainCol.height
 
     Component {
         id: qrCodePage
@@ -55,6 +53,10 @@ DockedPanel {
  //       PageHeader {
  //           title: qsTr("Settings")
  //       }
+
+        PageHeader {
+            title: qsTr("Kaidan")
+        }
 
         SectionHeader {
             text: qsTr("Accounts")
@@ -116,13 +118,6 @@ DockedPanel {
                     }
                 } // Column
         } // ColumnView
-    }
-
-//    Column {
-//        width: parent.width
-//        spacing: Theme.paddingLarge
-
-    PushUpMenu {
 
         SectionHeader {
                 text: qsTr("Actions")
@@ -138,7 +133,6 @@ DockedPanel {
                     pageStack.push(qrCodePage)
                 }
             }
-
             Button {
                 width:Theme.buttonWidthLarge
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -148,6 +142,7 @@ DockedPanel {
             }
 
             Button {
+                visible: false // To debug
                 width:Theme.buttonWidthLarge
                 anchors.horizontalCenter: parent.horizontalCenter
                 id: publicGroupChatSearchButton
@@ -182,6 +177,7 @@ DockedPanel {
             }
 
             Button {
+                visible: false // To debug
                 width:Theme.buttonWidthLarge
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: qsTr("Multimedia Settings")
@@ -201,8 +197,8 @@ DockedPanel {
         }
     }
 
-    onExpandedChanged: {
-        //onStatusChanged: {
+    //onExpandedChanged: {
+    onStatusChanged: {
         if (Kaidan.connectionState === Enums.StateConnected) {
             // Request the user's current vCard which contains the user's nickname.
             Kaidan.client.vCardManager.clientVCardRequested()

@@ -177,7 +177,10 @@ QHash<int, QByteArray> FileSelectionModel::roleNames() const
 		{ Thumbnail, QByteArrayLiteral("thumbnail") },
 		{ Description, QByteArrayLiteral("description") },
 		{ FileSize, QByteArrayLiteral("fileSize") }
-	};
+#if defined(SFOS)
+        , { ThumbnailUrl, QByteArrayLiteral("thumbnailUrl") }
+#endif
+    };
 	return roles;
 }
 
@@ -186,31 +189,38 @@ int FileSelectionModel::rowCount(const QModelIndex &parent) const
 	if (parent.isValid()) {
 		return 0;
 	}
-	return m_files.size();
+    return m_files.size();
 }
 
 QVariant FileSelectionModel::data(const QModelIndex &index, int role) const
 {
-	if (!hasIndex(index.row(), index.column(), index.parent())) {
+    if (!hasIndex(index.row(), index.column(), index.parent())) {
 		return {};
 	}
 
 	const auto &file = m_files.at(index.row());
 	switch (role) {
 	case Filename:
-		return QUrl::fromLocalFile(file.localFilePath).fileName();
+        return QUrl::fromLocalFile(file.localFilePath).fileName();
     case Description:
-		if (file.description) {
+        if (file.description) {
 			return *file.description;
 		}
 		return QString();
-	case Thumbnail:
-		if (!file.thumbnail.isNull()) {
+#if defined(SFOS)
+    case ThumbnailUrl:
+        if (!file.thumbnail.isNull()) {
+            return file.thumbnailImageUrl();
+        }
+        return file.getMimeTypeIcon();
+#endif
+    case Thumbnail:
+        if (!file.thumbnail.isNull()) {
 			return QImage::fromData(file.thumbnail);
 		}
 		return file.mimeType.iconName();
 	case FileSize:
-		if (file.size) {
+        if (file.size) {
 #if defined(SFOS)
 			return QString::number(*file.size);
 #else
@@ -244,9 +254,9 @@ void FileSelectionModel::selectFile()
 
 void FileSelectionModel::addFile(const QUrl &localFilePath)
 {
-	auto localPath = localFilePath.toLocalFile();
+    auto localPath = localFilePath.toLocalFile();
 
-	bool alreadyAdded = containsIf(m_files, [=](const auto &file) {
+    bool alreadyAdded = containsIf(m_files, [=](const auto &file) {
 		return file.localFilePath == localPath;
 	});
 
@@ -259,10 +269,13 @@ void FileSelectionModel::addFile(const QUrl &localFilePath)
 	file.localFilePath = localPath;
 	file.mimeType = MediaUtils::mimeDatabase().mimeTypeForFile(localPath);
 	file.size = QFileInfo(localPath).size();
-
-	generateThumbnail(file);
-
-	beginInsertRows({}, m_files.size(), m_files.size());
+#if defined(SFOS)
+    QImage preview(QImage(file.localFilePath).scaled(QSize(THUMBNAIL_SIZE, THUMBNAIL_SIZE)/*, Qt::KeepAspectRatio*/));
+    file.thumbnail = MediaUtils::encodeImageThumbnail(preview);
+#else
+    generateThumbnail(file);
+#endif
+    beginInsertRows({}, m_files.size(), m_files.size());
 	m_files.push_back(std::move(file));
 	endInsertRows();
 }
@@ -296,10 +309,22 @@ bool FileSelectionModel::setData(const QModelIndex &index, const QVariant &value
 	return true;
 }
 
-void FileSelectionModel::generateThumbnail(const File &file)
+void FileSelectionModel::generateThumbnail(const File &f)
 {
 #if defined(SFOS)
-#warning FIXE ME
+    QImage preview(QImage(f.localFilePath).scaled(QSize(THUMBNAIL_SIZE, THUMBNAIL_SIZE)/*, Qt::KeepAspectRatio*/));
+
+
+    auto *file = std::find_if(m_files.begin(), m_files.end(), [&](const auto &file) {
+        qDebug() << "FileSelectionModel:: " << file.localFilePath << "==" << f.localFilePath;
+        return file.localFilePath == f.localFilePath;
+    });
+
+    if (file != m_files.cend()) {
+        file->thumbnail = MediaUtils::encodeImageThumbnail(preview);
+        int i = std::distance(m_files.begin(), file);
+        Q_EMIT dataChanged(index(i), index(i), { Thumbnail });
+    }
 #else
 	static auto allPlugins = KIO::PreviewJob::availablePlugins();
 	KFileItemList items {

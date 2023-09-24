@@ -41,6 +41,8 @@
 
 #if !defined(SFOS)
 #include <KFileUtils>
+#else
+#include "MediaUtils.h"
 #endif 
 
 #include "Kaidan.h"
@@ -382,7 +384,7 @@ void FileSharingController::downloadFile(const QString &messageId, const File &f
 		QString dirPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation) +
 						  QDir::separator() + APPLICATION_DISPLAY_NAME;
 
-		if (auto dir = QDir(dirPath); !dir.exists()) {
+        if (auto dir = QDir(dirPath); !dir.exists()) {
 			dir.mkpath(QStringLiteral("."));
 		}
 
@@ -414,17 +416,34 @@ void FileSharingController::downloadFile(const QString &messageId, const File &f
 
 		QString filePath = makeFileName();
 
-		// Check if the file name is already taken, and propose one that is unique
+        // Check if the file name is already taken, and propose one that is unique
 		if (QFile::exists(filePath)) {
 #if defined(SFOS)
-			filename = addUniqueSuffix(filePath);
+            int idx = 1;
+            QString suffix = QString(" (%1)").arg(idx);
+            int extensionIdx = filePath.lastIndexOf(".");
+            if(extensionIdx<0)
+                extensionIdx=0;
+            int suffixIdx = filePath.lastIndexOf(suffix, extensionIdx);
+            if(suffixIdx < 0)
+            {
+                suffixIdx=extensionIdx;
+                filePath.insert(extensionIdx, suffix);
+            }
+
+            while ( QFile::exists( filePath ) ) {
+                idx++;
+                int suffixLen = suffix.length();
+                suffix = QString(" (%1)").arg(idx);
+                filePath.replace(suffixIdx, suffixLen, suffix);
+            }
 #else
 			filename = KFileUtils::suggestName(QUrl::fromLocalFile(dirPath), filename);
+            filePath = makeFileName();
 #endif
-			filePath = makeFileName();
 		}
 
-		// Open the file at the resulting path
+        // Open the file at the resulting path
 		auto output = std::make_unique<QFile>(filePath);
 
 		if (!output->open(QIODevice::WriteOnly)) {
@@ -458,7 +477,13 @@ void FileSharingController::downloadFile(const QString &messageId, const File &f
 
 					if (file != message.files.cend()) {
 						file->localFilePath = filePath;
-					}
+                        if(!file->size.has_value())
+                            file->size = QFileInfo(filePath).size();
+                        if(file->thumbnail.isEmpty() &&
+                           MediaUtils::messageType(file->mimeType) == Enums::MessageType::MessageImage) {
+                            file->thumbnail = MediaUtils::encodeImageThumbnail(QImage(filePath).scaled(QSize(200,200), Qt::KeepAspectRatio));
+                        }
+                    }
 					// TODO: generate possibly missing metadata
 					// metadata may be missing if the sender only used out of band urls
 				});

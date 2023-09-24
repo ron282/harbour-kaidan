@@ -17,7 +17,7 @@ import im.kaidan.kaidan 1.0
 ContextMenu {
 	id: root
 
-	property ChatMessage message: null
+    property ChatMessage message: null
 	property var file: null
 
     MenuItem {
@@ -39,7 +39,7 @@ ContextMenu {
 
     MenuItem {
 		text: qsTr("Copy download URL")
-		visible: root.file && root.file.downloadUrl
+        visible: root.file && root.file.downloadUrl
         onClicked: Utils.copyToClipboard(root.file.downloadUrl)
 	}
 
@@ -71,7 +71,7 @@ ContextMenu {
     MenuItem {
 		text: qsTr("Remove from this device")
         onClicked: {
-			root.message.font.italic = true
+//			root.message.font.italic = true
 			MessageModel.removeMessage(root.message.msgId)
 
 			if (root.file && root.file.localFilePath) {

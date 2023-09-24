@@ -7,17 +7,13 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-//import QtQuick 2.2
-//// import QtQuick.Controls 2.14 as Controls
-//import Sailfish.Silica 1.0
-
-//// import org.kde.kirigami 2.19 as Kirigami
 import EmojiModel 0.1
 
 DockedPanel {
 	id: root
-    width: 20
-    height: 15
+    width: 100
+    height: 50
+    dock: DockedPanel.Bottom
 
 	property TextArea textArea
 	property string searchedText
@@ -27,11 +23,8 @@ DockedPanel {
 
         SilicaGridView {
 			id: emojiView
-
-//			width: parent.width
-//			//FIXME Layout.fillHeight: true
-
-            cellWidth: 2.33
+            width: parent.width
+            cellWidth: 10
 			cellHeight: cellWidth
 
 			boundsBehavior: Flickable.DragOverBounds
@@ -46,15 +39,12 @@ DockedPanel {
 				width: emojiView.cellWidth
 				height: emojiView.cellHeight
 				hoverEnabled: true
-//				//FIXME Controls.ToolTip.text: model.shortName
-//				Controls.ToolTip.visible: hovered
-//				Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
 
                 Text {
 					horizontalAlignment: Text.AlignHCenter
 					verticalAlignment: Text.AlignVCenter
 
-					font.pointSize: 20
+                    font.pixelSize: Theme.fontSizeMedium
 					text: model.unicode
 				}
 

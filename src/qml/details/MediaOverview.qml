@@ -21,8 +21,11 @@ BackgroundItem {
     readonly property alias totalFilesCount: fileModel.rowCount
     readonly property alias visibleFilesCount: fileProxyModel.rowCount
 
+    width: parent.width
     Component.onCompleted: loadDownloadedFiles()
+
     SilicaGridView {
+        width: parent.width
         implicitHeight: contentHeight
 
         cellWidth: {

@@ -205,12 +205,12 @@ QString QmlUtils::formattedDataSize(qint64 fileSize)
 			QString s;
 			if( fileSize < 1000) {
 				s = QString::number(fileSize) + " B";
-            } else if( fileSize < (1000^2) ) {
-                s = QString::number(fileSize / (1000^2) ) + " kB";
-            } else if( fileSize < (1000^3) ) {
-                s = QString::number(fileSize / (1000^3) ) + " MB";
+            } else if( fileSize < (1000000) ) {
+                s = QString::number(fileSize / (1000) ) + " kB";
+            } else if( fileSize < (1000000000) ) {
+                s = QString::number(fileSize / (1000000) ) + " MB";
 			} else {
-                s = QString::number(fileSize / (1000^4) ) + " GB";
+                s = QString::number(fileSize / (1000000000) ) + " GB";
 			}
 
 			return s;

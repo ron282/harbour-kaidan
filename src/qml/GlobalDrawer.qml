@@ -49,6 +49,7 @@ Page {
     Column {
         id: mainCol
         width: parent.width
+        spacing: Theme.paddingMedium
 
  //       PageHeader {
  //           title: qsTr("Settings")

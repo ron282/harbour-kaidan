@@ -8,9 +8,9 @@ import Sailfish.Silica 1.0
 Page {
 	id: root
 
-//	default property alias __data: mainArea.data
+//  default property alias __data: mainArea.data
 
-//	Column {
-//		id: mainArea
-//	}
+//    Column {
+//        id: mainArea
+//    }
 }

@@ -154,7 +154,6 @@ QString AvatarFileStorage::getAvatarPathOfJid(const QString& jid) const
 
 QString AvatarFileStorage::getAvatarUrl(const QString &jid) const
 {
-    qDebug() << "Avatar url =" << QUrl::fromLocalFile(getAvatarPathOfJid(jid)).toString();
 	return QUrl::fromLocalFile(getAvatarPathOfJid(jid)).toString();
 }
 

@@ -12,31 +12,22 @@ import im.kaidan.kaidan 1.0
 import ".."
 import "../elements"
 
-SilicaControl {
+Column {
 	id: root
 
-    default property alias __data: mainArea.data
+//  default property alias __data: mainArea.data
     property Page sheet
     property string jid
 	property alias qrCodePage: qrCodePage
     property alias mediaOverview: mediaOverview
     property alias mediaOverviewExpansionButton: mediaOverviewExpansionButton
-//  property alias vCardArea: vCardArea.data
+    property alias vCardArea: vCardArea.data
     property alias vCardRepeater: vCardRepeater
     property alias rosterGroupArea: rosterGroupZone.data
     property alias encryptionArea: encryptionZone.data
     property alias extraContentArea: extraContent.data
 
     width: parent.width
-
-//    topPadding: Theme.paddingLarge
-//    bottomPadding: Theme.paddingLarge
-//    leftPadding: bottomPadding
-//    rightPadding: leftPadding
-
-    Rectangle {
-        color: secondaryBackgroundColor
-    }
 
     Column {
         id: mainArea
@@ -62,7 +53,8 @@ SilicaControl {
         }
 
         Column {
-            visible: mediaOverview.totalFilesCount
+            visible: false // FIXME
+
             width: parent.width
 
             SectionHeader {
@@ -75,19 +67,19 @@ SilicaControl {
                 width: parent.width
             }
 
-            Button {
+            FormExpansionButton {
                 id: mediaOverviewExpansionButton
-                property bool checked : false
-                anchors {
-                    right: parent.right
-                }
-                text: qsTr("View all media")
-                icon.source: checked ? "image://theme/icon-m-enter-close" : "image://theme/icon-m-enter-accept"
-                onClicked: {
-                    checked = !checked
+                anchors.right: parent.right
+                onCheckedChanged: {
                     if (checked) {
                         mediaOverview.selectionMode = false
-                        mediaOverview.tabBarCurrentIndex = 0
+
+                        // Display the content of the first tab only on initial loading.
+                        // Afterwards, display the content of the last active tab.
+                        if (mediaOverview.tabBarCurrentIndex === -1) {
+                            mediaOverview.tabBarCurrentIndex = 0
+                        }
+
                         mediaOverview.loadDownloadedFiles()
                     }
                 }
@@ -95,6 +87,7 @@ SilicaControl {
         }
 
         Column {
+            id: vCardArea
             visible: vCardRepeater.count
             width: parent.width
 
@@ -104,6 +97,7 @@ SilicaControl {
 
             ColumnView {
                 id: vCardRepeater
+                itemHeight: Theme.itemSizeMedium + Theme.paddingSmall
             }
         }
 
@@ -118,6 +112,7 @@ SilicaControl {
         }
 
         Column {
+            width: parent.width
             visible: deviceRepeater.count
 
             SectionHeader {
@@ -126,12 +121,13 @@ SilicaControl {
 
             ColumnView {
                 id: deviceRepeater
-                itemHeight: Theme.itemSizeMedium * 2
+                itemHeight: Theme.itemSizeMedium + Theme.paddingSmall
                 model: UserDevicesModel {
                     jid: root.jid
                 }
                 delegate: Column {
-                    width: parent.width
+                    width: parent.width - 2*Theme.horizontalPageMargin
+                    x: Theme.horizontalPageMargin
                     Label {
                         text: {
                             if (model.name) {

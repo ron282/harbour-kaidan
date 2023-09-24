@@ -59,7 +59,7 @@ public:
 	 */
 	static QString versionString()
 	{
-		return "VERSION_STRING";
+        return VERSION_STRING;
 	}
 
 	/**
@@ -67,7 +67,7 @@ public:
 	 */
 	static QString applicationDisplayName()
 	{
-		return "APPLICATION_DISPLAY_NAME";
+        return APPLICATION_DISPLAY_NAME;
 	}
 
 	/**
@@ -80,7 +80,7 @@ public:
 	 */
 	static QUrl applicationSourceCodeUrl()
 	{
-		return { "APPLICATION_SOURCE_CODE_URL" };
+        return { APPLICATION_SOURCE_CODE_URL };
 	}
 
 	/**
@@ -103,7 +103,7 @@ public:
 	 */
 	Q_INVOKABLE static QUrl invitationUrl(const QString &jid)
 	{
-		return { "INVITATION_URL" + jid };
+        return { INVITATION_URL + jid };
 	}
 
 	/**

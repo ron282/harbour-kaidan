@@ -19,6 +19,7 @@ import MediaUtils 0.1
 BackgroundItem {
 	id: root
     width: parent.width
+    height: editCol.height
 
 	property QtObject chatPage
 	property alias messageArea: messageArea
@@ -42,6 +43,7 @@ BackgroundItem {
     }
 
     Column {
+        id: editCol
         width: parent.width
 		spacing: 0
 
@@ -49,7 +51,7 @@ BackgroundItem {
 			visible: composition.isSpoiler
 			spacing: 0
             width: parent.width
-            height: Theme.iconSizeMedium
+            height: Math.max(Theme.iconSizeMedium, spoilerHintField.height)
 
             TextArea {
 				id: spoilerHintField
@@ -82,11 +84,12 @@ BackgroundItem {
         Row {
 			spacing: 0
             width: parent.width
-            height: Theme.iconSizeMedium
+            height: Math.max(Theme.iconSizeMedium, messageArea.height)
 
 			// emoji picker button
             ClickableIcon {
                 id: emojiPickerIcon
+                visible: false //FIXME
                 icon.source: "image://theme/icon-m-toy"
                 enabled: sendButton.enabled
                 onClicked: !emojiPicker.toggle()
@@ -181,7 +184,7 @@ BackgroundItem {
             ClickableIcon {
                 id: voiceIcon
                 icon.source: MediaUtilsInstance.newMediaIconName(Enums.MessageAudio)
-                visible: messageArea.text === ""
+                visible: false // messageArea.text === ""
                 width: Theme.iconSizeMedium
                 Behavior on opacity {
                     NumberAnimation {}
@@ -206,126 +209,14 @@ BackgroundItem {
                 onClicked:
                 {
                     if (!checked) {
-                        mediaPopup.show()
+                        mediaPopup.visible = true
                         checked = true
                     } else {
-                        mediaPopup.hide()
+                        mediaPopup.visible = false
                         checked = false
                     }
                 }
             }
-
-            DockedPanel {
-                id: mediaPopup
-                dock: Dock.Bottom
-                width: parent.width
-                height: Screen.height / 2
-
-    //				x:  root.width - width - 40
-    //				y: - height - root.padding - 20
-    //				width: 470
-    //                Column {
-    //					anchors.fill: parent
-    //                    AbstractApplicationHeader {
-    //						width: parent.width
-    //						leftPadding: Kirigami.Units.largeSpacing
-    //						SectionHeader {
-    //							text: qsTr("Attachments")
-    //						}
-    //					}
-
-                SilicaFlickable {
-                    Column {
-                        PageHeader {
-                            title: qsTr("Attachments")
-                        }
-
-                       width: parent.width
-    //                   visible: thumbnails.count !== 0
-
-                        ColumnView {
-                            id: thumbnails
-                            width: parent.width
-                            itemHeight: Theme.itemSizeLarge
-    //                            model: RecentPicturesModel {}
-
-                            delegate: Item {
-                                anchors.margins: Theme.smallSpacing
-
-                                width: parent.width
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: {
-                                        chatPage.sendMediaSheet.openWithExistingFile(model.filePath)
-                                        mediaPopup.close()
-                                    }
-                                }
-
-                                Image {
-                                    source: model.filePath
-                                    height: 125
-                                    width: 150
-                                    sourceSize: "125x150"
-                                    fillMode: Image.PreserveAspectFit
-                                    asynchronous: true
-                                }
-                            }
-                        }
-                    }
-
-                    Row {
-                        width: parent.width
-                        height: Theme.iconSizeMedium
-                        anchors.margins: 5
-
-                        IconButton {
-                            width: Theme.iconSizeMedium
-                            height: Theme.iconSizeMedium
-                            icon.source: "image://theme/icon-m-camera"
-    //                                text: qsTr("Take picture")
-
-                            onClicked: {
-                                chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageImage)
-                                mediaPopup.close()
-                            }
-                        }
-                        IconButton {
-                            width: Theme.iconSizeMedium
-                            height: Theme.iconSizeMedium
-                            icon.source: "image://theme/icon-m-video"
-    //								title: qsTr("Record video")
-
-                            onClicked: {
-                                chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageVideo)
-                                mediaPopup.close()
-                            }
-                        }
-                        IconButton {
-                            width: Theme.iconSizeMedium
-                            height: Theme.iconSizeMedium
-                            icon.source: "image://theme/icon-m-document"
-    //                      title: qsTr("Share files")
-
-                            onClicked: {
-                                chatPage.sendMediaSheet.selectFile()
-                                mediaPopup.close()
-                            }
-                        }
-                        IconButton {
-                            width: Theme.iconSizeMedium
-                            height: Theme.iconSizeMedium
-                            icon.source: "image://theme/icon-m-location"
-    //				        title: qsTr("Share location")
-
-                            onClicked: {
-                                chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageGeoLocation)
-                                mediaPopup.close()
-                            }
-                        }
-                    }
-                }
-            } // DockedPanel
 
             ClickableIcon {
 				id: sendButton
@@ -344,6 +235,92 @@ BackgroundItem {
 				onClicked: sendMessage()
 			}
         } // Row
+    }
+    SilicaControl {
+        id: mediaPopup
+        visible: false
+        anchors.bottom: editCol.top
+        anchors.right: editCol.right
+        width: Theme.buttonWidthLarge
+        height: col.height
+
+        Rectangle {
+            width: parent.width
+            height: col.height
+            opacity: 1
+            color: Theme.overlayBackgroundColor
+
+            Column {
+                id: col
+                width: parent.width
+                PageHeader {
+                    title: qsTr("Attachments")
+                    visible: thumbnails.count !== 0
+                }
+
+                ColumnView {
+                    id: thumbnails
+                    width: parent.width
+                    itemHeight: Theme.itemSizeLarge
+//                           model: RecentPicturesModel {}
+
+                    delegate: BackgroundItem {
+                        width: parent.width
+
+                        onClicked: {
+                            chatPage.sendMediaSheet.openWithExistingFile(model.filePath)
+                            mediaPopup.visible = false
+                        }
+
+                        Image {
+                            source: model.filePath
+                            height: Theme.iconSizeMedium
+                            fillMode: Image.PreserveAspectFit
+                            asynchronous: true
+                        }
+                    }
+                }
+                Button {
+                    width: parent.width
+                    icon.source: "image://theme/icon-m-camera"
+                    text: qsTr("Take picture")
+
+                    onClicked: {
+                        chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageImage)
+                        mediaPopup.visible = false
+                    }
+                }
+                Button {
+                    width: parent.width
+                    icon.source: "image://theme/icon-m-video"
+                    text: qsTr("Record video")
+
+                    onClicked: {
+                        chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageVideo)
+                        mediaPopup.visible = false
+                    }
+                }
+                Button {
+                    width: parent.width
+                    icon.source: "image://theme/icon-m-document"
+                    text: qsTr("Share files")
+                    onClicked: {
+                        chatPage.sendMediaSheet.selectFile()
+                        mediaPopup.visible = false
+                    }
+                }
+                Button {
+                    width: parent.width
+                    icon.source: "image://theme/icon-m-location"
+                    text: qsTr("Share location")
+
+                    onClicked: {
+                        chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageGeoLocation)
+                        mediaPopup.visible = false
+                    }
+                }
+           }
+        }
     }
 
         /**

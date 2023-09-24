@@ -89,7 +89,6 @@ ExplanationTogglePage {
 //        width: applicationWindow().wideScreen ? parent.width : Math.min(Theme.buttonWidthLarge, parent.width, parent.height * 0.48)
 //        height: applicationWindow().wideScreen ? Math.min(parent.height, parent.width * 0.48) : parent.height
         width: Theme.buttonWidthLarge
-        height: parent.height
         spacing: Theme.paddingLarge
 
         QrCodeScanner {

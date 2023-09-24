@@ -270,4 +270,34 @@ ApplicationWindow {
 			openStartPage()
 		}
     }
+
+    cover: CoverBackground {
+        Image {
+            id: bgimg
+            source: Utils.getResourcePath("images/kaidan-cover.png")
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: parent.width
+            height: sourceSize.height * width / sourceSize.width
+        }
+        Column {
+            id: cover
+            anchors.top: parent.top
+            width: parent.width
+            spacing: Theme.paddingMedium
+
+            Label {
+                width: parent.width
+                anchors.horizontalCenter: parent.horizontalCenter
+                horizontalAlignment: Text.AlignHCenter
+                font.family: Theme.fontFamilyHeading
+                color: Theme.primaryColor
+                text:  Utils.applicationDisplayName
+            }
+            Label {
+                anchors.horizontalCenter: parent.horizontalCenter
+                font.family: Theme.fontFamily
+                text: Kaidan.connectionStateText
+            }
+        }
+    }
 }

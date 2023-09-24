@@ -287,8 +287,20 @@ QVariant MessageModel::data(const QModelIndex &index, int role) const
 #endif
 		}
 		return {};
-	case Files:
-		return QVariant::fromValue(msg.files);
+    case Files: {
+#if defined(SFOS)
+       QVariantList list;
+
+       for (const auto& l: msg.files)
+       {
+           list.append(QVariant::fromValue(l));
+       }
+
+       return QVariant::fromValue(list);
+#else
+       return QVariant::fromValue(msg.files);
+#endif
+    }
 	case DisplayedReactions: {
 		QVector<DisplayedMessageReaction> displayedMessageReactions;
 

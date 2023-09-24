@@ -14,22 +14,12 @@ DetailsSheet {
 
     ContactDetailsHeader {
         id: header
-		jid: root.jid
+        jid: root.jid
     }
 
-    SilicaFlickable {
-        anchors.top: header.bottom
-        anchors.right: parent.right
-        anchors.left: parent.left
-        anchors.bottom: parent.bottom
-        contentHeight: Screen.height*2
-        contentWidth: parent.width
-        clip: true
-
-        ContactDetailsContent {
-            sheet: root
-            jid: root.jid
-            width: parent.width
-        }
+    ContactDetailsContent {
+        sheet: root
+        jid: root.jid
+        width: parent.width
     }
 }

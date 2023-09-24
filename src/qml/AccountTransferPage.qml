@@ -64,7 +64,7 @@ ExplainedContentPage {
         CenteredAdaptiveText {
             text: qsTr("Scan the QR code or enter the credentials as text on another device to log in on it.\n\nAttention:\nNever show this QR code to anyone else. It would allow unlimited access to your account!")
             //verticalAlignment: Text.AlignVCenter
-            //scaleFactor: 1.5
+            scaleFactor: 1.5
         }
     }
 

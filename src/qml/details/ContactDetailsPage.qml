@@ -10,12 +10,20 @@ DetailsPage {
 
     property string jid
 
-	ContactDetailsHeader {
-		jid: root.jid
-	}
+    SilicaFlickable {
+        anchors.fill: parent
+        contentHeight: Screen.height*3
+        contentWidth: parent.width
+        clip: true
 
-    ContactDetailsContent {
-		jid: root.jid
-		width: parent.width
-	}
+        ContactDetailsHeader {
+            id: header
+            jid: root.jid
+        }
+
+        ContactDetailsContent {
+            jid: root.jid
+            anchors.top: header.bottom
+        }
+    }
 }

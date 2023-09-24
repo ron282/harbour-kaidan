@@ -60,10 +60,12 @@ Page {
     Column {
         id: contentArea
         spacing: 0
-        width: parent.width
+        anchors.left: parent.left
+        anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         anchors.leftMargin: useMarginsForContent ?  Theme.horizontalPageMargin : 0
         anchors.rightMargin: useMarginsForContent ?  Theme.horizontalPageMargin : 0
+        anchors.topMargin: Theme.itemSizeMedium
         anchors.bottomMargin: useMarginsForContent ? parent.height - buttonArea.y : 0
     }
 
@@ -85,12 +87,12 @@ Page {
         Column {
             id: explanationArea
             spacing: 0
-            width: parent.width
-            anchors.verticalCenter: parent.verticalCenter
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.leftMargin: Theme.horizontalPageMargin
-            anchors.rightMargin: Theme.horizontalPageMargin
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width
+            anchors.topMargin: Theme.itemSizeMedium
+            anchors.bottomMargin: useMarginsForContent ? parent.height - buttonArea.y : 0
         }
 
         Column {

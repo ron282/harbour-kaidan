@@ -15,7 +15,7 @@ DetailsHeader {
     displayName: AccountManager.displayName
     avatarAction: Button {
         text: qsTr("Change your profile image")
-        icon.source: "image://theme/icon-m-file-vcard"
+        icon.source: "image://theme/icon-s-edit"
         onClicked: pageStack.push(avatarChangePage)
     }
 

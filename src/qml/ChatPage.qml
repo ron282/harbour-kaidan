@@ -40,55 +40,24 @@ import "details"
 ChatPageBase {
 	id: root
 
-	property alias searchBar: searchBar
+//    property alias searchBar: searchBar
     property alias sendMediaSheet: sendMediaSheet
     property alias newMediaSheet: newMediaSheet
-//	property alias messageReactionEmojiPicker: messageReactionEmojiPicker
-//	property alias messageReactionSenderSheet: messageReactionSenderSheet
+    property alias messageReactionEmojiPicker: messageReactionEmojiPicker
+    property alias messageReactionDetailsSheet: messageReactionDetailsSheet
 
 	property string messageToCorrect
     readonly property bool cameraAvailable: QtMultimedia.availableCameras.length > 0
 	property bool viewPositioned: false
 
     onStatusChanged: {
-        if (status === PageStatus.Active) {
-            pageStack.pushAttached(contactDetailsSheet)
+        if (status === PageStatus.Active && forwardNavigation === false) {
+            console.log("Push attached")
+            pageStack.pushAttached(contactDetailsPage)
         }
     }
 
-    PageHeader {
-        id: ph
-        title: chatItemWatcher.item.displayName
-
-        SilicaItem {
-            parent: ph.extraContent
-            height: Theme.iconSizeMedium
-            anchors {
-                leftMargin: Theme.paddingMedium
-                verticalCenter: parent.verticalCenter
-            }
-            Avatar {
-                id: avatar
-                jid: chatItemWatcher.item.jid
-                name: chatItemWatcher.item.displayName
-                smooth: true;
-                onClicked: contactDetailsSheet.show()
-            }
-        }
-
-        Rectangle {
-                z: -1;
-                color: "black";
-                opacity: 0.35;
-                anchors.fill: parent;
-            }
-        ChatPageSearchView {
-            id: searchBar
-        }
-
-    }
-
-	// Message search bar
+    // Message search bar
 
 
     RosterItemWatcher {
@@ -96,65 +65,58 @@ ChatPageBase {
 		jid: MessageModel.currentChatJid
 	}
 
-    ContactDetailsSheet {
-		id: contactDetailsSheet
-		jid: MessageModel.currentChatJid
-	}
+    Component {
+        id: contactDetailsSheet
+
+        ContactDetailsSheet {
+            jid: MessageModel.currentChatJid
+        }
+    }
 
     Component {
 		id: contactDetailsPage
 
 		ContactDetailsPage {
-			jid: MessageModel.currentChatJid
+            jid: MessageModel.currentChatJid
 		}
 	}
 
     SendMediaSheet {
-		id: sendMediaSheet
-		composition: sendingPane.composition
-		chatPage: parent
-	}
+        id: sendMediaSheet
+        composition: sendingPane.composition
+        chatPage: parent
+    }
 
     NewMediaSheet {
         id: newMediaSheet
         composition: sendingPane.composition
     }
 
-    /*
     MessageReactionEmojiPicker {
-		id: messageReactionEmojiPicker
-	}
+        id: messageReactionEmojiPicker
+    }
 
-	MessageReactionSenderSheet {
-		id: messageReactionSenderSheet
-	}
-*/
-     // View containing the messages
-    SilicaListView {
-		id: messageListView
-        anchors {
-            top: ph.bottom
-            left: parent.left
-            right: parent.right
-            bottom: sendingPane.top
-        }
-        VerticalScrollDecorator { flickable: rosterListView }
-        verticalLayoutDirection: ListView.BottomToTop
-        cacheBuffer: Screen.width // do avoid flickering when image width is changed
-        clip: true;
-        focus: true;
-        spacing: 0
+    MessageReactionDetailsSheet {
+        id: messageReactionDetailsSheet
+    }
+
+    SilicaFlickable {
+        contentHeight: Screen.height
+        contentWidth: Screen.width
+
+        anchors.fill: parent
+        anchors.bottomMargin: sendMediaSheet.margin
+        clip: sendMediaSheet.expanded
 
         PullDownMenu {
-            enabled: true
-            visible: true
-
             MenuItem {
+                visible: false
                 text: qsTr("Details…")
                 onClicked: pageStack.push(contactDetailsPage)
             }
             // Action to toggle the message search bar
             MenuItem {
+                visible: false // FIXME
                 id: searchAction
                 text: qsTr("Search")
 
@@ -170,6 +132,59 @@ ChatPageBase {
                 onClicked: sendingPane.composition.isSpoiler = true
             }
         }
+
+        PageHeader {
+            id: header
+            title: chatItemWatcher.item.displayName
+
+            Rectangle {
+                id: extraContent
+                height: Theme.itemSizeMedium
+                width: parent.width
+                color: "transparent"
+                anchors.fill: parent;
+
+                SilicaItem {
+                    height: Theme.iconSizeMedium
+                    width:Theme.iconSizeMedium
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.pageStackIndicatorWidth
+                        verticalCenter: parent.verticalCenter
+                    }
+                    Avatar {
+                        id: avatar
+                        jid: chatItemWatcher.item.jid
+                        name: chatItemWatcher.item.displayName
+                        smooth: true;
+                        onClicked: contactDetailsSheet.show()
+                    }
+                }
+
+                ChatPageSearchView {
+                    id: searchBar
+                }
+             }
+        }
+
+    // View containing the messages
+    SilicaListView {
+		id: messageListView
+        anchors {
+            top: header.bottom
+            left: parent.left
+            right: parent.right
+            bottom: sendingPane.top
+        }
+
+
+        VerticalScrollDecorator { flickable: messageListView }
+        verticalLayoutDirection: ListView.BottomToTop
+        cacheBuffer: Screen.width // do avoid flickering when image width is changed
+        clip: true;
+        focus: true;
+        spacing: 0
+
 
         // Highlighting of the message containing a searched string.
 /*
@@ -264,33 +279,36 @@ ChatPageBase {
 			}
 		}
 
+        ChatMessageContextMenu {
+            id: messageContextMenu
+        }
 
         delegate: ChatMessage {
-            contextMenu: ChatMessageContextMenu {
-            }
-//			reactionEmojiPicker: root.messageReactionEmojiPicker
-//			reactionSenderSheet: root.messageReactionSenderSheet
-			modelIndex: index
-			msgId: model.id
-			senderJid: model.sender
-			senderName: model.isOwn ? "" : chatItemWatcher.item.displayName
-			chatName: chatItemWatcher.item.displayName
-			encryption: model.encryption
-			isTrusted: model.isTrusted
-			isOwn: model.isOwn
-			messageBody: model.body
-			dateTime: new Date(model.timestamp)
-			deliveryState: model.deliveryState
-			deliveryStateName: model.deliveryStateName
-			deliveryStateIcon: model.deliveryStateIcon
-			isLastRead: model.isLastRead
-			edited: model.isEdited
-			isSpoiler: model.isSpoiler
-			spoilerHint: model.spoilerHint
-			errorText: model.errorText
-			files: model.files
-//			reactions: model.reactions
-
+            contextMenu: messageContextMenu
+            reactionEmojiPicker: root.messageReactionEmojiPicker
+            reactionDetailsSheet: root.messageReactionDetailsSheet
+            modelIndex: index
+            msgId: model.id
+            senderJid: model.sender
+            senderName: model.isOwn ? "" : chatItemWatcher.item.displayName
+            chatName: chatItemWatcher.item.displayName
+            encryption: model.encryption
+            isTrusted: model.isTrusted
+            isOwn: model.isOwn
+            messageBody: model.body
+            dateTime: new Date(model.timestamp)
+            deliveryState: model.deliveryState
+            deliveryStateName: model.deliveryStateName
+            deliveryStateIcon: model.deliveryStateIcon
+            isLastRead: model.isLastRead
+            edited: model.isEdited
+            isSpoiler: model.isSpoiler
+            spoilerHint: model.spoilerHint
+            errorText: model.errorText
+            files: model.files
+            displayedReactions: model.displayedReactions
+            detailedReactions: model.detailedReactions
+            ownDetailedReactions: model.ownDetailedReactions
 			onMessageEditRequested: {
 				messageToCorrect = id
 
@@ -299,35 +317,35 @@ ChatPageBase {
 			}
 
 			onQuoteRequested: {
-                quotedText = ""
+                var quotedText = ""
                 const lines = body.split("\n")
 
-                for (i = 0; i<lines.size(); i++) {
+                for (var i = 0; i<lines.length; i++) {
                     quotedText += "> " + lines[i] + "\n"
                 }
 
-                sendingPane.messageArea.insert(0, quotedText)
+                sendingPane.messageArea.text = quotedText + sendingPane.messageArea.text
 			}
         }
 
 		// Everything is upside down, looks like a footer
         header: Column {
-			anchors.left: parent.left
-			anchors.right: parent.right
-			height: stateLabel.text ? 20 : 0
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: stateLabel.text ? 20 : 0
 
             Label {
-				id: stateLabel
+                id: stateLabel
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width
                 height: !text ? Theme.paddingMedium : 0
                 topPadding: text ? Theme.paddingSmall : 0
                 color: Theme.primaryColor
 
-				text: Utils.chatStateDescription(chatItemWatcher.item.displayName, MessageModel.chatState)
-				elide: Qt.ElideMiddle
-			}
-		}
+                text: Utils.chatStateDescription(chatItemWatcher.item.displayName, MessageModel.chatState)
+                elide: Qt.ElideMiddle
+            }
+        }
 
 /*        footer: BusyIndicator {
             visible: opacity !== 0.0
@@ -376,12 +394,12 @@ ChatPageBase {
     ChatPageSendingPane {
         id: sendingPane
         chatPage: root
-        anchors.bottom: root.bottom
+        anchors.bottom: parent.bottom
     }
 
     function saveDraft() {
         sendingPane.composition.saveDraft();
     }
-
+}
 
 } // ChatPageBase

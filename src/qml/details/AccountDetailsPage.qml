@@ -2,30 +2,27 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import QtQuick 2.2
 import Sailfish.Silica 1.0
 import im.kaidan.kaidan 1.0
 
 DetailsPage {
 	id: root
 
-	AccountDetailsHeader {
-        id: header
-		jid: AccountManager.jid
-	}
-
     SilicaFlickable {
-        anchors.top: header.bottom
-        anchors.right: parent.right
-        anchors.left: parent.left
-        anchors.bottom: parent.bottom
-        contentHeight: Screen.height*2
+        anchors.fill: parent
+        contentHeight: Screen.height*3
         contentWidth: parent.width
         clip: true
 
+        AccountDetailsHeader {
+            id: header
+            jid: AccountManager.jid
+        }
+
         AccountDetailsContent {
             jid: AccountManager.jid
-            width: parent.width
-            anchors.leftMargin: Theme.horizontalPageMargin
+            anchors.top: header.bottom
         }
     }
 }

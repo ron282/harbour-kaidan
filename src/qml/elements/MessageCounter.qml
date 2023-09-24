@@ -19,7 +19,7 @@ Rectangle {
         id: lblUnread
         font.bold: true
         text: count > 9999 ? "9999+" : count
-        font.pixelSize: Theme.fontSizeTiny
+        font.pixelSize: Theme.fontSizeSmall
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
     }

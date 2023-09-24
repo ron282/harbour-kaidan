@@ -14,16 +14,14 @@ DetailsContent {
 	id: root
 
 	property bool isChatWithOneself: MessageModel.currentAccountJid === jid
-/*
+
     mediaOverview {
         accountJid: MessageModel.currentAccountJid
         chatJid: MessageModel.currentChatJid
     }
-*/
-/*
-    vCardRepeater {
-        itemHeight: Theme.itemSizeMedium * 2
 
+
+    vCardRepeater {
         model: VCardModel {
             jid: root.jid
         }
@@ -56,7 +54,8 @@ DetailsContent {
             }
         }
     }
-*/
+
+
     rosterGroupArea: Column {
         id: colRoster
         width: parent.width
@@ -227,26 +226,26 @@ DetailsContent {
 
                 return ""
             }
-/*            icon.source: {
-                if (!MessageModel.usableOmemoDevices.length) {
-					if (accountOmemoWatcher.distrustedOmemoDevices.length) {
-                        return "image://theme/icon-m-vpn"
-					} else if (ownResourcesWatcher.resourcesCount > 1) {
-                        return "image://theme/icon-m-warning"
-					} else if (root.isChatWithOneself) {
-                        return "image://theme/icon-m-warning"
-					}
-				} else if (accountOmemoWatcher.authenticatableOmemoDevices.length) {
-					if (accountOmemoWatcher.authenticatableOmemoDevices.length === accountOmemoWatcher.distrustedOmemoDevices.length) {
-                        return "image://theme/icon-m-device-lock"
-					}
+//            icon.source: {
+//               if (!MessageModel.usableOmemoDevices.length) {
+//					if (accountOmemoWatcher.distrustedOmemoDevices.length) {
+//                        return "image://theme/icon-m-vpn"
+//					} else if (ownResourcesWatcher.resourcesCount > 1) {
+//                        return "image://theme/icon-m-warning"
+//					} else if (root.isChatWithOneself) {
+//                        return "image://theme/icon-m-warning"
+//					}
+//				} else if (accountOmemoWatcher.authenticatableOmemoDevices.length) {
+//					if (accountOmemoWatcher.authenticatableOmemoDevices.length === accountOmemoWatcher.distrustedOmemoDevices.length) {
+//                        return "image://theme/icon-m-device-lock"
+//					}
+//
+//                    return "image://theme/icon-m-device-lock"
+//				}
+//
+//				return ""
+//			}
 
-                    return "image://theme/icon-m-device-lock"
-				}
-
-				return ""
-			}
-*/
             visible: label
 			enabled: accountOmemoWatcher.authenticatableOmemoDevices.length
             onClicked: pageStack.push(qrCodePage, { isForOwnDevices: true })
@@ -322,24 +321,23 @@ DetailsContent {
 			enabled: contactOmemoWatcher.authenticatableOmemoDevices.length
             onClicked: pageStack.push(qrCodePage, { contactJid: root.jid })
 		}
-	}
+    }
 
     Component {
         id: qrCodeDialog
         Dialog {
     //	z: 1000
+            Column {
+                width: parent.width
+                DialogHeader { title: qsTr("QR Code") }
 
-         Column {
-            width: parent.width
-            DialogHeader { title: qsTr("QR Code") }
-
-            QrCode {
-				jid: root.jid
-                height:  Screen.height * 0.5 // Math.min(parent.height, Screen.height * 0.5)
-				width: parent.width
-			}
-		}
-	}    
+                QrCode {
+                    jid: root.jid
+                    height:  Screen.height * 0.5 // Math.min(parent.height, Screen.height * 0.5)
+                    width: parent.width
+                }
+            }
+        }
     }
 
     RosterItemWatcher {

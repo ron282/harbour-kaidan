@@ -11,30 +11,30 @@ import im.kaidan.kaidan 1.0
 
 import "../elements"
 
-Row {
+Column {
     id: root
-    spacing: Theme.paddingSmall
+    width: parent.width
+    height: Theme.itemSizeMedium + Theme.iconSizeExtraLarge + Theme.itemSizeMedium + Theme.itemSizeSmall
+    spacing: 0
 
-//    default property alias __data: mainArea.data
     property string jid
     property string displayName
     property Button avatarAction
 
-    anchors {
-        left: parent.left
-        right: parent.right
-        leftMargin: Theme.horizontalPageMargin
-        rightMargin: Theme.horizontalPageMargin
-        top: parent.top
+
+    //    default property alias __data: mainArea.data
+
+    PageHeader {
+        title: root.displayName
     }
 
-    height: Theme.itemSizeLarge
-
-    SilicaItem {
-        height: Theme.iconSizeMedium
-        width: Theme.iconSizeMedium
+    BackgroundItem {
+ //       y: Theme.itemSizeMedium
+        height: Theme.iconSizeExtraLarge
+        width: Theme.iconSizeExtraLarge
         anchors {
-            verticalCenter: parent.verticalCenter
+            horizontalCenter: parent.horizontalCenter
+            horizontalCenterOffset: -Theme.iconSizeMedium + Theme.horizontalPageMargin
         }
         Avatar {
             jid: root.jid
@@ -44,12 +44,13 @@ Row {
 
             MouseArea {
                 anchors.fill: parent
-                Button {
+                HighlightImage {
                     id: avatarActionHoverImage
-                    icon.source: root.avatarAction.icon.source
+                    source: root.avatarAction.icon.source
                     width: parent.width / 2
                     height: width
-                    anchors.centerIn: parent
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
                     visible:  root.avatarAction.enabled
                 }
             }
@@ -58,17 +59,46 @@ Row {
 
     Row {
         id: displayNameArea
-        height: Theme.iconSizeMedium
+        height: Math.max(displayNameText.height, displayNameTextField.height, displayNameEditingButton.height)
+        width: parent.width
+        spacing: 0
 
-        width: parent.width - Theme.iconSizeMedium - Theme.paddingSmall
-        anchors.verticalCenter: parent.verticalCenter
-        spacing: Theme.paddingSmall
+        Label {
+            id: displayNameText
+            text: root.displayName
+            textFormat: Text.PlainText
+            elide: Text.ElideRight
+            visible: !displayNameTextField.visible
+            horizontalAlignment: Text.AlignHCenter
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width - Theme.iconSizeMedium - Theme.horizontalPageMargin
+            // TODO: Get update of current vCard by using Entity Capabilities
+                onTextChanged: handleDisplayNameChanged()
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: displayNameEditingButton.clicked()
+            }
+        }
+
+        TextField {
+            id: displayNameTextField
+            text: displayNameText.text
+            font.underline: false
+            labelVisible: false
+            horizontalAlignment: Text.AlignHCenter
+            anchors.verticalCenter: displayNameText.top
+            anchors.verticalCenterOffset:  displayNameTextField.textVerticalCenterOffset
+            width: parent.width - Theme.iconSizeMedium - Theme.horizontalPageMargin
+            visible: false
+        }
 
         IconButton {
             id: displayNameEditingButton
             anchors.verticalCenter: parent.verticalCenter
             icon.source: "image://theme/icon-m-edit"
-            width: Theme.iconSizeMedium
+            height: Theme.iconSizeSmall
+            width: height
             onClicked: {
                 if (displayNameText.visible) {
                     displayNameTextField.visible = true
@@ -85,52 +115,18 @@ Row {
                 }
             }
         }
-
-        Label {
-            id: displayNameText
-            text: root.displayName
-            textFormat: Text.PlainText
-            font.family: Theme.fontFamilyHeading
-            font.pixelSize: Theme.fontSizeLarge
-            maximumLineCount: 1
-            elide: Text.ElideRight
-            visible: !displayNameTextField.visible
-            horizontalAlignment: Text.AlignRight
-            anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - Theme.iconSizeMedium - Theme.paddingSmall
-            // TODO: Get update of current vCard by using Entity Capabilities
-                onTextChanged: handleDisplayNameChanged()
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: displayNameEditingButton.clicked()
-            }
-        }
-
-        TextField {
-            id: displayNameTextField
-            text: displayNameText.text
-            font.family: Theme.fontFamilyHeading
-            font.pixelSize: Theme.fontSizeLarge
-            font.underline: false
-            horizontalAlignment: Text.AlignRight
-            anchors.verticalCenter: displayNameText.top
-            anchors.verticalCenterOffset:  displayNameTextField.textVerticalCenterOffset + 10
-            width: parent.width - Theme.iconSizeMedium - Theme.paddingSmall
-            visible: false
-        }
     }
     Label {
         id: jidLabel
-        anchors.bottom: parent.bottom
-        width: parent.width - Theme.iconSizeMedium - Theme.paddingSmall - 2*Theme.horizontalPageMargin
+        width: parent.width - 2*Theme.horizontalPageMargin
+        //FIXME
+        //anchors.horizontalCenter: displayNameEditingButton.horizontalCenter
         text: root.jid
         color: Theme.secondaryColor
         textFormat: Text.PlainText
-        font.pixelSize: Theme.fontSizeTiny
-        maximumLineCount: 1
+        font.pixelSize: Theme.fontSizeSmall
         elide: Text.ElideRight
-        horizontalAlignment: Text.AlignRight
+        horizontalAlignment: Text.AlignHCenter
     }
 }
 

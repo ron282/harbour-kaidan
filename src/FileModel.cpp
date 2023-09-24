@@ -33,7 +33,7 @@ QVariant FileModel::data(const QModelIndex &index, int role) const
 		case Qt::DisplayRole:
 			return file.httpSources.isEmpty()
 					? QString()
-					: file.httpSources.constBegin()->url.toDisplayString();
+                    : file.httpSources.constBegin()->url.toDisplayString();
 		case static_cast<int>(Role::Id):
 			return file.id;
 		case static_cast<int>(Role::File):

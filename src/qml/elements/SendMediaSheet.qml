@@ -7,27 +7,38 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-
+import Sailfish.Pickers 1.0
 import im.kaidan.kaidan 1.0
 import MediaUtils 0.1
 
 DockedPanel {
 	id: root
 
+    dock: Dock.Bottom
+    modal: true
+    height: content.height
+    width: parent.width
+    z:1
 	property string targetJid
+    property string selectedFile
     property MessageComposition composition
     property QtObject chatPage
 
 	signal rejected()
 	signal accepted()
-
-    SectionHeader {
-		text: qsTr("Share files")
-	}
-
+    Component {
+        id: filePickerPage
+        ContentPickerPage {
+            onSelectedContentPropertiesChanged: {
+                root.composition.fileSelectionModel.addFile(selectedContentProperties.url)
+                root.ensureOpen()
+            }
+        }
+    }
 	// First open the file choose to select a file, then open the sheet
 	function selectFile() {
-		root.composition.fileSelectionModel.selectFile()
+        pageStack.push(filePickerPage)
+//        root.composition.fileSelectionModel.selectFile()
 	}
 
 	// Open the sheet containing an already known file
@@ -43,13 +54,13 @@ DockedPanel {
 
 	// Open the sheet if it is not already open
 	function ensureOpen() {
-		if (!root.sheetOpen) {
-			root.open()
+        if (!root.open) {
+            root.show()
 		}
 	}
 
     onOpenChanged: {
-        if (!open) {
+        if (!root.open) {
 			root.composition.fileSelectionModel.clear()
 			messageText.text = ""
 		}
@@ -60,17 +71,31 @@ DockedPanel {
 			target: root.composition && root.composition.fileSelectionModel
 
 			function onSelectFileFinished() {
-				if (!root.sheetOpen) {
-				   root.open()
+                if (!root.open) {
+                   root.show()
 				}
 			}
 		}
 	}
-
+    Rectangle {
+        color: Theme.overlayBackgroundColor
+        anchors.fill: parent
+    }
 	Column {
-//        anchors.horizontalCenter: parent
-//        anchors.topMargin: Theme.paddingSmall
-//        anchors.bottomMargin: Theme.paddingSmall
+        id: content
+        width: parent.width - 2*Theme.horizontalPageMargin
+
+        anchors {
+           leftMargin: Theme.horizontalPageMargin
+           rightMargin: Theme.horizontalPageMargin
+           topMargin: Theme.paddingSmall
+           bottomMargin: Theme.paddingSmall
+        }
+
+        SectionHeader {
+            text: qsTr("Share files")
+        }
+
         Label {
 			text: qsTr("Choose files")
 			visible: fileList.count === 0
@@ -79,55 +104,51 @@ DockedPanel {
 		// List of selected files
 		ColumnView {
 			id: fileList
-            itemHeight: Theme.itemSizeLarge
-			model: root.composition.fileSelectionModel
+            itemHeight: Theme.iconSizeExtraLarge + Theme.paddingSmall
+            model: root.composition.fileSelectionModel
 
             delegate: ListItem {
 				id: delegateRoot
 
                 Row {
+                    x: Theme.horizontalPageMargin
+                    spacing: Theme.paddingMedium
+                    width: parent.width - 2*Theme.horizontalPageMargin
+
 					// Icon
-					Icon {
+                    Image {
                         width: Theme.iconSizeExtraLarge
                         height: width
-						source: model.thumbnail
-					}
-
-					// spacer
-					Item {
+                        source: {
+                            return model.thumbnailUrl
+                        }
 					}
 
 					// File name and description
 					Column {
-						width: parent.width
+                        width: content.width - Theme.iconSizeExtraLarge - 2*Theme.paddingMedium - Theme.iconSizeExtraSmall
 
-						Row {
-							SectionHeader {
-								width: parent.width
-
-                                // level: 3
-								text: model.fileName
-							}
-
-							Label {
-								text: model.fileSize
-							}
-						}
-
+                        Label {
+                            text: model.fileName
+                            font.pixelSize: Theme.fontSizeTiny
+                            maximumLineCount: 2
+                            elide: Text.ElideRight
+                        }
+                        Label {
+                            text: Utils.formattedDataSize(model.fileSize)
+                            font.pixelSize: Theme.fontSizeTiny
+                            color: Theme.secondaryColor
+                        }
 						TextField {
 							width: parent.width
-
-							text: model.description
-							placeholderText: qsTr("Enter description…")
-
+                            text: model.description
+                            placeholderText: qsTr("Enter description…")
 							onTextChanged: model.description = text
 						}
 					}
 
-                    Button {
-                        icon.source: "image://theme/icon-splus-remove"
-						text: qsTr("Remove file")
-						//FIXME display: Controls.AbstractButton.IconOnly
+                    IconButton {
+                        icon.source: "image://theme/icon-splus-clear"
 						onClicked: root.composition.fileSelectionModel.removeFile(model.index)
 					}
 				}
@@ -138,23 +159,19 @@ DockedPanel {
 			id: messageText
 
 			width: parent.width
-            anchors.topMargin: Theme.paddingLarge
-
+            wrapMode: TextEdit.Wrap
 			placeholderText: qsTr("Compose message")
 			onFocusChanged: root.composition.body = messageText.text
 		}
 
 		// Button row
 		Row {
+            spacing: Theme.paddingSmall
+            anchors.horizontalCenter: parent.horizontalCenter
             Button {
 				text: qsTr("Add")
                 icon.source: "image://theme/icon-m-attach"
-
-				onClicked: root.composition.fileSelectionModel.selectFile()
-			}
-
-			Item {
-				width: parent.width
+                onClicked: pageStack.push(filePickerPage)
 			}
 
             Button {
@@ -164,7 +181,7 @@ DockedPanel {
 					// always (re)set the body in root.composition (it may contain a body from a previous message)
 					root.composition.body = messageText.text
 					root.composition.send()
-					close()
+                    root.hide()
 				}
 			}
 		}

@@ -16,126 +16,115 @@ import Sailfish.Silica 1.0
 import im.kaidan.kaidan 1.0
 import MediaUtils 0.1
 
-Rectangle {
+BackgroundItem {
 	id: root
 
     property url mediaSource
-    //property int messageSize: Kirigami.Units.gridUnit * 14
+    property int messageSize: Theme.itemSizeLarge // Kirigami.Units.gridUnit * 14
     property QtObject message
     property var file
     property string messageId
 
 	property bool fileAvailable: file.localFilePath && MediaUtilsInstance.localFileAvailable(file.localFilePath)
 
-	color: "transparent"
-
-	//FIXME Layout.fillHeight: false
 	width: parent.width
-    //Layout.alignment: Qt.AlignLeft
-	anchors.topMargin: -6
-	anchors.leftMargin: anchors.topMargin
-	anchors.rightMargin: anchors.topMargin
-	//FIXME Layout.maximumWidth: message ? messageSize : -1
+    height: content.height
 
 	// content
 	Column {
-		anchors {
-			fill: parent
-			margins: layout.spacing
-		}
-		Row {
+        id: content
+        width: parent.width
+        Rectangle {
 			id: layout
+            color: "transparent"
+            width: parent.width
+            height: Math.max(fallbackCircle.height, thumbnailIcon.paintedHeight, fileDesc.height)
+//            spacing: Theme.paddingSmall
 
 			// left: file icon
-			Rectangle {
+            Rectangle {
 				id: fallbackCircle
-
 				visible: !file.hasThumbnail
-                height: parent.height
-				//FIXME Layout.fillHeight: true
-				//FIXME Layout.preferredWidth: height
-				// // Layout.alignment: Qt.AlignLeft
-				radius: height / 2
-                //color: Qt.lighter(Kirigami.Theme.focusColor, 1.05)
+                height: Theme.iconSizeLarge
+                width: height
+                color: Theme.highlightBackgroundColor
+                opacity: Theme.highlightBackgroundOpacity
 
-				Icon {
-					source: root.fileAvailable ? file.mimeTypeIcon : "download"
-                    //FIXME isMask: !openButton.pressed && !openButton.containsMouse
+                Icon {
+                    source: root.fileAvailable ? file.mimeTypeIcon : "image://theme/icon-m-cloud-download"
 					smooth: true
-					height: 24 // we always want the 24x24 icon
-					width: height
-
 					anchors {
 						centerIn: parent
 					}
 				}
-			}
-			Icon {
-				id: thumbnailIcon
-				visible: file.hasThumbnail
-                height: parent.height
-                //FIXME Layout.fillHeight: true
-				//FIXME Layout.preferredWidth: height
-                //FIXME Layout.alignment: Qt.AlignLeft
-				source: file.thumbnailSquare
+            }
+            Image {
+                id: thumbnailIcon
+                visible: file.hasThumbnail
+                width: parent.width/2
+                height: (parent.width*2/3)
+                horizontalAlignment: Image.AlignLeft
+                verticalAlignment: Image.AlignTop
+                source: file.thumbnailUrl
+                fillMode: Image.PreserveAspectFit
 
-//FIXME			layer.enabled: true
-//				layer.effect: OpacityMask {
-//					maskSource: Item {
-//						width: thumbnailIcon.paintedWidth
-//						height: thumbnailIcon.paintedHeight//
-//
-//						Rectangle {
-//							anchors.centerIn: parent
-//							width: Math.min(thumbnailIcon.width, thumbnailIcon.height)
-//							height: width
-//							radius: roundedCornersRadius
-//						}
-//					}
-				}
+                Icon {
+                    source: "image://theme/icon-m-cloud-download"
+                    anchors.centerIn: thumbnailIcon
+                    anchors.verticalCenterOffset: (thumbnailIcon.paintedHeight - thumbnailIcon.height) / 2
+                    anchors.horizontalCenterOffset: (thumbnailIcon.paintedWidth - thumbnailIcon.width) / 2
+                    visible: !root.fileAvailable
+                }
+            }
 
-				Icon {
-					source: "download"
-					anchors.fill: thumbnailIcon
-					visible: !root.fileAvailable
-				}
-			}
+            // right: file description
+            Column {
+                id: fileDesc
+                anchors.top: parent.top
+                x: Math.max(fallbackCircle.width, thumbnailIcon.paintedWidth) + Theme.paddingSmall
+                width: parent.width - Math.max(fallbackCircle.width, thumbnailIcon.paintedWidth) - 2*Theme.paddingSmall
+                spacing: Theme.paddingSmall
 
-			// right: file description
-			Column {
-				//FIXME Layout.fillHeight: true
-				width: parent.width
-				spacing: Kirigami.Units.smallSpacing
+                // file name
+                Label {
+                    visible: !transferWatcher.isLoading
+                    width: parent.width
+                    text: file.name
+                    textFormat: Text.PlainText
+                    wrapMode: Text.Wrap
+                    maximumLineCount: 2
+                    elide: Text.ElideRight
+                    font.pixelSize: Theme.fontSizeTiny
+                }
 
-				// file name
-				Label {
-					width: parent.width
-					text: file.name
-					textFormat: Text.PlainText
-					elide: Text.ElideRight
-					maximumLineCount: 1
-				}
-
-				// file size
-				Label {
-					width: parent.width
-					text: Utils.formattedDataSize(file.size)
-					textFormat: Text.PlainText
-					elide: Text.ElideRight
-					maximumLineCount: 1
+                // file size
+                Label {
+                    visible: !transferWatcher.isLoading
+                    width: parent.width
+                    text: Utils.formattedDataSize(file.size)
+                    textFormat: Text.PlainText
+                    elide: Text.ElideRight
                     color: Theme.secondaryColor
-				}
-			}
-
-		// progress bar for upload/download status
-        Slider {
-            enabled: false
-			visible: transferWatcher.isLoading
-			value: transferWatcher.progress        
-
-			width: parent.width
-			//FIXME Layout.maximumWidth: Kirigami.Units.gridUnit * 14
-		}
+                    font.pixelSize: Theme.fontSizeTiny
+                }
+                // progress bar for upload/download status
+                Label {
+                    visible: transferWatcher.isLoading
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: qsTr("Transfering")
+                    textFormat: Text.PlainText
+                    elide: Text.ElideRight
+                    font.pixelSize: Theme.fontSizeTiny
+                }
+                Slider {
+                    enabled: false
+                    width: parent.width
+                    visible: transferWatcher.isLoading
+                    value: transferWatcher.progress
+                    handleVisible: false
+                }
+            }
+        }
 
 		FileProgressWatcher {
 			id: transferWatcher
@@ -143,32 +132,21 @@ Rectangle {
 		}
 	}
 
-	MouseArea {
-		id: openButton
-		hoverEnabled: true
-		acceptedButtons: Qt.LeftButton | Qt.RightButton
+    onClicked:
+    {
+        if (root.fileAvailable) {
+            Qt.openUrlExternally("file://" + file.localFilePath)
+        } else if (file.downloadUrl) {
+            Kaidan.fileSharingController.downloadFile(root.messageId, root.file)
+        }
+    }
 
-		anchors {
-			fill: parent
-		}
-
-        onClicked:
-
-            {
-				if (root.fileAvailable) {
-					Qt.openUrlExternally("file://" + file.localFilePath)
-				} else if (file.downloadUrl) {
-					Kaidan.fileSharingController.downloadFile(root.messageId, root.file)
-				}
-            } /*else if (event.button === Qt.RightButton) {
-				root.message.contextMenu.file = root.file
-				root.message.contextMenu.message = root.message
-				root.message.contextMenu.popup()
-			}
-        }*/
-
-        //FIXME Controls.ToolTip.visible: file.description && openButton.containsMouse
-        //FIXME Controls.ToolTip.delay: Kirigami.Units.longDuration
-		//FIXME Controls.ToolTip.text: file.description
-	}
+    onPressAndHold:
+    {
+        if(contextMenu) {
+            root.message.contextMenu.file = root.file
+            root.message.contextMenu.message = root.message
+            openMenu()
+         }
+    }
 }

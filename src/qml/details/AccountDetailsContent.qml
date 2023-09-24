@@ -15,7 +15,64 @@ import "../settings"
 DetailsContent {
     id: root
 
+    mediaOverview {
+        accountJid: AccountManager.jid
+        chatJid: ""
+    }
+    vCardArea: [
+        FormExpansionButton {
+            id: vCardExpansionButton
+            anchors.right: parent.right
+            checked: vCardRepeater.model.unsetEntriesProcessed
+            onCheckedChanged: vCardRepeater.model.unsetEntriesProcessed = checked
+        }
+    ]
+    vCardRepeater {
+        model: VCardModel {
+            jid: root.jid
+        }
+        delegate: BackgroundItem {
+            id: vCardDelegate
+
+            property bool editing: false
+
+            width: parent.width
+            height: vCardValueField.height
+
+            TextField {
+                id: vCardValueField
+                label: model.key
+                placeholderText: model.key
+                text: model.value
+                width: vCardDelegate.width
+                rightItem: IconButton {
+                    id: vCardConfirmationButton
+                    icon.source: editing ? "image://theme/icon-m-right" : "image://theme/icon-s-edit"
+                    width: Theme.iconSizeSmall
+                    height: width
+                    onClicked: {
+                        if(editing) {
+                            vCardBusyIndicator.visible = true
+                            model.value = vCardValueField.text
+                            vCardBusyIndicator.visible = false
+                            editing = !editing
+                        }
+                    }
+                    BusyIndicator {
+                        id: vCardBusyIndicator
+                        visible: false
+                    }
+                }
+                onClicked: {
+                    vCardDelegate.editing = true
+                }
+            }
+        }
+    }
+
     rosterGroupArea: Column {
+        width: parent.width
+
         SectionHeader {
             text: qsTr("Labels")
         }
@@ -278,8 +335,6 @@ DetailsContent {
             }
         }
     }
-
-
 
      Column {
         visible: Kaidan.serverFeaturesCache.inBandRegistrationSupported

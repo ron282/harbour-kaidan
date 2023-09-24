@@ -57,7 +57,7 @@ QColor Presence::availabilityToColor(Availability type)
 #if defined(SFOS)
 	switch (type) {
 	case Online:
-		return QColor("#008000");
+        return "lime"; // "QColor("#008000");
 	case Chat:
 		return QColor("#006400");
 	case Away:

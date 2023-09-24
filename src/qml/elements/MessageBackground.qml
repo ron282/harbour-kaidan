@@ -16,11 +16,19 @@ BackgroundItem {
 	id: backgroundRoot
 
 	property QtObject message
-//	property color color: message.isOwn ? rightMessageBubbleColor : primaryBackgroundColor
+    property color color: message.isOwn ? Theme.highlightColor: Theme.primaryColor
     property int tailSize: Theme.paddingLarge
 	property bool showTail: true
 	property alias dummy: dummy
 	readonly property alias metaInfoWidth: metaInfo.width
+    property bool refreshDate : false;
+
+    Timer {
+        interval: 60000; running: true; repeat: true
+        onTriggered: {
+            refreshDate = !refreshDate;
+        }
+    }
 
 	clip: true
 
@@ -86,63 +94,75 @@ BackgroundItem {
 		}
 
         Label {
-			id: timestamp
-            //opacity: 0.5
+            id: timestamp
             font.pixelSize: Theme.fontSizeTiny
-			text: Qt.formatDateTime(message.dateTime, "hh:mm")
-
-			MouseArea {
-				id: timestampMouseArea
-				anchors.fill: parent
-			}
-
-//			Controls.ToolTip {
-//				visible: timestampMouseArea.containsMouse
-//				text: Qt.formatDateTime(message.dateTime, "dd. MMM yyyy, hh:mm")
-//				delay: 500
-//			}
+            text: refreshDate, getDateDiffFormated(message.dateTime)
 		}
 
         Icon {
-            visible: backgroundRoot.message.encryption == Encryption.NoEncryption
+            visible: backgroundRoot.message.encryption !== Encryption.NoEncryption
             source: "image://theme/icon-s-outline-secure"
-            width: Theme.iconSizeSmall
+            width: Theme.iconSizeExtraSmall
             height: width
-		}
+            anchors.bottom: timestamp.bottom
+        }
 
-//        Icon {
-//			// TODO: Use "security-low-symbolic" for distrusted, "security-medium-symbolic" for automatically trusted and "security-high-symbolic" for authenticated
-//            source: backgroundRoot.message.isTrusted ? "image://theme/icon-s-installed" : "image://theme/icon-s-warning"
-//			visible: backgroundRoot.message.encryption !== Encryption.NoEncryption
-//            width: Theme.iconSizeSmall
-//            height: width
-//		}
+        Icon {
+            // TODO: Use "security-low-symbolic" for distrusted, "security-medium-symbolic" for automatically trusted and "security-high-symbolic" for authenticated
+            source: backgroundRoot.message.isTrusted ? "image://theme/icon-m-vpn" : "image://theme/icon-s-warning"
+            visible: backgroundRoot.message.encryption !== Encryption.NoEncryption
+            width: Theme.iconSizeExtraSmall
+            height: width
+            anchors.bottom: timestamp.bottom
+        }
 
 		Image {
 			visible: message.isOwn
+            source: deliveryStateIcon
+            width: Theme.iconSizeExtraSmall
+            height: width
+            anchors.bottom: timestamp.bottom
+        }
 
-			MouseArea {
-				id: checkmarkMouseArea
-				anchors.fill: parent
-				hoverEnabled: true
-			}
-
-//			Controls.ToolTip {
-//				text: message.deliveryStateName
-//				visible: checkmarkMouseArea.containsMouse
-//				delay: 500
-//			}
-		}
         Icon {
             source: "image://theme/icon-s-edit"
-			visible: message.edited
-//			// //FIXME Layout.preferredHeight: Kirigami.Units.gridUnit * 0.65
-//			//FIXME Layout.preferredWidth: Kirigami.Units.gridUnit * 0.65
-		}
-	}
+            width: Theme.iconSizeExtraSmall
+            height: width
+            visible: message.edited
+            anchors.bottom: timestamp.bottom
+        }
+    }
 
     Label {
         id: dummy
         text: "⠀"
+    }
+
+    function getDateDiffFormated(d) {
+        var n = new Date();
+        var diff = (n.getTime() - d.getTime()) / 1000;
+        var locale = Qt.locale();
+
+        if(diff < 0)
+            return "?"
+        else if(diff < 60)
+            return qsTr("now")
+        else if(diff < 60*2)
+            return qsTr("1 mn ago")
+        else if(diff < 60*30)
+            return qsTr ("") + Math.round(diff/60, 0)+ qsTr(" mns ago");
+
+        var s = d.toLocaleTimeString(locale, "hh:mm");
+
+        if(d.getFullYear() !== n.getFullYear())
+        {
+            s = d.toLocaleDateString(locale, "d MMM yyyy") + " " + s;
+        }
+        else if (d.getMonth() !== n.getMonth() || d.getDate() !== n.getDate())
+        {
+            s = d.toLocaleDateString(locale, "d MMM") + " " +s;
+        }
+
+        return s;
     }
 }

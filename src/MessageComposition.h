@@ -73,10 +73,13 @@ class FileSelectionModel : public QAbstractListModel
 public:
 	enum Roles {
 		Filename = Qt::UserRole + 1,
-		Thumbnail,
+        Thumbnail,
 		Description,
 		FileSize,
-	};
+#if defined(SFOS)
+        ThumbnailUrl,
+#endif
+    };
 
 	explicit FileSelectionModel(QObject *parent = nullptr);
 	~FileSelectionModel() override;

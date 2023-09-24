@@ -47,7 +47,7 @@ Button {
     property string messageId
 
 	text: emoji + " " +  description
-    width: smallButtonWidth + (description.length == 1 ? 0 : (description.length - 1) * Theme.defaultFont.pixelSize * 0.6)
+    width: Theme.buttonWidthTiny + (description.length == 1 ? 0 : (description.length - 1) * Theme.defaultFont.pixelSize * 0.6)
 
 	onClicked: {
 		senderSheet.messageId = root.messageId

@@ -25,6 +25,7 @@
 
 #if defined (SFOS)
 #include "QmlUtils.h"
+#include <QBuffer>
 
 bool FileHash::operator==(const FileHash &o) const
 {
@@ -66,11 +67,18 @@ bool File::operator==(const File &o) const
 		disposition == o.disposition &&
 	 	localFilePath == o.localFilePath &&
 		hashes == o.hashes &&
-	 	thumbnail == o.thumbnail &&
+//        thumbnail == o.thumbnail &&
 		httpSources == o.httpSources &&
 		encryptedSources == o.encryptedSources;
 }
 
+QUrl File::getHttpSource() const
+{
+    if(httpSources.count() > 0)
+        return httpSources.constBegin()->url;
+    else
+        return QUrl {};
+}
 bool MessageReaction::operator==(const MessageReaction &o) const
 {
     return deliveryState == o.deliveryState &&
@@ -100,7 +108,7 @@ bool Message::operator==(const Message &m) const
 		originId == m.originId &&
 		stanzaId == m.stanzaId &&
 		fileGroupId == m.fileGroupId &&
-		files == m.files &&
+        files == m.files &&
 		receiptRequested == m.receiptRequested &&
         encryption == m.encryption &&
 		senderKey == m.senderKey && 
@@ -112,6 +120,37 @@ bool Message::operator==(const Message &m) const
 bool Message::operator!=(const Message &m) const
 {
 	return !(*this == m);
+}
+
+QString File::mimeTypeIcon() const
+{
+    if(mimeType.name().contains("video")) {
+        return "image://theme/icon-m-file-video";
+    } else if(mimeType.name().contains("image")) {
+        return "image://theme/icon-m-file-image";
+    } else if(mimeType.name().contains("audio")) {
+        return "image://theme/icon-m-file-audio";
+    } else if(mimeType.name().contains("zip")) {
+        return "image://theme/icon-m-file-zip";
+    } else if(mimeType.name().contains("compressed")) {
+        return "image://theme/icon-m-file-zip";
+    } else if(mimeType.name().contains("pdf")) {
+        return "image://theme/icon-m-file-pdf-dark";
+    } else if(mimeType.name().contains("vcard")) {
+        return "image://theme/icon-m-file-vcard";
+    } else if(mimeType.name().contains("text")) {
+        return "image://theme/icon-m-file-note-dark";
+    } else if(mimeType.name().contains("text")) {
+        return "image://theme/icon-m-file-note-dark";
+    } else if(mimeType.name().contains("presentation")) {
+        return "image://theme/icon-m-file-presentation-dark";
+    } else if(mimeType.name().contains("spreadsheet")) {
+        return "image://theme/icon-m-file-spreadsheet-dark";
+    } else if(mimeType.name().contains("location")) {
+        return "image://theme/icon-m-browser-location";
+    } else {
+        return "icon-m-file-other-dark";
+    }
 }
 
 #endif
@@ -201,6 +240,28 @@ QUrl File::downloadUrl() const
 	}
 	// don't use encrypted source urls (can't be opened externally)
 	return {};
+}
+
+QUrl File::imageToUrl(const QImage& image) const
+{
+    if(image.isNull()) {
+        return QUrl {};
+    }
+    QByteArray byteArray;
+    QBuffer buffer(&byteArray);
+    buffer.open(QIODevice::WriteOnly);
+    image.save(&buffer, "png");
+    QString base64 = QString::fromUtf8(byteArray.toBase64());
+    return QString("data:image/png;base64,") + base64;
+}
+
+QUrl File::thumbnailImageUrl() const
+{
+    return imageToUrl(thumbnailImage());
+}
+QUrl File::thumbnailSquareImageUrl() const
+{
+    return imageToUrl(thumbnailSquareImage());
 }
 
 #if defined(SFOS)

@@ -91,7 +91,7 @@ UserListItem {
     Column {
         anchors.right: parent.right
         anchors.top: parent.top
-        width: Theme.iconSizeSmall
+        width: Theme.iconSizeMedium
         // right: icon for muted contact
         // Its size depends on the font's pixel size to be as large as the message counter.
         Icon {

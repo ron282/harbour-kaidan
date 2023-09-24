@@ -11,7 +11,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.2
+import QtQuick 2.5
 import Sailfish.Silica 1.0
 import im.kaidan.kaidan 1.0
 import MediaUtils 0.1
@@ -42,7 +42,10 @@ ListItem {
 	property string spoilerHint
 	property bool isShowingSpoiler: false
 	property string errorText: ""
-//	property alias bodyLabel: bodyLabel
+    property string downloadUrl
+    property string localFilePath
+    property int nbfiles : 0
+    property alias bodyLabel: bodyLabel
 	property var files;
 	property var displayedReactions
 	property var detailedReactions
@@ -89,7 +92,6 @@ ListItem {
     Rectangle {
         id: shadow
         color: "white"
-//      radius: 3
         opacity: (!isOwn ? 0.05 : 0.15)
         antialiasing: true
         anchors {
@@ -141,7 +143,7 @@ ListItem {
 //					"⠀".repeat(Math.ceil(background.metaInfoWidth / background.dummy.implicitWidth))
 //				}
 
-//                readonly property alias backgroundColor: bubbleBackground.color
+                readonly property alias backgroundColor: bubbleBackground.color
 
                 MessageBackground {
                     id: bubbleBackground
@@ -149,49 +151,41 @@ ListItem {
                     showTail: !isOwn && isGroupBegin
                     anchors.fill: parent
 
-                    MouseArea {
-                        anchors.fill: parent
+                    onPressAndHold: showContextMenu()
 
-                        onClicked: {
-                            if (mouse.button === Qt.RightButton)
-                                showContextMenu()
-                        }
-
-                        onPressAndHold: showContextMenu()
-                    }
-                }
-
-                Column {
+                    Column {
 					id: content
-                    anchors.left: parent.left
-                    anchors.right: parent.right
+                    width: parent.width
 
                     Row {
 						id: spoilerHintRow
 						visible: isSpoiler
+                        spacing: Theme.paddingSmall
+                        height: Math.max(Theme.iconSizeSmall, spoilerLabel.height)
 
                         Label {
                             id: spoilerLabel
 							text: spoilerHint == "" ? qsTr("Spoiler") : spoilerHint
-                            color: Theme.primaryColor
+                            color: isOwn ? Theme.highlightColor: Theme.primaryColor
                             font.pixelSize: Theme.fontSizeMedium
-							MouseArea {
-								anchors.fill: parent
-								acceptedButtons: Qt.LeftButton | Qt.RightButton
-								onClicked: {
-									if (mouse.button === Qt.LeftButton) {
-										isShowingSpoiler = !isShowingSpoiler
-									}
-								}
-							}
-						}
+                            MouseArea {
+                                anchors.fill: parent
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                onClicked: {
+    //									if (mouse.button === Qt.LeftButton) {
+                                        isShowingSpoiler = !isShowingSpoiler
+    //									}
+                                }
+                            }
+                        }
 
                         Icon {
-                            height: Theme.iconSizeExtraSmall
+                            height: Theme.iconSizeSmall
                             width: height
+                            color: isOwn ? Theme.highlightColor: Theme.primaryColor
                             source: isShowingSpoiler ? "image://theme/icon-splus-hide-password" : "image://theme/icon-splus-show-password"
 						}
-					}
+                    }
 
                     Separator {
 						visible: isSpoiler
@@ -224,98 +218,123 @@ ListItem {
                         }
                     }
 
-                    ColumnView {
-                        model: root.files
-                        itemHeight: Theme.itemSizeHuge
-                        visible: {
-                            console.log("MediaPreviewVisible=" + (isSpoiler && isShowingSpoiler) || !isSpoiler);
-                            return (isSpoiler && isShowingSpoiler) || !isSpoiler;
-                        }
+                    Column {
+                       visible: isSpoiler && isShowingSpoiler || !isSpoiler
+                       width: parent.width
 
-                        delegate: MediaPreviewOther {
-                            property var modelData
+                       Repeater {
+                            model: root.files
+                            width: Screen.width /2
+                            height: width
 
-                            messageId: root.msgId
+                            delegate:
+                                MediaPreviewOther {
 
-                            mediaSource: {
-                                if (modelData.localFilePath) {
-                                    local = MediaUtilsInstance.fromLocalFile(modelData.localFilePath);
-                                    if (MediaUtilsInstance.localFileAvailable(local)) {
-                                        return local;
+//                                  property var modelData
+
+                                    messageId: root.msgId
+
+                                    mediaSource: {
+                                        if (modelData.localFilePath) {
+                                            var local = MediaUtilsInstance.fromLocalFile(modelData.localFilePath);
+                                            if (MediaUtilsInstance.localFileAvailable(local)) {
+                                                return local;
+                                            }
+                                        }
+                                        return "";
                                     }
+                                    message: root
+                                    file: modelData
                                 }
-                                return "";
-                            }
-                            message: root
-                            file: modelData
                         }
-                    }
 
-                    // message body
-                    Label {
-                        id: bodyLabel
-                        visible: messageBody
-                        text: Utils.formatMessage(messageBody) // + bubble.paddingText
-                        textFormat: Text.StyledText
-                        wrapMode: Text.Wrap
-                        font.family: Theme.fontFamilyHeading
-                        font.pixelSize: Theme.fontSizeMedium
-                        color: isOwn ? Theme.highlightColor: Theme.primaryColor
-                        anchors.right : isOwn ? parent.right : undefined
-                        width: isOwn ? parent.width - Theme.paddingMedium : parent.width - Theme.paddingMedium - Theme.iconSizeMedium
-                        onLinkActivated: Qt.openUrlExternally(link)
-                    }
-                    Separator {
-                        visible: isSpoiler && isShowingSpoiler
-                        width : parent.width
+                       // message body
+                       Label {
+                           id: bodyLabel
+                           visible: messageBody
+                           text: Utils.formatMessage(messageBody) // + bubble.paddingText
+                           textFormat: Text.StyledText
+                           wrapMode: Text.Wrap
+                           font.family: Theme.fontFamilyHeading
+                           font.pixelSize: Theme.fontSizeMedium
+                           color: isOwn ? Theme.highlightColor: Theme.primaryColor
+                           anchors.right : isOwn ? parent.right : undefined
+                           width: isOwn ? parent.width - Theme.paddingMedium : parent.width - Theme.paddingMedium - Theme.iconSizeMedium
+                           onLinkActivated: Qt.openUrlExternally(link)
+                       }
+
+                       Separator {
+                           visible: isSpoiler && isShowingSpoiler
+                           width : parent.width
+                       }
                     }
 
 					// message reactions (emojis in reaction to this message)
 
-                    /*Flow {
-						spacing: 4
-                        anchors.rightMargin: isOwn ? 45 : 30
+                    Flow {
+                        visible: displayedReactionsArea.count
+                        spacing: 4
                         width: {
-							if (messageReactionAddition.visible) {
-								return (messageReactionAddition.width + spacing) * (Object.keys(root.reactions).length + 1)
-							} else {
-								return (messageReactionAddition.width + spacing) * Object.keys(root.reactions).length
-							}
+                            var displayedReactionsWidth = 0
 
-							return displayedReactionsWidth + (messageReactionAdditionButton.width * 2) + spacing * (displayedReactionsArea.count + 2)
-						}
+                            for (var i = 0; i < displayedReactionsArea.count; i++) {
+                                displayedReactionsWidth += displayedReactionsArea.itemAt(i).width
+                            }
 
-                        ColumnView {
-							model: Object.keys(root.reactions)
+                            return displayedReactionsWidth + (messageReactionAdditionButton.width * 2) + spacing * (displayedReactionsArea.count + 2)
+                        }
 
-							MessageReactionDisplay {
-								messageId: root.msgId
-								emoji: modelData
-								isOwnMessage: root.isOwn
-								senderJids: root.reactions[modelData]
-								senderSheet: root.reactionSenderSheet
-//								primaryColor: root.isOwn ? primaryBackgroundColor : secondaryBackgroundColor
-//								accentColor: bubble.backgroundColor
-							}
-						}
-                        MessageReactionAddition {
-							id: messageReactionAddition
-							// TODO: Remove " && Kaidan.connectionState === Enums.StateConnected" once offline queue for message reactions is implemented
-							visible: !root.isOwn && Object.keys(root.reactions).length && Kaidan.connectionState === Enums.StateConnected
-							messageId: root.msgId
-							emojiPicker: root.reactionEmojiPicker
-							accentColor: bubble.backgroundColor
-						}
-                    }*/
+                        Repeater {
+                            id: displayedReactionsArea
+                            model: root.displayedReactions
 
-					// warning for different encryption corner cases
+                            MessageReactionDisplayButton {
+                                accentColor: bubble.backgroundColor
+                                ownReactionIncluded: modelData.ownReactionIncluded
+                                deliveryState: modelData.deliveryState
+                                isOwnMessage: root.isOwn
+                                text: modelData.count === 1 ? modelData.emoji : modelData.emoji + " " + modelData.count
+                                width: smallButtonWidth + (text.length < 3 ? 0 : (text.length - 2) * Kirigami.Theme.defaultFont.pixelSize * 0.6)
+                                onClicked: {
+                                    if (ownReactionIncluded) {
+                                        if (deliveryState === MessageReactionDeliveryState.PendingRemovalAfterSent ||
+                                            deliveryState === MessageReactionDeliveryState.PendingRemovalAfterDelivered) {
+                                            MessageModel.addMessageReaction(root.msgId, modelData.emoji)
+                                        } else {
+                                            MessageModel.removeMessageReaction(root.msgId, modelData.emoji)
+                                        }
+                                    } else {
+                                        MessageModel.addMessageReaction(root.msgId, modelData.emoji)
+                                    }
+                                }
+                            }
+                        }
+
+                        MessageReactionAdditionButton {
+                            id: messageReactionAdditionButton
+                            messageId: root.msgId
+                            emojiPicker: root.reactionEmojiPicker
+                            accentColor: bubble.backgroundColor
+                        }
+
+                        MessageReactionDetailsButton {
+                            messageId: root.msgId
+                            accentColor: bubble.backgroundColor
+                            isOwnMessage: root.isOwn
+                            detailedReactions: root.detailedReactions
+                            ownDetailedReactions: root.ownDetailedReactions
+                            detailsSheet: root.reactionDetailsSheet
+                        }
+                    }
+
+                    // warning for different encryption corner cases
                     Label {
 						text: {
 							if (root.encryption === Encryption.NoEncryption) {
 								if (MessageModel.isOmemoEncryptionEnabled) {
 									// Encryption is set for the current chat but this message is
 									// unencrypted.
-									return qsTr("Unencrypted")
+                                    return qsTr("Unencrypted");
 								}
 							} else if (MessageModel.encryption !== Encryption.NoEncryption && !root.isTrusted){
 								// Encryption is set for the current chat but the key of this message's
@@ -348,7 +367,8 @@ ListItem {
                         font.pixelSize: Theme.fontSizeTiny
                     }
 				}
-			}
+                }
+            }
 
 			// placeholder
 //			Item {
@@ -372,8 +392,8 @@ ListItem {
     function showContextMenu() {
         if (contextMenu) {
             contextMenu.file = null
-            contextMenu.message = this
-            contextMenu.popup()
+            contextMenu.message = root
+            openMenu()
         }
     }
 }

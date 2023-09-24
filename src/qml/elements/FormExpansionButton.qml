@@ -9,10 +9,16 @@ import Sailfish.Silica 1.0
 /**
  * Used to expand and collapse form entries.
  */
-Button {
+BackgroundItem {
 	id: root
-    property boo checkable: true
-    icon.source: root.checked ? "image://theme/icon-m-up" : "image://theme/icon-m-up"
-    width: Theme.iconSizeSmall
-    height: width
+    property bool checkable: true
+    property bool checked : false
+    contentHeight: Theme.itemSizeSmall
+    width: Theme.itemSizeSmall
+    onClicked: { checked = !checked }
+    HighlightImage {
+        source: root.checked ? "image://theme/icon-splus-hide-password" : "image://theme/icon-splus-show-password"
+        anchors.centerIn: parent
+    }
 }
+

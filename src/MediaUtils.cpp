@@ -493,6 +493,7 @@ QByteArray MediaUtils::encodeImageThumbnail(const QPixmap &pixmap)
 
 QByteArray MediaUtils::encodeImageThumbnail(const QImage &image)
 {
+    qDebug() << "MediaUtils::encodeImageThumbnail";
 	QByteArray output;
 	QBuffer buffer(&output);
 	image.save(&buffer, "PNG");
@@ -502,7 +503,8 @@ QByteArray MediaUtils::encodeImageThumbnail(const QImage &image)
 QFuture<std::shared_ptr<QXmppFileSharingManager::MetadataGeneratorResult>> MediaUtils::generateMetadata(std::unique_ptr<QIODevice> f)
 {
 #if defined(SFOS)
-#warning to be FIXED
+    qWarning() << "to be FIXED";
+
 	using Result = QXmppFileSharingManager::MetadataGeneratorResult;
 
 	QFutureInterface<std::shared_ptr<Result>> interface;

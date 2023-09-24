@@ -10,6 +10,9 @@ import "../elements"
 
 DetailsHeader {
 	id: root
+
+    property Page sheet
+
     displayName: contactWatcher.item.displayName
     avatarAction: Button {
         text: qsTr("Maximize avatar")

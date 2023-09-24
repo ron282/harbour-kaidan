@@ -612,7 +612,11 @@ QFuture<void> MessageDb::removeMessage(const QString &senderJid, const QString &
 				"WHERE messageId = :messageId "
 				"AND ((messageSender = :sender AND messageRecipient = :recipient) "
 				"OR (messageRecipient = :sender AND messageSender = :recipient)) "
-				"LIMIT 1",
+#if defined(SFOS)
+                ,
+#else
+                "LIMIT 1",
+#endif
 				{{ u":messageId", messageId },
 				 { u":recipient", recipientJid },
 				 { u":sender", senderJid }}

@@ -208,11 +208,11 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qputenv("OPENSSL_CONF", "");
 #endif
 
-#ifndef SFOS
 	// name, display name, description
 	QGuiApplication::setApplicationName(APPLICATION_NAME);
 	QGuiApplication::setApplicationDisplayName(APPLICATION_DISPLAY_NAME);
 	QGuiApplication::setApplicationVersion(VERSION_STRING);
+#ifndef SFOS
     QGuiApplication::setDesktopFileName("im.kaidan.kaidan");
 	// attributes
 	QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -262,6 +262,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #endif // APPIMAGE
 #if defined(SFOS)
     qRegisterMetaType<Settings*>("Settings*");
+    qRegisterMetaType<File>();
+    qRegisterMetaType<QVector<File>>();
 #endif
 	// register qMetaTypes
 	qRegisterMetaType<ProviderListItem>();

@@ -40,10 +40,17 @@ struct FileHash
 
 struct HttpSource
 {
-	qint64 fileId;
+#if defined(SFOS)
+    Q_GADGET
+    Q_PROPERTY(qint64 fileId MEMBER fileId)
+    Q_PROPERTY(QUrl url MEMBER url)
+public:
+#endif
+
+    qint64 fileId;
 	QUrl url;
 
-	QXmppHttpFileSource toQXmpp() const;
+    QXmppHttpFileSource toQXmpp() const;
 
 #if defined(SFOS)
 	bool operator==(const HttpSource &other) const;
@@ -86,12 +93,17 @@ struct File
 	Q_PROPERTY(QString localFilePath MEMBER localFilePath)
 	Q_PROPERTY(QUrl localFileUrl READ localFileUrl CONSTANT)
 	Q_PROPERTY(bool hasThumbnail READ hasThumbnail CONSTANT)
-	Q_PROPERTY(QImage thumbnail READ thumbnailImage CONSTANT)
+    Q_PROPERTY(QImage thumbnail READ thumbnailImage CONSTANT)
 	Q_PROPERTY(QImage thumbnailSquare READ thumbnailSquareImage CONSTANT)
 	Q_PROPERTY(QUrl downloadUrl READ downloadUrl CONSTANT)
 	Q_PROPERTY(Enums::MessageType type READ type CONSTANT)
 	Q_PROPERTY(QString details READ details CONSTANT)
-
+#if defined(SFOS)
+    Q_PROPERTY(QUrl httpSource READ getHttpSource CONSTANT)
+    Q_PROPERTY(QUrl thumbnailUrl READ thumbnailImageUrl )
+    Q_PROPERTY(QUrl thumbnailSquareUrl READ thumbnailSquareImageUrl )
+    QUrl imageToUrl(const QImage& image) const;
+#endif
 public:
 	qint64 id = 0;
 	qint64 fileGroupId = 0;
@@ -111,6 +123,10 @@ public:
 
 #if defined(SFOS)
 	bool operator==(const File &other) const;
+    QUrl getHttpSource() const;
+    QUrl thumbnailImageUrl() const;
+    QUrl thumbnailSquareImageUrl() const;
+    QString getMimeTypeIcon() const { return mimeTypeIcon(); }
 #else
 	bool operator==(const File &other) const = default;
 #endif
@@ -119,8 +135,12 @@ private:
 	[[nodiscard]] QString _name() const { return name.value_or(QString()); }
 	[[nodiscard]] QString _description() const { return description.value_or(QString()); }
 	[[nodiscard]] QString mimeTypeName() const { return mimeType.name(); }
-	[[nodiscard]] QString mimeTypeIcon() const { return mimeType.iconName(); }
-	[[nodiscard]] qint64 _size() const { return size.value_or(-1); }
+#if defined(SFOS)
+    [[nodiscard]] QString mimeTypeIcon() const;
+#else
+    [[nodiscard]] QString mimeTypeIcon() const { return mimeType.iconName(); }
+#endif
+    [[nodiscard]] qint64 _size() const { return size.value_or(-1); }
 	[[nodiscard]] bool displayInline() const { return disposition == QXmppFileShare::Inline; }
 	[[nodiscard]] bool hasThumbnail() const { return !thumbnail.isEmpty(); }
 	[[nodiscard]] QImage thumbnailImage() const { return QImage::fromData(thumbnail); }
@@ -131,7 +151,6 @@ private:
 	[[nodiscard]] QString fileId() const { return QString::number(id); }
 	[[nodiscard]] QString details() const;
 };
-
 class MessageReactionDeliveryState
 {
 	Q_GADGET
@@ -189,7 +208,9 @@ struct MessageReactionSender
 struct Message
 {
 	Q_DECLARE_TR_FUNCTIONS(Message)
-
+#if defined(SFOS)
+    Q_GADGET
+#endif
 public:
 	/**
 	 * Compares another @c Message with this. Only attributes that are saved in the

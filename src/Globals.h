@@ -111,6 +111,10 @@ constexpr auto JPEG_EXPORT_QUALITY = 85;
 // Maximum file size for reading files just to generate an image thumbnail.
 constexpr auto THUMBNAIL_GENERATION_MAX_FILE_SIZE = 10 * 1024 * 1024;
 // Width and height of generated file thumbnails.
+#if defined(SFOS)
+constexpr auto THUMBNAIL_PIXEL_SIZE = 500;
+#else
 constexpr auto THUMBNAIL_PIXEL_SIZE = 50;
+#endif
 
 #endif // GLOBALS_H

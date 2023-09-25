@@ -231,7 +231,7 @@ ChatPageBase {
 				// function positioned the view at firstUnreadContactMessageIndex and that is close
 				// to the end of the loaded messages.
                 if (!root.viewPositioned) {
-                   unreadMessageCount = chatItemWatcher.item.unreadMessageCount
+                   var unreadMessageCount = chatItemWatcher.item.unreadMessageCount
 
                     if (unreadMessageCount) {
                         firstUnreadContactMessageIndex = MessageModel.firstUnreadContactMessageIndex()

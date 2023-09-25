@@ -503,11 +503,42 @@ QByteArray MediaUtils::encodeImageThumbnail(const QImage &image)
 QFuture<std::shared_ptr<QXmppFileSharingManager::MetadataGeneratorResult>> MediaUtils::generateMetadata(std::unique_ptr<QIODevice> f)
 {
 #if defined(SFOS)
-    qWarning() << "to be FIXED";
+    using Result = QXmppFileSharingManager::MetadataGeneratorResult;
+    using Thumnbnail = QXmppFileSharingManager::MetadataThumbnail;
 
-	using Result = QXmppFileSharingManager::MetadataGeneratorResult;
+    auto result = std::make_shared<Result>();
 
-	QFutureInterface<std::shared_ptr<Result>> interface;
+    auto *file = dynamic_cast<QFile *>(f.get());
+    if (!file) {
+        // other io devices can't be handled
+        return makeReadyFuture<std::shared_ptr<Result>>(std::move(result));
+    }
+
+    QFutureInterface<std::shared_ptr<Result>> interface;
+
+    QImage image;
+    image = QImage(file->fileName()).scaled(QSize(THUMBNAIL_PIXEL_SIZE, THUMBNAIL_PIXEL_SIZE), Qt::KeepAspectRatio);
+    QByteArray thumbnailData;
+    QBuffer thumbnailBuffer(&thumbnailData);
+    image.save(&thumbnailBuffer, "JPG", JPEG_EXPORT_QUALITY);
+
+    if (const QImageReader reader(file->fileName()); reader.canRead()) {
+        if (const QSize size = reader.size(); !size.isEmpty()) {
+            result->dimensions = size;
+        }
+    }
+
+    result->dataDevice = std::move(f);
+    result->thumbnails.push_back(Thumnbnail {
+        .width = uint32_t(image.size().width()),
+        .height = uint32_t(image.size().height()),
+        .data = thumbnailData,
+        .mimeType = QMimeDatabase().mimeTypeForData(thumbnailData)
+    });
+
+    interface.reportResult(result);
+    interface.reportFinished();
+    return interface.future();
 #else
 	using Result = QXmppFileSharingManager::MetadataGeneratorResult;
 	using Thumnbnail = QXmppFileSharingManager::MetadataThumbnail;
@@ -559,6 +590,6 @@ QFuture<std::shared_ptr<QXmppFileSharingManager::MetadataGeneratorResult>> Media
 		interface.reportResult(result);
 		interface.reportFinished();
 	});
+    return interface.future();
 #endif
-	return interface.future();
 }

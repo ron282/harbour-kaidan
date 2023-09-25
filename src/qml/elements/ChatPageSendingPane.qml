@@ -281,6 +281,7 @@ BackgroundItem {
                     }
                 }
                 Button {
+                    visible: false // TO DEBUG
                     width: parent.width
                     icon.source: "image://theme/icon-m-camera"
                     text: qsTr("Take picture")
@@ -291,6 +292,7 @@ BackgroundItem {
                     }
                 }
                 Button {
+                    visible: false // TO DEBUG
                     width: parent.width
                     icon.source: "image://theme/icon-m-video"
                     text: qsTr("Record video")
@@ -310,6 +312,16 @@ BackgroundItem {
                     }
                 }
                 Button {
+                    width: parent.width
+                    icon.source: "image://theme/icon-m-image"
+                    text: qsTr("Share pictures")
+                    onClicked: {
+                        chatPage.sendMediaSheet.selectImage()
+                        mediaPopup.visible = false
+                    }
+                }
+                Button {
+                    visible: false // TO DEBUG
                     width: parent.width
                     icon.source: "image://theme/icon-m-location"
                     text: qsTr("Share location")

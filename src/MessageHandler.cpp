@@ -308,6 +308,8 @@ void MessageHandler::handleConnected()
 
 void MessageHandler::sendPendingMessage(Message message)
 {
+    qDebug() << " MessageHandler::sendPendingMessage";
+
 	if (m_client->state() == QXmppClient::ConnectedState) {
 		// if the message is a pending edition of the existing in the history message
 		// I need to send it with the most recent stamp

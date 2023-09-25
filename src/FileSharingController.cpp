@@ -248,12 +248,14 @@ void FileSharingController::sendMessage(Message &&message, bool encrypt)
 		return sendFile(file, encrypt);
 	});
 
-	await(join(this, std::move(futures)), this, [message = std::move(message)](auto &&uploadResults) mutable {
+	await(join(this, std::move(futures)), this, [message = std::move(message)](auto &&uploadResults) mutable {        
 		// Check if any of the uploads failed
 		bool failed = std::any_of(uploadResults.begin(), uploadResults.end(), [](const auto &result) {
 			auto &[id, uploadResult] = result;
 			return !std::holds_alternative<QXmppFileUpload::FileResult>(uploadResult);
 		});
+
+
 
 		// upload error handling
 		if (failed) {

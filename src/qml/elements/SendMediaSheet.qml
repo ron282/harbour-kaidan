@@ -35,13 +35,25 @@ DockedPanel {
             }
         }
     }
-	// First open the file choose to select a file, then open the sheet
+    Component {
+        id: imagePickerPage
+        ImagePickerPage {
+            onSelectedContentPropertiesChanged: {
+                root.composition.fileSelectionModel.addFile(selectedContentProperties.url)
+                root.ensureOpen()
+            }
+        }
+    }
+    // First open the file choose to select a file, then open the sheet
 	function selectFile() {
         pageStack.push(filePickerPage)
-//        root.composition.fileSelectionModel.selectFile()
 	}
 
-	// Open the sheet containing an already known file
+    function selectImage() {
+        pageStack.push(imagePickerPage)
+    }
+
+    // Open the sheet containing an already known file
 	function openWithExistingFile(localPath) {
 		root.composition.fileSelectionModel.addFile(localPath)
 		root.ensureOpen()
@@ -111,7 +123,7 @@ DockedPanel {
 				id: delegateRoot
 
                 Row {
-                    x: Theme.horizontalPageMargin
+                    x:Theme.horizontalPageMargin
                     spacing: Theme.paddingMedium
                     width: parent.width - 2*Theme.horizontalPageMargin
 

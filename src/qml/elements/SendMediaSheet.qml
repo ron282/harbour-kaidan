@@ -95,11 +95,9 @@ DockedPanel {
     }
 	Column {
         id: content
-        width: parent.width - 2*Theme.horizontalPageMargin
+        width: parent.width
 
         anchors {
-           leftMargin: Theme.horizontalPageMargin
-           rightMargin: Theme.horizontalPageMargin
            topMargin: Theme.paddingSmall
            bottomMargin: Theme.paddingSmall
         }
@@ -116,8 +114,9 @@ DockedPanel {
 		// List of selected files
 		ColumnView {
 			id: fileList
-            itemHeight: Theme.iconSizeExtraLarge + Theme.paddingSmall
+            itemHeight: Theme.itemSizeMedium * 2
             model: root.composition.fileSelectionModel
+            width: parent.width
 
             delegate: ListItem {
 				id: delegateRoot
@@ -138,17 +137,16 @@ DockedPanel {
 
 					// File name and description
 					Column {
-                        width: content.width - Theme.iconSizeExtraLarge - 2*Theme.paddingMedium - Theme.iconSizeExtraSmall
+                        width: parent.width - Theme.iconSizeExtraLarge - Theme.paddingMedium
 
                         Label {
+                            width: parent.width
                             text: model.fileName
-                            font.pixelSize: Theme.fontSizeTiny
-                            maximumLineCount: 2
+                            maximumLineCount: 1
                             elide: Text.ElideRight
                         }
                         Label {
                             text: Utils.formattedDataSize(model.fileSize)
-                            font.pixelSize: Theme.fontSizeTiny
                             color: Theme.secondaryColor
                         }
 						TextField {
@@ -182,12 +180,14 @@ DockedPanel {
             anchors.horizontalCenter: parent.horizontalCenter
             Button {
 				text: qsTr("Add")
+                width: Theme.buttonWidthSmall
                 icon.source: "image://theme/icon-m-attach"
                 onClicked: pageStack.push(filePickerPage)
 			}
 
             Button {
 				text: qsTr("Send")
+                width: Theme.buttonWidthSmall
                 icon.source: "image://theme/icon-m-send"
 				onClicked: {
 					// always (re)set the body in root.composition (it may contain a body from a previous message)

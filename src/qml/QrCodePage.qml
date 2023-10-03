@@ -106,14 +106,14 @@ ExplanationTogglePage {
                     if (!root.isOnlyForTrustDecisions) {
                         switch (RosterModel.addContactByUri(result)) {
                         case RosterModel.AddingContact:
-                            showPassiveNotification(qsTr("Contact added - Continue with step 2"), Kirigami.Units.veryLongDuration * 4)
+                            showPassiveNotification(qsTr("Contact added - Continue with step 2"), 1000 * 4)
                             break
                         case RosterModel.ContactExists:
                             processTrust = false
                             break
                         case RosterModel.InvalidUri:
                             processTrust = false
-                            showPassiveNotification(qsTr("This QR code does not contain a contact"), Kirigami.Units.veryLongDuration * 4)
+                            showPassiveNotification(qsTr("This QR code does not contain a contact"), 1000 * 4)
                         }
                     }
 
@@ -126,24 +126,24 @@ ExplanationTogglePage {
                         switch (Kaidan.makeTrustDecisionsByUri(result, expectedJid)) {
                         case Kaidan.MakingTrustDecisions:
                             if (root.isForOwnDevices) {
-                                showPassiveNotification(qsTr("Trust decisions made for other own device - Continue with step 2"), Kirigami.Units.veryLongDuration * 4)
+                                showPassiveNotification(qsTr("Trust decisions made for other own device - Continue with step 2"), 1000 * 4)
                             } else {
-                                showPassiveNotification(qsTr("Trust decisions made for contact - Continue with step 2"), Kirigami.Units.veryLongDuration * 4)
+                                showPassiveNotification(qsTr("Trust decisions made for contact - Continue with step 2"), 1000 * 4)
                             }
 
                             break
                         case Kaidan.JidUnexpected:
                             if (root.isOnlyForTrustDecisions) {
                                 if (root.isForOwnDevices) {
-                                    showPassiveNotification(qsTr("This QR code is not for your other device"), Kirigami.Units.veryLongDuration * 4)
+                                    showPassiveNotification(qsTr("This QR code is not for your other device"), 1000 * 4)
                                 } else {
-                                    showPassiveNotification(qsTr("This QR code is not for your contact"), Kirigami.Units.veryLongDuration * 4)
+                                    showPassiveNotification(qsTr("This QR code is not for your contact"), 1000 * 4)
                                 }
                             }
                             break
                         case Kaidan.InvalidUri:
                             if (root.isOnlyForTrustDecisions) {
-                                showPassiveNotification(qsTr("This QR code is not for trust decisions"), Kirigami.Units.veryLongDuration * 4)
+                                showPassiveNotification(qsTr("This QR code is not for trust decisions"), 1000 * 4)
                             }
                         }
                     }

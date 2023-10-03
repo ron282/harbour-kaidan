@@ -6,6 +6,10 @@
 
 #include "OmemoCache.h"
 
+#if defined(SFOS)
+#include <QDebug>
+#endif
+
 QString OmemoWatcher::jid() const
 {
 	return m_jid;
@@ -48,8 +52,10 @@ void OmemoWatcher::handleDistrustedOmemoDevicesRetrieved(const QString &jid, con
 void OmemoWatcher::handleUsableOmemoDevicesRetrieved(const QString &jid, const QList<QString> &deviceLabels)
 {
 	if (jid == m_jid) {
-		m_usableOmemoDevices = deviceLabels;
-		emit usableOmemoDevicesChanged();
+        qDebug() << "handleUsableOmemoDevicesRetrieved" << " jid: " << jid << "deviceLabels.size:" << deviceLabels.size();
+        m_usableOmemoDevices = deviceLabels;
+        qDebug() << "handleUsableOmemoDevicesRetrieved" << " jid: " << jid << "m_usableOmemoDevices.size:" << m_usableOmemoDevices.size();
+        emit usableOmemoDevicesChanged();
 	}
 }
 

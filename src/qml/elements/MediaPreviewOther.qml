@@ -12,6 +12,7 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
+import QtGraphicalEffects 1.0
 
 import im.kaidan.kaidan 1.0
 import MediaUtils 0.1
@@ -45,15 +46,17 @@ BackgroundItem {
             Rectangle {
 				id: fallbackCircle
 				visible: !file.hasThumbnail
-                height: Theme.iconSizeLarge
+                height: Theme.iconSizeExtraLarge
                 width: height
+//              radius: height / 2
                 color: Theme.highlightBackgroundColor
                 opacity: Theme.highlightBackgroundOpacity
 
                 Icon {
                     source: root.fileAvailable ? file.mimeTypeIcon : "image://theme/icon-m-cloud-download"
 					smooth: true
-					anchors {
+                    height: Theme.iconSizeMedium
+                    anchors {
 						centerIn: parent
 					}
 				}
@@ -61,12 +64,27 @@ BackgroundItem {
             Image {
                 id: thumbnailIcon
                 visible: file.hasThumbnail
-                width: parent.width/2
-                height: (parent.width*2/3)
+                width: Theme.iconSizeExtraLarge
+                height: Theme.iconSizeExtraLarge
                 horizontalAlignment: Image.AlignLeft
                 verticalAlignment: Image.AlignTop
-                source: file.thumbnailUrl
+                source: file.thumbnailSquareUrl
                 fillMode: Image.PreserveAspectFit
+
+                layer.enabled: true
+                layer.effect: OpacityMask {
+                    maskSource: Item {
+                        width: thumbnailIcon.paintedWidth
+                        height: thumbnailIcon.paintedHeight
+
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: Math.min(thumbnailIcon.width, thumbnailIcon.height)
+                            height: width
+                            radius: roundedCornersRadius
+                        }
+                    }
+                }
 
                 Icon {
                     source: "image://theme/icon-m-cloud-download"
@@ -92,9 +110,9 @@ BackgroundItem {
                     text: file.name
                     textFormat: Text.PlainText
                     wrapMode: Text.Wrap
-                    maximumLineCount: 2
+                    maximumLineCount: 1
                     elide: Text.ElideRight
-                    font.pixelSize: Theme.fontSizeTiny
+//                  font.pixelSize: Theme.fontSizeTiny
                 }
 
                 // file size
@@ -105,7 +123,7 @@ BackgroundItem {
                     textFormat: Text.PlainText
                     elide: Text.ElideRight
                     color: Theme.secondaryColor
-                    font.pixelSize: Theme.fontSizeTiny
+//                  font.pixelSize: Theme.fontSizeTiny
                 }
                 // progress bar for upload/download status
                 Label {

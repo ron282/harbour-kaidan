@@ -83,24 +83,11 @@ QFuture<void> OmemoManager::load()
 	if (m_isLoaded) {
 		interface.reportFinished();
 	} else {
-#if defined(WITH_OMEMO_V03)
-        auto future = m_manager->setSecurityPolicy(QXmpp::TrustSecurityPolicy::NoSecurityPolicy);
-#else
-		auto future = m_manager->setSecurityPolicy(QXmpp::TrustSecurityPolicy::Toakafa);
-#endif
+        auto future = m_manager->setSecurityPolicy(QXmpp::TrustSecurityPolicy::Toakafa);
 		future.then(this, [this, interface]() mutable {
 			const auto productName = QSysInfo::prettyProductName();
 			const QString productNameWithoutVersion = productName.contains(" ") ? productName.section(" ", 0, -2) : productName;
 			auto future = m_manager->changeDeviceLabel(APPLICATION_DISPLAY_NAME % QStringLiteral(" - ") % productNameWithoutVersion);
-#if defined(WITH_OMEMO_V03)
-        constexpr auto ANY_TRUST_LEVEL = QXmpp::TrustLevel::Undecided |
-                    QXmpp::TrustLevel::AutomaticallyDistrusted |
-                    QXmpp::TrustLevel::ManuallyDistrusted |
-                    QXmpp::TrustLevel::AutomaticallyTrusted |
-                    QXmpp::TrustLevel::ManuallyTrusted |
-                    QXmpp::TrustLevel::Authenticated;
-        m_manager->setAcceptedSessionBuildingTrustLevels(ANY_TRUST_LEVEL);
-#endif
         future.then(this, [this, interface](bool) mutable {
 				auto future = m_manager->load();
 				future.then(this, [this, interface](bool isLoaded) mutable {
@@ -234,7 +221,7 @@ void OmemoManager::enableSessionBuildingForNewDevices()
 
 QFuture<void> OmemoManager::initializeChat(const QString &accountJid, const QString &chatJid)
 {
-	QFutureInterface<void> interface(QFutureInterfaceBase::Started);
+    QFutureInterface<void> interface(QFutureInterfaceBase::Started);
 
 	const QList<QString> jids = { accountJid, chatJid };
 	m_lastRequestedDeviceJids = jids;
@@ -323,13 +310,13 @@ void OmemoManager::retrieveDevices(const QList<QString> &jids)
 			const auto label = device.label();
 
 			if ((QXmpp::TrustLevel::AutomaticallyDistrusted | QXmpp::TrustLevel::ManuallyDistrusted).testFlag(trustLevel)) {
-				distrustedDevices.insert(jid, label);
+                distrustedDevices.insert(jid, label);
 			} else {
-				usableDevices.insert(jid, label);
+                usableDevices.insert(jid, label);
 			}
 
 			if (!((QXmpp::TrustLevel::Undecided | QXmpp::TrustLevel::Authenticated).testFlag(trustLevel))) {
-				authenticatableDevices.insert(jid, label);
+                authenticatableDevices.insert(jid, label);
 			}
 		}
 

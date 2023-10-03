@@ -683,16 +683,9 @@ QFuture<QXmpp::SendResult> MessageHandler::send(QXmppMessage &&message)
 	const auto recipientJid = message.to();
 
 #if defined(WITH_OMEMO_V03)
+    //FIXME Need to find a solution to manually trust a device
     QXmppSendStanzaParams sendParams;
-
-    constexpr auto ANY_TRUST_LEVEL = QXmpp::TrustLevel::Undecided |
-                QXmpp::TrustLevel::AutomaticallyDistrusted |
-                QXmpp::TrustLevel::ManuallyDistrusted |
-                QXmpp::TrustLevel::AutomaticallyTrusted |
-                QXmpp::TrustLevel::ManuallyTrusted |
-                QXmpp::TrustLevel::Authenticated;
-
-    sendParams.setAcceptedTrustLevels(ANY_TRUST_LEVEL);
+    sendParams.setAcceptedTrustLevels(QXmpp::TrustLevel::Undecided | QXmpp::TrustLevel::Authenticated);
     auto sendEncrypted = [=, this]() mutable {
         m_client->sendSensitive(std::move(message), sendParams).then(this, [=](QXmpp::SendResult result) mutable {
 #else

@@ -12,7 +12,7 @@ DetailsPage {
 
     SilicaFlickable {
         anchors.fill: parent
-        contentHeight: Screen.height*3
+        contentHeight: header.height + content.height
         contentWidth: parent.width
         clip: true
 
@@ -22,6 +22,7 @@ DetailsPage {
         }
 
         ContactDetailsContent {
+            id: content
             jid: root.jid
             anchors.top: header.bottom
         }

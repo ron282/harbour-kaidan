@@ -145,6 +145,8 @@ QString QmlUtils::trustMessageUriString(const QString &jid)
 	QList<QString> authenticatedKeys;
 	QList<QString> distrustedKeys;
 
+    qDebug() << "trustMessageUriString:" << jid;
+
 	for (auto itr = keys.constBegin(); itr != keys.constEnd(); ++itr) {
 		const auto key = itr.key().toHex();
 		const auto trustLevel = itr.value();
@@ -163,8 +165,12 @@ QString QmlUtils::trustMessageUriString(const QString &jid)
 	if (!authenticatedKeys.isEmpty() || !distrustedKeys.isEmpty()) {
 		uri.setAction(QXmppUri::TrustMessage);
 		// TODO: Find solution to pass enum to "uri.setEncryption()" instead of string (see QXmppGlobal::encryptionToString())
-		uri.setEncryption(QStringLiteral("urn:xmpp:omemo:2"));
-		uri.setTrustedKeysIds(authenticatedKeys);
+#if defined(SFOS)
+        uri.setEncryption(QStringLiteral("eu.siacs.conversations.axolotl"));
+#else
+        uri.setEncryption(QStringLiteral("urn:xmpp:omemo:2"));
+#endif
+        uri.setTrustedKeysIds(authenticatedKeys);
 		uri.setDistrustedKeysIds(distrustedKeys);
 	}
 

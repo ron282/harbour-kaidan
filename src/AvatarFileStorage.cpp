@@ -40,7 +40,7 @@ AvatarFileStorage::AvatarFileStorage(QObject *parent) : QObject(parent)
 			QString line = stream.readLine();
 			while (!line.isNull()) {
 				// get hash and jid from line (seperated by a blank)
-#if SFOS
+#if defined(SFOS)
 				QStringList list = line.split(' ', QString::SkipEmptyParts);		
 #else
 				QStringList list = line.split(' ', Qt::SkipEmptyParts);

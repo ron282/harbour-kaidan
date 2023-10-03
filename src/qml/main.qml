@@ -44,7 +44,7 @@ ApplicationWindow {
 	}
 
 	// radius for using rounded corners
-    readonly property int roundedCornersRadius: Theme.itemSizeExtraSmall * 1.1
+    readonly property int roundedCornersRadius: Theme.paddingMedium * 1.5
 
 	readonly property int largeButtonWidth: Theme.buttonWidthLarge
 	readonly property int smallButtonWidth: Theme.buttonWidthSmall
@@ -119,13 +119,14 @@ ApplicationWindow {
 	 * Shows a passive notification for a long period.
 	 */
     function passiveNotification(text) {
-        showPassiveNotification(text, "long")
+        showPassiveNotification(text, 4000)
     }
 
-    function showPassiveNotification(text, style) {
+    function showPassiveNotification(text, timeout) {
         var m = messageNotification.createObject(null)
         m.category = "x-nemo.messaging.im"
         m.previewBody = text
+        m.expireTimeout = timeout
         // This is needed to call default action
         m.publish()
     }

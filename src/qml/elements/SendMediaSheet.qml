@@ -86,6 +86,7 @@ DockedPanel {
                 if (!root.open) {
                    root.show()
 				}
+                root.modal = true
 			}
 		}
 	}
@@ -114,12 +115,14 @@ DockedPanel {
 		// List of selected files
 		ColumnView {
 			id: fileList
-            itemHeight: Theme.itemSizeMedium * 2
+            itemHeight: Theme.itemSizeExtraLarge + Theme.itemSizeMedium
             model: root.composition.fileSelectionModel
             width: parent.width
 
             delegate: ListItem {
 				id: delegateRoot
+                width: parent.width
+                height: Theme.itemSizeExtraLarge + Theme.itemSizeMedium
 
                 Row {
                     x:Theme.horizontalPageMargin
@@ -128,7 +131,7 @@ DockedPanel {
 
 					// Icon
                     Image {
-                        width: Theme.iconSizeExtraLarge
+                        width: Theme.iconSizeLarge
                         height: width
                         source: {
                             return model.thumbnailUrl
@@ -137,7 +140,7 @@ DockedPanel {
 
 					// File name and description
 					Column {
-                        width: parent.width - Theme.iconSizeExtraLarge - Theme.paddingMedium
+                        width: parent.width - Theme.iconSizeLarge - 2*Theme.paddingMedium - Theme.iconSizeSmallPlus
 
                         Label {
                             width: parent.width
@@ -182,7 +185,10 @@ DockedPanel {
 				text: qsTr("Add")
                 width: Theme.buttonWidthSmall
                 icon.source: "image://theme/icon-m-attach"
-                onClicked: pageStack.push(filePickerPage)
+                onClicked: {
+                    root.modal = false
+                    pageStack.push(filePickerPage)
+                }
 			}
 
             Button {

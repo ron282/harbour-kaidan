@@ -49,7 +49,6 @@ ChatPageBase {
 	property string messageToCorrect
     readonly property bool cameraAvailable: QtMultimedia.availableCameras.length > 0
 	property bool viewPositioned: false
-
     onStatusChanged: {
         if (status === PageStatus.Active && forwardNavigation === false) {
             console.log("Push attached")
@@ -100,13 +99,15 @@ ChatPageBase {
         id: messageReactionDetailsSheet
     }
 
-    SilicaFlickable {
-        contentHeight: Screen.height
-        contentWidth: Screen.width
-
-        anchors.fill: parent
-        anchors.bottomMargin: sendMediaSheet.margin
-        clip: sendMediaSheet.expanded
+    // View containing the messages
+    SilicaListView {
+		id: messageListView
+        anchors {
+            top: parent.top
+            left: parent.left
+            right: parent.right
+            bottom: sendingPane.top
+        }
 
         PullDownMenu {
             MenuItem {
@@ -133,7 +134,8 @@ ChatPageBase {
             }
         }
 
-        PageHeader {
+//      footerPositioning: ListView.OverlayFooter
+        footer: PageHeader {
             id: header
             title: chatItemWatcher.item.displayName
 
@@ -167,21 +169,13 @@ ChatPageBase {
              }
         }
 
-    // View containing the messages
-    SilicaListView {
-		id: messageListView
-        anchors {
-            top: header.bottom
-            left: parent.left
-            right: parent.right
-            bottom: sendingPane.top
-        }
 
 
         VerticalScrollDecorator { flickable: messageListView }
         verticalLayoutDirection: ListView.BottomToTop
         cacheBuffer: Screen.width // do avoid flickering when image width is changed
         clip: true;
+        //clip: sendMediaSheet.expanded
         focus: true;
         spacing: 0
 
@@ -329,7 +323,7 @@ ChatPageBase {
         }
 
 		// Everything is upside down, looks like a footer
-        header: Column {
+/*        header: Column {
             anchors.left: parent.left
             anchors.right: parent.right
             height: stateLabel.text ? 20 : 0
@@ -345,7 +339,7 @@ ChatPageBase {
                 text: Utils.chatStateDescription(chatItemWatcher.item.displayName, MessageModel.chatState)
                 elide: Qt.ElideMiddle
             }
-        }
+        }*/
 
 /*        footer: BusyIndicator {
             visible: opacity !== 0.0
@@ -390,7 +384,6 @@ ChatPageBase {
 */
     } // SilicaListView
 
-
     ChatPageSendingPane {
         id: sendingPane
         chatPage: root
@@ -400,6 +393,6 @@ ChatPageBase {
     function saveDraft() {
         sendingPane.composition.saveDraft();
     }
-}
+/*  }*/
 
 } // ChatPageBase

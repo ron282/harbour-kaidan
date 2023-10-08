@@ -309,6 +309,7 @@ void MessageHandler::handleConnected()
 void MessageHandler::sendPendingMessage(Message message)
 {
     qDebug() << " MessageHandler::sendPendingMessage";
+    qDebug() << " ->message.body:" << message.body;
 
 	if (m_client->state() == QXmppClient::ConnectedState) {
 		// if the message is a pending edition of the existing in the history message
@@ -603,6 +604,8 @@ bool MessageHandler::handleReaction(const QXmppMessage &message, const QString &
 
 void MessageHandler::parseSharedFiles(const QXmppMessage &message, Message &messageToEdit)
 {
+    qDebug() << "parseSharedFiles message.body:" << message.body();
+
 	if (const auto sharedFiles = message.sharedFiles(); !sharedFiles.empty()) {
 		messageToEdit.fileGroupId = QRandomGenerator::system()->generate64();
 		messageToEdit.files = transform(sharedFiles, [message, fgid = messageToEdit.fileGroupId](const QXmppFileShare &file) {
@@ -673,7 +676,61 @@ void MessageHandler::parseSharedFiles(const QXmppMessage &message, Message &mess
 		if (!messageToEdit.files.empty()) {
 			messageToEdit.fileGroupId = fileGroupId;
 		}
-	}
+    }
+#if defined(WITH_OMEMO_V03)
+    else if (message.body().startsWith("aesgcm://")) {
+
+        QUrl fileUrl(message.body());
+        QString ivAndKey = fileUrl.fragment();
+        const auto name (fileUrl.fileName());
+        fileUrl.setScheme("https");
+        fileUrl.setFragment("");
+
+        if(ivAndKey.count() == 88 || ivAndKey.count() == 96) {            
+            qDebug() << "key:" << ivAndKey.right(64).toLatin1();
+            qDebug() << "iv:" << ivAndKey.left(ivAndKey.count()-64).toLatin1();
+            messageToEdit.body = " ";
+            messageToEdit.fileGroupId = QRandomGenerator::system()->generate64();
+            auto fId = qint64(QRandomGenerator::system()->generate64());
+            messageToEdit.files.append(
+                File {
+                .id = fId,
+                .name = name,
+                .description = "",
+                .mimeType = [&name] {
+                                const auto possibleMimeTypes = MediaUtils::mimeDatabase().mimeTypesForFileName(name);
+                                if (possibleMimeTypes.empty()) {
+                                    return MediaUtils::mimeDatabase().mimeTypeForName("application/octet-stream");
+                                }
+
+                                return possibleMimeTypes.front();
+                            }(),
+                .size = {},
+                .lastModified = {},
+                .localFilePath = {},
+                .hashes = {},
+                .thumbnail = {},
+                .httpSources = { /*
+                    HttpSource {
+                        .fileId = fId,
+                        .url = fileUrl.url()
+                    }*/
+                },
+                .encryptedSources {
+                    EncryptedSource {
+                        .fileId = fId,
+                        .url = fileUrl,
+                        .cipher = QXmpp::Cipher::Aes256GcmNoPad,
+                        .key = QByteArray::fromHex(ivAndKey.right(64).toLatin1()),
+                        .iv = QByteArray::fromHex(ivAndKey.left(ivAndKey.count()-64).toLatin1()),
+//                      .encryptedDataId = QRandomGenerator::system()->generate64(),
+                        .encryptedHashes = {}
+                    }
+                }
+            });
+        }
+    }
+#endif
 }
 
 QFuture<QXmpp::SendResult> MessageHandler::send(QXmppMessage &&message)

@@ -418,7 +418,7 @@ void FileSharingController::downloadFile(const QString &messageId, const File &f
 
 		QString filePath = makeFileName();
 
-        // Check if the file name is already taken, and propose one that is unique
+        // Check if the f=ile name is already taken, and propose one that is unique
 		if (QFile::exists(filePath)) {
 #if defined(SFOS)
             int idx = 1;

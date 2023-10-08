@@ -166,7 +166,7 @@ BackgroundItem {
                         }
                     }
 
-                    Connections {
+/*                    Connections {
                         target: chatPage.searchBar
 
                         // Restore the active focus when searchBar is closed.
@@ -176,7 +176,7 @@ BackgroundItem {
                             }
                         }
                     }
-
+*/
     //				Connections {
     //					target: chatPage.messageReactionEmojiPicker
 

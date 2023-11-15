@@ -180,7 +180,7 @@ DetailsContent {
         }
 
         IconTextSwitch {
-            text: qsTr("OMEMO")
+            text: qsTr("OMEMO 0")
             description: qsTr("End-to-end encryption with OMEMO 0 ensures that nobody else than you and your chat partners can read or modify the data you exchange.")
             checked: Kaidan.settings.encryption === Encryption.Omemo0
             // The switch is toggled by setting the user's preference on using encryption.
@@ -518,7 +518,7 @@ DetailsContent {
             width: parent.width
             CustomConnectionSettings {
                 id: customConnectionSettings
-                confirmationButton: connectionSettingsConfirmationButton
+                //confirmationButton: connectionSettingsConfirmationButton
             }
             Button {
                 id: connectionSettingsConfirmationButton

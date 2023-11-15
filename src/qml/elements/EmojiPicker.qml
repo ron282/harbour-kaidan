@@ -98,7 +98,7 @@ DockedPanel {
                     emojiModel.append({ label: "🚁", group: Emoji.Group.Activity });
                     emojiModel.append({ label: "🚅", group: Emoji.Group.Travel });
                     emojiModel.append({ label: "💡", group: Emoji.Group.Objects });
-                    emojiModel.append({ label: "🔣", group: Em>oji.Group.Symbols });
+                    emojiModel.append({ label: "🔣", group: Emoji.Group.Symbols });
                     emojiModel.append({ label: "🏁", group: Emoji.Group.Flags });
                 }
 			}

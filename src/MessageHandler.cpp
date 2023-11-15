@@ -684,11 +684,9 @@ void MessageHandler::parseSharedFiles(const QXmppMessage &message, Message &mess
         QString ivAndKey = fileUrl.fragment();
         const auto name (fileUrl.fileName());
         fileUrl.setScheme("https");
-        fileUrl.setFragment("");
+        fileUrl.setFragment(QString::null);
 
         if(ivAndKey.count() == 88 || ivAndKey.count() == 96) {            
-            qDebug() << "key:" << ivAndKey.right(64).toLatin1();
-            qDebug() << "iv:" << ivAndKey.left(ivAndKey.count()-64).toLatin1();
             messageToEdit.body = " ";
             messageToEdit.fileGroupId = QRandomGenerator::system()->generate64();
             auto fId = qint64(QRandomGenerator::system()->generate64());
@@ -710,11 +708,11 @@ void MessageHandler::parseSharedFiles(const QXmppMessage &message, Message &mess
                 .localFilePath = {},
                 .hashes = {},
                 .thumbnail = {},
-                .httpSources = { /*
+                .httpSources = {
                     HttpSource {
                         .fileId = fId,
                         .url = fileUrl.url()
-                    }*/
+                    }
                 },
                 .encryptedSources {
                     EncryptedSource {
@@ -723,7 +721,7 @@ void MessageHandler::parseSharedFiles(const QXmppMessage &message, Message &mess
                         .cipher = QXmpp::Cipher::Aes256GcmNoPad,
                         .key = QByteArray::fromHex(ivAndKey.right(64).toLatin1()),
                         .iv = QByteArray::fromHex(ivAndKey.left(ivAndKey.count()-64).toLatin1()),
-//                      .encryptedDataId = QRandomGenerator::system()->generate64(),
+                        .encryptedDataId = QRandomGenerator::system()->generate64(),
                         .encryptedHashes = {}
                     }
                 }

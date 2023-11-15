@@ -178,7 +178,7 @@ DetailsContent {
 		}
 
 		TextSwitch {
-            text: qsTr("OMEMO")
+            text: qsTr("OMEMO 0")
             description: qsTr("End-to-end encryption with OMEMO ensures that nobody else than you and your chat partners can read or modify the data you exchange.")
 			enabled: MessageModel.usableOmemoDevices.length
 			checked: MessageModel.isOmemoEncryptionEnabled

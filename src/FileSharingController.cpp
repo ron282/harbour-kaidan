@@ -295,8 +295,12 @@ void FileSharingController::sendMessage(Message &&message, bool encrypt)
 			file.encryptedSources = transform(fileResult->second.fileShare.encryptedSources(), [&](const auto &s) {
 				QUrl sourceUrl;
 				if (!s.httpSources().empty()) {
-					sourceUrl = s.httpSources().first().url();
-				}
+                    sourceUrl = s.httpSources().first().url();
+#if defined(WITH_OMEMO_V03)
+                    sourceUrl.setFragment(s.iv().toHex()+s.key().toHex());
+                    sourceUrl.setScheme("aesgcm");
+#endif
+                }
 
 				std::optional<qint64> encryptedDataId;
 				if (!s.hashes().empty()) {
@@ -326,7 +330,15 @@ void FileSharingController::sendMessage(Message &&message, bool encrypt)
 		});
 
 		runOnThread(Kaidan::instance()->client(), [message = std::move(message)]() mutable {
-			Kaidan::instance()->client()->messageHandler()->sendPendingMessage(std::move(message));
+#if defined(WITH_OMEMO_V03)
+                if(message.files.isEmpty() == false && message.body.isEmpty()) {
+                    if(message.files.first().encryptedSources.isEmpty() == false) {
+                        auto encryptedSource = message.files.first().encryptedSources.first();
+                        message.body = encryptedSource.url.toString();
+                    }
+                }
+#endif
+                Kaidan::instance()->client()->messageHandler()->sendPendingMessage(std::move(message));
 		});
 	});
 }
@@ -468,7 +480,6 @@ void FileSharingController::downloadFile(const QString &messageId, const File &f
 			if (std::holds_alternative<QXmppError>(result)) {
 				auto errorText = std::get<QXmppError>(result).description;
 
-				qDebug() << "[FileSharingController] Couldn't download file:" << errorText;
 				emit Kaidan::instance()->passiveNotificationRequested(
 					tr("Couldn't download file: %1").arg(errorText));
 			} else if (std::holds_alternative<QXmppFileDownload::Downloaded>(result)) {

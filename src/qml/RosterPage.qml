@@ -149,6 +149,8 @@ Page {
 */
                 MessageModel.setCurrentChat(accountJid, chatJid)
 
+                console.log("[roster.qml] MessageModel.setCurrentChat set")
+
                 // Close all pages (especially the chat page) except the roster page.
                 while (pageStack.depth > 2) {
                     pageStack.navigateBack(PageStackAction.Immediate)

@@ -393,7 +393,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	// Kaidan back-end
 	//
 //    Kaidan kaidan(!parser.isSet("disable-xml-log"));
-    Kaidan kaidan(true);
+    Kaidan kaidan(false);
 
 #if !defined(Q_OS_IOS) && !defined(Q_OS_ANDROID) && !defined(SFOS) 
 	// receive messages from other instances of Kaidan

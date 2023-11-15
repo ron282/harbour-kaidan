@@ -223,15 +223,15 @@ QFuture<void> OmemoManager::initializeChat(const QString &accountJid, const QStr
 {
     QFutureInterface<void> interface(QFutureInterfaceBase::Started);
 
-	const QList<QString> jids = { accountJid, chatJid };
+    const QList<QString> jids = { accountJid, chatJid };
 	m_lastRequestedDeviceJids = jids;
 
 	auto initializeSessionsKeysAndDevices = [this, interface, jids]() mutable {
 		auto future = m_manager->buildMissingSessions(jids);
 		future.then(this, [this, interface, jids]() mutable {
 			retrieveKeys(jids);
-			retrieveDevices(jids);
-			interface.reportFinished();
+            retrieveDevices(jids);
+            interface.reportFinished();
 		});
 	};
 

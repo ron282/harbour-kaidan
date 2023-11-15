@@ -228,7 +228,7 @@ ChatPageBase {
                    var unreadMessageCount = chatItemWatcher.item.unreadMessageCount
 
                     if (unreadMessageCount) {
-                        firstUnreadContactMessageIndex = MessageModel.firstUnreadContactMessageIndex()
+                        var firstUnreadContactMessageIndex = MessageModel.firstUnreadContactMessageIndex()
 
                         if (firstUnreadContactMessageIndex > 0) {
                             messageListView.positionViewAtIndex(firstUnreadContactMessageIndex, ListView.End)

@@ -3,6 +3,7 @@ TARGET = harbour-kaidan
 TEMPLATE = app
 QT += qml quick core sql xml concurrent multimedia positioning widgets multimedia-private location
 
+
 LBUILD = build
 
 DEFINES += WITH_OMEMO_V03
@@ -34,9 +35,9 @@ contains(DEFINES, SFOS) {
 }
 
 QMAKE_CXXFLAGS += -std=c++17
-LIBS += -lgcrypt -lQXmppQt5 -lQXmppOmemoQt5 -lZXing
+LIBS += -lgcrypt -lZXing -lQXmppQt5 -lQXmppOmemoQt5
 
-CONFIG += QXmppl-devel ZXing
+CONFIG += QXmpp-devel ZXing
 
 DEFINES += BOOST_SIGNALS_NO_DEPRECATION_WARNING
 

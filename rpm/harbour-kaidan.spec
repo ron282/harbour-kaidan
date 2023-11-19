@@ -20,7 +20,6 @@ BuildRequires:  libgcrypt-devel
 BuildRequires:  sqlite-devel
 BuildRequires:  QXmpp-devel
 BuildRequires:  ZXing-devel
-BuildRequires:  ecm-devel
 Requires:       QXmpp
 Requires:       qt5-qtdeclarative-import-positioning
 Requires:       qt5-qtdeclarative-import-location

@@ -22,11 +22,12 @@ Controls.Control {
 	property Kirigami.OverlaySheet sheet
 	required property string jid
 	property alias qrCodePage: qrCodePage
+	property alias automaticMediaDownloadsDelegate: automaticMediaDownloadsDelegate
 	property alias mediaOverview: mediaOverview
 	property alias mediaOverviewExpansionButton: mediaOverviewExpansionButton
 	property alias vCardArea: vCardArea.data
 	property alias vCardRepeater: vCardRepeater
-	property ColumnLayout rosterGroupArea
+	property alias rosterGoupListView: rosterGoupListView
 	required property ColumnLayout encryptionArea
 
 	topPadding: Kirigami.Settings.isMobile ? Kirigami.Units.largeSpacing : Kirigami.Units.largeSpacing * 3
@@ -60,24 +61,60 @@ Controls.Control {
 		}
 
 		MobileForm.FormCard {
-			visible: contentItem.enabled
 			Layout.fillWidth: true
 			contentItem: ColumnLayout {
-				enabled: mediaOverview.totalFilesCount
 				spacing: 0
 
 				MobileForm.FormCardHeader {
 					title: qsTr("Media")
 				}
 
-				MediaOverview {
-					id: mediaOverview
-					visible: mediaOverviewExpansionButton.checked
-					Layout.fillWidth: true
+				MobileForm.FormComboBoxDelegate {
+					id: automaticMediaDownloadsDelegate
+					text: qsTr("Automatic Downloads")
+					description: qsTr("Download media automatically")
+
+					// "FormComboBoxDelegate.indexOfValue()" seems to not work with an array-based
+					// model.
+					// Thus, an own function is used.
+					function indexOf(value) {
+						if (Array.isArray(model)) {
+							return model.findIndex((entry) => entry[valueRole] === value)
+						}
+
+						return indexOfValue(value)
+					}
+
+					Component.onCompleted: {
+						// "Kirigami.OverlaySheet" uses a z-index of 101.
+						// In order to see the popup, it needs to have that z-index as well.
+						if (root.sheet) {
+							let comboBox = contentItem.children[2];
+
+							if (comboBox instanceof Controls.ComboBox) {
+								comboBox.popup.z = 101
+							}
+						}
+                    }
+				}
+
+				ColumnLayout {
+					visible: mediaOverviewExpansionButton.visible && mediaOverviewExpansionButton.checked
+					spacing: 0
+
+					Kirigami.Separator {
+						Layout.fillWidth: true
+					}
+
+					MediaOverview {
+						id: mediaOverview
+						Layout.fillWidth: true
+					}
 				}
 
 				FormExpansionButton {
 					id: mediaOverviewExpansionButton
+					visible: mediaOverview.totalFilesCount
 					onCheckedChanged: {
 						if (checked) {
 							mediaOverview.selectionMode = false
@@ -96,7 +133,7 @@ Controls.Control {
 		}
 
 		MobileForm.FormCard {
-			visible: vCardRepeater.count
+			visible: vCardRepeater.count || vCardRepeater.model.jid === AccountManager.jid
 			Layout.fillWidth: true
 			contentItem: ColumnLayout {
 				id: vCardArea
@@ -115,12 +152,33 @@ Controls.Control {
 
 		MobileForm.FormCard {
 			Layout.fillWidth: true
-			contentItem: root.rosterGroupArea
+			contentItem: root.encryptionArea
 		}
 
 		MobileForm.FormCard {
+			// Hide this if there are no items and no header.
+			visible: rosterGoupListView.count || rosterGoupListView.headerItem
 			Layout.fillWidth: true
-			contentItem: root.encryptionArea
+
+			contentItem: ColumnLayout {
+				spacing: 0
+
+				MobileForm.FormCardHeader {
+					title: qsTr("Labels")
+				}
+
+				ListView {
+					id: rosterGoupListView
+					model: RosterModel.groups
+					visible: rosterGroupExpansionButton.checked
+					implicitHeight: contentHeight
+					Layout.fillWidth: true
+				}
+
+				FormExpansionButton {
+					id: rosterGroupExpansionButton
+				}
+			}
 		}
 
 		MobileForm.FormCard {
@@ -140,6 +198,7 @@ Controls.Control {
 						jid: root.jid
 					}
 					delegate: MobileForm.AbstractFormDelegate {
+						visible: deviceExpansionButton.checked
 						background: Item {}
 						contentItem: ColumnLayout {
 							Controls.Label {
@@ -167,6 +226,10 @@ Controls.Control {
 							}
 						}
 					}
+				}
+
+				FormExpansionButton {
+					id: deviceExpansionButton
 				}
 			}
 		}

@@ -4,6 +4,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "RosterFilterProxyModel.h"
+
+#include "PresenceCache.h"
 #include "RosterModel.h"
 
 RosterFilterProxyModel::RosterFilterProxyModel(QObject *parent)
@@ -11,11 +13,28 @@ RosterFilterProxyModel::RosterFilterProxyModel(QObject *parent)
 {
 }
 
+void RosterFilterProxyModel::setOnlyAvailableContactsShown(bool onlyAvailableContactsShown)
+{
+	if (m_onlyAvailableContactsShown != onlyAvailableContactsShown) {
+		m_onlyAvailableContactsShown = onlyAvailableContactsShown;
+		invalidate();
+		Q_EMIT onlyAvailableContactsShownChanged();
+	}
+}
+
+bool RosterFilterProxyModel::onlyAvailableContactsShown() const
+{
+	return m_onlyAvailableContactsShown;
+}
+
 void RosterFilterProxyModel::setSelectedAccountJids(const QVector<QString> &selectedAccountJids)
 {
-	m_selectedAccountJids = selectedAccountJids;
-	Q_EMIT selectedAccountJidsChanged();
-	invalidate();
+	if (m_selectedAccountJids != selectedAccountJids) {
+		m_selectedAccountJids = selectedAccountJids;
+		invalidate();
+		Q_EMIT selectedAccountJidsChanged();
+	}
+
 }
 
 QVector<QString> RosterFilterProxyModel::selectedAccountJids() const
@@ -25,9 +44,12 @@ QVector<QString> RosterFilterProxyModel::selectedAccountJids() const
 
 void RosterFilterProxyModel::setSelectedGroups(const QVector<QString> &selectedGroups)
 {
-	m_selectedGroups = selectedGroups;
-	Q_EMIT selectedGroupsChanged();
-	invalidate();
+	if (m_selectedGroups != selectedGroups) {
+		m_selectedGroups = selectedGroups;
+		invalidate();
+		Q_EMIT selectedGroupsChanged();
+	}
+
 }
 
 QVector<QString> RosterFilterProxyModel::selectedGroups() const
@@ -39,15 +61,31 @@ bool RosterFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &
 {
 	QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
 
-	const auto accountJid = sourceModel()->data(index, RosterModel::AccountJidRole).value<QString>();
-	bool accountJidSelected = m_selectedAccountJids.isEmpty() || m_selectedAccountJids.contains(accountJid);
+	if (m_onlyAvailableContactsShown) {
+		auto *presenceCache = PresenceCache::instance();
+		const auto chatJid = sourceModel()->data(index, RosterModel::JidRole).toString();
 
-	const auto groups = sourceModel()->data(index, RosterModel::GroupsRole).value<QVector<QString>>();
-	bool groupSelected = m_selectedGroups.isEmpty() || std::any_of(groups.cbegin(), groups.cend(), [&](const QString &group) {
+		if (const auto contactPresence = presenceCache->presence(chatJid, presenceCache->pickIdealResource(chatJid))) {
+			if (contactPresence->type() != QXmppPresence::Available) {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+
+	if (const auto accountJid = sourceModel()->data(index, RosterModel::AccountJidRole).toString();
+		!m_selectedAccountJids.isEmpty() && !m_selectedAccountJids.contains(accountJid)) {
+		return false;
+	}
+
+	if (const auto groups = sourceModel()->data(index, RosterModel::GroupsRole).value<QVector<QString>>();
+		!m_selectedGroups.isEmpty() && std::none_of(groups.cbegin(), groups.cend(), [&](const QString &group) {
 		return m_selectedGroups.contains(group);
-	});
+	})) {
+		return false;
+	}
 
-	return (sourceModel()->data(index, RosterModel::NameRole).toString().toLower().contains(filterRegExp()) ||
-			sourceModel()->data(index, RosterModel::JidRole).toString().toLower().contains(filterRegExp())) &&
-			accountJidSelected && groupSelected;
+	return sourceModel()->data(index, RosterModel::NameRole).toString().toLower().contains(filterRegExp()) ||
+		   sourceModel()->data(index, RosterModel::JidRole).toString().toLower().contains(filterRegExp());
 }

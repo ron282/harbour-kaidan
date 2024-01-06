@@ -18,6 +18,7 @@ import StatusBar 0.1
 
 import im.kaidan.kaidan 1.0
 
+import "details"
 import "elements"
 import "registration"
 import "settings"
@@ -28,20 +29,6 @@ Kirigami.ApplicationWindow {
 	minimumHeight: 300
 	minimumWidth: 280
 
-	readonly property ChatPage currentChatPage: {
-		for (let i = 0; i < pageStack.items.length; ++i) {
-			const page = pageStack.items[i];
-
-			if (page instanceof ChatPage) {
-				return page;
-			}
-		}
-
-		return null;
-	}
-
-	property bool currentDraftSaved: false
-
 	readonly property color primaryBackgroundColor: {
 		Kirigami.Theme.colorSet = Kirigami.Theme.View
 		return Kirigami.Theme.backgroundColor
@@ -50,6 +37,11 @@ Kirigami.ApplicationWindow {
 	readonly property color secondaryBackgroundColor: {
 		Kirigami.Theme.colorSet = Kirigami.Theme.Window
 		return Kirigami.Theme.backgroundColor
+	}
+
+	readonly property color tertiaryBackgroundColor: {
+		const accentColor = secondaryBackgroundColor
+		return Qt.tint(primaryBackgroundColor, Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.7))
 	}
 
 	// radius for using rounded corners
@@ -77,9 +69,27 @@ Kirigami.ApplicationWindow {
 		id: contextDrawer
 	}
 
-
-	SubRequestAcceptSheet {
-		id: subReqAcceptSheet
+	// Needed to be outside of the DetailsSheet to not be destroyed with it.
+	// Otherwise, the undo action of "showPassiveNotification()" would point to a destroyed object.
+	BlockingAction {
+		id: blockingAction
+		onSucceeded: (jid, block) => {
+			// Show a passive notification when a JID that is not in the roster is blocked and
+			// provide an option to undo that.
+			// JIDs in the roster can be blocked again via their details.
+			if (!block && !RosterModel.hasItem(jid)) {
+				showPassiveNotification(qsTr("Unblocked %1").arg(jid), "long", qsTr("Undo"), () => {
+					blockingAction.block(jid)
+				})
+			}
+		}
+		onErrorOccurred: (jid, block, errorText) => {
+			if (block) {
+				showPassiveNotification(qsTr("Could not block %1: %2").arg(jid).arg(errorText))
+			} else {
+				showPassiveNotification(qsTr("Could not unblock %1: %2").arg(jid).arg(errorText))
+			}
+		}
 	}
 
 	// components for all main pages
@@ -93,25 +103,24 @@ Kirigami.ApplicationWindow {
 	Component {id: chatPage; ChatPage {}}
 	Component {id: emptyChatPage; EmptyChatPage {}}
 	Component {id: settingsPage; SettingsPage {}}
+	Component {id: accountDetailsSheet; AccountDetailsSheet {}}
+	Component {id: accountDetailsPage; AccountDetailsPage {}}
+	Component {id: avatarChangePage; AvatarChangePage {}}
 	Component {id: qrCodeOnboardingPage; QrCodeOnboardingPage {}}
 	Component {id: contactAdditionPage; ContactAdditionPage {}}
 	Component {id: contactAdditionDialog; ContactAdditionDialog {}}
 
 	onWideScreenChanged: showRosterPageForNarrowWindow()
 
-	onClosing: {
-		if (currentChatPage) {
-			if (!currentDraftSaved) {
-				currentChatPage.saveDraft();
-
-				close.accepted = false;
-
-				Qt.callLater(function() {
-					root.currentDraftSaved = true;
-					root.close();
-				});
-			}
-		}
+	/**
+	 * Returns a radius used for rectangles with rounded corners that is relative to the
+	 * rectangle's dimensions.
+	 *
+	 * @param width width of the rectangle
+	 * @param height height of the rectangle
+	 */
+	function relativeRoundedCornersRadius(width, height) {
+		return Math.sqrt(width < height ? width : height)
 	}
 
 	/**
@@ -138,8 +147,14 @@ Kirigami.ApplicationWindow {
 		popLayersAboveLowest()
 		popAllPages()
 		pageStack.push(rosterPage)
-		if (!Kirigami.Settings.isMobile)
+		resetChatView()
+	}
+
+	function resetChatView() {
+		if (!Kirigami.Settings.isMobile) {
 			pageStack.push(emptyChatPage)
+		}
+
 		showRosterPageForNarrowWindow()
 	}
 
@@ -223,18 +238,6 @@ Kirigami.ApplicationWindow {
 
 		function onOpenChatViewRequested() {
 			openChatView()
-		}
-	}
-
-	Connections {
-		target: RosterModel
-
-		function onSubscriptionRequestReceived(from, msg) {
-			Kaidan.client.vCardManager.vCardRequested(from)
-
-			subReqAcceptSheet.from = from
-
-			subReqAcceptSheet.open()
 		}
 	}
 

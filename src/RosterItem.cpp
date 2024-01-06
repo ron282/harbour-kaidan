@@ -8,8 +8,8 @@
 
 #include <QXmppUtils.h>
 
-RosterItem::RosterItem(const QString &accountJid, const QXmppRosterIq::Item &item, const QDateTime &lastMessageDateTime)
-	: accountJid(accountJid), jid(item.bareJid()), name(item.name()), subscription(item.subscriptionType()), lastMessageDateTime(lastMessageDateTime)
+RosterItem::RosterItem(const QString &accountJid, const QXmppRosterIq::Item &item)
+	: accountJid(accountJid), jid(item.bareJid()), name(item.name()), subscription(item.subscriptionType())
 {
 	const auto rosterGroups = item.groups();
 	groups = QVector(rosterGroups.cbegin(), rosterGroups.cend());
@@ -17,7 +17,22 @@ RosterItem::RosterItem(const QString &accountJid, const QXmppRosterIq::Item &ite
 
 QString RosterItem::displayName() const
 {
-	return name.isEmpty() ? QXmppUtils::jidToUser(jid) : name;
+	if (name.isEmpty()) {
+		if (jid == accountJid) {
+			return QObject::tr("Notes");
+		}
+
+		const auto username = QXmppUtils::jidToUser(jid);
+
+		// Return the domain in case of a server as a roster item (for service announcements).
+		if (username.isEmpty()) {
+			return QXmppUtils::jidToDomain(jid);
+		}
+
+		return username;
+	}
+
+	return name;
 }
 
 bool RosterItem::isSendingPresence() const

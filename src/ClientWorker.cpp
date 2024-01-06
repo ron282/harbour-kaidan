@@ -11,20 +11,22 @@
 #include <QSettings>
 #include <QNetworkAccessManager>
 // QXmpp
+#include <QXmppBlockingManager.h>
 #include <QXmppCarbonManagerV2.h>
-#include <QXmppMamManager.h>
-#include <QXmppPubSubManager.h>
-#include <QXmppUtils.h>
+#include <QXmppEncryptedFileSharingProvider.h>
 #include <QXmppFileSharingManager.h>
 #include <QXmppHttpFileSharingProvider.h>
-#include <QXmppEncryptedFileSharingProvider.h>
 #include <QXmppHttpUploadManager.h>
-#include <QXmppUploadRequestManager.h>
+#include <QXmppMamManager.h>
 #include <QXmppPubSubBaseItem.h>
+#include <QXmppPubSubManager.h>
+#include <QXmppUploadRequestManager.h>
+#include <QXmppUtils.h>
 // Kaidan
 #include "AccountManager.h"
 #include "AtmManager.h"
 #include "AvatarFileStorage.h"
+#include "ChatHintModel.h"
 #include "DiscoveryManager.h"
 #include "Enums.h"
 #include "FutureUtils.h"
@@ -52,6 +54,7 @@ ClientWorker::Caches::Caches(QObject *parent)
 	  presenceCache(new PresenceCache(parent)),
 	  msgModel(new MessageModel(parent)),
 	  rosterModel(new RosterModel(parent)),
+	  chatHintModel(new ChatHintModel(parent)),
 	  omemoCache(new OmemoCache(parent)),
 	  avatarStorage(new AvatarFileStorage(parent)),
 	  serverFeaturesCache(new ServerFeaturesCache(parent))
@@ -67,9 +70,10 @@ ClientWorker::ClientWorker(Caches *caches, Database *database, bool enableLoggin
 	  m_networkManager(new QNetworkAccessManager(this))
 {
 	m_client->addNewExtension<QXmppCarbonManagerV2>();
-	m_client->addExtension(new QXmppMamManager);
-	m_client->addExtension(new QXmppPubSubManager);
+	m_client->addNewExtension<QXmppMamManager>();
+	m_client->addNewExtension<QXmppPubSubManager>();
 	m_client->addNewExtension<QXmppUploadRequestManager>();
+	m_client->addNewExtension<QXmppBlockingManager>();
 	auto *uploadManager = m_client->addNewExtension<QXmppHttpUploadManager>(m_networkManager);
 
 	m_registrationManager = new RegistrationManager(this, m_client, this);
@@ -283,7 +287,7 @@ void ClientWorker::handleAccountDeletedFromServer()
 
 void ClientWorker::handleAccountDeletionFromServerFailed(const QXmppStanza::Error &error)
 {
-	emit Kaidan::instance()->passiveNotificationRequested(tr("Your account could not be deleted from the server. Therefore, it was also not removed from this app: %1").arg(error.text()));
+	Q_EMIT Kaidan::instance()->passiveNotificationRequested(tr("Your account could not be deleted from the server. Therefore, it was also not removed from this app: %1").arg(error.text()));
 
 	m_isAccountToBeDeletedFromClientAndServer = false;
 
@@ -297,7 +301,7 @@ void ClientWorker::onConnected()
 	qDebug() << "[client] Connected successfully to server";
 
 	// If there was an error before, notify about its absence.
-	emit connectionErrorChanged(ClientWorker::NoError);
+	Q_EMIT connectionErrorChanged(ClientWorker::NoError);
 
 	// If the account could not be deleted from the server because the client was
 	// disconnected, delete it now.
@@ -322,7 +326,7 @@ void ClientWorker::onConnected()
 	// The following tasks are only done after a login with new credentials or connection settings.
 	if (AccountManager::instance()->hasNewCredentials() || AccountManager::instance()->hasNewConnectionSettings()) {
 		if (AccountManager::instance()->hasNewCredentials()) {
-			emit loggedInWithNewCredentials();
+			Q_EMIT loggedInWithNewCredentials();
 		}
 
 		// Store the valid settings.
@@ -333,7 +337,7 @@ void ClientWorker::onConnected()
 	// automatically in case of a connection outage.
 	m_client->configuration().setAutoReconnectionEnabled(true);
 
-	MessageModel::instance()->sendPendingMessages();
+	m_messageHandler->sendPendingMessages();
 
 	// Send read markers that could not be sent yet because the client was offline.
 	runOnThread(RosterModel::instance(), [jid = AccountManager::instance()->jid()]() {
@@ -369,7 +373,7 @@ void ClientWorker::onDisconnected()
 
 void ClientWorker::onConnectionStateChanged(QXmppClient::State connectionState)
 {
-	emit connectionStateChanged(Enums::ConnectionState(connectionState));
+	Q_EMIT connectionStateChanged(Enums::ConnectionState(connectionState));
 }
 
 void ClientWorker::onConnectionError(QXmppClient::Error error)
@@ -381,15 +385,15 @@ void ClientWorker::onConnectionError(QXmppClient::Error error)
 	case QXmppClient::NoError:
 		Q_UNREACHABLE();
 	case QXmppClient::KeepAliveError:
-		emit connectionErrorChanged(ClientWorker::KeepAliveError);
+		Q_EMIT connectionErrorChanged(ClientWorker::KeepAliveError);
 		break;
 	case QXmppClient::XmppStreamError: {
 		QXmppStanza::Error::Condition xmppStreamError = m_client->xmppStreamError();
 		qDebug() << "[client] XMPP stream error:" << xmppStreamError;
 		if (xmppStreamError == QXmppStanza::Error::NotAuthorized) {
-			emit connectionErrorChanged(ClientWorker::AuthenticationFailed);
+			Q_EMIT connectionErrorChanged(ClientWorker::AuthenticationFailed);
 		} else {
-			emit connectionErrorChanged(ClientWorker::NotConnected);
+			Q_EMIT connectionErrorChanged(ClientWorker::NotConnected);
 		}
 		break;
 	}
@@ -398,23 +402,23 @@ void ClientWorker::onConnectionError(QXmppClient::Error error)
 		switch (socketError) {
 		case QAbstractSocket::ConnectionRefusedError:
 		case QAbstractSocket::RemoteHostClosedError:
-			emit connectionErrorChanged(ClientWorker::ConnectionRefused);
+			Q_EMIT connectionErrorChanged(ClientWorker::ConnectionRefused);
 			break;
 		case QAbstractSocket::HostNotFoundError:
-			emit connectionErrorChanged(ClientWorker::DnsError);
+			Q_EMIT connectionErrorChanged(ClientWorker::DnsError);
 			break;
 		case QAbstractSocket::SocketAccessError:
-			emit connectionErrorChanged(ClientWorker::NoNetworkPermission);
+			Q_EMIT connectionErrorChanged(ClientWorker::NoNetworkPermission);
 			break;
 		case QAbstractSocket::SocketTimeoutError:
-			emit connectionErrorChanged(ClientWorker::KeepAliveError);
+			Q_EMIT connectionErrorChanged(ClientWorker::KeepAliveError);
 			break;
 		case QAbstractSocket::SslHandshakeFailedError:
 		case QAbstractSocket::SslInternalError:
-			emit connectionErrorChanged(ClientWorker::TlsFailed);
+			Q_EMIT connectionErrorChanged(ClientWorker::TlsFailed);
 			break;
 		default:
-			emit connectionErrorChanged(ClientWorker::NotConnected);
+			Q_EMIT connectionErrorChanged(ClientWorker::NotConnected);
 		}
 		break;
 	}

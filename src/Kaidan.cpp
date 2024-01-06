@@ -17,19 +17,24 @@
 #include <QStringBuilder>
 #include <QThread>
 #include <QTimer>
+#include <QFile>
 // QXmpp
 #include "qxmpp-exts/QXmppUri.h"
 // Kaidan
+#include "AccountDb.h"
 #include "AccountManager.h"
 #include "AtmManager.h"
 #include "AvatarFileStorage.h"
+#include "Blocking.h"
 #include "CredentialsValidator.h"
 #include "Database.h"
+#include "FileSharingController.h"
 #include "Globals.h"
 #include "MessageDb.h"
 #include "Notifications.h"
 #include "RosterDb.h"
-#include "FileSharingController.h"
+#include "RosterModel.h"
+#include "Settings.h"
 
 Kaidan *Kaidan::s_instance;
 
@@ -43,6 +48,7 @@ Kaidan::Kaidan(bool enableLogging, QObject *parent)
 
 	// database
 	m_database = new Database(this);
+	m_accountDb = new AccountDb(m_database, this);
 	m_msgDb = new MessageDb(m_database, this);
 	m_rosterDb = new RosterDb(m_database, this);
 
@@ -68,16 +74,61 @@ Kaidan::Kaidan(bool enableLogging, QObject *parent)
 	m_cltThrd->start();
 
 	// create controllers
+	m_blockingController = std::make_unique<BlockingController>(m_database);
 	m_fileSharingController = std::make_unique<FileSharingController>(m_client->xmppClient());
 
 	// Log out of the server when the application window is closed.
 	connect(qGuiApp, &QGuiApplication::aboutToQuit, this, [this]() {
-		emit logOutRequested(true);
+		Q_EMIT logOutRequested(true);
+	});
+
+	connect(m_msgDb, &MessageDb::messageAdded, this, [this](const Message &message, MessageOrigin origin) {
+		if (origin != MessageOrigin::UserInput) {
+			if (const auto item = RosterModel::instance()->findItem(message.chatJid)) {
+				const auto contactRule = item->automaticMediaDownloadsRule;
+
+				const auto effectiveRule = [this, contactRule]() -> AccountManager::AutomaticMediaDownloadsRule {
+					switch (contactRule) {
+					case RosterItem::AutomaticMediaDownloadsRule::Account:
+						return settings()->automaticMediaDownloadsRule();
+					case RosterItem::AutomaticMediaDownloadsRule::Never:
+						return AccountManager::AutomaticMediaDownloadsRule::Never;
+					case RosterItem::AutomaticMediaDownloadsRule::Always:
+						return AccountManager::AutomaticMediaDownloadsRule::Always;
+					}
+
+					Q_UNREACHABLE();
+				}();
+
+				const auto automaticDownloadDesired = [effectiveRule, &message]() -> bool {
+					switch (effectiveRule) {
+					case AccountManager::AutomaticMediaDownloadsRule::Never:
+						return false;
+					case AccountManager::AutomaticMediaDownloadsRule::PresenceOnly:
+						return message.isOwn() || RosterModel::instance()->isPresenceSubscribedByItem(message.accountJid, message.chatJid);
+					case AccountManager::AutomaticMediaDownloadsRule::Always:
+						return true;
+					}
+
+					Q_UNREACHABLE();
+				}();
+
+				if (automaticDownloadDesired) {
+					for (const auto &file : message.files) {
+						if (file.localFilePath.isEmpty() || !QFile::exists(file.localFilePath)) {
+							m_fileSharingController->downloadFile(message.id, file);
+						}
+					}
+				}
+			}
+		}
 	});
 }
 
 Kaidan::~Kaidan()
 {
+	m_cltThrd->quit();
+	m_cltThrd->wait();
 	s_instance = nullptr;
 }
 
@@ -98,14 +149,14 @@ void Kaidan::setConnectionState(Enums::ConnectionState connectionState)
 {
 	if (m_connectionState != connectionState) {
 		m_connectionState = connectionState;
-		emit connectionStateChanged();
+		Q_EMIT connectionStateChanged();
 
 		// Open the possibly cached URI when connected.
 		// This is needed because the XMPP URIs can't be opened when Kaidan is not connected.
 		if (m_connectionState == ConnectionState::StateConnected && !m_openUriCache.isEmpty()) {
 			// delay is needed because sometimes the RosterPage needs to be loaded first
 			QTimer::singleShot(300, this, [this] {
-				emit xmppUriReceived(m_openUriCache);
+				Q_EMIT xmppUriReceived(m_openUriCache);
 				m_openUriCache = "";
 			});
 		}
@@ -116,7 +167,7 @@ void Kaidan::setConnectionError(ClientWorker::ConnectionError error)
 {
 	if (error != m_connectionError) {
 		m_connectionError = error;
-		emit connectionErrorChanged();
+		Q_EMIT connectionErrorChanged();
 	}
 }
 
@@ -127,9 +178,9 @@ void Kaidan::addOpenUri(const QString &uri)
 		return;
 
 	if (m_connectionState == ConnectionState::StateConnected) {
-		emit xmppUriReceived(uri);
+		Q_EMIT xmppUriReceived(uri);
 	} else {
-		emit passiveNotificationRequested(tr("The link will be opened after you have connected."));
+		Q_EMIT passiveNotificationRequested(tr("The link will be opened after you have connected."));
 		m_openUriCache = uri;
 	}
 }

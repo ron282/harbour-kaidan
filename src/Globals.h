@@ -24,6 +24,7 @@
 #define KAIDAN_SETTINGS_FAVORITE_EMOJIS "emojis/favorites"
 #define KAIDAN_SETTINGS_WINDOW_POSITION "window/position"
 #define KAIDAN_SETTINGS_WINDOW_SIZE "window/size"
+#define KAIDAN_SETTINGS_AUTOMATIC_MEDIA_DOWNLOADS_RULE "media/automaticDownloadsRule"
 #define KAIDAN_SETTINGS_HELP_VISIBILITY_QR_CODE_PAGE "helpVisibility/qrCodePage"
 
 #define KAIDAN_JID_RESOURCE_DEFAULT_PREFIX APPLICATION_DISPLAY_NAME
@@ -40,7 +41,9 @@ constexpr auto MESSAGE_MAX_CHARS = 1e4;
 // SQL
 #define DB_FILE_BASE_NAME "kaidan"
 #define DB_TABLE_INFO "dbinfo"
+#define DB_TABLE_ACCOUNTS "accounts"
 #define DB_TABLE_ROSTER "roster"
+#define DB_TABLE_ROSTER_GROUPS "rosterGroups"
 #define DB_TABLE_MESSAGES "messages"
 #define DB_VIEW_CHAT_MESSAGES "chatMessages"
 #define DB_VIEW_DRAFT_MESSAGES "draftMessages"
@@ -49,6 +52,7 @@ constexpr auto MESSAGE_MAX_CHARS = 1e4;
 #define DB_TABLE_FILE_HTTP_SOURCES "fileHttpSources"
 #define DB_TABLE_FILE_ENCRYPTED_SOURCES "fileEncryptedSources"
 #define DB_TABLE_MESSAGE_REACTIONS "messageReactions"
+#define DB_TABLE_BLOCKED "blocked"
 #define DB_TABLE_TRUST_SECURITY_POLICIES "trustSecurityPolicies"
 #define DB_TABLE_TRUST_OWN_KEYS "trustOwnKeys"
 #define DB_TABLE_TRUST_KEYS "trustKeys"

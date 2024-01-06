@@ -10,6 +10,10 @@ add_executable(${PROJECT_NAME} WIN32)
 
 target_sources(${PROJECT_NAME} PRIVATE
 	AbstractNotifier.h
+	Account.cpp
+	Account.h
+	AccountDb.cpp
+	AccountDb.h
 	AccountManager.cpp
 	AccountManager.h
 	Algorithms.h
@@ -21,6 +25,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 	AvatarFileStorage.h
 	BitsOfBinaryImageProvider.cpp
 	BitsOfBinaryImageProvider.h
+	Blocking.cpp
+	Blocking.h
 	CameraImageCapture.cpp
 	CameraImageCapture.h
 	CameraModel.cpp
@@ -63,11 +69,6 @@ target_sources(${PROJECT_NAME} PRIVATE
 	# hsluv-c required for color generation
 	hsluv-c/hsluv.c
 	hsluv-c/hsluv.h
-	OmemoCache.cpp
-	OmemoCache.h
-	OmemoWatcher.cpp
-	OmemoWatcher.h
-
 	JsonUtils.h
 	Kaidan.cpp
 	Kaidan.h
@@ -93,10 +94,14 @@ target_sources(${PROJECT_NAME} PRIVATE
 	MessageModel.h
 	Notifications.cpp
 	Notifications.h
+	OmemoCache.cpp
+	OmemoCache.h
 	OmemoDb.cpp
 	OmemoDb.h
 	OmemoManager.cpp
 	OmemoManager.h
+	OmemoWatcher.cpp
+	OmemoWatcher.h
 	PresenceCache.cpp
 	PresenceCache.h
 	ProviderListItem.cpp
@@ -227,7 +232,8 @@ target_link_libraries(${PROJECT_NAME}
 	Qt::Location
 	Qt::QuickControls2
 	KF5::CoreAddons
-	KF5::KIOFileWidgets
+	KF5::KIOCore
+	KF5::KIOWidgets
 	QXmpp::QXmpp QXmpp::Omemo
 	${__Qt5Widgets_LIBRARIES}
 	${__KF5Notifications_LIBRARIES}
@@ -244,7 +250,9 @@ if(ANDROID OR IOS)
 endif()
 
 if(ANDROID)
-	target_link_libraries(${PROJECT_NAME} PkgConfig::OPENSSL SQLite::SQLite3 Qt5::AndroidExtras)
+	target_link_libraries(${PROJECT_NAME} OpenSSL::Crypto SQLite::SQLite3 Qt5::AndroidExtras)
+else()
+	target_link_libraries(${PROJECT_NAME} KF5::KIOFileWidgets)
 endif()
 
 if(STATIC_BUILD)

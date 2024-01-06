@@ -16,164 +16,46 @@ import "../elements"
 DetailsContent {
 	id: root
 
-	property bool isChatWithOneself: MessageModel.currentAccountJid === jid
+	required property string accountJid
+	property bool isChatWithOneself: accountJid === jid
 
+	automaticMediaDownloadsDelegate {
+		model: [
+			{
+				display: qsTr("Account default"),
+				value: RosterItem.AutomaticMediaDownloadsRule.Account
+			},
+			{
+				display: qsTr("Never"),
+				value: RosterItem.AutomaticMediaDownloadsRule.Never
+			},
+			{
+				display: qsTr("Always"),
+				value: RosterItem.AutomaticMediaDownloadsRule.Always
+			}
+		]
+		textRole: "display"
+		valueRole: "value"
+		currentIndex: automaticMediaDownloadsDelegate.indexOf(contactWatcher.item.automaticMediaDownloadsRule)
+		onActivated: RosterModel.setAutomaticMediaDownloadsRule(root.accountJid, root.jid, automaticMediaDownloadsDelegate.currentValue)
+	}
 	mediaOverview {
-		accountJid: MessageModel.currentAccountJid
-		chatJid: MessageModel.currentChatJid
+		accountJid: root.accountJid
+		chatJid: root.jid
 	}
 	vCardRepeater {
 		model: VCardModel {
 			jid: root.jid
 		}
-		delegate: MobileForm.AbstractFormDelegate {
-			id: vCardDelegate
-			background: Item {}
-			contentItem: ColumnLayout {
-				Controls.Label {
-					text: Utils.formatMessage(model.value)
-					textFormat: Text.StyledText
-					wrapMode: Text.WordWrap
-					visible: !vCardDelegate.editMode
-					Layout.fillWidth: true
-					onLinkActivated: Qt.openUrlExternally(link)
-				}
-
-				Controls.Label {
-					text: model.key
-					color: Kirigami.Theme.disabledTextColor
-					font: Kirigami.Theme.smallFont
-					textFormat: Text.PlainText
-					wrapMode: Text.WordWrap
-					Layout.fillWidth: true
-				}
-			}
-		}
-	}
-	rosterGroupArea: ColumnLayout {
-		MobileForm.FormCard {
-			Layout.fillWidth: true
-			contentItem: ColumnLayout {
-				spacing: 0
-
-				MobileForm.FormCardHeader {
-					title: qsTr("Labels")
-				}
-
-				ListView {
-					id: rosterGroupListView
-					model: RosterModel.groups
-					visible: rosterGroupExpansionButton.checked
-					implicitHeight: contentHeight
-					Layout.fillWidth: true
-					header: MobileForm.FormCard {
-						width: ListView.view.width
-						Kirigami.Theme.colorSet: Kirigami.Theme.Window
-						contentItem: MobileForm.AbstractFormDelegate {
-							background: Item {}
-							contentItem: RowLayout {
-								spacing: Kirigami.Units.largeSpacing * 3
-
-								Controls.TextField {
-									id: rosterGroupField
-									placeholderText: qsTr("New label")
-									enabled: !rosterGroupBusyIndicator.visible
-									Layout.fillWidth: true
-									onAccepted: rosterGroupAdditionButton.clicked()
-
-									Connections {
-										target: rosterGroupListView
-
-										function onVisibleChanged() {
-											if (rosterGroupListView.visible) {
-												rosterGroupField.text = ""
-												rosterGroupField.forceActiveFocus()
-											}
-										}
-									}
-								}
-
-								Button {
-									id: rosterGroupAdditionButton
-									Controls.ToolTip.text: qsTr("Add label")
-									icon.name: "list-add-symbolic"
-									enabled: rosterGroupField.text.length
-									visible: !rosterGroupBusyIndicator.visible
-									flat: !hovered
-									Layout.preferredWidth: Layout.preferredHeight
-									Layout.preferredHeight: rosterGroupField.implicitHeight
-									Layout.rightMargin: Kirigami.Units.largeSpacing
-									onHoveredChanged: flat = !hovered
-									onClicked: {
-										let groups = chatItemWatcher.item.groups
-
-										if (groups.includes(rosterGroupField.text)) {
-											rosterGroupField.text = ""
-										} else if (enabled) {
-											rosterGroupBusyIndicator.visible = true
-
-											groups.push(rosterGroupField.text)
-											Kaidan.client.rosterManager.updateGroupsRequested(root.jid, chatItemWatcher.item.name, groups)
-
-											rosterGroupField.text = ""
-										} else {
-											rosterGroupField.forceActiveFocus()
-										}
-									}
-								}
-
-								Controls.BusyIndicator {
-									id: rosterGroupBusyIndicator
-									visible: false
-									Layout.preferredWidth: rosterGroupAdditionButton.Layout.preferredWidth
-									Layout.preferredHeight: Layout.preferredWidth
-									Layout.rightMargin: rosterGroupAdditionButton.Layout.rightMargin
-								}
-
-								Connections {
-									target: RosterModel
-
-									function onGroupsChanged() {
-										rosterGroupBusyIndicator.visible = false
-										rosterGroupField.forceActiveFocus()
-									}
-								}
-							}
-						}
-					}
-					delegate: MobileForm.FormSwitchDelegate {
-						id: rosterGroupDelegate
-						text: modelData
-						checked: contactWatcher.item.groups.includes(modelData)
-						width: ListView.view.width
-						onToggled: {
-							let groups = contactWatcher.item.groups
-
-							if (checked) {
-								groups.push(modelData)
-							} else {
-								groups.splice(groups.indexOf(modelData), 1)
-							}
-
-							Kaidan.client.rosterManager.updateGroupsRequested(root.jid, contactWatcher.item.name, groups)
-						}
-
-						// TODO: Remove this and see TODO in RosterModel once fixed in Kirigami Addons.
-						Connections {
-							target: RosterModel
-
-							function onGroupsChanged() {
-								// Update the "checked" value of "rosterGroupDelegate" as a work
-								// around because "MobileForm.FormSwitchDelegate" does not listen to
-								// changes of "contactWatcher.item.groups".
-								rosterGroupDelegate.checked = contactWatcher.item.groups.includes(modelData)
-							}
-						}
-					}
-				}
-
-				FormExpansionButton {
-					id: rosterGroupExpansionButton
+		delegate: MobileForm.FormButtonDelegate {
+			text: model.value
+			description: model.key
+			enabled: model.uriScheme === "mailto" || model.uriScheme === "http"
+			onClicked: {
+				if (model.uriScheme === "mailto") {
+					Qt.openUrlExternally(model.uriScheme + ":" + model.value)
+				} else if (model.uriScheme === "http") {
+					Qt.openUrlExternally(model.value)
 				}
 			}
 		}
@@ -298,22 +180,103 @@ DetailsContent {
 			onClicked: pageStack.layers.push(qrCodePage, { contactJid: root.jid })
 		}
 	}
+	rosterGoupListView {
+		header: MobileForm.FormCard {
+			width: ListView.view.width
+			Kirigami.Theme.colorSet: Kirigami.Theme.Window
+			contentItem: MobileForm.AbstractFormDelegate {
+				background: Item {}
+				contentItem: RowLayout {
+					spacing: Kirigami.Units.largeSpacing * 3
 
-	Kirigami.Dialog {
-		id: qrCodeDialog
-		z: 1000
-		preferredWidth: 500
-		standardButtons: Kirigami.Dialog.NoButton
-		showCloseButton: false
+					Controls.TextField {
+						id: rosterGroupField
+						placeholderText: qsTr("New label")
+						enabled: !rosterGroupBusyIndicator.visible
+						Layout.fillWidth: true
+						onAccepted: rosterGroupAdditionButton.clicked()
+						onVisibleChanged: {
+							if (visible) {
+								text = ""
+								forceActiveFocus()
+							}
+						}
+					}
 
-		ColumnLayout {
-			QrCode {
-				jid: root.jid
-				Layout.fillHeight: true
-				Layout.fillWidth: true
-				Layout.preferredWidth: 500
-				Layout.preferredHeight: 500
-				Layout.maximumHeight: applicationWindow().height * 0.5
+					Button {
+						id: rosterGroupAdditionButton
+						Controls.ToolTip.text: qsTr("Add label")
+						icon.name: "list-add-symbolic"
+						enabled: rosterGroupField.text.length
+						visible: !rosterGroupBusyIndicator.visible
+						flat: !hovered
+						Layout.preferredWidth: Layout.preferredHeight
+						Layout.preferredHeight: rosterGroupField.implicitHeight
+						Layout.rightMargin: Kirigami.Units.largeSpacing
+						onClicked: {
+							let groups = contactWatcher.item.groups
+
+							if (groups.includes(rosterGroupField.text)) {
+								rosterGroupField.text = ""
+							} else if (enabled) {
+								rosterGroupBusyIndicator.visible = true
+
+								groups.push(rosterGroupField.text)
+								Kaidan.client.rosterManager.updateGroupsRequested(root.jid, contactWatcher.item.name, groups)
+
+								rosterGroupField.text = ""
+							} else {
+								rosterGroupField.forceActiveFocus()
+							}
+						}
+					}
+
+					Controls.BusyIndicator {
+						id: rosterGroupBusyIndicator
+						visible: false
+						Layout.preferredWidth: rosterGroupAdditionButton.Layout.preferredWidth
+						Layout.preferredHeight: Layout.preferredWidth
+						Layout.rightMargin: rosterGroupAdditionButton.Layout.rightMargin
+					}
+
+					Connections {
+						target: RosterModel
+
+						function onGroupsChanged() {
+							rosterGroupBusyIndicator.visible = false
+							rosterGroupField.forceActiveFocus()
+						}
+					}
+				}
+			}
+		}
+		delegate: MobileForm.FormSwitchDelegate {
+			id: rosterGroupDelegate
+			text: modelData
+			checked: contactWatcher.item.groups.includes(modelData)
+			width: ListView.view.width
+			onToggled: {
+				let groups = contactWatcher.item.groups
+
+				if (checked) {
+					groups.push(modelData)
+				} else {
+					groups.splice(groups.indexOf(modelData), 1)
+				}
+
+				Kaidan.client.rosterManager.updateGroupsRequested(root.jid, contactWatcher.item.name, groups)
+			}
+
+			// TODO: Remove this and see TODO in RosterModel once fixed in Kirigami Addons.
+			Connections {
+				target: RosterModel
+
+				function onGroupsChanged() {
+					// Update the "checked" value of "rosterGroupDelegate" as a work
+					// around because "MobileForm.FormSwitchDelegate" does not listen to
+					// changes of "contactWatcher.item.groups".
+					rosterGroupDelegate.checked = contactWatcher.item.groups.includes(modelData)
+				}
 			}
 		}
 	}
@@ -332,7 +295,27 @@ DetailsContent {
 				text: qsTr("Show QR code")
 				description: qsTr("Share this contact's chat address via QR code")
 				icon.name: "view-barcode-qr"
-				onClicked: qrCodeDialog.open()
+				// TODO: If possible, scroll down to show whole QR code
+				onClicked: qrCodeArea.visible = !qrCodeArea.visible
+			}
+
+			MobileForm.AbstractFormDelegate {
+				id: qrCodeArea
+				visible: false
+				background: Rectangle {
+					color: secondaryBackgroundColor
+				}
+				contentItem: QrCode {
+					jid: root.jid
+					Layout.fillHeight: true
+					Layout.fillWidth: true
+					Layout.preferredWidth: parent.width
+					Layout.preferredHeight: Layout.preferredWidth
+				}
+				Layout.fillHeight: true
+				Layout.fillWidth: true
+				Layout.preferredWidth: parent.width
+				Layout.preferredHeight: Layout.preferredWidth
 			}
 
 			MobileForm.FormButtonDelegate {
@@ -363,8 +346,8 @@ DetailsContent {
 				checked: !contactWatcher.item.notificationsMuted
 				onToggled: {
 					RosterModel.setNotificationsMuted(
-						MessageModel.currentAccountJid,
-						MessageModel.currentChatJid,
+						root.accountJid,
+						root.jid,
 						!checked)
 				}
 			}
@@ -382,24 +365,17 @@ DetailsContent {
 			}
 
 			MobileForm.FormButtonDelegate {
-				text: qsTr("Request status")
-				description: qsTr("Request contact's availability, devices and other personal information")
-				visible: !contactWatcher.item.sendingPresence
+				text: qsTr("Request personal data")
+				description: qsTr("Ask your contact to share the availability, devices and other personal information")
+				visible: !isChatWithOneself && Kaidan.connectionState === Enums.StateConnected && !contactWatcher.item.sendingPresence
 				onClicked: Kaidan.client.rosterManager.subscribeToPresenceRequested(root.jid)
 			}
 
-			MobileForm.FormSwitchDelegate {
-				text: qsTr("Send status")
-				description: qsTr("Provide your availability, devices and other personal information")
-				checked: contactWatcher.item.receivingPresence
-				visible: !isChatWithOneself
-				onToggled: {
-					if (checked) {
-						Kaidan.client.rosterManager.acceptSubscriptionToPresenceRequested(MessageModel.currentChatJid)
-					} else {
-						Kaidan.client.rosterManager.refuseSubscriptionToPresenceRequested(MessageModel.currentChatJid)
-					}
-				}
+			MobileForm.FormButtonDelegate {
+				text: qsTr("Cancel personal data sharing")
+				description: qsTr("Stop sharing your availability, devices and other personal information")
+				visible: !isChatWithOneself && Kaidan.connectionState === Enums.StateConnected && contactWatcher.item.receivingPresence
+				onClicked: Kaidan.client.rosterManager.refuseSubscriptionToPresenceRequested(root.jid)
 			}
 
 			MobileForm.FormSwitchDelegate {
@@ -408,8 +384,8 @@ DetailsContent {
 				checked: contactWatcher.item.chatStateSendingEnabled
 				onToggled: {
 					RosterModel.setChatStateSendingEnabled(
-						MessageModel.currentAccountJid,
-						MessageModel.currentChatJid,
+						root.accountJid,
+						root.jid,
 						checked)
 				}
 			}
@@ -420,9 +396,28 @@ DetailsContent {
 				checked: contactWatcher.item.readMarkerSendingEnabled
 				onToggled: {
 					RosterModel.setReadMarkerSendingEnabled(
-						MessageModel.currentAccountJid,
-						MessageModel.currentChatJid,
+						root.accountJid,
+						root.jid,
 						checked)
+				}
+			}
+
+			MobileForm.FormSwitchDelegate {
+				text: qsTr("Block")
+				description: qsTr("Block all communication including status and notifications")
+				enabled: !blockingAction.loading && Kaidan.connectionState === Enums.StateConnected
+				checked: blockingWatcher.blocked
+				onToggled: {
+					if (checked) {
+						blockingAction.block(root.jid)
+					} else {
+						blockingAction.unblock(root.jid)
+					}
+				}
+
+				BlockingWatcher {
+					id: blockingWatcher
+					jid: root.jid
 				}
 			}
 		}
@@ -442,23 +437,22 @@ DetailsContent {
 				spacing: 0
 
 				MobileForm.FormButtonDelegate {
-					id: removalButton
+					id: contactRemovalButton
 					text: qsTr("Remove")
 					description: qsTr("Remove contact and complete chat history")
 					icon.name: "edit-delete-symbolic"
 					icon.color: "red"
-					checkable: true
-					onToggled: contactRemovalCorfirmButton.visible = !contactRemovalCorfirmButton.visible
+					onClicked: contactRemovalConfirmationButton.visible = !contactRemovalConfirmationButton.visible
 				}
 
 				MobileForm.FormButtonDelegate {
-					id: contactRemovalCorfirmButton
+					id: contactRemovalConfirmationButton
 					text: qsTr("Confirm")
 					visible: false
 					Layout.leftMargin: Kirigami.Units.largeSpacing * 6
 					onClicked: {
 						visible = false
-						removalButton.enabled = false
+						contactRemovalButton.enabled = false
 						Kaidan.client.rosterManager.removeContactRequested(jid)
 					}
 				}

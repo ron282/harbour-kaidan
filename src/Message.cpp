@@ -159,19 +159,19 @@ QString File::details() const
 QXmppMessage Message::toQXmpp() const
 {
 	QXmppMessage msg;
+	msg.setFrom(isOwn() ? accountJid : chatJid);
+	msg.setTo(isOwn() ? chatJid : accountJid);
 	msg.setId(id);
-	msg.setTo(to);
-	msg.setFrom(from);
+	msg.setOriginId(originId);
+	msg.setStanzaId(stanzaId);
+	msg.setReplaceId(replaceId);
+	msg.setStamp(timestamp);
 	msg.setBody(body);
-	msg.setStamp(stamp);
 	msg.setIsSpoiler(isSpoiler);
 	msg.setSpoilerHint(spoilerHint);
 	msg.setMarkable(true);
 	msg.setMarker(marker);
 	msg.setMarkerId(markerId);
-	msg.setReplaceId(replaceId);
-	msg.setOriginId(originId);
-	msg.setStanzaId(stanzaId);
 	msg.setReceiptRequested(receiptRequested);
 
 	// attached files
@@ -197,6 +197,11 @@ QXmppMessage Message::toQXmpp() const
 	}));
 
 	return msg;
+}
+
+bool Message::isOwn() const
+{
+	return accountJid == senderId;
 }
 
 QString Message::previewText() const

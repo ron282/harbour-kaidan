@@ -34,7 +34,7 @@ Controls.Menu {
 	Controls.MenuItem {
 		text: qsTr("Edit message")
 		enabled: MessageModel.canCorrectMessage(root.message && root.message.modelIndex)
-		onTriggered: root.message.messageEditRequested(root.message.msgId, root.message.messageBody)
+		onTriggered: root.message.messageEditRequested(root.message.msgId, root.message.messageBody, root.message.spoilerHint)
 	}
 
 	Controls.MenuItem {
@@ -64,7 +64,7 @@ Controls.Menu {
 		onTriggered: {
 			MessageModel.markMessageAsFirstUnread(message.modelIndex);
 			MessageModel.resetCurrentChat()
-			openChatView()
+			Kaidan.closeChatPageRequested()
 		}
 	}
 

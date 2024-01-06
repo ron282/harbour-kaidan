@@ -29,14 +29,15 @@ Kirigami.SwipeListItem {
 
 	property int modelIndex
 	property string msgId
-	property string senderJid
+	property string senderId
 	property string senderName
 	property string chatName
 	property bool isOwn: true
 	property int encryption
 	property bool isTrusted
 	property string messageBody
-	property date dateTime
+	property string date
+	property string time
 	property int deliveryState
 	property string deliveryStateName
 	property url deliveryStateIcon
@@ -54,10 +55,10 @@ Kirigami.SwipeListItem {
 
 	property bool isGroupBegin: {
 		return modelIndex < 1 ||
-			MessageModel.data(MessageModel.index(modelIndex - 1, 0), MessageModel.Sender) !== senderJid
+			MessageModel.data(MessageModel.index(modelIndex - 1, 0), MessageModel.SenderId) !== senderId
 	}
 
-	signal messageEditRequested(string id, string body)
+	signal messageEditRequested(string replaceId, string body, string spoilerHint)
 	signal quoteRequested(string body)
 
 	height: messageArea.implicitHeight + (isGroupBegin ? Kirigami.Units.largeSpacing : Kirigami.Units.smallSpacing)
@@ -100,7 +101,7 @@ Kirigami.SwipeListItem {
 					id: avatar
 					visible: !isOwn && isGroupBegin
 					anchors.fill: parent
-					jid: root.senderJid
+					jid: root.senderId
 					name: root.senderName
 				}
 			}
@@ -139,46 +140,36 @@ Kirigami.SwipeListItem {
 				}
 
 				contentItem: ColumnLayout {
-					id: content
-
-					RowLayout {
-						id: spoilerHintRow
+					// spoiler hint area
+					ColumnLayout {
 						visible: isSpoiler
+						Layout.minimumWidth: bubbleBackground.metaInfoWidth
+						Layout.bottomMargin: isShowingSpoiler ? 0 : Kirigami.Units.largeSpacing * 2
 
-						Controls.Label {
-							text: spoilerHint == "" ? qsTr("Spoiler") : spoilerHint
-							color: Kirigami.Theme.textColor
-							font.pixelSize: Kirigami.Units.gridUnit * 0.8
-							MouseArea {
-								anchors.fill: parent
-								acceptedButtons: Qt.LeftButton | Qt.RightButton
-								onClicked: {
-									if (mouse.button === Qt.LeftButton) {
-										isShowingSpoiler = !isShowingSpoiler
-									}
-								}
+						RowLayout {
+							Controls.Label {
+								text: spoilerHint == "" ? qsTr("Spoiler") : Utils.formatMessage(spoilerHint)
+								textFormat: Text.StyledText
+								wrapMode: Text.Wrap
+								color: Kirigami.Theme.textColor
+								Layout.fillWidth: true
+							}
+
+							ClickableIcon {
+								source: isShowingSpoiler ? "password-show-off" : "password-show-on"
+								Layout.leftMargin: Kirigami.Units.largeSpacing
+								onClicked: isShowingSpoiler = !isShowingSpoiler
 							}
 						}
 
-						Item {
+						Kirigami.Separator {
+							visible: isShowingSpoiler
 							Layout.fillWidth: true
-							height: 1
-						}
-
-						Kirigami.Icon {
-							height: 28
-							width: 28
-							source: isShowingSpoiler ? "password-show-off" : "password-show-on"
-							color: Kirigami.Theme.textColor
-						}
-					}
-					Kirigami.Separator {
-						visible: isSpoiler
-						Layout.fillWidth: true
-						color: {
-							let bgColor = Kirigami.Theme.backgroundColor
-							let textColor = Kirigami.Theme.textColor
-							return Qt.tint(textColor, Qt.rgba(bgColor.r, bgColor.g, bgColor.b, 0.7))
+							color: {
+								const bgColor = Kirigami.Theme.backgroundColor
+								const textColor = Kirigami.Theme.textColor
+								return Qt.tint(textColor, Qt.rgba(bgColor.r, bgColor.g, bgColor.b, 0.7))
+							}
 						}
 					}
 
@@ -221,15 +212,6 @@ Kirigami.SwipeListItem {
 							onLinkActivated: Qt.openUrlExternally(link)
 							Layout.maximumWidth: root.width - Kirigami.Units.gridUnit * 6
 						}
-						Kirigami.Separator {
-							visible: isSpoiler && isShowingSpoiler
-							Layout.fillWidth: true
-							color: {
-								let bgColor = Kirigami.Theme.backgroundColor
-								let textColor = Kirigami.Theme.textColor
-								return Qt.tint(textColor, Qt.rgba(bgColor.r, bgColor.g, bgColor.b, 0.7))
-							}
-						}
 					}
 
 					// message reactions (emojis in reaction to this message)
@@ -260,13 +242,10 @@ Kirigami.SwipeListItem {
 								text: modelData.count === 1 ? modelData.emoji : modelData.emoji + " " + modelData.count
 								width: smallButtonWidth + (text.length < 3 ? 0 : (text.length - 2) * Kirigami.Theme.defaultFont.pixelSize * 0.6)
 								onClicked: {
-									if (ownReactionIncluded) {
-										if (deliveryState === MessageReactionDeliveryState.PendingRemovalAfterSent ||
-											deliveryState === MessageReactionDeliveryState.PendingRemovalAfterDelivered) {
-											MessageModel.addMessageReaction(root.msgId, modelData.emoji)
-										} else {
-											MessageModel.removeMessageReaction(root.msgId, modelData.emoji)
-										}
+									if (ownReactionIncluded &&
+										deliveryState !== MessageReactionDeliveryState.PendingRemovalAfterSent &&
+										deliveryState !== MessageReactionDeliveryState.PendingRemovalAfterDelivered) {
+										MessageModel.removeMessageReaction(root.msgId, modelData.emoji)
 									} else {
 										MessageModel.addMessageReaction(root.msgId, modelData.emoji)
 									}
@@ -290,39 +269,6 @@ Kirigami.SwipeListItem {
 							detailsSheet: root.reactionDetailsSheet
 						}
 					}
-
-					// warning for different encryption corner cases
-					CenteredAdaptiveText {
-						text: {
-							if (root.encryption === Encryption.NoEncryption) {
-								if (MessageModel.isOmemoEncryptionEnabled) {
-									// Encryption is set for the current chat but this message is
-									// unencrypted.
-									return qsTr("Unencrypted")
-								}
-							} else if (MessageModel.encryption !== Encryption.NoEncryption && !root.isTrusted){
-								// Encryption is set for the current chat but the key of this message's
-								// sender is not trusted.
-								return qsTr("Untrusted")
-							}
-
-							return ""
-						}
-
-						visible: text.length
-						color: Kirigami.Theme.negativeTextColor
-						font.italic: true
-						scaleFactor: 0.9
-						Layout.bottomMargin: 10
-					}
-
-					Controls.Label {
-						visible: errorText
-						id: errorLabel
-						text: qsTr(errorText)
-						color: Kirigami.Theme.disabledTextColor
-						font.pixelSize: Kirigami.Units.gridUnit * 0.8
-					}
 				}
 			}
 
@@ -333,11 +279,30 @@ Kirigami.SwipeListItem {
 		}
 
 		// Read marker text for own message
-		Text {
-			visible: isLastRead
-			text: qsTr("%1 has read up to this point").arg(chatName)
-			Layout.topMargin: 10
-			Layout.leftMargin: 10
+		RowLayout {
+			visible: root.isLastRead && MessageModel.currentAccountJid !== MessageModel.currentChatJid
+			spacing: Kirigami.Units.smallSpacing * 3
+			Layout.topMargin: spacing
+			Layout.leftMargin: spacing
+			Layout.rightMargin: spacing
+
+			Kirigami.Separator {
+				opacity: 0.8
+				Layout.fillWidth: true
+			}
+
+			ScalableText {
+				text: qsTr("%1 has read up to this point").arg(chatName)
+				color: Kirigami.Theme.disabledTextColor
+				scaleFactor: 0.9
+				elide: Text.ElideMiddle
+				Layout.maximumWidth: parent.width - Kirigami.Units.largeSpacing * 10
+			}
+
+			Kirigami.Separator {
+				opacity: 0.8
+				Layout.fillWidth: true
+			}
 		}
 	}
 

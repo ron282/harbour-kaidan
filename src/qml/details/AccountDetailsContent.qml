@@ -19,13 +19,34 @@ import "../settings"
 
 DetailsContent {
 	id: root
+	automaticMediaDownloadsDelegate {
+		model: [
+			{
+				display: qsTr("Never"),
+				value: AccountManager.AutomaticMediaDownloadsRule.Never
+			},
+			{
+				display: qsTr("If personal data is shared"),
+				value: AccountManager.AutomaticMediaDownloadsRule.PresenceOnly
+			},
+			{
+				display: qsTr("Always"),
+				value: AccountManager.AutomaticMediaDownloadsRule.Always
+			}
+		]
+		textRole: "display"
+		valueRole: "value"
+		currentIndex: automaticMediaDownloadsDelegate.indexOf(Kaidan.settings.automaticMediaDownloadsRule)
+		onActivated: {
+			Kaidan.settings.automaticMediaDownloadsRule = automaticMediaDownloadsDelegate.currentValue
+		}
+	}
 	mediaOverview {
 		accountJid: AccountManager.jid
 		chatJid: ""
 	}
 	vCardArea: [
 		FormExpansionButton {
-			id: vCardExpansionButton
 			checked: vCardRepeater.model.unsetEntriesProcessed
 			onCheckedChanged: vCardRepeater.model.unsetEntriesProcessed = checked
 		}
@@ -64,17 +85,10 @@ DetailsContent {
 						Controls.ToolTip.text: qsTr("Set value")
 						icon.name: "emblem-ok-symbolic"
 						visible: !vCardBusyIndicator.visible
-						flat: true
+						flat: !hovered
 						Layout.preferredWidth: Layout.preferredHeight
 						Layout.preferredHeight: customConnectionSettings.portField.implicitHeight
 						Layout.alignment: Qt.AlignBottom
-						onHoveredChanged: {
-							if (hovered) {
-								flat = false
-							} else {
-								flat = true
-							}
-						}
 						onClicked: {
 							vCardBusyIndicator.visible = true
 							model.value = vCardValueField.text
@@ -107,98 +121,6 @@ DetailsContent {
 				}
 
 				editing = !editing
-			}
-		}
-	}
-	rosterGroupArea: ColumnLayout {
-		MobileForm.FormCard {
-			Layout.fillWidth: true
-			contentItem: ColumnLayout {
-				spacing: 0
-
-				MobileForm.FormCardHeader {
-					title: qsTr("Labels")
-				}
-
-				ListView {
-					id: rosterGroupListView
-					model: RosterModel.groups
-					visible: rosterGroupExpansionButton.checked
-					implicitHeight: contentHeight
-					Layout.fillWidth: true
-					delegate: MobileForm.AbstractFormDelegate {
-						id: rosterGroupDelegate
-						width: ListView.view.width
-						onClicked: rosterGroupEditingButton.toggled()
-						contentItem: RowLayout {
-							Controls.Label {
-								id: rosterGroupText
-								text: modelData
-								textFormat: Text.PlainText
-								maximumLineCount: 1
-								elide: Text.ElideRight
-								visible: !rosterGroupTextField.visible
-								Layout.preferredHeight: rosterGroupTextField.height
-								Layout.fillWidth: true
-								leftPadding: Kirigami.Units.smallSpacing * 1.5
-							}
-
-							Controls.TextField {
-								id: rosterGroupTextField
-								text: modelData
-								visible: false
-								Layout.fillWidth: true
-								onAccepted: rosterGroupEditingButton.toggled()
-							}
-
-							Button {
-								id: rosterGroupEditingButton
-								text: qsTr("Change label…")
-								icon.name: "document-edit-symbolic"
-								display: Controls.AbstractButton.IconOnly
-								checked: !rosterGroupText.visible
-								flat: !hovered
-								Controls.ToolTip.text: text
-								// Ensure that the button can be used within "rosterGroupDelegate"
-								// which acts as an overlay to toggle this button when clicked.
-								// Otherwise, this button would be toggled by "rosterGroupDelegate"
-								// and by this button's own visible area at the same time resulting
-								// in resetting the toggling on each click.
-								autoRepeat: true
-								onToggled: {
-									if (rosterGroupText.visible) {
-										rosterGroupTextField.visible = true
-										rosterGroupTextField.forceActiveFocus()
-										rosterGroupTextField.selectAll()
-									} else {
-										rosterGroupTextField.visible = false
-
-										if (rosterGroupTextField.text !== modelData) {
-											RosterModel.updateGroup(modelData, rosterGroupTextField.text)
-										}
-									}
-								}
-							}
-
-							Button {
-								id: rosterGroupRemovalButton
-								text: qsTr("Remove label")
-								icon.name: "edit-delete-symbolic"
-								display: Controls.AbstractButton.IconOnly
-								flat: !rosterGroupDelegate.hovered
-								Controls.ToolTip.text: text
-								onClicked: {
-									rosterGroupTextField.visible = false
-									RosterModel.removeGroup(modelData)
-								}
-							}
-						}
-					}
-				}
-
-				FormExpansionButton {
-					id: rosterGroupExpansionButton
-				}
 			}
 		}
 	}
@@ -279,6 +201,75 @@ DetailsContent {
 			UserResourcesWatcher {
 				id: ownResourcesWatcher
 				jid: root.jid
+			}
+		}
+	}
+	rosterGoupListView {
+		delegate: MobileForm.AbstractFormDelegate {
+			id: rosterGroupDelegate
+			width: ListView.view.width
+			onClicked: rosterGroupEditingButton.toggled()
+			contentItem: RowLayout {
+				Controls.Label {
+					id: rosterGroupText
+					text: modelData
+					textFormat: Text.PlainText
+					elide: Text.ElideRight
+					visible: !rosterGroupTextField.visible
+					Layout.preferredHeight: rosterGroupTextField.height
+					Layout.fillWidth: true
+					leftPadding: Kirigami.Units.smallSpacing * 1.5
+				}
+
+				Controls.TextField {
+					id: rosterGroupTextField
+					text: modelData
+					visible: false
+					Layout.fillWidth: true
+					onAccepted: rosterGroupEditingButton.toggled()
+				}
+
+				Button {
+					id: rosterGroupEditingButton
+					text: qsTr("Change label…")
+					icon.name: "document-edit-symbolic"
+					display: Controls.AbstractButton.IconOnly
+					checked: !rosterGroupText.visible
+					flat: !hovered
+					Controls.ToolTip.text: text
+					// Ensure that the button can be used within "rosterGroupDelegate"
+					// which acts as an overlay to toggle this button when clicked.
+					// Otherwise, this button would be toggled by "rosterGroupDelegate"
+					// and by this button's own visible area at the same time resulting
+					// in resetting the toggling on each click.
+					autoRepeat: true
+					onToggled: {
+						if (rosterGroupText.visible) {
+							rosterGroupTextField.visible = true
+							rosterGroupTextField.forceActiveFocus()
+							rosterGroupTextField.selectAll()
+						} else {
+							rosterGroupTextField.visible = false
+
+							if (rosterGroupTextField.text !== modelData) {
+								RosterModel.updateGroup(modelData, rosterGroupTextField.text)
+							}
+						}
+					}
+				}
+
+				Button {
+					id: rosterGroupRemovalButton
+					text: qsTr("Remove label")
+					icon.name: "edit-delete-symbolic"
+					display: Controls.AbstractButton.IconOnly
+					flat: !rosterGroupDelegate.hovered
+					Controls.ToolTip.text: text
+					onClicked: {
+						rosterGroupTextField.visible = false
+						RosterModel.removeGroup(modelData)
+					}
+				}
 			}
 		}
 	}
@@ -370,6 +361,213 @@ DetailsContent {
 	}
 
 	MobileForm.FormCard {
+		Layout.fillWidth: true
+		contentItem: ColumnLayout {
+			spacing: 0
+
+			MobileForm.FormCardHeader {
+				title: qsTr("Blocked Chat Addresses")
+			}
+
+			MobileForm.FormSectionText {
+				text: qsTr("Block a specific user (e.g., user@example.org) or all users of the same server (e.g., example.org)")
+				visible: blockingExpansionButton.checked
+			}
+
+			ListView {
+				id: blockingListView
+				model: BlockingModel {}
+				visible: blockingExpansionButton.checked
+				implicitHeight: contentHeight
+				Layout.fillWidth: true
+				header: MobileForm.FormCard {
+					width: ListView.view.width
+					Kirigami.Theme.colorSet: Kirigami.Theme.Window
+					contentItem: MobileForm.AbstractFormDelegate {
+						background: Item {}
+						contentItem: RowLayout {
+							spacing: Kirigami.Units.largeSpacing * 3
+
+							Controls.Label {
+								text: qsTr("You must be connected to block or unblock chat addresses")
+								visible: Kaidan.connectionState !== Enums.StateConnected
+								Layout.fillWidth: true
+							}
+
+							Controls.TextField {
+								id: blockingTextField
+								placeholderText: qsTr("user@example.org")
+								visible: Kaidan.connectionState === Enums.StateConnected
+								enabled: !blockingAction.loading
+								Layout.fillWidth: true
+								onAccepted: blockingButton.clicked()
+								onVisibleChanged: {
+									if (visible) {
+										text = ""
+										forceActiveFocus()
+									}
+								}
+							}
+
+							Button {
+								id: blockingButton
+								Controls.ToolTip.text: qsTr("Block chat address")
+								icon.name: "list-add-symbolic"
+								visible: !blockingAction.loading && Kaidan.connectionState === Enums.StateConnected
+								enabled: blockingTextField.text.length
+								flat: !hovered
+								Layout.preferredWidth: Layout.preferredHeight
+								Layout.preferredHeight: blockingTextField.implicitHeight
+								Layout.rightMargin: Kirigami.Units.largeSpacing
+								onClicked: {
+									const jid = blockingTextField.text
+									if (blockingListView.model.contains(jid)) {
+										blockingTextField.text = ""
+									} else if (enabled) {
+										blockingAction.block(jid)
+										blockingTextField.text = ""
+									} else {
+										blockingTextField.forceActiveFocus()
+									}
+								}
+							}
+
+							Controls.BusyIndicator {
+								visible: blockingAction.loading
+								Layout.preferredWidth: blockingButton.Layout.preferredWidth
+								Layout.preferredHeight: Layout.preferredWidth
+								Layout.rightMargin: blockingButton.Layout.rightMargin
+							}
+						}
+					}
+				}
+				section.property: "type"
+				section.delegate: MobileForm.FormSectionText {
+					text: section
+					padding: Kirigami.Units.largeSpacing
+					leftPadding: Kirigami.Units.largeSpacing * 3
+					font.weight: Font.Light
+					anchors.left: parent.left
+					anchors.right: parent.right
+					background: Rectangle {
+						color: tertiaryBackgroundColor
+					}
+				}
+				delegate: MobileForm.AbstractFormDelegate {
+					id: blockingDelegate
+					width: ListView.view.width
+					onClicked: blockingEditingButton.toggled()
+					contentItem: RowLayout {
+						Controls.Label {
+							id: blockingText
+							text: model.jid
+							textFormat: Text.PlainText
+							elide: Text.ElideMiddle
+							visible: !blockingEditingTextField.visible
+							Layout.preferredHeight: blockingEditingTextField.height
+							Layout.fillWidth: true
+							leftPadding: Kirigami.Units.smallSpacing * 1.5
+						}
+
+						Controls.TextField {
+							id: blockingEditingTextField
+							text: model.jid
+							visible: false
+							Layout.fillWidth: true
+							onAccepted: blockingEditingButton.toggled()
+						}
+
+						Button {
+							id: blockingEditingButton
+							text: qsTr("Change chat address…")
+							icon.name: "document-edit-symbolic"
+							display: Controls.AbstractButton.IconOnly
+							checked: !blockingText.visible
+							flat: !hovered
+							Controls.ToolTip.text: text
+							// Ensure that the button can be used within "blockingDelegate"
+							// which acts as an overlay to toggle this button when clicked.
+							// Otherwise, this button would be toggled by "blockingDelegate"
+							// and by this button's own visible area at the same time resulting
+							// in resetting the toggling on each click.
+							autoRepeat: true
+							onToggled: {
+								if (blockingText.visible) {
+									blockingEditingTextField.visible = true
+									blockingEditingTextField.forceActiveFocus()
+									blockingEditingTextField.selectAll()
+								} else {
+									blockingEditingTextField.visible = false
+
+									if (blockingEditingTextField.text !== model.jid) {
+										blockingAction.block(blockingEditingTextField.text)
+										blockingAction.unblock(model.jid)
+									}
+								}
+							}
+						}
+
+						Button {
+							text: qsTr("Unblock")
+							icon.name: "edit-delete-symbolic"
+							visible: Kaidan.connectionState === Enums.StateConnected
+							display: Controls.AbstractButton.IconOnly
+							flat: !blockingDelegate.hovered
+							Controls.ToolTip.text: text
+							onClicked: blockingAction.unblock(model.jid)
+						}
+					}
+				}
+			}
+
+			FormExpansionButton {
+				id: blockingExpansionButton
+			}
+		}
+	}
+
+	MobileForm.FormCard {
+		id: notesAdditionArea
+		visible: !RosterModel.hasItem(root.jid)
+		Layout.fillWidth: true
+
+		contentItem: ColumnLayout {
+			spacing: 0
+
+			MobileForm.FormCardHeader {
+				title: qsTr("Notes")
+			}
+
+			// TODO: Find a solution (hide button or add local-only chat) to servers not allowing to add oneself to the roster (such as Prosody)
+			MobileForm.FormButtonDelegate {
+				text: qsTr("Add chat for notes")
+				description: qsTr("Add a chat for synchronizing your notes across all your devices")
+				icon.name: "note-symbolic"
+				onClicked: {
+					Kaidan.client.rosterManager.addContactRequested(root.jid)
+					Kaidan.openChatPageRequested(root.jid, root.jid)
+				}
+
+				Connections {
+					target: RosterModel
+
+					function onAddItemRequested(item) {
+						if (item.jid === root.jid) {
+							notesAdditionArea.visible = false
+						}
+					}
+
+					function onRemoveItemsRequested(accountJid, jid) {
+						if (accountJid === jid) {
+							notesAdditionArea.visible = true
+						}
+					}
+				}
+			}
+		}
+	}
+
+	MobileForm.FormCard {
 		visible: Kaidan.serverFeaturesCache.inBandRegistrationSupported
 		Layout.fillWidth: true
 
@@ -384,124 +582,120 @@ DetailsContent {
 				text: qsTr("Change your password. You need to enter the new password on all your other devices!")
 			}
 
-			MobileForm.AbstractFormDelegate {
-				background: Item {}
-				contentItem: ColumnLayout {
-					Component.onCompleted: {
-						passwordVerificationField.initialize()
-						passwordField.initialize()
-					}
-
-					PasswordField {
-						id: passwordVerificationField
-						labelText: qsTr("Current password")
-						placeholderText: qsTr("Enter your current password")
-						invalidHintText: qsTr("Enter correct password")
-						visible: Kaidan.settings.passwordVisibility !== Kaidan.PasswordVisible
-						enabled: !passwordBusyIndicator.visible
-						Layout.rightMargin: passwordChangeButton.Layout.preferredWidth + passwordButtonFieldArea.spacing
-						onTextChanged: {
-							valid = text === AccountManager.password
-							toggleHintForInvalidText()
+			MobileForm.FormCard {
+				Layout.fillWidth: true
+				Kirigami.Theme.colorSet: Kirigami.Theme.Window
+				contentItem: MobileForm.AbstractFormDelegate {
+					background: Item {}
+					contentItem: ColumnLayout {
+						Component.onCompleted: {
+							passwordVerificationField.initialize()
+							passwordField.initialize()
 						}
-						inputField.onAccepted: passwordChangeButton.clicked()
-
-						function initialize() {
-							showPassword = false
-							invalidHintMayBeShown = false
-							text = ""
-						}
-					}
-
-					RowLayout {
-						id: passwordButtonFieldArea
 
 						PasswordField {
-							id: passwordField
-							labelText: passwordVerificationField.visible ? qsTr("New password") : qsTr("Password")
-							placeholderText: qsTr("Enter your new password")
-							invalidHintText: qsTr("Enter different password to change it")
-							invalidHintMayBeShown: true
+							id: passwordVerificationField
+							labelText: qsTr("Current password")
+							placeholderText: qsTr("Enter your current password")
+							invalidHintText: qsTr("Enter correct password")
+							visible: Kaidan.settings.passwordVisibility !== Kaidan.PasswordVisible
 							enabled: !passwordBusyIndicator.visible
+							Layout.rightMargin: passwordChangeButton.Layout.preferredWidth + passwordButtonFieldArea.spacing
 							onTextChanged: {
-								valid = credentialsValidator.isPasswordValid(text) && text !== AccountManager.password
+								valid = text === AccountManager.password
 								toggleHintForInvalidText()
 							}
 							inputField.onAccepted: passwordChangeButton.clicked()
 
 							function initialize() {
 								showPassword = false
-								text = Kaidan.settings.passwordVisibility !== Kaidan.PasswordVisible ? "" : AccountManager.password
-
-								// Avoid showing a hint on initial setting.
-								invalidHint.visible = false
+								invalidHintMayBeShown = false
+								text = ""
 							}
 						}
 
-						Button {
-							id: passwordChangeButton
-							Controls.ToolTip.text: qsTr("Change password")
-							icon.name: "emblem-ok-symbolic"
-							visible: !passwordBusyIndicator.visible
-							flat: true
-							Layout.preferredWidth: Layout.preferredHeight
-							Layout.preferredHeight: passwordField.inputField.implicitHeight
-							Layout.alignment: passwordField.invalidHint.visible ? Qt.AlignVCenter : Qt.AlignBottom
-							onHoveredChanged: {
-								if (hovered) {
-									flat = false
-								} else {
-									flat = true
+						RowLayout {
+							id: passwordButtonFieldArea
+
+							PasswordField {
+								id: passwordField
+								labelText: passwordVerificationField.visible ? qsTr("New password") : qsTr("Password")
+								placeholderText: qsTr("Enter your new password")
+								invalidHintText: qsTr("Enter different password to change it")
+								invalidHintMayBeShown: true
+								enabled: !passwordBusyIndicator.visible
+								onTextChanged: {
+									valid = credentialsValidator.isPasswordValid(text) && text !== AccountManager.password
+									toggleHintForInvalidText()
+								}
+								inputField.onAccepted: passwordChangeButton.clicked()
+
+								function initialize() {
+									showPassword = false
+									text = Kaidan.settings.passwordVisibility !== Kaidan.PasswordVisible ? "" : AccountManager.password
+
+									// Avoid showing a hint on initial setting.
+									invalidHint.visible = false
 								}
 							}
-							onClicked: {
-								if (passwordVerificationField.visible && !passwordVerificationField.valid) {
-									passwordVerificationField.forceActiveFocus()
-								} else if (!passwordField.valid) {
-									passwordField.forceActiveFocus()
-									passwordField.toggleHintForInvalidText()
-								} else {
-									passwordBusyIndicator.visible = true
-									Kaidan.client.registrationManager.changePasswordRequested(passwordField.text)
+
+							Button {
+								id: passwordChangeButton
+								Controls.ToolTip.text: qsTr("Change password")
+								icon.name: "emblem-ok-symbolic"
+								visible: !passwordBusyIndicator.visible
+								flat: !hovered
+								Layout.preferredWidth: Layout.preferredHeight
+								Layout.preferredHeight: passwordField.inputField.implicitHeight
+								Layout.alignment: passwordField.invalidHint.visible ? Qt.AlignVCenter : Qt.AlignBottom
+								onClicked: {
+									if (passwordVerificationField.visible && !passwordVerificationField.valid) {
+										passwordVerificationField.forceActiveFocus()
+									} else if (!passwordField.valid) {
+										passwordField.forceActiveFocus()
+										passwordField.toggleHintForInvalidText()
+									} else {
+										passwordBusyIndicator.visible = true
+										Kaidan.client.registrationManager.changePasswordRequested(passwordField.text)
+									}
 								}
+							}
+
+							Controls.BusyIndicator {
+								id: passwordBusyIndicator
+								visible: false
+								Layout.preferredWidth: passwordChangeButton.Layout.preferredWidth
+								Layout.preferredHeight: Layout.preferredWidth
+								Layout.alignment: passwordChangeButton.Layout.alignment
 							}
 						}
 
-						Controls.BusyIndicator {
-							id: passwordBusyIndicator
+						Controls.Label {
+							id: passwordChangeErrorMessage
 							visible: false
-							Layout.preferredWidth: passwordChangeButton.Layout.preferredWidth
-							Layout.preferredHeight: Layout.preferredWidth
-							Layout.alignment: passwordChangeButton.Layout.alignment
-						}
-					}
-
-					Controls.Label {
-						id: passwordChangeErrorMessage
-						visible: false
-						font.bold: true
-						wrapMode: Text.WordWrap
-						padding: 10
-						Layout.fillWidth: true
-						background: Rectangle {
-							color: Kirigami.Theme.negativeBackgroundColor
-							radius: roundedCornersRadius
-						}
-					}
-
-					Connections {
-						target: Kaidan
-
-						function onPasswordChangeFailed(errorMessage) {
-							passwordBusyIndicator.visible = false
-							passwordChangeErrorMessage.visible = true
-							passwordChangeErrorMessage.text = qsTr("Failed to change password: %1").arg(errorMessage)
+							font.bold: true
+							wrapMode: Text.WordWrap
+							padding: 10
+							Layout.fillWidth: true
+							background: RoundedRectangle {
+								color: Kirigami.Theme.negativeBackgroundColor
+							}
 						}
 
-						function onPasswordChangeSucceeded() {
-							passwordBusyIndicator.visible = false
-							passwordChangeErrorMessage.visible = false
-							passiveNotification(qsTr("Password changed successfully"))
+						Connections {
+							target: Kaidan
+
+							function onPasswordChangeFailed(errorMessage) {
+								passwordBusyIndicator.visible = false
+								passwordChangeErrorMessage.visible = true
+								passwordChangeErrorMessage.text = qsTr("Failed to change password: %1").arg(errorMessage)
+							}
+
+							function onPasswordChangeSucceeded() {
+								passwordBusyIndicator.visible = false
+								passwordChangeErrorMessage.visible = false
+								passiveNotification(qsTr("Password changed successfully"))
+							}
 						}
 					}
 				}
@@ -517,7 +711,7 @@ DetailsContent {
 			spacing: 0
 
 			MobileForm.FormCardHeader {
-				title: qsTr("Password Security")
+				title: qsTr("Password Visibility")
 			}
 
 			MobileForm.FormSectionText {
@@ -526,9 +720,17 @@ DetailsContent {
 
 			MobileForm.FormButtonDelegate {
 				text: qsTr("Don't show password as text")
-				visible: Kaidan.settings.passwordVisibility === Kaidan.PasswordVisible
 				description: qsTr("Allow to add additional devices using the login QR code but never show the password")
 				icon.name: "security-medium-symbolic"
+				visible: Kaidan.settings.passwordVisibility === Kaidan.PasswordVisible
+				onClicked: passwordRemovalFromQrCodeConfirmationButton.visible = !passwordRemovalFromQrCodeConfirmationButton.visible
+			}
+
+			MobileForm.FormButtonDelegate {
+				id: passwordRemovalFromQrCodeConfirmationButton
+				text: qsTr("Confirm")
+				visible: false
+				Layout.leftMargin: Kirigami.Units.smallSpacing * 7
 				onClicked: {
 					Kaidan.settings.passwordVisibility = Kaidan.PasswordVisibleQrOnly
 					passwordField.initialize()
@@ -537,9 +739,17 @@ DetailsContent {
 
 			MobileForm.FormButtonDelegate {
 				text: qsTr("Don't expose password in any way")
-				visible: Kaidan.settings.passwordVisibility !== Kaidan.PasswordInvisible
 				description: qsTr("Neither allow to add additional devices using the login QR code nor show the password")
 				icon.name: "security-high-symbolic"
+				visible: Kaidan.settings.passwordVisibility !== Kaidan.PasswordInvisible
+				onClicked: passwordRemovalConfirmationButton.visible = !passwordRemovalConfirmationButton.visible
+			}
+
+			MobileForm.FormButtonDelegate {
+				id: passwordRemovalConfirmationButton
+				text: qsTr("Confirm")
+				visible: false
+				Layout.leftMargin: Kirigami.Units.smallSpacing * 7
 				onClicked: {
 					const oldPasswordVisibility = Kaidan.settings.passwordVisibility
 					Kaidan.settings.passwordVisibility = Kaidan.PasswordInvisible
@@ -567,110 +777,106 @@ DetailsContent {
 				text: qsTr("Configure the hostname and port to connect to (empty fields for default values)")
 			}
 
-			MobileForm.AbstractFormDelegate {
-				background: Item {}
-				contentItem: ColumnLayout {
-					id: connectionSettings
+			MobileForm.FormCard {
+				Layout.fillWidth: true
+				Kirigami.Theme.colorSet: Kirigami.Theme.Window
+				contentItem: MobileForm.AbstractFormDelegate {
+					background: Item {}
+					contentItem: ColumnLayout {
+						id: connectionSettings
 
-					RowLayout {
-						CustomConnectionSettings {
-							id: customConnectionSettings
-							confirmationButton: connectionSettingsButton
-						}
-
-						Button {
-							id: connectionSettingsButton
-							Controls.ToolTip.text: qsTr("Change connection settings")
-							icon.name: "emblem-ok-symbolic"
-							visible: !connectionSettingsBusyIndicator.visible
-							flat: true
-							Layout.preferredWidth: Layout.preferredHeight
-							Layout.preferredHeight: customConnectionSettings.portField.implicitHeight
-							Layout.alignment: Qt.AlignBottom
-							onHoveredChanged: {
-								if (hovered) {
-									flat = false
-								} else {
-									flat = true
-								}
+						RowLayout {
+							CustomConnectionSettings {
+								id: customConnectionSettings
+								confirmationButton: connectionSettingsButton
 							}
-							onClicked: {
-								if (customConnectionSettings.hostField.text === AccountManager.host && customConnectionSettings.portField.value === AccountManager.port) {
-									connectionSettingsErrorMessage.text = qsTr("Enter different connection settings to change them")
-									connectionSettingsErrorMessage.visible = true
-								} else {
-									connectionSettingsBusyIndicator.visible = true
 
-									// Reset the error message in case of previous button clicking without changed entered settings.
-									if (Kaidan.connectionError === ClientWorker.NoError) {
-										connectionSettingsErrorMessage.visible = false
-									}
-
-									if (Kaidan.connectionState === Enums.StateDisconnected) {
-										connectionSettings.logIn()
+							Button {
+								id: connectionSettingsButton
+								Controls.ToolTip.text: qsTr("Change connection settings")
+								icon.name: "emblem-ok-symbolic"
+								visible: !connectionSettingsBusyIndicator.visible
+								flat: !hovered
+								Layout.preferredWidth: Layout.preferredHeight
+								Layout.preferredHeight: customConnectionSettings.portField.implicitHeight
+								Layout.alignment: Qt.AlignBottom
+								onClicked: {
+									if (customConnectionSettings.hostField.text === AccountManager.host && customConnectionSettings.portField.value === AccountManager.port) {
+										connectionSettingsErrorMessage.text = qsTr("Enter different connection settings to change them")
+										connectionSettingsErrorMessage.visible = true
 									} else {
-										Kaidan.logOut()
+										connectionSettingsBusyIndicator.visible = true
+
+										// Reset the error message in case of previous button clicking without changed entered settings.
+										if (Kaidan.connectionError === ClientWorker.NoError) {
+											connectionSettingsErrorMessage.visible = false
+										}
+
+										if (Kaidan.connectionState === Enums.StateDisconnected) {
+											connectionSettings.logIn()
+										} else {
+											Kaidan.logOut()
+										}
 									}
 								}
 							}
+
+							Controls.BusyIndicator {
+								id: connectionSettingsBusyIndicator
+								visible: false
+								Layout.preferredWidth: connectionSettingsButton.Layout.preferredWidth
+								Layout.preferredHeight: Layout.preferredWidth
+								Layout.alignment: connectionSettingsButton.Layout.alignment
+							}
 						}
 
-						Controls.BusyIndicator {
-							id: connectionSettingsBusyIndicator
+						Controls.Label {
+							id: connectionSettingsErrorMessage
 							visible: false
-							Layout.preferredWidth: connectionSettingsButton.Layout.preferredWidth
-							Layout.preferredHeight: Layout.preferredWidth
-							Layout.alignment: connectionSettingsButton.Layout.alignment
-						}
-					}
-
-					Controls.Label {
-						id: connectionSettingsErrorMessage
-						visible: false
-						font.bold: true
-						wrapMode: Text.WordWrap
-						padding: 10
-						Layout.fillWidth: true
-						background: Rectangle {
-							color: Kirigami.Theme.negativeBackgroundColor
-							radius: roundedCornersRadius
-						}
-					}
-
-					Connections {
-						target: Kaidan
-
-						function onConnectionErrorChanged() {
-							// Skip connection error changes not invoked via connectionSettings by checking whether connectionSettingsBusyIndicator is visible.
-							if (Kaidan.connectionError === ClientWorker.NoError) {
-								connectionSettingsErrorMessage.visible = false
-							} else {
-								connectionSettingsErrorMessage.visible = true
-								connectionSettingsErrorMessage.text = qsTr("Connection settings could not be changed: %1").arg(Utils.connectionErrorMessage(Kaidan.connectionError))
+							font.bold: true
+							wrapMode: Text.WordWrap
+							padding: 10
+							Layout.fillWidth: true
+							background: RoundedRectangle {
+								color: Kirigami.Theme.negativeBackgroundColor
 							}
 						}
 
-						function onConnectionStateChanged() {
-							// Skip connection state changes not invoked via connectionSettings by checking whether connectionSettingsBusyIndicator is visible.
-							if (connectionSettingsBusyIndicator.visible) {
-								if (Kaidan.connectionState === Enums.StateDisconnected) {
-									if (Kaidan.connectionError === ClientWorker.NoError) {
-										connectionSettings.logIn()
-									} else {
+						Connections {
+							target: Kaidan
+
+							function onConnectionErrorChanged() {
+								// Skip connection error changes not invoked via connectionSettings by checking whether connectionSettingsBusyIndicator is visible.
+								if (Kaidan.connectionError === ClientWorker.NoError) {
+									connectionSettingsErrorMessage.visible = false
+								} else {
+									connectionSettingsErrorMessage.visible = true
+									connectionSettingsErrorMessage.text = qsTr("Connection settings could not be changed: %1").arg(Utils.connectionErrorMessage(Kaidan.connectionError))
+								}
+							}
+
+							function onConnectionStateChanged() {
+								// Skip connection state changes not invoked via connectionSettings by checking whether connectionSettingsBusyIndicator is visible.
+								if (connectionSettingsBusyIndicator.visible) {
+									if (Kaidan.connectionState === Enums.StateDisconnected) {
+										if (Kaidan.connectionError === ClientWorker.NoError) {
+											connectionSettings.logIn()
+										} else {
+											connectionSettingsBusyIndicator.visible = false
+										}
+									} else if (Kaidan.connectionState === Enums.StateConnected) {
 										connectionSettingsBusyIndicator.visible = false
+										passiveNotification(qsTr("Connection settings changed"))
 									}
-								} else if (Kaidan.connectionState === Enums.StateConnected) {
-									connectionSettingsBusyIndicator.visible = false
-									passiveNotification(qsTr("Connection settings changed"))
 								}
 							}
 						}
-					}
 
-					function logIn() {
-						AccountManager.host = customConnectionSettings.hostField.text
-						AccountManager.port = customConnectionSettings.portField.value
-						Kaidan.logIn()
+						function logIn() {
+							AccountManager.host = customConnectionSettings.hostField.text
+							AccountManager.port = customConnectionSettings.portField.value
+							Kaidan.logIn()
+						}
 					}
 				}
 			}
@@ -691,23 +897,22 @@ DetailsContent {
 				spacing: 0
 
 				MobileForm.FormButtonDelegate {
-					id: removalButton
+					id: accountRemovalButton
 					text: qsTr("Remove from Kaidan")
 					description: qsTr("Remove account from this app. Back up your credentials and chat history if needed!")
 					icon.name: "edit-delete-symbolic"
 					icon.color: Kirigami.Theme.neutralTextColor
-					checkable: true
-					onToggled: contactRemovalCorfirmationButton.visible = !contactRemovalCorfirmationButton.visible
+					onClicked: accountRemovalConfirmationButton.visible = !accountRemovalConfirmationButton.visible
 				}
 
 				MobileForm.FormButtonDelegate {
-					id: contactRemovalCorfirmationButton
+					id: accountRemovalConfirmationButton
 					text: qsTr("Confirm")
 					visible: false
 					Layout.leftMargin: Kirigami.Units.largeSpacing * 6
 					onClicked: {
 						visible = false
-						removalButton.enabled = false
+						accountRemovalButton.enabled = false
 						Kaidan.deleteAccountFromClient()
 					}
 				}
@@ -717,23 +922,23 @@ DetailsContent {
 				spacing: 0
 
 				MobileForm.FormButtonDelegate {
-					id: deletionButton
+					id: accountDeletionButton
 					text: qsTr("Delete completely")
 					description: qsTr("Delete account from provider. You will not be able to use your account again!")
 					icon.name: "edit-delete-symbolic"
 					icon.color: Kirigami.Theme.negativeTextColor
-					checkable: true
-					onToggled: contactDeletionCorfirmationButton.visible = !contactDeletionCorfirmationButton.visible
+					onClicked: accountDeletionConfirmationButton.visible = !accountDeletionConfirmationButton.visible
 				}
 
 				MobileForm.FormButtonDelegate {
-					id: contactDeletionCorfirmationButton
+					id: accountDeletionConfirmationButton
 					text: qsTr("Confirm")
 					visible: false
 					Layout.leftMargin: Kirigami.Units.largeSpacing * 6
 					onClicked: {
 						visible = false
-						removalButton.enabled = false
+						accountRemovalButton.enabled = false
+						accountDeletionButton.enabled = false
 						Kaidan.deleteAccountFromClientAndServer()
 					}
 				}

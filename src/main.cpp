@@ -38,6 +38,7 @@
 #include "AudioDeviceModel.h"
 #include "AvatarFileStorage.h"
 #include "BitsOfBinaryImageProvider.h"
+#include "Blocking.h"
 #include "CameraModel.h"
 #include "ChatHintModel.h"
 #include "CredentialsGenerator.h"
@@ -55,34 +56,34 @@
 #include "HostCompletionModel.h"
 #include "HostCompletionProxyModel.h"
 #include "Kaidan.h"
-#include "MediaUtils.h"
 #include "MediaRecorder.h"
+#include "MediaUtils.h"
 #include "Message.h"
 #include "MessageComposition.h"
-#include "MessageModel.h"
 #include "MessageHandler.h"
+#include "MessageModel.h"
 #include "OmemoManager.h"
 #include "OmemoWatcher.h"
+#include "ProviderListModel.h"
 #include "PublicGroupChatModel.h"
 #include "PublicGroupChatProxyModel.h"
 #include "PublicGroupChatSearchManager.h"
 #include "QmlUtils.h"
 #include "QrCodeGenerator.h"
 #include "QrCodeScannerFilter.h"
+#include "RecentPicturesModel.h"
 #include "RegistrationDataFormFilterModel.h"
 #include "RegistrationManager.h"
+#include "RosterFilterProxyModel.h"
 #include "RosterItemWatcher.h"
 #include "RosterManager.h"
 #include "RosterModel.h"
-#include "RosterFilterProxyModel.h"
 #include "ServerFeaturesCache.h"
-#include "ProviderListModel.h"
 #include "StatusBar.h"
 #include "UserDevicesModel.h"
-#include "VCardModel.h"
 #include "VCardManager.h"
+#include "VCardModel.h"
 #include "VersionManager.h"
-#include "RecentPicturesModel.h"
 
 Q_DECLARE_METATYPE(Qt::ApplicationState)
 
@@ -245,6 +246,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qRegisterMetaType<RosterManager*>();
 	qRegisterMetaType<Message>();
 	qRegisterMetaType<MessageModel*>();
+	qRegisterMetaType<ChatHintModel*>();
 	qRegisterMetaType<MessageHandler*>();
 	qRegisterMetaType<DiscoveryManager*>();
 	qRegisterMetaType<VCardManager*>();
@@ -301,6 +303,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qRegisterMetaType<MessageReactionDeliveryState>();
 	qRegisterMetaType<FileModel::Role>();
 	qRegisterMetaType<FileProxyModel::Mode>();
+	qRegisterMetaType<AccountManager::AutomaticMediaDownloadsRule>();
+	qRegisterMetaType<RosterItem::AutomaticMediaDownloadsRule>();
 
 	// QXmpp
 	qRegisterMetaType<QXmppResultSetReply>();
@@ -408,6 +412,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qmlRegisterType<QrCodeScannerFilter>(APPLICATION_ID, 1, 0, "QrCodeScannerFilter");
 	qmlRegisterType<VCardModel>(APPLICATION_ID, 1, 0, "VCardModel");
 	qmlRegisterType<RosterFilterProxyModel>(APPLICATION_ID, 1, 0, "RosterFilterProxyModel");
+	qmlRegisterType<BlockingModel>(APPLICATION_ID, 1, 0, "BlockingModel");
+	qmlRegisterType<BlockingWatcher>(APPLICATION_ID, 1, 0, "BlockingWatcher");
+	qmlRegisterType<BlockingAction>(APPLICATION_ID, 1, 0, "BlockingAction");
 	qmlRegisterType<MessageComposition>(APPLICATION_ID, 1, 0, "MessageComposition");
 	qmlRegisterType<FileSelectionModel>(APPLICATION_ID, 1, 0, "FileSelectionModel");
 	qmlRegisterType<CameraModel>(APPLICATION_ID, 1, 0, "CameraModel");
@@ -438,7 +445,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qmlRegisterType<OmemoWatcher>(APPLICATION_ID, 1, 0, "OmemoWatcher");
 	qmlRegisterType<HostCompletionModel>(APPLICATION_ID, 1, 0, "HostCompletionModel");
 	qmlRegisterType<HostCompletionProxyModel>(APPLICATION_ID, 1, 0, "HostCompletionProxyModel");
-	qmlRegisterType<ChatHintModel>(APPLICATION_ID, 1, 0, "ChatHintModel");
 	qmlRegisterType<FileModel>(APPLICATION_ID, 1, 0, "FileModel");
 	qmlRegisterType<FileProxyModel>(APPLICATION_ID, 1, 0, "FileProxyModel");
 
@@ -464,6 +470,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qmlRegisterUncreatableType<PublicGroupChat>("PublicGroupChats", 1, 0, "PublicGroupChat", "Used by PublicGroupChatModel");
 	qmlRegisterUncreatableType<HostCompletionModel>(APPLICATION_ID, 1, 0, "HostCompletionModel", "Cannot create object; only enums defined!");
 	qmlRegisterUncreatableType<MessageReactionDeliveryState>(APPLICATION_ID, 1, 0, "MessageReactionDeliveryState", "Cannot create object; only enums defined!");
+	qmlRegisterUncreatableType<RosterItem>(APPLICATION_ID, 1, 0, "RosterItem", "Cannot create object; only enums defined!");
 
 	qmlRegisterUncreatableMetaObject(ChatState::staticMetaObject, APPLICATION_ID, 1, 0, "ChatState", "Can't create object; only enums defined!");
 	qmlRegisterUncreatableMetaObject(Enums::staticMetaObject, APPLICATION_ID, 1, 0, "Enums", "Can't create object; only enums defined!");
@@ -490,6 +497,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	});
 	qmlRegisterSingletonType<MessageModel>(APPLICATION_ID, 1, 0, "MessageModel", [](QQmlEngine *, QJSEngine *) {
 		return static_cast<QObject *>(MessageModel::instance());
+	});
+	qmlRegisterSingletonType<ChatHintModel>(APPLICATION_ID, 1, 0, "ChatHintModel", [](QQmlEngine *, QJSEngine *) {
+		return static_cast<QObject *>(ChatHintModel::instance());
 	});
 	qmlRegisterSingletonType<HostCompletionModel>(APPLICATION_ID, 1, 0, "HostCompletionModel", [](QQmlEngine *, QJSEngine *) {
 		static auto self = new HostCompletionModel(qApp);

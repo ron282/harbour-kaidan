@@ -99,23 +99,40 @@ Item {
 			margins: Kirigami.Units.smallSpacing
 		}
 
-		Controls.Label {
-			id: timestamp
+		// warning for different encryption corner cases
+		ScalableText {
+			text: {
+				if (backgroundRoot.message.encryption === Encryption.NoEncryption) {
+					if (MessageModel.isOmemoEncryptionEnabled) {
+						// Encryption is set for the current chat but this message is unencrypted.
+						return qsTr("Unencrypted")
+					}
+				} else if (MessageModel.encryption !== Encryption.NoEncryption && !backgroundRoot.message.isTrusted){
+					// Encryption is set for the current chat but the key of this message's sender
+					// is not trusted.
+					return qsTr("Untrusted")
+				}
+
+				return ""
+			}
+			visible: text.length
+			color: Kirigami.Theme.neutralTextColor
+			font.italic: true
+			scaleFactor: 0.9
+		}
+
+		ScalableText {
+			text: backgroundRoot.message.errorText
+			visible: text.length
+			color: Kirigami.Theme.negativeTextColor
+			scaleFactor: 0.9
+		}
+
+		ScalableText {
+			text: backgroundRoot.message.time
+			color: Kirigami.Theme.disabledTextColor
 			opacity: 0.5
-			text: Qt.formatDateTime(message.dateTime, "hh:mm")
-			font.pointSize: -1
-			font.pixelSize: Kirigami.Units.gridUnit * (2/3)
-
-			MouseArea {
-				id: timestampMouseArea
-				anchors.fill: parent
-			}
-
-			Controls.ToolTip {
-				visible: timestampMouseArea.containsMouse
-				text: Qt.formatDateTime(message.dateTime, "dd. MMM yyyy, hh:mm")
-				delay: 500
-			}
+			scaleFactor: 0.9
 		}
 
 		Kirigami.Icon {

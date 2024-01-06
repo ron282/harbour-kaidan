@@ -20,9 +20,23 @@ ColumnLayout {
 
 	spacing: 0
 
+	MobileForm.FormCard {
+		implicitWidth: 570
+		Layout.fillWidth: true
+		Kirigami.Theme.colorSet: Kirigami.Theme.Window
+		contentItem: MobileForm.FormSwitchDelegate {
+			id: chatFilteringSwitch
+			text: qsTr("Filter by availability")
+			description: qsTr("Show only available contacts")
+			checked: root.rosterFilterProxyModel.onlyAvailableContactsShown
+			onToggled: root.rosterFilterProxyModel.onlyAvailableContactsShown = checked
+		}
+	}
+
 	ListView {
 		id: accountListView
 		model: RosterModel.accountJids
+		visible: count > 1
 		implicitWidth: 570
 		implicitHeight: contentHeight
 		Layout.fillWidth: true
@@ -100,6 +114,7 @@ ColumnLayout {
 	ListView {
 		id: groupListView
 		model: RosterModel.groups
+		visible: count
 		implicitWidth: 570
 		implicitHeight: contentHeight
 		Layout.fillWidth: true

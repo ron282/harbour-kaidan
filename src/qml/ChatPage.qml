@@ -57,7 +57,7 @@ ChatPageBase {
 	property alias messageReactionDetailsSheet: messageReactionDetailsSheet
 
 	property ChatPageSendingPane sendingPane
-	property string messageToCorrect
+	property ChatInfo globalChatDate
 	readonly property bool cameraAvailable: Multimedia.QtMultimedia.availableCameras.length > 0
 	property bool viewPositioned: false
 
@@ -72,7 +72,7 @@ ChatPageBase {
 				Layout.leftMargin: Kirigami.Units.largeSpacing
 				Layout.preferredHeight: parent.height
 				Layout.preferredWidth: parent.height
-				jid: chatItemWatcher.item.jid
+				jid: MessageModel.currentChatJid
 				name: chatItemWatcher.item.displayName
 			}
 			Kirigami.Heading {
@@ -98,7 +98,7 @@ ChatPageBase {
 			id: searchAction
 			text: qsTr("Search")
 			icon.name: "system-search-symbolic"
-
+			displayHint: Kirigami.DisplayHint.IconOnly
 			onTriggered: {
 				if (searchBar.active)
 					searchBar.close()
@@ -109,7 +109,8 @@ ChatPageBase {
 		Kirigami.Action {
 			visible: !sendingPane.composition.isSpoiler
 			icon.name: "password-show-off"
-			text: qsTr("Send a spoiler message")
+			text: qsTr("Add hidden message part")
+			displayHint: Kirigami.DisplayHint.IconOnly
 			onTriggered: sendingPane.composition.isSpoiler = true
 		}
 	]
@@ -128,6 +129,7 @@ ChatPageBase {
 		id: contactDetailsSheet
 
 		ContactDetailsSheet {
+			accountJid: MessageModel.currentAccountJid
 			jid: MessageModel.currentChatJid
 		}
 	}
@@ -136,6 +138,7 @@ ChatPageBase {
 		id: contactDetailsPage
 
 		ContactDetailsPage {
+			accountJid: MessageModel.currentAccountJid
 			jid: MessageModel.currentChatJid
 		}
 	}
@@ -164,6 +167,33 @@ ChatPageBase {
 		id: messageListView
 		verticalLayoutDirection: ListView.BottomToTop
 		spacing: 0
+		footerPositioning: ListView.OverlayFooter
+		section.property: "nextDate"
+		section.delegate: ColumnLayout {
+			anchors.horizontalCenter: parent.horizontalCenter
+			spacing: 0
+
+			Item {
+				height: Kirigami.Units.smallSpacing * 3
+			}
+
+			// placeholder for the hidden chatDate
+			Item {
+				height: chatDate.height
+				visible: !chatDate.visible
+			}
+
+			ChatInfo {
+				id: chatDate
+				text: section
+				// Hide the date if the section label would display the same date as globalChatDate.
+				visible: root.globalChatDate && text !== root.globalChatDate.text
+			}
+
+			Item {
+				height: Kirigami.Units.smallSpacing
+			}
+		}
 
 		// Highlighting of the message containing a searched string.
 		highlight: Component {
@@ -279,14 +309,15 @@ ChatPageBase {
 			reactionDetailsSheet: root.messageReactionDetailsSheet
 			modelIndex: index
 			msgId: model.id
-			senderJid: model.sender
+			senderId: model.senderId
 			senderName: model.isOwn ? "" : chatItemWatcher.item.displayName
 			chatName: chatItemWatcher.item.displayName
 			encryption: model.encryption
 			isTrusted: model.isTrusted
 			isOwn: model.isOwn
 			messageBody: model.body
-			dateTime: new Date(model.timestamp)
+			date: model.date
+			time: model.time
 			deliveryState: model.deliveryState
 			deliveryStateName: model.deliveryStateName
 			deliveryStateIcon: model.deliveryStateIcon
@@ -300,12 +331,7 @@ ChatPageBase {
 			detailedReactions: model.detailedReactions
 			ownDetailedReactions: model.ownDetailedReactions
 
-			onMessageEditRequested: {
-				messageToCorrect = id
-
-				sendingPane.messageArea.text = body
-				sendingPane.messageArea.state = "edit"
-			}
+			onMessageEditRequested: (replaceId, body, spoilerHint) => sendingPane.prepareMessageCorrection(replaceId, body, spoilerHint)
 
 			onQuoteRequested: {
 				let quotedText = ""
@@ -321,6 +347,7 @@ ChatPageBase {
 
 		// Everything is upside down, looks like a footer
 		header: ColumnLayout {
+			visible: MessageModel.currentAccountJid !== MessageModel.currentChatJid
 			anchors.left: parent.left
 			anchors.right: parent.right
 			height: stateLabel.text ? 20 : 0
@@ -337,17 +364,60 @@ ChatPageBase {
 			}
 		}
 
-		footer: Controls.BusyIndicator {
-			visible: opacity !== 0.0
+		footer: ColumnLayout {
+			z: 2
 			anchors.horizontalCenter: parent.horizontalCenter
-			height: visible ? undefined : Kirigami.Units.smallSpacing * 4
-			padding: 0
-			opacity: MessageModel.mamLoading ? 1.0 : 0.0
+			spacing: 0
 
-			Behavior on opacity {
-				NumberAnimation {
-					duration: Kirigami.Units.shortDuration
+			Item {
+				height: Kirigami.Units.smallSpacing * 3
+			}
+
+			// date of the top-most (first) visible message shown at the top of the ChatPage
+			ChatInfo {
+				text: {
+					// The "yPosition" is checked in order to update/display the text once the
+					// ChatPage is opened and its messages loaded.
+					if (messageListView.visibleArea.yPosition >= 0) {
+						const contentY = messageListView.contentY
+
+						// Search until a message is found if there is a section label instead of a
+						// message at the top of the visible/content area.
+						// "i" is used as an offset.
+						for (let i = 0; i < 100; i++) {
+							const firstVisibleMessage = messageListView.itemAt(0, contentY + i)
+
+							if (firstVisibleMessage) {
+								return firstVisibleMessage.date
+							}
+						}
+
+						return ""
+					}
+
+					return ""
 				}
+				visible: text.length
+				Component.onCompleted: root.globalChatDate = this
+			}
+
+			Controls.BusyIndicator {
+				visible: opacity !== 0.0
+				height: visible ? undefined : Kirigami.Units.smallSpacing * 4
+				Layout.alignment: Qt.AlignHCenter
+				Layout.topMargin: Kirigami.Units.smallSpacing
+				padding: 0
+				opacity: MessageModel.mamLoading ? 1.0 : 0.0
+
+				Behavior on opacity {
+					NumberAnimation {
+						duration: Kirigami.Units.shortDuration
+					}
+				}
+			}
+
+			Item {
+				height: Kirigami.Units.smallSpacing
 			}
 		}
 
@@ -394,10 +464,9 @@ ChatPageBase {
 		height: contentHeight
 		verticalLayoutDirection: ListView.BottomToTop
 		interactive: false
-		model: ChatHintModel {}
+		model: ChatHintModel
 		delegate: ChatHintArea {
 			id: chatHintArea
-			chatHintModel: chatHintListView.model
 			index: model.index
 			text: model.text
 			buttons: model.buttons
@@ -429,9 +498,5 @@ ChatPageBase {
 			// Make it possible to directly enter a message after chatHintListView is focused because of changes in its model.
 			sendingPane.forceActiveFocus()
 		}
-	}
-
-	function saveDraft() {
-		sendingPane.composition.saveDraft();
 	}
 }

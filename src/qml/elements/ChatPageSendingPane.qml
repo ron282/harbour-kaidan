@@ -30,22 +30,27 @@ Controls.Pane {
 
 	property QtObject chatPage
 	property alias messageArea: messageArea
+	property string messageToCorrect
 	property int lastMessageLength: 0
-	readonly property MessageComposition composition: MessageComposition {
-		id: composition
-		account: AccountManager.jid
-		to: MessageModel.currentChatJid
+	property MessageComposition composition: MessageComposition {
+		accountJid: MessageModel.currentAccountJid
+		chatJid: MessageModel.currentChatJid
+		replaceId: messageToCorrect
 		body: messageArea.text
 		spoilerHint: spoilerHintField.text
-		draftId: MessageModel.currentDraftMessageId
 
-		onDraftFetched: {
-			this.isSpoiler = isSpoiler;
-			spoilerHintField.text = spoilerHint;
-			messageArea.text = body;
+		onIsDraftChanged: {
+			if (isDraft) {
+				if (replaceId) {
+					prepareMessageCorrection(replaceId, body, spoilerHint)
+				} else {
+					messageArea.text = body
+					spoilerHintField.text = spoilerHint
 
-			// Position the cursor after the draft message's body.
-			messageArea.cursorPosition = messageArea.text.length
+					// Position the cursor after the draft message's body.
+					messageArea.cursorPosition = messageArea.text.length
+				}
+			}
 		}
 	}
 
@@ -60,14 +65,14 @@ Controls.Pane {
 			Controls.TextArea {
 				id: spoilerHintField
 				Layout.fillWidth: true
-				placeholderText: qsTr("Spoiler hint")
+				placeholderText: qsTr("Visible message part")
 				wrapMode: Controls.TextArea.Wrap
 				selectByMouse: true
 				background: Item {}
 			}
 
 			Controls.Button {
-				text: qsTr("Close spoiler hint field")
+				text: qsTr("Cancel adding hidden message part")
 				icon.name: "window-close-symbolic"
 				display: Controls.Button.IconOnly
 				flat: true
@@ -105,7 +110,13 @@ Controls.Pane {
 
 			Controls.TextArea {
 				id: messageArea
-				placeholderText: MessageModel.isOmemoEncryptionEnabled ? qsTr("Compose <b>encrypted</b> message") : qsTr("Compose <b>unencrypted</b> message")
+				placeholderText: {
+					if (root.composition.isSpoiler) {
+						return MessageModel.isOmemoEncryptionEnabled ? qsTr("Compose <b>encrypted </b> message with hidden part") : qsTr("Compose <b>unencrypted</b> message with hidden part")
+					} else {
+						return MessageModel.isOmemoEncryptionEnabled ? qsTr("Compose <b>encrypted</b> message") : qsTr("Compose <b>unencrypted</b> message")
+					}
+				}
 				background: Item {}
 				wrapMode: TextEdit.Wrap
 				Layout.leftMargin: Style.isMaterial ? 6 : 0
@@ -135,14 +146,6 @@ Controls.Pane {
 						name: "edit"
 					}
 				]
-
-				onStateChanged: {
-					if (state === "edit") {
-						// Move the cursor to the end of the text being corrected.
-						forceActiveFocus()
-						cursorPosition = text.length
-					}
-				}
 
 				Keys.onReturnPressed: {
 					if (event.key === Qt.Key_Return) {
@@ -359,6 +362,18 @@ Controls.Pane {
 		}
 	}
 
+	function prepareMessageCorrection(replaceId, body, spoilerHint) {
+		messageToCorrect = replaceId
+		messageArea.text = body
+		composition.isSpoiler = spoilerHint.length
+		spoilerHintField.text = spoilerHint
+		messageArea.state = "edit"
+
+		// Move the cursor to the end of the text being corrected and focus it.
+		messageArea.cursorPosition = messageArea.text.length
+		forceActiveFocus()
+	}
+
 	/**
 	 * Sends the text entered in the messageArea.
 	 */
@@ -374,7 +389,8 @@ Controls.Pane {
 		if (messageArea.state === "compose") {
 			composition.send()
 		} else if (messageArea.state === "edit") {
-			MessageModel.correctMessage(chatPage.messageToCorrect, messageArea.text)
+			MessageModel.correctMessage(messageToCorrect, messageArea.text, spoilerHintField.text)
+			composition.isDraft = false
 		}
 		MessageModel.resetComposingChatState();
 
@@ -427,8 +443,9 @@ Controls.Pane {
 
 	function clearMessageArea() {
 		messageArea.text = ""
+		composition.isSpoiler = false
 		spoilerHintField.text = ""
-		chatPage.messageToCorrect = ''
+		messageToCorrect = ""
 		messageArea.state = "compose"
 	}
 }

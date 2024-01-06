@@ -28,7 +28,9 @@
             "sources": [
                 {
                     "type": "git",
-                    "url": "https://invent.kde.org/libraries/kirigami-addons.git"
+                    "url": "https://invent.kde.org/libraries/kirigami-addons.git",
+                    "tag": "v0.11.0",
+                    "commit": "42f0df909b82e6a928193db088003f275493e262"
                 }
             ]
         },
@@ -76,6 +78,31 @@
                 }
             ],
             "cleanup": ["/include", "/lib/cmake", "/lib/pkgconfig"]
+        },
+        {
+            "name": "zxing",
+            "config-opts": [
+                "-DBUILD_DEPENDENCIES=LOCAL",
+                "-DBUILD_SHARED_LIBS=ON",
+                "-DBUILD_UNIT_TESTS=OFF",
+                "-DBUILD_BLACKBOX_TESTS=OFF",
+                "-DBUILD_EXAMPLES=OFF"
+            ],
+            "buildsystem": "cmake-ninja",
+            "builddir": true,
+            "sources": [
+                {
+                    "type": "git",
+                    "url": "https://github.com/zxing-cpp/zxing-cpp.git",
+                    "tag": "v2.1.0"
+                }
+            ],
+            "cleanup": [
+                "/include",
+                "*.pc",
+                "/lib/*/cmake",
+                "libZXing.so"
+            ]
         },
         {
             "name": "kaidan",

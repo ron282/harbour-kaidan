@@ -27,23 +27,21 @@ Kirigami.GlobalDrawer {
 	}
 
 	Component {
-		id: accountDetailsSheet
+		id: searchPublicGroupChatSheet
 
-		AccountDetailsSheet {}
+		SearchPublicGroupChatSheet {}
 	}
 
 	Component {
-		id: accountDetailsPage
+		id: deviceSwitchingPage
 
-		AccountDetailsPage {}
+		DeviceSwitchingPage {}
 	}
 
-	SearchPublicGroupChatSheet {
-		id: searchPublicGroupChatSheet
-	}
-
-	SettingsSheet {
+	Component {
 		id: settingsSheet
+
+		SettingsSheet {}
 	}
 
 	topContent: [
@@ -104,9 +102,8 @@ Kirigami.GlobalDrawer {
 								padding: 10
 								Layout.margins: 10
 								Layout.fillWidth: true
-								background: Rectangle {
+								background: RoundedRectangle {
 									color: Kirigami.Theme.negativeBackgroundColor
-									radius: roundedCornersRadius
 								}
 							}
 						}
@@ -127,10 +124,7 @@ Kirigami.GlobalDrawer {
 					MobileForm.FormButtonDelegate {
 						text: qsTr("Add contact by QR code")
 						icon.name: "view-barcode-qr"
-						onClicked: {
-							root.close()
-							pageStack.layers.push(qrCodePage)
-						}
+						onClicked: openPageFromGlobalDrawer(qrCodePage)
 					}
 
 					MobileForm.FormButtonDelegate {
@@ -143,10 +137,7 @@ Kirigami.GlobalDrawer {
 						id: publicGroupChatSearchButton
 						text: qsTr("Search public groups")
 						icon.name: "system-search-symbolic"
-						onClicked: {
-							root.close()
-							searchPublicGroupChatSheet.open()
-						}
+						onClicked: openOverlayFromGlobalDrawe(searchPublicGroupChatSheet)
 
 						Shortcut {
 							sequence: "Ctrl+G"
@@ -166,25 +157,13 @@ Kirigami.GlobalDrawer {
 					MobileForm.FormButtonDelegate {
 						text: qsTr("Switch device")
 						icon.name: "send-to-symbolic"
-						onClicked: {
-							root.close()
-							pageStack.layers.push("AccountTransferPage.qml")
-						}
+						onClicked: openPageFromGlobalDrawer(deviceSwitchingPage)
 					}
 
 					MobileForm.FormButtonDelegate {
 						text: qsTr("Settings")
 						icon.name: "preferences-system-symbolic"
-						onClicked: {
-							root.close()
-
-							if (Kirigami.Settings.isMobile) {
-								if (pageStack.layers.depth < 2)
-									pageStack.layers.push(settingsPage)
-							} else {
-								settingsSheet.open()
-							}
-						}
+						onClicked: openViewFromGlobalDrawer(settingsSheet, settingsSheet)
 					}
 				}
 			}
@@ -215,6 +194,16 @@ Kirigami.GlobalDrawer {
 		return openViewFromGlobalDrawer(contactAdditionDialog, contactAdditionPage)
 	}
 
+	function openOverlayFromGlobalDrawe(overlayComponent) {
+		root.close()
+		return openOverlay(overlayComponent)
+	}
+
+	function openPageFromGlobalDrawer(pageComponent) {
+		root.close()
+		return openPage(pageComponent)
+	}
+
 	function openViewFromGlobalDrawer(overlayComponent, pageComponent) {
 		root.close()
 		return openView(overlayComponent, pageComponent)
@@ -224,7 +213,6 @@ Kirigami.GlobalDrawer {
 		target: Kaidan
 
 		function onCredentialsNeeded() {
-			accountDetailsSheet.close()
 			close()
 		}
 

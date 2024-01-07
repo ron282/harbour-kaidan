@@ -37,6 +37,10 @@ class RosterModel : public QAbstractListModel
 	Q_PROPERTY(QStringList accountJids READ accountJids NOTIFY accountJidsChanged)
 	Q_PROPERTY(QStringList groups READ groups NOTIFY groupsChanged)
 
+#if defined (SFOS)
+    Q_PROPERTY(int unreadMessages READ getUnreadMessagesCount NOTIFY unreadMessagesChanged)
+#endif
+
 public:
 	enum RosterItemRoles {
 		AccountJidRole,
@@ -98,7 +102,12 @@ public:
 	Q_INVOKABLE void updateGroup(const QString &oldGroup, const QString &newGroup);
 	Q_INVOKABLE void removeGroup(const QString &group);
 
-	/**
+#if defined (SFOS)
+    int getUnreadMessagesCount() const;
+    Q_SIGNAL void unreadMessagesChanged();
+#endif
+
+    /**
 	 * Returns whether an account's presence is subscribed by a roster item.
 	 *
 	 * @param accountJid JID of the account whose roster item's presence subcription is requested

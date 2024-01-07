@@ -18,11 +18,11 @@ SettingsPageBase {
            anchors.horizontalCenter: parent.horizontalCenter
 
            PageHeader {
-                title: qsTr("About Kaidan")
+                title: qsTr("About SailKaidan")
            }
 
            Image {
-                source: Utils.getResourcePath("images/kaidan.svg")
+                source: Utils.getResourcePath("images/sailkaidan.svg")
                 width: parent.width
                 fillMode: Image.PreserveAspectFit
                 sourceSize: Qt.size(width, height)

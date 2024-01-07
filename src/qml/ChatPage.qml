@@ -51,7 +51,6 @@ ChatPageBase {
 	property bool viewPositioned: false
     onStatusChanged: {
         if (status === PageStatus.Active && forwardNavigation === false) {
-            console.log("Push attached")
             pageStack.pushAttached(contactDetailsPage)
         }
     }
@@ -99,17 +98,51 @@ ChatPageBase {
         id: messageReactionDetailsSheet
     }
 
+    PageHeader {
+        id: header
+        title: chatItemWatcher.item.displayName
+
+        Rectangle {
+            id: extraContent
+            height: Theme.itemSizeMedium
+            width: parent.width
+            color: "transparent"
+            anchors.fill: parent;
+
+            SilicaItem {
+                height: Theme.iconSizeMedium
+                width:Theme.iconSizeMedium
+                anchors {
+                    left: parent.left
+                    leftMargin: Theme.pageStackIndicatorWidth
+                    verticalCenter: parent.verticalCenter
+                }
+                Avatar {
+                    id: avatar
+                    jid: chatItemWatcher.item.jid
+                    name: chatItemWatcher.item.displayName
+                    smooth: true;
+                    onClicked: contactDetailsSheet.show()
+                }
+            }
+
+            ChatPageSearchView {
+                id: searchBar
+            }
+         }
+    }
+
     // View containing the messages
     SilicaListView {
 		id: messageListView
         anchors {
-            top: parent.top
+            top: header.bottom
             left: parent.left
             right: parent.right
             bottom: sendingPane.top
         }
 
-        PullDownMenu {
+  /*      PullDownMenu {
             MenuItem {
                 visible: false
                 text: qsTr("Details…")
@@ -133,43 +166,7 @@ ChatPageBase {
                 onClicked: sendingPane.composition.isSpoiler = true
             }
         }
-
-//      footerPositioning: ListView.OverlayFooter
-        footer: PageHeader {
-            id: header
-            title: chatItemWatcher.item.displayName
-
-            Rectangle {
-                id: extraContent
-                height: Theme.itemSizeMedium
-                width: parent.width
-                color: "transparent"
-                anchors.fill: parent;
-
-                SilicaItem {
-                    height: Theme.iconSizeMedium
-                    width:Theme.iconSizeMedium
-                    anchors {
-                        left: parent.left
-                        leftMargin: Theme.pageStackIndicatorWidth
-                        verticalCenter: parent.verticalCenter
-                    }
-                    Avatar {
-                        id: avatar
-                        jid: chatItemWatcher.item.jid
-                        name: chatItemWatcher.item.displayName
-                        smooth: true;
-                        onClicked: contactDetailsSheet.show()
-                    }
-                }
-
-                ChatPageSearchView {
-                    id: searchBar
-                }
-             }
-        }
-
-
+*/
 
         VerticalScrollDecorator { flickable: messageListView }
         verticalLayoutDirection: ListView.BottomToTop

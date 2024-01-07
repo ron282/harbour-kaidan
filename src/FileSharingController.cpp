@@ -296,10 +296,6 @@ void FileSharingController::sendMessage(Message &&message, bool encrypt)
 				QUrl sourceUrl;
 				if (!s.httpSources().empty()) {
                     sourceUrl = s.httpSources().first().url();
-#if defined(WITH_OMEMO_V03)
-                    sourceUrl.setFragment(s.iv().toHex()+s.key().toHex());
-                    sourceUrl.setScheme("aesgcm");
-#endif
                 }
 
 				std::optional<qint64> encryptedDataId;
@@ -334,7 +330,10 @@ void FileSharingController::sendMessage(Message &&message, bool encrypt)
                 if(message.files.isEmpty() == false && message.body.isEmpty()) {
                     if(message.files.first().encryptedSources.isEmpty() == false) {
                         auto encryptedSource = message.files.first().encryptedSources.first();
-                        message.body = encryptedSource.url.toString();
+                        QUrl msgUrl(encryptedSource.url);
+                        msgUrl.setScheme("aesgcm");
+                        msgUrl.setFragment(encryptedSource.iv.toHex()+encryptedSource.key.toHex());
+                        message.body = msgUrl.toString() + QChar(10) + "data:"+message.files.first().mimeType.name();
                     }
                 }
 #endif
@@ -461,7 +460,6 @@ void FileSharingController::downloadFile(const QString &messageId, const File &f
 		auto output = std::make_unique<QFile>(filePath);
 
 		if (!output->open(QIODevice::WriteOnly)) {
-			qDebug() << "Failed to open output file at" << filePath;
 			return;
 		}
 
@@ -479,7 +477,6 @@ void FileSharingController::downloadFile(const QString &messageId, const File &f
 			auto result = download->result();
 			if (std::holds_alternative<QXmppError>(result)) {
 				auto errorText = std::get<QXmppError>(result).description;
-
 				emit Kaidan::instance()->passiveNotificationRequested(
 					tr("Couldn't download file: %1").arg(errorText));
 			} else if (std::holds_alternative<QXmppFileDownload::Downloaded>(result)) {

@@ -128,8 +128,12 @@ QFuture<void> OmemoManager::setUp()
 					interface.reportFinished();
 				});
 			} else {
-				emit Kaidan::instance()->passiveNotificationRequested(tr("End-to-end encryption via OMEMO 2 could not be set up"));
-				interface.reportFinished();
+#if defined(WITH_OMEMO_V03)
+                emit Kaidan::instance()->passiveNotificationRequested(tr("End-to-end encryption via OMEMO 0 could not be set up"));
+#else
+                emit Kaidan::instance()->passiveNotificationRequested(tr("End-to-end encryption via OMEMO 2 could not be set up"));
+#endif
+                interface.reportFinished();
 			}
 		});
 	}
@@ -176,8 +180,7 @@ QFuture<bool> OmemoManager::hasUsableDevices(const QList<QString> &jids)
 QFuture<void> OmemoManager::requestDeviceLists(const QList<QString> &jids)
 {
 	QFutureInterface<void> interface(QFutureInterfaceBase::Started);
-
-	auto future = m_manager->requestDeviceLists(jids);
+    auto future = m_manager->requestDeviceLists(jids);
 	future.then(this, [interface](auto &&) mutable {
 		interface.reportFinished();
 	});
@@ -305,9 +308,13 @@ void OmemoManager::retrieveDevices(const QList<QString> &jids)
 		JidLabelMap authenticatableDevices;
 
 		for (const auto &device : std::as_const(devices)) {
-			const auto jid = device.jid();
+            const auto jid = device.jid();
 			const auto trustLevel = device.trustLevel();
 			const auto label = device.label();
+
+#if defined(WITH_OMEMO_V03)
+            qDebug() << "device: " << jid << ":" << device.keyId().toHex() << " trustLevel: " << (int)trustLevel;
+#endif
 
 			if ((QXmpp::TrustLevel::AutomaticallyDistrusted | QXmpp::TrustLevel::ManuallyDistrusted).testFlag(trustLevel)) {
                 distrustedDevices.insert(jid, label);

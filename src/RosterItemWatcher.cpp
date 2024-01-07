@@ -42,15 +42,19 @@ void RosterItemNotifier::unregisterItemWatcher(const QString &jid, RosterItemWat
 #if defined(SFOS)
 	auto list = m_itemWatchers.values(jid);
 	int i = 0;
-	while(i < list.size()) {
+    while(i < list.size()) {
 		if(list[i] == watcher) {
 			if(m_itemWatchers.remove(jid) > 1) {
 				list = m_itemWatchers.values(jid);
 				i = 0;	
-			} else {
-				i++;
-			}
-		}
+            }
+            else {
+                i++;
+            }
+        }
+        else {
+            i++;
+        }
 	}
 #else
 	auto [keyBegin, keyEnd] = m_itemWatchers.equal_range(jid);
@@ -82,13 +86,13 @@ void RosterItemWatcher::setJid(const QString &jid)
 {
 	if (jid != m_jid) {
 		unregister();
-		m_jid = jid;
+        m_jid = jid;
 		RosterItemNotifier::instance().registerItemWatcher(m_jid, this);
-		emit jidChanged();
+        emit jidChanged();
 #ifndef UNIT_TEST
 		notify(RosterModel::instance()->findItem(m_jid));
 #endif
-	}
+    }
 }
 
 const RosterItem &RosterItemWatcher::item() const

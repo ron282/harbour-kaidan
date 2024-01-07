@@ -158,20 +158,20 @@ void MessageHandler::handleMessage(const QXmppMessage &msg, MessageOrigin origin
 	}
 
 	if (handleReadMarker(msg, senderJid, recipientJid, isOwnMessage)) {
-		return;
-	}
+        return;
+    }
 
 	if (handleReaction(msg, senderJid)) {
-		return;
+        return;
 	}
 
 	if (msg.body().isEmpty() && msg.outOfBandUrl().isEmpty() && msg.sharedFiles().isEmpty()) {
-		return;
+        return;
 	}
 
 	// Close a notification for messages to which the user replied via another own resource.
 	if (isOwnMessage) {
-		emit Notifications::instance()->closeMessageNotificationRequested(senderJid, recipientJid);
+        emit Notifications::instance()->closeMessageNotificationRequested(senderJid, recipientJid);
 	}
 
 	Message message;
@@ -183,7 +183,7 @@ void MessageHandler::handleMessage(const QXmppMessage &msg, MessageOrigin origin
 	if (auto e2eeMetadata = msg.e2eeMetadata()) {
 		message.encryption = Encryption::Enum(e2eeMetadata->encryption());
 		message.senderKey = e2eeMetadata->senderKey();
-	}
+    }
 
 	parseSharedFiles(msg, message);
 
@@ -192,9 +192,15 @@ void MessageHandler::handleMessage(const QXmppMessage &msg, MessageOrigin origin
 		message.body = tr("This message is encrypted with %1 but could not be decrypted").arg(encryptionName);
 	} else {
 		// Do not use the file sharing fallback body.
+#if defined(WITH_OMEMO_V03)
+        if (msg.body() != msg.outOfBandUrl() && message.files.count() == 0) {
+            message.body = msg.body();
+        }
+#else
 		if (msg.body() != msg.outOfBandUrl()) {
 			message.body = msg.body();
 		}
+#endif
 	}
 
 	message.isSpoiler = msg.isSpoiler();
@@ -308,8 +314,6 @@ void MessageHandler::handleConnected()
 
 void MessageHandler::sendPendingMessage(Message message)
 {
-    qDebug() << " MessageHandler::sendPendingMessage";
-    qDebug() << " ->message.body:" << message.body;
 
 	if (m_client->state() == QXmppClient::ConnectedState) {
 		// if the message is a pending edition of the existing in the history message
@@ -345,7 +349,54 @@ void MessageHandler::sendPendingMessage(Message message)
 
 std::optional<File> MessageHandler::parseOobUrl(const QXmppOutOfBandUrl &url, qint64 fileGroupId)
 {
-	if (!MediaUtils::isHttp(url.url())) {
+#if defined(WITH_OMEMO_V03)
+    // Support XEP-0454
+    QUrl oobUrl(url.url());
+    if (oobUrl.isValid() && oobUrl.scheme() == "aesgcm") {
+        QUrl fileUrl(oobUrl);
+        QString ivAndKey = oobUrl.fragment();
+        const auto name = oobUrl.fileName();
+        const auto id = static_cast<qint64>(QRandomGenerator::system()->generate64());
+        fileUrl.setScheme("https");
+        fileUrl.setFragment(QString::null);
+        if(ivAndKey.count() == 88 || ivAndKey.count() == 96) {
+            return File {
+                .id = id,
+                .fileGroupId = fileGroupId,
+                .name = name,
+                .description = url.description(),
+                .mimeType = [&name] {
+                    const auto possibleMimeTypes = MediaUtils::mimeDatabase().mimeTypesForFileName(name);
+                    if (possibleMimeTypes.empty()) {
+                        return MediaUtils::mimeDatabase().mimeTypeForName("application/octet-stream");
+                    }
+                    return possibleMimeTypes.front();
+                }(),
+                .size = {},
+                .lastModified = {},
+                .localFilePath = {},
+                .hashes = {},
+                .thumbnail = {},
+                .httpSources = {},
+                .encryptedSources = {
+                    EncryptedSource {
+                        .fileId = id,
+                        .url = fileUrl,
+                        .cipher = QXmpp::Cipher::Aes256GcmNoPad,
+                        .key = QByteArray::fromHex(ivAndKey.right(64).toLatin1()),
+                        .iv = QByteArray::fromHex(ivAndKey.left(ivAndKey.count()-64).toLatin1()),
+                        .encryptedDataId = QRandomGenerator::system()->generate64(),
+                        .encryptedHashes = {}
+                    }
+                }
+            };
+        } else {
+            return {};
+        }
+    }
+#endif
+
+    if (!MediaUtils::isHttp(url.url())) {
 		return {};
 	}
 
@@ -604,8 +655,6 @@ bool MessageHandler::handleReaction(const QXmppMessage &message, const QString &
 
 void MessageHandler::parseSharedFiles(const QXmppMessage &message, Message &messageToEdit)
 {
-    qDebug() << "parseSharedFiles message.body:" << message.body();
-
 	if (const auto sharedFiles = message.sharedFiles(); !sharedFiles.empty()) {
 		messageToEdit.fileGroupId = QRandomGenerator::system()->generate64();
 		messageToEdit.files = transform(sharedFiles, [message, fgid = messageToEdit.fileGroupId](const QXmppFileShare &file) {
@@ -679,53 +728,24 @@ void MessageHandler::parseSharedFiles(const QXmppMessage &message, Message &mess
     }
 #if defined(WITH_OMEMO_V03)
     else if (message.body().startsWith("aesgcm://")) {
+        // Support XEP-0454
+        QXmppOutOfBandUrl data;
+        QVector<QXmppOutOfBandUrl> urls;
+        QStringList strings = message.body().split("\n");
+        data.setUrl(strings.at(0));
+        urls.push_back(std::move(data));
+        messageToEdit.body.clear();
 
-        QUrl fileUrl(message.body());
-        QString ivAndKey = fileUrl.fragment();
-        const auto name (fileUrl.fileName());
-        fileUrl.setScheme("https");
-        fileUrl.setFragment(QString::null);
+        //FIXME process thumbnail if any
 
-        if(ivAndKey.count() == 88 || ivAndKey.count() == 96) {            
-            messageToEdit.body = " ";
-            messageToEdit.fileGroupId = QRandomGenerator::system()->generate64();
-            auto fId = qint64(QRandomGenerator::system()->generate64());
-            messageToEdit.files.append(
-                File {
-                .id = fId,
-                .name = name,
-                .description = "",
-                .mimeType = [&name] {
-                                const auto possibleMimeTypes = MediaUtils::mimeDatabase().mimeTypesForFileName(name);
-                                if (possibleMimeTypes.empty()) {
-                                    return MediaUtils::mimeDatabase().mimeTypeForName("application/octet-stream");
-                                }
+        const qint64 fileGroupId = QRandomGenerator::system()->generate64();
+        messageToEdit.files = transformFilter(urls, [&](auto &file) {
+            return MessageHandler::parseOobUrl(file, fileGroupId);
+        });
 
-                                return possibleMimeTypes.front();
-                            }(),
-                .size = {},
-                .lastModified = {},
-                .localFilePath = {},
-                .hashes = {},
-                .thumbnail = {},
-                .httpSources = {
-                    HttpSource {
-                        .fileId = fId,
-                        .url = fileUrl.url()
-                    }
-                },
-                .encryptedSources {
-                    EncryptedSource {
-                        .fileId = fId,
-                        .url = fileUrl,
-                        .cipher = QXmpp::Cipher::Aes256GcmNoPad,
-                        .key = QByteArray::fromHex(ivAndKey.right(64).toLatin1()),
-                        .iv = QByteArray::fromHex(ivAndKey.left(ivAndKey.count()-64).toLatin1()),
-                        .encryptedDataId = QRandomGenerator::system()->generate64(),
-                        .encryptedHashes = {}
-                    }
-                }
-            });
+        // don't set file group id if there are no files
+        if (!messageToEdit.files.empty()) {
+            messageToEdit.fileGroupId = fileGroupId;
         }
     }
 #endif
@@ -737,16 +757,8 @@ QFuture<QXmpp::SendResult> MessageHandler::send(QXmppMessage &&message)
 
 	const auto recipientJid = message.to();
 
-#if defined(WITH_OMEMO_V03)
-    //FIXME Need to find a solution to manually trust a device
-    QXmppSendStanzaParams sendParams;
-    sendParams.setAcceptedTrustLevels(QXmpp::TrustLevel::Undecided | QXmpp::TrustLevel::Authenticated);
-    auto sendEncrypted = [=, this]() mutable {
-        m_client->sendSensitive(std::move(message), sendParams).then(this, [=](QXmpp::SendResult result) mutable {
-#else
 	auto sendEncrypted = [=, this]() mutable {
         m_client->sendSensitive(std::move(message)).then(this, [=](QXmpp::SendResult result) mutable {
-#endif
             reportFinishedResult(interface, result);
 		});
 	};
@@ -770,7 +782,7 @@ QFuture<QXmpp::SendResult> MessageHandler::send(QXmppMessage &&message)
 				if (isOmemoEncryptionEnabled) {
 					sendEncrypted();
 				} else {
-					sendUnencrypted();
+                    sendUnencrypted();
 				}
 			});
 		} else {
@@ -792,7 +804,7 @@ QFuture<QXmpp::SendResult> MessageHandler::send(QXmppMessage &&message)
 						if (isOmemoEncryptionEnabled) {
 							sendEncrypted();
 						} else {
-							sendUnencrypted();
+                            sendUnencrypted();
 						}
 					});
 				} else {

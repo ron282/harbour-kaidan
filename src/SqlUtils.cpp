@@ -22,7 +22,6 @@ namespace SqlUtils {
 void prepareQuery(QSqlQuery &query, const QString &sql)
 {
 	if (!query.prepare(sql)) {
-		qDebug() << "Failed to prepare query:" << sql;
 		qFatal("QSqlError: %s", qPrintable(query.lastError().text()));
 	}
 }

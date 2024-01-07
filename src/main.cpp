@@ -392,8 +392,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	//
 	// Kaidan back-end
 	//
-//    Kaidan kaidan(!parser.isSet("disable-xml-log"));
-    Kaidan kaidan(false);
+    Kaidan kaidan(!parser.isSet("disable-xml-log"));
 
 #if !defined(Q_OS_IOS) && !defined(Q_OS_ANDROID) && !defined(SFOS) 
 	// receive messages from other instances of Kaidan
@@ -559,7 +558,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	// enter qt main loop
 	return app.exec();
 #else
-    qDebug() << "starting...";
 	return pApp->exec();
 #endif
 }

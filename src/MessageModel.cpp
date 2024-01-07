@@ -1120,22 +1120,22 @@ void MessageModel::resetCurrentChat(const QString &accountJid, const QString &ch
 {
 	// Send "gone" state for the previous chat.
 	if (!m_currentAccountJid.isEmpty() && !m_currentChatJid.isEmpty()) {
-		sendChatState(QXmppMessage::State::Gone);
-	}
+        sendChatState(QXmppMessage::State::Gone);
+    }
 
-	// Setting of the following attributes must be done before sending chat states for the new chat.
+    // Setting of the following attributes must be done before sending chat states for the new chat.
 	// Otherwise, the chat states would be sent for the previous chat.
 	m_currentAccountJid = accountJid;
 	m_currentChatJid = chatJid;
-	emit currentAccountJidChanged(accountJid);
-	emit currentChatJidChanged(chatJid);
+    emit currentAccountJidChanged(accountJid);
+    emit currentChatJidChanged(chatJid);
 
-	m_rosterItemWatcher.setJid(chatJid);
-	m_contactResourcesWatcher.setJid(chatJid);
-	m_accountOmemoWatcher.setJid(accountJid);
-	m_contactOmemoWatcher.setJid(chatJid);
-	m_lastReadOwnMessageId = m_rosterItemWatcher.item().lastReadOwnMessageId;
-	emit currentDraftMessageIdChanged(currentDraftMessageId());
+    m_rosterItemWatcher.setJid(chatJid);
+    m_contactResourcesWatcher.setJid(chatJid);
+    m_accountOmemoWatcher.setJid(accountJid);
+    m_contactOmemoWatcher.setJid(chatJid);
+    m_lastReadOwnMessageId = m_rosterItemWatcher.item().lastReadOwnMessageId;
+    emit currentDraftMessageIdChanged(currentDraftMessageId());
 
 	// Reset the chat states of the previous chat.
 	m_ownChatState = QXmppMessage::State::None;

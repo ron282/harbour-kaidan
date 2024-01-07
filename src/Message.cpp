@@ -209,9 +209,10 @@ QXmppFileShare File::toQXmpp() const
 	fs.setMetadata(metadata);
 	fs.setHttpSources(transform(httpSources, [](const HttpSource &fileSource) {
 		return fileSource.toQXmpp();
-	}));
-	fs.setEncryptedSourecs(transform(encryptedSources, [](const EncryptedSource &fileSource) {
-		return fileSource.toQXmpp();
+    }));
+
+    fs.setEncryptedSourecs(transform(encryptedSources, [](const EncryptedSource & fileSource) {
+        return fileSource.toQXmpp();
 	}));
 	return fs;
 }

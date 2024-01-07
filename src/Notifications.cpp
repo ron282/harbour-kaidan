@@ -11,6 +11,7 @@
 #include <QString>
 #include <chrono>
 #include "../3rdparty/QEmuStringView/qemustringview.h"
+#include "Notifications.h"
 #endif
 
 #include "Notifications.h"
@@ -219,8 +220,17 @@ void Notifications::closeMessageNotification(const QString &accountJid, const QS
 	}
 }
 #else
-void Notifications::sendMessageNotification(const QString &, const QString &, const QString &, const QString &)
+void Notifications::sendMessageNotification(const QString &accountJid, const QString &chatJid, const QString &messageId, const QString &messageBody)
 {
+    //FIX ME
+    //I don't know how to use notifications from C++
+    //Can't find the notification.h file mentionned in the doc
+    //Send the notification to QML to display it
+
+    auto rosterItem = RosterModel::instance()->findItem(chatJid);
+    auto chatName = rosterItem ? rosterItem->displayName() : chatJid;
+
+    emit Kaidan::instance()->messageNotification(chatJid, chatName, messageBody);
 }
 
 void Notifications::closeMessageNotification(const QString &, const QString &)

@@ -51,10 +51,6 @@ Page {
         width: parent.width
         spacing: Theme.paddingMedium
 
- //       PageHeader {
- //           title: qsTr("Settings")
- //       }
-
         PageHeader {
             title: qsTr("Kaidan")
         }
@@ -93,7 +89,7 @@ Page {
                             width: parent.width - 2*Theme.iconSizeMedium
                             text: AccountManager.displayName
                             description: Kaidan.connectionStateText
-//                            valueColor: accountArea.connected ? Theme.highlightColor: Theme.primaryColor
+                            highlighted: accountArea.connected
                             checked: !accountArea.disconnected
                             onClicked: {
                                 checked: !checked
@@ -106,17 +102,16 @@ Page {
                                 openViewFromGlobalDrawer(accountDetailsSheet, accountDetailsPage)
                             }
                         }
+                        Label {
+                            id: errorMessage
+                            width: parent.width
+                            visible: Kaidan.connectionError
+                            text: Kaidan.connectionError ? Utils.connectionErrorMessage(Kaidan.connectionError) : ""
+                            color: Theme.errorColor
+                            font.pixelSize: Theme.fontSizeTiny
+                            wrapMode: Text.WordWrap
+                        }
                     } // Row
-
-                    Label {
-                        id: errorMessage
-                        width: parent.width
-                        visible: Kaidan.connectionError
-                        text: Kaidan.connectionError ? Utils.connectionErrorMessage(Kaidan.connectionError) : ""
-                        color: Theme.errorColor
-                        font.pixelSize: Theme.fontSizeTiny
-                        wrapMode: Text.WordWrap
-                    }
                 } // Column
         } // ColumnView
 

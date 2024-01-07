@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2017 Linus Jahn <lnj@kaidan.im>
+    // SPDX-FileCopyrightText: 2017 Linus Jahn <lnj@kaidan.im>
 // SPDX-FileCopyrightText: 2020 Jonah Brüchert <jbb@kaidan.im>
 // SPDX-FileCopyrightText: 2020 Melvin Keskin <melvo@olomono.de>
 // SPDX-FileCopyrightText: 2020 caca hueto <cacahueto@olomono.de>
@@ -58,10 +58,10 @@ public:
 
 	void closeMessageNotification(const QString &accountJid, const QString &chatJid);
 
-	/**
+    /**
 	 * Emitted to close all chat message notifications of the same age or older than a timestamp.
 	 */
-	Q_SIGNAL void closeMessageNotificationRequested(const QString &accountJid, const QString &chatJid);
+    Q_SIGNAL void closeMessageNotificationRequested(const QString &accountJid, const QString &chatJid);
 
 private:
 	QVector<NotificationWrapper> m_openNotifications;

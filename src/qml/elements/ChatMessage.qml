@@ -193,6 +193,8 @@ ListItem {
                     }
 
                     Button {
+                        id: downloadMedia
+
                         visible: {
                             switch (root.mediaType) {
                             case Enums.MessageUnknown:

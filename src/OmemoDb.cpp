@@ -233,7 +233,7 @@ auto OmemoDb::removeDevice(const QString &jid, uint32_t deviceId) -> QXmppTask<v
 
 auto OmemoDb::removeDevices(const QString &jid) -> QXmppTask<void>
 {
-	return runTask([this, jid] {
+    return runTask([this, jid] {
 		auto query = createQuery();
 		execQuery(query,
 			QStringLiteral(

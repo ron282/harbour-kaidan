@@ -15,8 +15,7 @@ import QtQuick 2.2
 import Sailfish.Silica 1.0
 //import StatusBar 0.1
 import im.kaidan.kaidan 1.0
-import org.nemomobile.notifications 1.0
-
+import Nemo.Notifications 1.0
 
 import "elements"
 import "registration"
@@ -130,7 +129,6 @@ ApplicationWindow {
         // This is needed to call default action
         m.publish()
     }
-
 	function openStartPage() {
 //        globalDrawer.open = false
 //        dockedPanel().hide()
@@ -143,7 +141,6 @@ ApplicationWindow {
 	 * Opens the view with the roster and chat page.
 	 */
 	function openChatView() {
-        console.log("[main.qml] OpenChatView called")
 
 //        globalDrawer.open = true
 //        dockedPanel().show()
@@ -221,7 +218,6 @@ ApplicationWindow {
 		target: Kaidan
 
         onRaiseWindowRequested: {
-            console.log("[main.qml] onRaiseWindowRequested")
 			if (!root.active) {
 				root.raise()
 				root.requestActivate()
@@ -229,20 +225,42 @@ ApplicationWindow {
 		}
 
         onPassiveNotificationRequested: {
-            console.log("[main.qml] onPassiveNotificationRequested")
 			passiveNotification(text)
 		}
 
         onCredentialsNeeded: {
-            console.log("[main.qml] onCredentialsNeeded")
 			openStartPage()
 		}
 
         onOpenChatViewRequested: {
-            console.log("[main.qml] onOpenChatViewRequested")
 			openChatView()
 		}
-	}
+
+        onMessageNotification : {
+            var m = messageNotification.createObject(null)
+            m.category = "x-nemo.messaging.im"
+            m.previewSummary = chatName
+            m.previewBody = messageBody
+            m.summary = chatName
+            m.body = messageBody
+            m.clicked.connect(function() {
+                Kaidan.openChatPageRequested(AccountManager.jid, chatJid)
+                root.activate()
+            })
+            // This is needed to call default action
+            m.remoteActions = [ {
+                                   "name": "default",
+                                   "displayName": "Show SailKaidan",
+                                   "icon": "harbour-kaidan",
+                                   "service": "im.kaidan.kaidan",
+                                   "path": "/mainWindow",
+                                   "iface": "im.kaidan.kaidan",
+                                   "method": "showSession",
+                                   "arguments": [ "jid", chatJid ]
+                               } ]
+            m.publish()
+        }
+    }
 
 
     Connections {
@@ -258,13 +276,11 @@ ApplicationWindow {
     }
 
 	Component.onCompleted: {
-        console.log("[main.qml] onComponentCompleted")
         HostCompletionModel.rosterModel = RosterModel;
         //HostCompletionModel.aggregateKnownProviders();
 
 		if (AccountManager.loadConnectionData()) {
 			openChatView()
-            console.log("[main.qml] Kaidan.logIn()")
             // Announce that the user interface is ready and the application can start connecting.
             Kaidan.logIn()
 		} else {
@@ -273,15 +289,15 @@ ApplicationWindow {
     }
 
     cover: CoverBackground {
+
+        property int unreadMessages : 0
+
         Image {
             id: bgimg
-            source: Utils.getResourcePath("images/kaidan-cover.png")
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: parent.width
-            height: sourceSize.height * width / sourceSize.width
+            source: Utils.getResourcePath("images/sailkaidan-cover.png")
+            anchors.fill: parent
         }
         Column {
-            id: cover
             anchors.top: parent.top
             width: parent.width
             spacing: Theme.paddingMedium
@@ -290,15 +306,49 @@ ApplicationWindow {
                 width: parent.width
                 anchors.horizontalCenter: parent.horizontalCenter
                 horizontalAlignment: Text.AlignHCenter
-                font.family: Theme.fontFamilyHeading
+                font.pixelSize: Theme.fontSizeLarge
                 color: Theme.primaryColor
                 text:  Utils.applicationDisplayName
             }
             Label {
                 anchors.horizontalCenter: parent.horizontalCenter
-                font.family: Theme.fontFamily
                 text: Kaidan.connectionStateText
+                font.pixelSize: Theme.fontSizeLarge
+                color: Theme.highlightColor
             }
+            Label {
+                anchors.horizontalCenter: parent.horizontalCenter
+                font.pixelSize: Theme.fontSizeHuge
+                text: cover.unreadMessages.toString();
+            }
+            Label {
+                anchors.horizontalCenter: parent.horizontalCenter
+                font.pixelSize: Theme.fontSizeExtraSmall
+                maximumLineCount: 2
+                wrapMode: Text.Wrap
+                fontSizeMode: Text.HorizontalFit
+                text: qsTr("Unread messages")
+            }
+        }
+
+        Connections {
+            target: Kaidan
+            onMessageNotification: {
+                if (!root.active) {
+                    cover.unreadMessages++
+                }
+            }
+        }
+
+        Connections
+        {
+            target: root.pageStack.currentPage
+            onStatusChanged: if(root.pageStack.currentPage.status === PageStatus.Active)
+                cover.resetUnreadMessages()
+        }
+
+        function resetUnreadMessages() {
+            cover.unreadMessages = 0
         }
     }
 }

@@ -275,12 +275,16 @@ signals:
 	 */
 	void passiveNotificationRequested(QString text);
 
-	/**
+#if defined (SFOS)
+    void messageNotification(const QString &chatJid, const QString &chatName, const QString &messageBody);
+#endif
+
+    /**
 	 * XMPP URI received
 	 *
 	 * Is called when Kaidan was used to open an XMPP URI (i.e. 'xmpp:kaidan@muc.kaidan.im?join')
 	 */
-	void xmppUriReceived(QString uri);
+    void xmppUriReceived(QString uri);
 
 	/**
 	 * Emitted when changing of the user's password finished succfessully.

@@ -821,3 +821,15 @@ QString RosterModel::formattedLastMessageDateTime(const QDateTime &lastMessageDa
         return QLocale::system().toString(lastMessageLocalDateTime.date(), QLocale::ShortFormat);
     }
 }
+
+#if defined (SFOS)
+int RosterModel::getUnreadMessagesCount() const
+{
+    int unreadMessagesCount = 0;
+    for (const auto &item : std::as_const(m_items)) {
+        unreadMessagesCount += item.unreadMessages;
+    }
+    qDebug() << "getUnreadMessagesCount:" << unreadMessagesCount;
+    return unreadMessagesCount;
+}
+#endif

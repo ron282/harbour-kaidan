@@ -316,7 +316,6 @@ void FileSelectionModel::generateThumbnail(const File &f)
 
 
     auto *file = std::find_if(m_files.begin(), m_files.end(), [&](const auto &file) {
-        qDebug() << "FileSelectionModel:: " << file.localFilePath << "==" << f.localFilePath;
         return file.localFilePath == f.localFilePath;
     });
 

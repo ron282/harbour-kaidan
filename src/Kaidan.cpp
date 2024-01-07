@@ -40,8 +40,6 @@ Kaidan *Kaidan::s_instance;
 Kaidan::Kaidan(bool enableLogging, QObject *parent)
 	: QObject(parent)
 {
-    qDebug() << "enable logging:" << enableLogging;
-
 	Q_ASSERT(!s_instance);
     s_instance = this;
 
@@ -189,7 +187,6 @@ quint8 Kaidan::logInByUri(const QString &uri)
 
 Kaidan::TrustDecisionByUriResult Kaidan::makeTrustDecisionsByUri(const QString &uri, const QString &expectedJid)
 {
-    qDebug() <<  "makeTrustDecisionsByUri " << uri << ", expectedJid:" << expectedJid;
 	if (QXmppUri::isXmppUri(uri)) {
 		auto parsedUri = QXmppUri(uri);
 

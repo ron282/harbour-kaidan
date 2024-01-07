@@ -201,7 +201,6 @@ void Database::startTransaction()
     timer->setSingleShot(true);
     QObject::connect(timer, &QTimer::timeout, [timer, this]()
     {
-        qDebug() << "[database] transaction()";
         // main thread
         transaction();
         timer->deleteLater();
@@ -223,7 +222,6 @@ void Database::commitTransaction()
     QObject::connect(timer, &QTimer::timeout, [timer, this]()
     {
         // main thread
-        qDebug() << "[database] commit()";
         commit();
         timer->deleteLater();
     });

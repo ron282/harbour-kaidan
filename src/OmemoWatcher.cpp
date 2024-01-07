@@ -52,9 +52,7 @@ void OmemoWatcher::handleDistrustedOmemoDevicesRetrieved(const QString &jid, con
 void OmemoWatcher::handleUsableOmemoDevicesRetrieved(const QString &jid, const QList<QString> &deviceLabels)
 {
 	if (jid == m_jid) {
-        qDebug() << "handleUsableOmemoDevicesRetrieved" << " jid: " << jid << "deviceLabels.size:" << deviceLabels.size();
         m_usableOmemoDevices = deviceLabels;
-        qDebug() << "handleUsableOmemoDevicesRetrieved" << " jid: " << jid << "m_usableOmemoDevices.size:" << m_usableOmemoDevices.size();
         emit usableOmemoDevicesChanged();
 	}
 }

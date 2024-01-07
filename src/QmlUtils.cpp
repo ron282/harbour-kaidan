@@ -145,8 +145,6 @@ QString QmlUtils::trustMessageUriString(const QString &jid)
 	QList<QString> authenticatedKeys;
 	QList<QString> distrustedKeys;
 
-    qDebug() << "trustMessageUriString:" << jid;
-
 	for (auto itr = keys.constBegin(); itr != keys.constEnd(); ++itr) {
 		const auto key = itr.key().toHex();
 		const auto trustLevel = itr.value();

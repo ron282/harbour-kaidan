@@ -493,7 +493,6 @@ QByteArray MediaUtils::encodeImageThumbnail(const QPixmap &pixmap)
 
 QByteArray MediaUtils::encodeImageThumbnail(const QImage &image)
 {
-    qDebug() << "MediaUtils::encodeImageThumbnail";
 	QByteArray output;
 	QBuffer buffer(&output);
 	image.save(&buffer, "PNG");

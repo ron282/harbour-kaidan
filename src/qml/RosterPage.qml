@@ -62,19 +62,7 @@ Page {
 
     SilicaListView {
         id: rosterListView
-        PullDownMenu {
-                MenuItem {
-                    text: qsTr("Add contact by QR code")
-                    onClicked: {
-                        pageStack.push(qrCodePage)
-                    }
-                }
-                MenuItem {
-                    text: qsTr("Add contact by address")
-                    onClicked: {
-                        pageStack.push(contactAdditionPage)
-                    }
-                }
+//FIXME      PullDownMenu {
 //                MenuItem {
 //                    text: qsTr("Search")
 //                  visible: isSearchActionShown
@@ -82,7 +70,7 @@ Page {
 //                        toggleSearchBar()
 //                    }
 //                }
-            }
+//            }
 
         header:
             PageHeader {
@@ -110,7 +98,7 @@ Page {
 
         delegate: RosterListItem {
             listView: rosterListView
-            contextMenu: itemContextMenu
+//FIXME     contextMenu: itemContextMenu
             accountJid: AccountManager.jid
             jid: model ? model.jid : ""
             name: model ? (model.name ? model.name : model.jid) : ""
@@ -149,15 +137,12 @@ Page {
 */
                 MessageModel.setCurrentChat(accountJid, chatJid)
 
-                console.log("[roster.qml] MessageModel.setCurrentChat set")
-
                 // Close all pages (especially the chat page) except the roster page.
                 while (pageStack.depth > 2) {
                     pageStack.navigateBack(PageStackAction.Immediate)
                 }
 //                popLayersAboveLowest()
-
-                pageStack.push(chatPage)
+                pageStack.push(chatPage, PageStackAction.Immediate)
             }
         }
     }

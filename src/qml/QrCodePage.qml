@@ -44,7 +44,6 @@ ExplanationTogglePage {
     secondaryButton.visible: false
 
     explanation: Column {
-        width: parent.width - 2*Theme.horizontalPageMargin
         anchors.horizontalCenter: parent.horizontalCenter
 
         CenteredAdaptiveText {
@@ -58,12 +57,13 @@ ExplanationTogglePage {
 
         Image {
             source: Utils.getResourcePath(root.isForOwnDevices ? "images/qr-code-scan-own-1.svg" : "images/qr-code-scan-1.svg")
-            sourceSize: Qt.size(Screen.width-2*Theme.horizontalPageMargin, Screen.width-2*Theme.horizontalPageMargin)
+            sourceSize: Qt.size(Screen.height/3, Screen.height/3)
             fillMode: Image.PreserveAspectFit
             anchors.horizontalCenter: parent.horizontalCenter
         }
 
-        Separator {
+        BackgroundItem {
+            height: Theme.paddingLarge
         }
 
         CenteredAdaptiveText {
@@ -77,7 +77,7 @@ ExplanationTogglePage {
 
         Image {
             source: Utils.getResourcePath(root.isForOwnDevices ? "images/qr-code-scan-own-2.svg" : "images/qr-code-scan-2.svg")
-            sourceSize: Qt.size(Screen.width-2*Theme.horizontalPageMargin, Screen.width-2*Theme.horizontalPageMargin)
+            sourceSize: Qt.size(Screen.height/3, Screen.height/3)
             fillMode: Image.PreserveAspectFit
             anchors.horizontalCenter: parent.horizontalCenter
         }
@@ -86,15 +86,13 @@ ExplanationTogglePage {
     content: Column {
         visible: !Kaidan.settings.qrCodePageExplanationVisible
         anchors.horizontalCenter: parent.horizontalCenter
-//        width: applicationWindow().wideScreen ? parent.width : Math.min(Theme.buttonWidthLarge, parent.width, parent.height * 0.48)
-//        height: applicationWindow().wideScreen ? Math.min(parent.height, parent.width * 0.48) : parent.height
-        width: Theme.buttonWidthLarge
-        spacing: Theme.paddingLarge
+        spacing: Theme.paddingLarge*3
 
         QrCodeScanner {
             id: scanner
-            width: parent.width
-            height: parent.width
+            width: Screen.height/3
+            height: Screen.height/3
+            anchors.horizontalCenter: parent.horizontalCenter
 
             // Use the data from the decoded QR code.
             filter.onScanningSucceeded: {
@@ -171,12 +169,14 @@ ExplanationTogglePage {
             }
         }
 
-        Separator {
+        BackgroundItem {
+            height: Theme.paddingLarge*2
         }
 
         QrCode {
-            width: parent.width
-            height: parent.width
+            width: Screen.height/4
+            height: Screen.height/4
+            anchors.horizontalCenter: parent.horizontalCenter
         }
     }
 

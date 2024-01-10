@@ -12,15 +12,17 @@ SPDX-License-Identifier: CC0-1.0
 
 ## About
 
-SailKaidan is based on [Kaidan][kaidan-website]. 
+SailKaidan is based on [Kaidan][kaidan-website]. SailKaidan runs on SailfishOS. 
 
-[Kaidan][kaidan-website] is a simple, user-friendly and modern chat client. It
+SailKaidan is a simple, user-friendly and modern chat client. It
 uses the open communication protocol [XMPP (Jabber)][xmpp]. The user interface
 makes use of [Silica][silica-website] and [QtQuick][qtquick], while the
 back-end of Kaidan is entirely written in C++ using [Qt][qt] and the Qt-based
 XMPP library [QXmpp][qxmpp].
-7
-SailKaidan runs on SailfishOS. 
+
+SailKaidan supports end-to-end encryption compatible with [OMEMO v0.3][omemo-03] to be
+interoperable with [Conversations][conversations]. 
+
 
 SailKaidan does *not* have all basic features yet and has still some stability
 issues. Do not expect it to be as good as the currently dominating instant
@@ -35,13 +37,17 @@ Downloadable builds are available on [Openrepos.net][downloads].
 
 ## How to compile
 * Install SFDK development tools
+[Install SailfiskOS SDK][sfdk-install]
 
 * Install SFOS devices
-Need to open QtCreator and to install a device. You need to enable Development tools on your device. 
+Open QtCreator to install a device. You need to enable Development tools on your SailfishOS device. 
 
 * Create a directory for output rpm packages
 mkdir /home/user/dev/RPMS
 sfdk config --global --push output-target "/home/user/dev/RPMS"
+
+* Configure package generation without fix version
+sfdk config --global --push no-fix-version
 
 * Configure SFDK tools
 sfdk tools list
@@ -62,7 +68,7 @@ sfdk build\
 cd ../qca\
 sfdk build\
 cd ../qxmpp\
-git checkout 1.5\
+git checkout 1.6\
 sfdk build\
 cd ../harbour-kaidan\
 git checkout sfos\
@@ -85,20 +91,20 @@ cd ../harbour-kaidan\
 sfdk deploy --sdk\ 
 
 ## How to compile for another target
-sfdk config --global --push target "SailfishOS-4.5.0.18-aarch64"\
-sfdk config --global --push device "Xperia 10 III (ARM 64bit)"\
+sfdk config --global --push target "SailfishOS-4.5.0.18-armv7hl"\
+sfdk config --global --push device "Xperia10"\
 
 cd ../libomemo-c\
-rm -rf build\
-sfdk deploy --sdk omemo-c\
+git clean -xfd
+sfdk build
 cd ../qca\
-rm -rf build\
-sfdk deploy --sdk qca\
+git clean -xfd
+sfdk build
 cd ../qxmpp\
-rm -rf build\
-sfdk deploy --sdk QXmpp\
+git clean -xfd
+sfdk build
 cd ../harbour-kaidan\
-rm *.o\
+git clean -xfd
 sfdk build
 
 ## Dependencies
@@ -122,3 +128,6 @@ Here are the general dependencies of Kaidan:
 [securitytxt]: https://www.kaidan.im/.well-known/security.txt
 [kdesecurity]: https://kde.org/info/security/
 [silica-website]: https://sailfishos.org/develop/docs/silica/
+[sfdk-install]: https://docs.sailfishos.org/Tools/Sailfish_SDK/Installation/
+[omemo-03]: https://xmpp.org/extensions/attic/xep-0384-0.3.0.html
+[conversations]: https://conversations.im/

@@ -41,13 +41,13 @@ Need to open QtCreator and to install a device. You need to enable Development t
 
 * Create a directory for output rpm packages
 mkdir /home/user/dev/RPMS\
-sfdk config --global --push output-target "/home/user/dev/RPMS"\
+sfdk config --global --push output-target "/home/user/dev/RPMS"
 
 * Configure SFDK tools
 sfdk tools list\
 sfdk config --global --push target "SailfishOS-4.5.0.18-aarch64"\
 sfdk device list\
-sfdk config --global --push device "Xperia 10 III (ARM 64bit)"\
+sfdk config --global --push device "Xperia 10 III (ARM 64bit)"
 
 * Clone repositories locally for compilation
 cd dev\

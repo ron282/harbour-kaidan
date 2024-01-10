@@ -40,20 +40,20 @@ Downloadable builds are available on [Openrepos.net][downloads].
 Need to open QtCreator and to install a device. You need to enable Development tools on your device. 
 
 * Create a directory for output rpm packages
-mkdir /home/user/dev/RPMS
-sfdk config --global --push output-target "/home/user/dev/RPMS"
+mkdir /home/user/dev/RPMS\
+sfdk config --global --push output-target "/home/user/dev/RPMS"\
 
 * Configure SFDK tools
-sfdk tools list
-sfdk config --global --push target "SailfishOS-4.5.0.18-aarch64"
-sfdk device list
-sfdk config --global --push device "Xperia 10 III (ARM 64bit)"
+sfdk tools list\
+sfdk config --global --push target "SailfishOS-4.5.0.18-aarch64"\
+sfdk device list\
+sfdk config --global --push device "Xperia 10 III (ARM 64bit)"\
 
-* Clone repositories for compilation
-cd dev
-git clone https://github.com/ron282/libomemo-c.git
-git clone https://github.com/ron282/qca.git
-git clone https://github.com/ron282/qxmpp.git 
+* Clone repositories locally for compilation
+cd dev\
+git clone https://github.com/ron282/libomemo-c.git\
+git clone https://github.com/ron282/qca.git\
+git clone https://github.com/ron282/qxmpp.git\
 git clone https://github.com/ron282/harbour-kaidan.git
 
 * Compile sources

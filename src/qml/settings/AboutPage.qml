@@ -23,9 +23,9 @@ SettingsPageBase {
 
            Image {
                 source: Utils.getResourcePath("images/sailkaidan.svg")
-                width: parent.width
+                anchors.horizontalCenter: col.horizontalCenter
                 fillMode: Image.PreserveAspectFit
-                sourceSize: Qt.size(width, height)
+                sourceSize: Qt.size(Theme.itemSizeExtraLarge, Theme.itemSizeExtraLarge)
             }
 
             SectionHeader {

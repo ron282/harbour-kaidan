@@ -26,7 +26,7 @@ BackgroundItem {
 
     SilicaGridView {
         width: parent.width
-        implicitHeight: contentHeight
+        height: Screen.height / 3
 
         cellWidth: {
             switch (root.tabBarCurrentIndex) {
@@ -43,7 +43,7 @@ BackgroundItem {
             switch (root.tabBarCurrentIndex) {
             case 0:
             case 1:
-                return cellWidth
+                return root.width / 4
             case 2:
                 return Theme.iconSizeLarge
             }
@@ -51,15 +51,14 @@ BackgroundItem {
             return 0
         }
         header: Column {
-            ButtonLayout {
+            width: parent.width
+            Row {
                 id: tabBar
                 visible: !root.selectionMode
-                width: parent.width
-                height: Theme.itemSizeMedium
-                columnSpacing: 0
+                spacing: 0
                 Switch {
-                    id: imagesTab
-                    width: tabBar.width / 3
+                    id: imageTab
+                    width: root.width / 3
                     iconSource: "image://theme/icon-m-file-image"
                     checked: true
                     automaticCheck: false
@@ -72,7 +71,7 @@ BackgroundItem {
                 }
                 Switch {
                     id: videoTab
-                    width: tabBar.width / 3
+                    width: root.width / 3
                     iconSource: "image://theme/icon-m-file-video"
                     automaticCheck: false
                     onClicked: {
@@ -84,7 +83,7 @@ BackgroundItem {
                 }
                 Switch {
                     id: otherTab
-                    width: tabBar.width / 3
+                    width: root.width / 3
                     iconSource: "image://theme/icon-m-file-other-dark"
                     automaticCheck: false
                     onClicked: {
@@ -140,14 +139,15 @@ BackgroundItem {
         model: FileProxyModel {
             id: fileProxyModel
             mode: {
-                switch (root.tabBarCurrentIndex) {
+
+                /*switch (root.tabBarCurrentIndex) {
                 case 0:
                     return FileProxyModel.Images
                 case 1:
                     return FileProxyModel.Videos
                 case 2:
                     return FileProxyModel.Other
-                }
+                }*/
 
                 return FileProxyModel.All
             }
@@ -163,8 +163,10 @@ BackgroundItem {
 //                root.loadDownloadedFiles()
 //            }
         }
-        delegate: Item {/*
-            switch (root.tabBarCurrentIndex) {
+        delegate: {
+            return otherDelegate
+
+/*            switch (root.tabBarCurrentIndex) {
             case 0:
                 return imageDelegate
             case 1:
@@ -173,7 +175,8 @@ BackgroundItem {
                 return otherDelegate
             }
 
-            return null*/
+            return null
+*/
         }
 
         Component {
@@ -209,10 +212,10 @@ BackgroundItem {
 
                     SelectionMarker {
                         visible: preview.containsMouse || checked
-                        checked: preview.checked
+                        //checked: preview.checked
                         anchors.top: parent.top
                         anchors.right: parent.right
-                        anchors.topMargin: Kirigami.Units.smallSpacing
+                        anchors.topMargin: Theme.paddingSmall
                         anchors.rightMargin: anchors.topMargin
                         onClicked: {
                             root.selectionMode = true
@@ -283,8 +286,8 @@ BackgroundItem {
 
             BackgroundItem {
                 id: control
-                implicitWidth: GridView.view.cellWidth
-                implicitHeight: GridView.view.cellHeight
+                width: GridView.view.cellWidth
+                height: GridView.view.cellHeight
 //                autoExclusive: false
 //                checkable: root.selectionMode
 //                checked: checkable && model.checkState === Qt.Checked
@@ -295,8 +298,8 @@ BackgroundItem {
                     hoverEnabled: true
                     acceptedButtons: Qt.NoButton
 
-                    SilicaGridView {
-                        anchors.fill: parent
+                    Column {
+                      width: parent.width
 
                         Icon {
                             source: model.file.mimeTypeIcon
@@ -304,17 +307,20 @@ BackgroundItem {
 
                         Label {
                             text: model.file.name
+                            width: parent.width
                             elide: Qt.ElideRight
                             font.bold: true
                         }
 
                         Label {
+                            width: parent.width
+                            elide: Qt.ElideRight
                             text: model.file.details
                         }
 
                         SelectionMarker {
                             visible: selectionArea.containsMouse || checked
-                            checked: control.checked
+                            // checked: control.checked
                             onClicked: {
                                 root.selectionMode = true
                                 model.checkState = checkState

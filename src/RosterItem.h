@@ -19,21 +19,36 @@
 struct RosterItem
 {
     Q_GADGET
-public:
-	Q_PROPERTY(QString accountJid MEMBER jid)
+
+    Q_PROPERTY(QString accountJid MEMBER jid)
 	Q_PROPERTY(QString jid MEMBER jid)
 	Q_PROPERTY(QString name MEMBER name)
 	Q_PROPERTY(QString displayName READ displayName CONSTANT)
 	Q_PROPERTY(bool sendingPresence READ isSendingPresence CONSTANT)
 	Q_PROPERTY(bool receivingPresence READ isReceivingPresence CONSTANT)
-	Q_PROPERTY(QVector<QString> groups MEMBER groups)
 #if defined(SFOS)
-    Q_PROPERTY(QStringList groupsList READ readGroups)
+    Q_PROPERTY(QList<QString> groups MEMBER groups)
+#else
+    Q_PROPERTY(QVector<QString> groups MEMBER groups)
 #endif
+
     Q_PROPERTY(int unreadMessageCount MEMBER unreadMessages)
 	Q_PROPERTY(bool chatStateSendingEnabled MEMBER chatStateSendingEnabled)
 	Q_PROPERTY(bool readMarkerSendingEnabled MEMBER readMarkerSendingEnabled)
 	Q_PROPERTY(bool notificationsMuted MEMBER notificationsMuted)
+    Q_PROPERTY(RosterItem::AutomaticMediaDownloadsRule automaticMediaDownloadsRule MEMBER automaticMediaDownloadsRule)
+
+public:
+    /**
+     * Rule to automatically download media for a roster item
+     */
+    enum class AutomaticMediaDownloadsRule {
+        Account, ///< Use the account rule
+        Never,   ///< Never automatically download files
+        Always,  ///< Always automatically download files
+        Default = Account,
+    };
+    Q_ENUM(AutomaticMediaDownloadsRule)
 
 #if defined(SFOS)
     RosterItem() {}
@@ -60,10 +75,6 @@ public:
 	bool operator<=(const RosterItem &other) const;
 	bool operator>=(const RosterItem &other) const;
 
-#if defined(SFOS)
-    QStringList readGroups();
-#endif
-
     // JID of the account that has this item.
 	QString accountJid;
 
@@ -77,7 +88,11 @@ public:
 	QXmppRosterIq::Item::SubscriptionType subscription = QXmppRosterIq::Item::NotSet;
 
 	// Roster groups (i.e., labels) used for filtering (e.g., "Family", "Friends" etc.).
-	QVector<QString> groups;
+#if defined(SFOS)
+    QList<QString> groups;
+#else
+    QVector<QString> groups;
+#endif
 
 	// End-to-end encryption used for this roster item.
 #if defined(WITH_OMEMO_V03)
@@ -123,6 +138,10 @@ public:
 
 	// Whether notifications are muted.
 	bool notificationsMuted = false;
+
+    // Wheither files get downloaded automatically
+    RosterItem::AutomaticMediaDownloadsRule automaticMediaDownloadsRule = RosterItem::AutomaticMediaDownloadsRule::Default;
 };
 
 Q_DECLARE_METATYPE(RosterItem)
+Q_DECLARE_METATYPE(RosterItem::AutomaticMediaDownloadsRule)

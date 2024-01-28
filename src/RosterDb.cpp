@@ -148,8 +148,13 @@ QFuture<void> RosterDb::addItems(const QVector<RosterItem> &items)
 			query.addBindValue(item.notificationsMuted);
 			execQuery(query);
 
-			addGroups(item.accountJid, item.jid, item.groups);
-		}
+#if QT_VERSION < QT_VERSION_CHECK(5,15,0)
+            addGroups(item.accountJid, item.jid, item.groups.toVector());
+#else
+            addGroups(item.accountJid, item.jid, item.groups);
+#endif
+        }
+
 
 		commit();
 	});
@@ -200,7 +205,7 @@ QFuture<void> RosterDb::replaceItems(const QHash<QString, RosterItem> &items)
 		transaction();
 
 		QList<QString> keys = items.keys();
-#if defined(SFOS)
+#if QT_VERSION < QT_VERSION_CHECK(5,15,0)
         QSet<QString> newJids;
         for (auto it = keys.begin(); it != keys.end(); it++) {
             newJids.insert(*it);
@@ -209,7 +214,7 @@ QFuture<void> RosterDb::replaceItems(const QHash<QString, RosterItem> &items)
         QSet<QString> newJids = QSet<QString>(keys.begin(), keys.end());
 #endif
 
-#if defined(SFOS)
+#if QT_VERSION < QT_VERSION_CHECK(5,15,0)
         for (const auto &oldItem : const_cast<const QVector<RosterItem>&>(currentItems)) {
 #else
         for (const auto &oldItem : qAsConst(currentItems)) {

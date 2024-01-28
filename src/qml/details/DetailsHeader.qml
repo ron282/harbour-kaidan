@@ -29,7 +29,6 @@ Column {
     }
 
     BackgroundItem {
- //       y: Theme.itemSizeMedium
         height: Theme.iconSizeExtraLarge
         width: Theme.iconSizeExtraLarge
         anchors {
@@ -47,8 +46,8 @@ Column {
                 HighlightImage {
                     id: avatarActionHoverImage
                     source: root.avatarAction.icon.source
-                    width: parent.width / 2
-                    height: width
+                    sourceSize.height: Theme.iconSizeSmallPlus
+                    sourceSize.width: Theme.iconSizeSmallPlus
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottom: parent.bottom
                     visible:  root.avatarAction.enabled
@@ -97,8 +96,8 @@ Column {
             id: displayNameEditingButton
             anchors.verticalCenter: parent.verticalCenter
             icon.source: "image://theme/icon-m-edit"
-            height: Theme.iconSizeSmall
-            width: height
+            icon.sourceSize.width: Theme.iconSizeSmallPlus
+            icon.sourceSize.height: Theme.iconSizeSmallPlus
             onClicked: {
                 if (displayNameText.visible) {
                     displayNameTextField.visible = true

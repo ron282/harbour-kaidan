@@ -18,17 +18,33 @@ class VCardCache;
  */
 class AccountManager : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
+public:
 
-	Q_PROPERTY(QString jid READ jid WRITE setJid NOTIFY jidChanged)
+    Q_PROPERTY(QString jid READ jid WRITE setJid NOTIFY jidChanged)
 	Q_PROPERTY(QString password READ password WRITE setPassword NOTIFY passwordChanged)
 	Q_PROPERTY(QString host READ host WRITE setHost NOTIFY hostChanged)
 	Q_PROPERTY(quint16 port READ port WRITE setPort NOTIFY portChanged)
 	Q_PROPERTY(quint16 portAutodetect READ portAutodetect CONSTANT)
 	Q_PROPERTY(QString displayName READ displayName NOTIFY displayNameChanged)
 
-public:
-	static AccountManager *instance();
+    /**
+     * Default rule to automatically download media for all roster items of an account
+     */
+
+#if QT_VERSION < QT_VERSION_CHECK(5,15,0)
+    enum AutomaticMediaDownloadsRule {
+#else
+    enum class AutomaticMediaDownloadsRule {
+#endif
+        Never,        ///< Never automatically download files
+        PresenceOnly, ///< Only for contacts receiving presence
+        Always,       ///< Always automatically download files
+        Default = PresenceOnly,
+    };
+    Q_ENUM(AutomaticMediaDownloadsRule)
+
+    static AccountManager *instance();
 
 	AccountManager(Settings *settings, VCardCache *cache, QObject *parent = nullptr);
 
@@ -287,3 +303,5 @@ private:
 
 	static AccountManager *s_instance;
 };
+
+Q_DECLARE_METATYPE(AccountManager::AutomaticMediaDownloadsRule)

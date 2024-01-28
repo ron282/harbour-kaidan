@@ -8,6 +8,7 @@ import Sailfish.Silica 1.0
 DetailsPage {
 	id: root
 
+    property string accountJid
     property string jid
 
     SilicaFlickable {
@@ -23,6 +24,7 @@ DetailsPage {
 
         ContactDetailsContent {
             id: content
+            accountJid: root.accountJid
             jid: root.jid
             anchors.top: header.bottom
         }

@@ -25,23 +25,16 @@ bool RosterItem::operator==(const RosterItem &o) const
         readMarkerPending == o.readMarkerPending &&
         pinningPosition == o.pinningPosition &&
         chatStateSendingEnabled == o.chatStateSendingEnabled &&
-        readMarkerSendingEnabled == o.readMarkerSendingEnabled;
+        readMarkerSendingEnabled == o.readMarkerSendingEnabled &&
+        groups == o.groups &&
+        automaticMediaDownloadsRule == o.automaticMediaDownloadsRule;
 }
+
+
 
 bool RosterItem::operator!=(const RosterItem &o) const
 {
     return !(*this == o);
-}
-
-QStringList RosterItem::readGroups()
-{
-    QStringList retVal;
-    auto it = groups.cbegin();
-    while (it != groups.cend()) {
-        retVal.append(*it);
-        ++it;
-    }
-    return retVal;
 }
 #endif
 
@@ -50,11 +43,7 @@ RosterItem::RosterItem(const QString &accountJid, const QXmppRosterIq::Item &ite
 {
 	const auto rosterGroups = item.groups();
 #if defined(SFOS)
-    auto it = rosterGroups.cbegin();
-    while (it != rosterGroups.cend()) {
-        groups.append(*it);
-       ++it;
-    }
+    groups = rosterGroups.toList();
 #else
     groups = QVector(rosterGroups.cbegin(), rosterGroups.cend());
 #endif

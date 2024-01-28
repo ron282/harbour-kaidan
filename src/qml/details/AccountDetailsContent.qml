@@ -15,6 +15,27 @@ import "../settings"
 DetailsContent {
     id: root
 
+    automaticMediaDownloadsDelegate {
+        menu: ContextMenu {
+                ComboBoxMenuItem {
+                    text: qsTr("Never")
+                    value: AccountManager.Never
+                    onClicked: Kaidan.settings.automaticMediaDownloadsRule = AccountManager.Never
+                }
+                ComboBoxMenuItem {
+                    text: qsTr("If personal data is shared")
+                    value: AccountManager.PresenceOnly
+                    onClicked: Kaidan.settings.automaticMediaDownloadsRule = AccountManager.PresenceOnly
+                }
+                ComboBoxMenuItem {
+                    text: qsTr("Always")
+                    value: AccountManager.Always
+                    onClicked: Kaidan.settings.automaticMediaDownloadsRule = AccountManager.Always
+                }
+        }
+            currentIndex: automaticMediaDownloadsDelegate.indexOf(Kaidan.settings.automaticMediaDownloadsRule)
+        }
+
     mediaOverview {
         accountJid: AccountManager.jid
         chatJid: ""
@@ -70,7 +91,8 @@ DetailsContent {
         }
     }
 
-    rosterGroupArea: Column {
+        rosterGroupArea: Column {
+        id: colRoster
         width: parent.width
 
         SectionHeader {
@@ -79,13 +101,13 @@ DetailsContent {
         ColumnView {
             id: rosterGroupListView
             model: RosterModel.groups
-            visible: true // rosterGroupExpansionButton.checked
+            visible: true
             itemHeight: Theme.itemSizeSmall
             delegate: BackgroundItem {
                 id: rosterGroupDelegate
-                width: parent.width
-                onClicked: rosterGroupEditingButton.toggled()
+                width: rosterGroupListView.width
                 Row {
+                    id: rosterGroupRow
                     Label {
                         id: rosterGroupText
                         text: modelData
@@ -94,21 +116,21 @@ DetailsContent {
                         elide: Text.ElideRight
                         visible: !rosterGroupTextField.visible
                         height: rosterGroupTextField.height
-                        width: parent.width - 2*Theme.iconSizeMedium
-                        leftPadding: Theme.paddingSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: rosterGroupDelegate.width - 2*rosterGroupRow.spacing - rosterGroupEditingButton.width - rosterGroupRemovalButton.width
+                        leftPadding: Theme.horizontalPageMargin
                     }
                     TextField {
                         id: rosterGroupTextField
                         text: modelData
                         visible: false
-                        width: parent.width - 2*Theme.iconSizeMedium
-//                        onAccepted: rosterGroupEditingButton.toggled()
+                        width: rosterGroupDelegate.width - 2*rosterGroupRow.spacing - rosterGroupEditingButton.width - rosterGroupRemovalButton.width
                     }
                     IconButton {
                         id: rosterGroupEditingButton
-                        icon.source: "image://theme/icon-s-edit"
-                        visible: !rosterGroupText.visible
-//                      checked: !rosterGroupText.visible
+                        icon.source: rosterGroupTextField.visible ? "image://theme/icon-splus-right" : "image://theme/icon-m-edit"
+                        icon.sourceSize.width: Theme.iconSizeSmallPlus
+                        icon.sourceSize.height: Theme.iconSizeSmallPlus
                         // Ensure that the button can be used within "rosterGroupDelegate"
                         // which acts as an overlay to toggle this button when clicked.
                         // Otherwise, this button would be toggled by "rosterGroupDelegate"

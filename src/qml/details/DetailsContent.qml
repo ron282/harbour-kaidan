@@ -19,6 +19,7 @@ Column {
     property Page sheet
     property string jid
 	property alias qrCodePage: qrCodePage
+    property alias automaticMediaDownloadsDelegate: automaticMediaDownloadsDelegate
     property alias mediaOverview: mediaOverview
     property alias mediaOverviewExpansionButton: mediaOverviewExpansionButton
     property alias vCardArea: vCardArea.data
@@ -53,22 +54,34 @@ Column {
         }
 
         Column {
-            visible: false // FIXME
-
             width: parent.width
 
             SectionHeader {
                 text: qsTr("Media")
             }
 
-            MediaOverview {
-                id: mediaOverview
-                visible: mediaOverviewExpansionButton.checked
-                width: parent.width
+            ComboBox {
+                id: automaticMediaDownloadsDelegate
+                label: qsTr("Automatic Downloads")
+                description: qsTr("Download media automatically")
+
+                // "FormComboBoxDelegate.indexOfValue()" seems to not work with an array-based
+                // model.
+                // Thus, an own function is used.
+                function indexOf(value) {
+                    var parent = menu
+                    for (var i=0; i < menu.children.length; i++) {
+                        var child = menu.children[i]
+                        if( child.value == value)
+                            return i;
+                    }
+                    return -1
+                }
             }
 
             FormExpansionButton {
                 id: mediaOverviewExpansionButton
+                visible: false
                 anchors.right: parent.right
                 onCheckedChanged: {
                     if (checked) {
@@ -83,6 +96,12 @@ Column {
                         mediaOverview.loadDownloadedFiles()
                     }
                 }
+            }
+
+            MediaOverview {
+                id: mediaOverview
+                visible: false // mediaOverviewExpansionButton.checked
+                width: parent.width
             }
         }
 
@@ -111,6 +130,25 @@ Column {
             width: parent.width
         }
 
+        /*Column {
+            // Hide this if there are no items and no header.
+            visible: rosterGoupListView.count || rosterGoupListView.headerItem
+            width: parent.width
+
+            spacing: 0
+
+            SectionHeader {
+                text: qsTr("Labels")
+            }
+
+            ListView {
+                id: rosterGoupListView
+                model: RosterModel.groups
+                visible: rosterGroupExpansionButton.checked
+                implicitHeight: contentHeight
+            }
+        }*/
+
         Column {
             width: parent.width
             visible: deviceRepeater.count
@@ -121,35 +159,50 @@ Column {
 
             ColumnView {
                 id: deviceRepeater
-                itemHeight: Theme.itemSizeMedium + Theme.paddingSmall
+                itemHeight: Theme.itemSizeSmall
                 model: UserDevicesModel {
                     jid: root.jid
                 }
-                delegate: Column {
-                    width: parent.width - 2*Theme.horizontalPageMargin
+                delegate: Row {
                     x: Theme.horizontalPageMargin
-                    Label {
-                        text: {
-                            if (model.name) {
-                                if (model.version) {
-                                    return model.name + " " + model.version
-                                }
-                                return model.name
-                            }
-                            return model.resource
+                    width: parent.width - 2*Theme.horizontalPageMargin - Theme.paddingMedium
+                    spacing: Theme.paddingMedium
+                    Icon {
+                        id: deviceIcon
+                        source: {
+                            if (model.os.indexOf("Android") < 0 && model.os.indexOf("Sailfish") < 0 )
+                                return "image://theme/icon-l-computer"
+                            else
+                                return "image://theme/icon-m-device"
                         }
-                        textFormat: Text.PlainText
-                        wrapMode: Text.WordWrap
-                        width: parent.width
+                        sourceSize: Qt.size(Theme.iconSizeMedium, Theme.iconSizeMedium)
+                        anchors.verticalCenter: parent.verticalCenter
                     }
+                    Column {
+                        width: parent.width - deviceIcon.width - Theme.paddingMedium
+                        Label {
+                            text: {
+                                if (model.name) {
+                                    if (model.version) {
+                                        return model.name + " " + model.version
+                                    }
+                                    return model.name
+                                }
+                                return model.resource
+                            }
+                            textFormat: Text.PlainText
+                            wrapMode: Text.WordWrap
+                            width: parent.width
+                        }
 
-                    Label {
-                        text: model.os
-                        color: Theme.secondaryColor
-                        font.pixelSize: Theme.fontSizeSmall
-                        textFormat: Text.PlainText
-                        wrapMode: Text.WordWrap
-                        width: parent.width
+                        Label {
+                            text: model.os
+                            color: Theme.secondaryColor
+                            font.pixelSize: Theme.fontSizeSmall
+                            textFormat: Text.PlainText
+                            wrapMode: Text.WordWrap
+                            width: parent.width
+                        }
                     }
                 }
             }

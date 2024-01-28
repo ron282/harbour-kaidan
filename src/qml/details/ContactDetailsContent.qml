@@ -9,17 +9,39 @@ import Sailfish.Silica 1.0
 import im.kaidan.kaidan 1.0
 
 import "../elements"
+import "../elements/fields"
 
 DetailsContent {
 	id: root
 
-	property bool isChatWithOneself: MessageModel.currentAccountJid === jid
+    property string accountJid
+    property bool isChatWithOneself: accountJid === jid
 
-    mediaOverview {
-        accountJid: MessageModel.currentAccountJid
-        chatJid: MessageModel.currentChatJid
+    automaticMediaDownloadsDelegate {
+        menu: ContextMenu {
+            ComboBoxMenuItem {
+                text: qsTr("Account default")
+                value: RosterItem.Account
+                onClicked: RosterModel.setAutomaticMediaDownloadsRule(root.accountJid, root.jid, RosterItem.Never)
+            }
+            ComboBoxMenuItem {
+                text: qsTr("Never")
+                value: RosterItem.Never
+                onClicked: RosterModel.setAutomaticMediaDownloadsRule(root.accountJid, root.jid, RosterItem.Never)
+            }
+            ComboBoxMenuItem {
+                text: qsTr("Always")
+                value: RosterItem.Always
+                onClicked: RosterModel.setAutomaticMediaDownloadsRule(root.accountJid, root.jid, RosterItem.Always)
+            }
+        }
+        currentIndex: automaticMediaDownloadsDelegate.indexOf(contactWatcher.item.automaticMediaDownloadsRule)
     }
 
+    mediaOverview {
+        accountJid: root.accountJid
+        chatJid: root.jid
+    }
 
     vCardRepeater {
         model: VCardModel {
@@ -68,6 +90,8 @@ DetailsContent {
             placeholderText: qsTr("New label")
             enabled: !rosterGroupBusyIndicator.running
             width: parent.width
+            focus: false
+
 //          onAccepted: rosterGroupAdditionButton.clicked()
 
             rightItem: IconButton {
@@ -76,9 +100,7 @@ DetailsContent {
                 enabled: rosterGroupField.text.length
                 visible: !rosterGroupBusyIndicator.running
                 onClicked: {
-                    var groups = []
-
-                    groups = chatItemWatcher.item.groupsList
+                    var groups = chatItemWatcher.item.groups
 
                     if (groups.indexOf(rosterGroupField.text) !== -1) {
                         rosterGroupField.text = ""
@@ -129,31 +151,19 @@ DetailsContent {
             delegate: TextSwitch {
                 id: rosterGroupDelegate
                 text: modelData
-                checked: contactWatcher.item.groupsList.includes(modelData)
+                checked: contactWatcher.item.groups.indexOf(modelData) !== -1
                 width: parent.width
                 height: Theme.itemSizeSmall
-                onCheckedChanged:  {
-                    var groups = contactWatcher.item.groupsList
+                onCheckedChanged: {
+                    var groups = contactWatcher.item.groups
 
-                    if (checked) {
+                    if (checked && contactWatcher.item.groups.indexOf(modelData) === -1) {
                         groups.push(modelData)
-                    } else {
+                        Kaidan.client.rosterManager.updateGroupsRequested(root.jid, contactWatcher.item.name, groups)
+                    } else if (!checked && contactWatcher.item.groups.indexOf(modelData) !== -1){
                         groups.splice(groups.indexOf(modelData), 1)
+                        Kaidan.client.rosterManager.updateGroupsRequested(root.jid, contactWatcher.item.name, groups)
                     }
-
-                    Kaidan.client.rosterManager.updateGroupsRequested(root.jid, contactWatcher.item.name, groups)
-                }
-            }
-
-            // TODO: Remove this and see TODO in RosterModel once fixed in Kirigami Addons.
-            Connections {
-                target: RosterModel
-
-                onGroupsChanged: {
-                    // Update the "checked" value of "rosterGroupDelegate" as a work
-                    // around because "MobileForm.FormSwitchDelegate" does not listen to
-                    // changes of "contactWatcher.item.groups".
-                    rosterGroupDelegate.checked = contactWatcher.item.groupsList.includes(modelData)
                 }
             }
         }

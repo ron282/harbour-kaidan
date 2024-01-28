@@ -35,8 +35,13 @@ public:
 	void acceptSubscriptionToPresence(const QString &contactJid);
 	void refuseSubscriptionToPresence(const QString &contactJid);
 
-	void updateGroups(const QString &jid, const QString &name, const QVector<QString> &groups = {});
-	Q_SIGNAL void updateGroupsRequested(const QString &jid, const QString &name, const QVector<QString> &groups);
+#if defined(SFOS)
+    void updateGroups(const QString &jid, const QString &name, const QList<QString> &groups = {});
+    Q_SIGNAL void updateGroupsRequested(const QString &jid, const QString &name, const QList<QString> &groups);
+#else
+    void updateGroups(const QString &jid, const QString &name, const QVector<QString> &groups = {});
+    Q_SIGNAL void updateGroupsRequested(const QString &jid, const QString &name, const QVector<QString> &groups);
+#endif
 
 signals:
 	/**
@@ -55,7 +60,7 @@ signals:
 	void addContactRequested(const QString &jid, const QString &nick = {}, const QString &msg = {});
 
 	/**
-	 * Remove a contact from your roster
+     * Remove a contact from your roster
 	 *
 	 * Only the JID is needed.
 	 */

@@ -52,7 +52,7 @@ private:
     void updateItemByRecord(const QString &jid, const QSqlRecord &record);
 
 	void fetchGroups(QVector<RosterItem> &items);
-	void addGroups(const QString &accountJid, const QString &jid, const QVector<QString> &groups);
+    void addGroups(const QString &accountJid, const QString &jid, const QVector<QString> &groups);
 	void updateGroups(const RosterItem &oldItem, const RosterItem &newItem);
 	void removeGroups(const QString &accountJid);
 	void removeGroups(const QString &accountJid, const QString &jid);

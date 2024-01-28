@@ -118,7 +118,7 @@ QVariant RosterModel::data(const QModelIndex &index, int role) const
 		return m_items.at(index.row()).jid;
 	case NameRole:
 		return m_items.at(index.row()).name;
-	case GroupsRole:
+    case GroupsRole:
 		return QVariant::fromValue(m_items.at(index.row()).groups);
 	case LastMessageDateTimeRole: {
 		// "lastMessageDateTime" is used for sorting the roster items.
@@ -333,7 +333,7 @@ void RosterModel::handleItemsFetched(const QVector<RosterItem> &items)
 	}
 
 	Q_EMIT accountJidsChanged();
-	Q_EMIT groupsChanged();
+    Q_EMIT groupsChanged();
 }
 
 void RosterModel::addItem(const RosterItem &item)
@@ -366,6 +366,8 @@ void RosterModel::updateItem(const QString &jid,
 //			if (oldGroups != groups()) {
 				Q_EMIT groupsChanged();
 //			}
+
+            RosterItemNotifier::instance().notifyWatchers(item.jid, item);
 
 			return;
 		}
@@ -538,7 +540,7 @@ void RosterModel::removeItems(const QString &accountJid, const QString &jid)
 			}
 
 			if (oldGroupCount < groups().size()) {
-				Q_EMIT groupsChanged();
+                Q_EMIT groupsChanged();
 			}
 
 			return;
@@ -740,7 +742,7 @@ void RosterModel::insertItem(int index, const RosterItem &item)
 	}
 
 	if (oldGroupCount < groups().size()) {
-		Q_EMIT groupsChanged();
+        Q_EMIT groupsChanged();
 	}
 }
 

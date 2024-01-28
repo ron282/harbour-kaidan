@@ -48,20 +48,14 @@ RosterManager::RosterManager(ClientWorker *clientWorker,
 
 	connect(m_manager, &QXmppRosterManager::itemChanged,
 		this, [this] (const QString &jid) {
-		emit RosterModel::instance()->updateItemRequested(jid, [this, jid](RosterItem &item) {
+        Q_EMIT RosterModel::instance()->updateItemRequested(jid, [this, jid](RosterItem &item) {
 			const auto updatedItem = m_manager->getRosterEntry(jid);
 			item.name = updatedItem.name();
 			item.subscription = updatedItem.subscriptionType();
 
 			const auto groups = updatedItem.groups();
 #if defined(SFOS)
-            auto it = groups.cbegin();
-            QVector<QString> v;
-            while (it != groups.cend()) {
-                v.append(*it);
-                ++it;
-            }
-            item.groups = v;
+            item.groups = groups.toList();
 #else
             item.groups = QVector(groups.cbegin(), groups.cend());
 #endif
@@ -107,7 +101,7 @@ RosterManager::RosterManager(ClientWorker *clientWorker,
 	connect(this, &RosterManager::acceptSubscriptionToPresenceRequested, this, &RosterManager::acceptSubscriptionToPresence);
 	connect(this, &RosterManager::refuseSubscriptionToPresenceRequested, this, &RosterManager::refuseSubscriptionToPresence);
 
-	connect(this, &RosterManager::updateGroupsRequested, this, &RosterManager::updateGroups);
+    connect(this, &RosterManager::updateGroupsRequested, this, &RosterManager::updateGroups);
 }
 
 void RosterManager::populateRoster()
@@ -195,22 +189,20 @@ void RosterManager::refuseSubscriptionToPresence(const QString &contactJid)
 	}
 }
 
+
+#if defined(SFOS)
+void RosterManager::updateGroups(const QString &jid, const QString &name, const QList<QString> &groups)
+#else
 void RosterManager::updateGroups(const QString &jid, const QString &name, const QVector<QString> &groups)
+#endif
 {
-	m_isItemBeingChanged = true;
+    m_isItemBeingChanged = true;
 
 	m_clientWorker->startTask(
 		[this, jid, name, groups] {
 			// TODO: Add updating only groups to QXmppRosterManager without the need to pass the unmodified name
 #if defined(SFOS)
-        QSet<QString> s;
-        auto it = groups.cbegin();
-        while (it != groups.cend()) {
-            s.insert(*it);
-            ++it;
-        }
-
-        m_manager->addItem(jid, name, s);
+        m_manager->addItem(jid, name, groups.toSet());
 #else
         m_manager->addItem(jid, name, QSet(groups.cbegin(), groups.cend()));
 #endif

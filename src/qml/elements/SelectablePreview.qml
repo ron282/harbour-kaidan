@@ -27,10 +27,10 @@ BackgroundItem {
 
         // overlay to indicate the currently hovered or selected medium
         Rectangle {
-            color: Kirigami.Theme.highlightColor
+            color: Theme.highlightColor
             opacity: 0.1
             z: 1
-            visible: root.hovered || root.checked
+            /*visible: root.hovered || root.checked*/
             anchors.fill: parent
         }
     }

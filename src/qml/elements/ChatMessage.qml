@@ -260,6 +260,7 @@ ListItem {
                            font.family: Theme.fontFamilyHeading
                            font.pixelSize: Theme.fontSizeMedium
                            color: isOwn ? Theme.highlightColor: Theme.primaryColor
+                           linkColor: color
                            anchors.right : isOwn ? parent.right : undefined
                            width: isOwn ? parent.width - Theme.paddingMedium : parent.width - Theme.paddingMedium - Theme.iconSizeMedium
                            onLinkActivated: Qt.openUrlExternally(link)

@@ -15,7 +15,7 @@ import im.kaidan.kaidan 1.0
 BackgroundItem {
 	id: backgroundRoot
 
-	property QtObject message
+    property QtObject message
     property color color: message.isOwn ? Theme.highlightColor: Theme.primaryColor
     property int tailSize: Theme.paddingLarge
 	property bool showTail: true
@@ -93,15 +93,46 @@ BackgroundItem {
 //          margins: Theme.paddingSmall
 		}
 
+        // warning for different encryption corner cases
+        Label {
+            text: {
+                if (root.encryption === Encryption.NoEncryption) {
+                    if (MessageModel.isOmemoEncryptionEnabled) {
+                        // Encryption is set for the current chat but this message is
+                        // unencrypted.
+                        return qsTr("Unencrypted");
+                    }
+                } else if (MessageModel.encryption !== Encryption.NoEncryption && !backgroundRoot.message.isTrusted){
+                    // Encryption is set for the current chat but the key of this message's
+                    // sender is not trusted.
+                    return qsTr("Untrusted")
+                }
+
+                return ""
+            }
+
+            visible: text.length
+            color: isOwn ? Theme.highlightColor: Theme.primaryColor
+            font.italic: true
+            font.pixelSize: Theme.fontSizeTiny
+        }
+
+        Label {
+            text: backgroundRoot.message.errorText
+            visible: text.length
+            color: isOwn ? Theme.highlightColor: Theme.primaryColor
+            font.pixelSize: Theme.fontSizeTiny
+        }
+
         Label {
             id: timestamp
             font.pixelSize: Theme.fontSizeTiny
-            text: refreshDate, getDateDiffFormated(message.dateTime)
-		}
+            text: refreshDate, getDateDiffFormated(backgroundRoot.message.dateTime)
+        }
 
         Icon {
-            visible: backgroundRoot.message.encryption !== Encryption.NoEncryption
             source: "image://theme/icon-s-outline-secure"
+            visible: backgroundRoot.message.encryption !== Encryption.NoEncryption
             width: Theme.iconSizeExtraSmall
             height: width
             anchors.bottom: timestamp.bottom
@@ -126,9 +157,9 @@ BackgroundItem {
 
         Icon {
             source: "image://theme/icon-s-edit"
+            visible: message.edited
             width: Theme.iconSizeExtraSmall
             height: width
-            visible: message.edited
             anchors.bottom: timestamp.bottom
         }
     }

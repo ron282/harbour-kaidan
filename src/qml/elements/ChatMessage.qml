@@ -114,12 +114,11 @@ ListItem {
             // Own messages are on the right, others on the left side.
             layoutDirection: isOwn ? Qt.RightToLeft : Qt.LeftToRight
             spacing: Theme.paddingMedium
-            width: root.width - Theme.iconSizeMedium - Theme.paddingMedium
+            width: isOwn ? root.width - Theme.iconSizeMedium - Theme.paddingMedium : root.width - Theme.paddingMedium
 
             Item {
                 id: avatarItem
                 visible: !isOwn
-//                Layout.alignment: Qt.AlignHCenter | Qt.AlignBottom
                 anchors.top: parent.top
                 height: Theme.iconSizeMedium
                 width: isOwn ? 0 : Theme.iconSizeMedium
@@ -329,42 +328,6 @@ ListItem {
                             detailsSheet: root.reactionDetailsSheet
                         }
                     }
-
-                    // warning for different encryption corner cases
-                    Label {
-						text: {
-							if (root.encryption === Encryption.NoEncryption) {
-								if (MessageModel.isOmemoEncryptionEnabled) {
-									// Encryption is set for the current chat but this message is
-									// unencrypted.
-                                    return qsTr("Unencrypted");
-								}
-							} else if (MessageModel.encryption !== Encryption.NoEncryption && !root.isTrusted){
-								// Encryption is set for the current chat but the key of this message's
-								// sender is not trusted.
-								return qsTr("Untrusted")
-							}
-
-							return ""
-						}
-
-                        width: parent.width;
-                        visible: text.length
-                        color: isOwn ? Theme.highlightColor: Theme.primaryColor
-                        font.italic: true
-                        font.pixelSize: Theme.fontSizeTiny
-                        anchors.bottomMargin: Theme.paddingSmall
-                    }
-
-
-                    Label {
-						visible: errorText
-						id: errorLabel
-						text: qsTr(errorText)
-                        width: parent.width;
-                        color: isOwn ? Theme.highlightColor: Theme.primaryColor
-                        font.pixelSize: Theme.fontSizeTiny
-                    }
                     Label {
                         text: " "
                         font.pixelSize: Theme.fontSizeTiny
@@ -381,7 +344,7 @@ ListItem {
         // Read marker text for own message
         Text {
             id: isLastReadText
-            visible: isLastRead
+            visible: root.isLastRead && MessageModel.currentAccountJid !== MessageModel.currentChatJid
             color: Theme.primaryColor
             text: qsTr("%1 has read up to this point").arg(chatName)
             font.pixelSize: Theme.fontSizeTiny

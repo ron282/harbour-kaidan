@@ -8,6 +8,7 @@
 // SPDX-FileCopyrightText: 2022 Bhavy Airi <airiragahv@gmail.com>
 // SPDX-FileCopyrightText: 2023 Filipe Azevedo <pasnox@gmail.com>
 // SPDX-FileCopyrightText: 2023 Tibor Csötönyi <work@taibsu.de>
+// SPDX-FileCopyrightText: 2024 ron282 <ronan35@gmx.fr>
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -21,18 +22,19 @@ import "elements"
 Page {
     id: root
 
-//    anchors.bottomMargin: dockedPanel().visibleSize
-
     Component {
         id: rosterFilteringDialog
 
         Dialog {
-            DialogHeader {
-                title: qsTr("Filter")
-            }
+            Column {
+                width: parent.width
+                DialogHeader {
+                    title: qsTr("Filter")
+                }
 
-            RosterFilteringArea {
-                rosterFilterProxyModel: filterModel
+                RosterFilteringArea {
+                    rosterFilterProxyModel: filterModel
+                }
             }
         }
     }
@@ -42,12 +44,20 @@ Page {
 
         Page {
             SilicaFlickable {
-                PageHeader {
-                    title: qsTr("Filter")
-                }
+                anchors.fill: parent
+                contentHeight: column.height
 
-                RosterFilteringArea {
-                    rosterFilterProxyModel: filterModel
+                Column {
+                    id: column
+                    width: parent.width
+
+                    PageHeader {
+                        title: qsTr("Filter")
+                    }
+
+                    RosterFilteringArea {
+                        rosterFilterProxyModel: filterModel
+                    }
                 }
             }
         }
@@ -62,15 +72,20 @@ Page {
 
     SilicaListView {
         id: rosterListView
-//FIXME      PullDownMenu {
-//                MenuItem {
-//                    text: qsTr("Search")
-//                  visible: isSearchActionShown
-//                    onClicked: {
-//                        toggleSearchBar()
-//                    }
-//                }
-//            }
+
+        PullDownMenu {
+                MenuItem {
+                    text: qsTr("Search")
+                    visible: false // isSearchActionShown
+                    onClicked: {
+                        toggleSearchBar()
+                    }
+                }
+                MenuItem {
+                    text: qsTr("Filter")
+                    onClicked: openView(rosterFilteringDialog, rosterFilteringPage)
+                }
+            }
 
         header:
             PageHeader {

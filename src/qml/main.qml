@@ -110,6 +110,14 @@ Kirigami.ApplicationWindow {
 	Component {id: contactAdditionPage; ContactAdditionPage {}}
 	Component {id: contactAdditionDialog; ContactAdditionDialog {}}
 
+	Component {
+		id: accountDetailsKeyAuthenticationPage
+
+		KeyAuthenticationPage {
+			Component.onDestruction: openView(accountDetailsSheet, accountDetailsPage)
+		}
+	}
+
 	onWideScreenChanged: showRosterPageForNarrowWindow()
 
 	/**

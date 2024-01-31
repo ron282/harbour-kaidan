@@ -17,7 +17,7 @@ DetailsContent {
 	id: root
 
 	required property string accountJid
-	property bool isChatWithOneself: accountJid === jid
+	readonly property bool isChatWithOneself: accountJid === jid
 
 	automaticMediaDownloadsDelegate {
 		model: [
@@ -65,7 +65,7 @@ DetailsContent {
 
 		OmemoWatcher {
 			id: accountOmemoWatcher
-			jid: AccountManager.jid
+			jid: root.accountJid
 		}
 
 		OmemoWatcher {
@@ -90,34 +90,34 @@ DetailsContent {
 		MobileForm.FormButtonDelegate {
 			text: {
 				if (!MessageModel.usableOmemoDevices.length) {
-					if (accountOmemoWatcher.distrustedOmemoDevices.length) {
-						return qsTr("Scan the QR codes of <b>your</b> devices to encrypt for them")
+					if (accountOmemoWatcher.distrustedDevices.length) {
+						return qsTr("Verify <b>your</b> devices to encrypt for them")
 					} else if (ownResourcesWatcher.resourcesCount > 1) {
 						return qsTr("<b>Your</b> other devices don't use OMEMO 2")
 					} else if (root.isChatWithOneself) {
 						return qsTr("<b>You</b> have no other devices supporting OMEMO 2")
 					}
-				} else if (accountOmemoWatcher.authenticatableOmemoDevices.length) {
-					if (accountOmemoWatcher.authenticatableOmemoDevices.length === accountOmemoWatcher.distrustedOmemoDevices.length) {
-						return qsTr("Scan the QR codes of <b>your</b> devices to encrypt for them")
+				} else if (accountOmemoWatcher.authenticatableDevices.length) {
+					if (accountOmemoWatcher.authenticatableDevices.length === accountOmemoWatcher.distrustedDevices.length) {
+						return qsTr("Verify <b>your</b> devices to encrypt for them")
 					}
 
-					return qsTr("Scan the QR codes of <b>your</b> devices for maximum security")
+					return qsTr("Verify <b>your</b> devices for maximum security")
 				}
 
 				return ""
 			}
 			icon.name: {
 				if (!MessageModel.usableOmemoDevices.length) {
-					if (accountOmemoWatcher.distrustedOmemoDevices.length) {
+					if (accountOmemoWatcher.distrustedDevices.length) {
 						return "channel-secure-symbolic"
 					} else if (ownResourcesWatcher.resourcesCount > 1) {
 						return "channel-insecure-symbolic"
 					} else if (root.isChatWithOneself) {
 						return "channel-insecure-symbolic"
 					}
-				} else if (accountOmemoWatcher.authenticatableOmemoDevices.length) {
-					if (accountOmemoWatcher.authenticatableOmemoDevices.length === accountOmemoWatcher.distrustedOmemoDevices.length) {
+				} else if (accountOmemoWatcher.authenticatableDevices.length) {
+					if (accountOmemoWatcher.authenticatableDevices.length === accountOmemoWatcher.distrustedDevices.length) {
 						return "security-medium-symbolic"
 					}
 
@@ -127,12 +127,12 @@ DetailsContent {
 				return ""
 			}
 			visible: text
-			enabled: accountOmemoWatcher.authenticatableOmemoDevices.length
-			onClicked: pageStack.layers.push(qrCodePage, { isForOwnDevices: true })
+			enabled: accountOmemoWatcher.authenticatableDevices.length
+			onClicked: root.openKeyAuthenticationPage(contactDetailsKeyAuthenticationPage, root.accountJid, root.accountJid)
 
 			UserResourcesWatcher {
 				id: ownResourcesWatcher
-				jid: AccountManager.jid
+				jid: root.accountJid
 			}
 		}
 
@@ -143,30 +143,30 @@ DetailsContent {
 				}
 
 				if (!MessageModel.usableOmemoDevices.length) {
-					if (contactOmemoWatcher.distrustedOmemoDevices.length) {
-						return qsTr("Scan the QR code of your <b>contact</b> to enable encryption")
+					if (contactOmemoWatcher.distrustedDevices.length) {
+						return qsTr("Verify your <b>contact</b> to enable encryption")
 					}
 
 					return qsTr("Your <b>contact</b> doesn't use OMEMO 2")
-				} else if (contactOmemoWatcher.authenticatableOmemoDevices.length) {
-					if (contactOmemoWatcher.authenticatableOmemoDevices.length === contactOmemoWatcher.distrustedOmemoDevices.length) {
-						return qsTr("Scan the QR codes of your <b>contact's</b> devices to encrypt for them")
+				} else if (contactOmemoWatcher.authenticatableDevices.length) {
+					if (contactOmemoWatcher.authenticatableDevices.length === contactOmemoWatcher.distrustedDevices.length) {
+						return qsTr("Verify your <b>contact's</b> devices to encrypt for them")
 					}
 
-					return qsTr("Scan the QR code of your <b>contact</b> for maximum security")
+					return qsTr("Verify your <b>contact</b> for maximum security")
 				}
 
 				return ""
 			}
 			icon.name: {
 				if (!MessageModel.usableOmemoDevices.length) {
-					if (contactOmemoWatcher.distrustedOmemoDevices.length) {
+					if (contactOmemoWatcher.distrustedDevices.length) {
 						return "channel-secure-symbolic"
 					}
 
 					return "channel-insecure-symbolic"
-				} else if (contactOmemoWatcher.authenticatableOmemoDevices.length) {
-					if (contactOmemoWatcher.authenticatableOmemoDevices.length === contactOmemoWatcher.distrustedOmemoDevices.length) {
+				} else if (contactOmemoWatcher.authenticatableDevices.length) {
+					if (contactOmemoWatcher.authenticatableDevices.length === contactOmemoWatcher.distrustedDevices.length) {
 						return "security-medium-symbolic"
 					}
 
@@ -176,8 +176,8 @@ DetailsContent {
 				return ""
 			}
 			visible: text
-			enabled: contactOmemoWatcher.authenticatableOmemoDevices.length
-			onClicked: pageStack.layers.push(qrCodePage, { contactJid: root.jid })
+			enabled: contactOmemoWatcher.authenticatableDevices.length
+			onClicked: root.openKeyAuthenticationPage(contactDetailsKeyAuthenticationPage, root.accountJid, root.jid)
 		}
 	}
 	rosterGoupListView {

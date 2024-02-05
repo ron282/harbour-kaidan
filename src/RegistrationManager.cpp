@@ -21,11 +21,9 @@ RegistrationManager::RegistrationManager(ClientWorker *clientWorker, QXmppClient
 	: QObject(parent),
 	  m_clientWorker(clientWorker),
 	  m_client(client),
-	  m_manager(new QXmppRegistrationManager),
+	  m_manager(client->addNewExtension<QXmppRegistrationManager>()),
 	  m_dataFormModel(new RegistrationDataFormModel())
 {
-	client->addExtension(m_manager);
-
 	connect(m_manager, &QXmppRegistrationManager::supportedByServerChanged, this, &RegistrationManager::handleInBandRegistrationSupportedChanged);
 
 	// account creation
@@ -99,7 +97,7 @@ void RegistrationManager::handleRegistrationFormReceived(const QXmppRegisterIq &
 	if (newDataForm.fields().isEmpty()) {
 		// If there is a standardized out-of-band URL, use that.
 		if (!iq.outOfBandUrl().isEmpty()) {
-			emit Kaidan::instance()->registrationOutOfBandUrlReceived(iq.outOfBandUrl());
+			Q_EMIT Kaidan::instance()->registrationOutOfBandUrlReceived(iq.outOfBandUrl());
 			setRegisterOnConnectEnabled(false);
 			return;
 		}
@@ -113,7 +111,7 @@ void RegistrationManager::handleRegistrationFormReceived(const QXmppRegisterIq &
 #else
 			if (instructionPart.startsWith(u"https://")) {
 #endif
-				emit Kaidan::instance()->registrationOutOfBandUrlReceived(instructionPart);
+				Q_EMIT Kaidan::instance()->registrationOutOfBandUrlReceived(instructionPart);
 				setRegisterOnConnectEnabled(false);
 				return;
 			}
@@ -121,7 +119,7 @@ void RegistrationManager::handleRegistrationFormReceived(const QXmppRegisterIq &
 
 		// If no URL has been found in the instructions, there is a
 		// problem with the server.
-		emit m_clientWorker->connectionErrorChanged(ClientWorker::RegistrationUnsupported);
+		Q_EMIT m_clientWorker->connectionErrorChanged(ClientWorker::RegistrationUnsupported);
 		setRegisterOnConnectEnabled(false);
 		return;
 	}
@@ -141,7 +139,7 @@ void RegistrationManager::handleRegistrationFormReceived(const QXmppRegisterIq &
 		m_contentIdsToRemove << bobData.cid();
 	}
 
-	emit Kaidan::instance()->registrationFormReceived(m_dataFormModel);
+	Q_EMIT Kaidan::instance()->registrationFormReceived(m_dataFormModel);
 }
 
 void RegistrationManager::handleRegistrationSucceeded()
@@ -191,7 +189,7 @@ void RegistrationManager::handleRegistrationFailed(const QXmppStanza::Error &err
 		break;
 	}
 
-	emit Kaidan::instance()->registrationFailed(quint8(registrationError), error.text());
+	Q_EMIT Kaidan::instance()->registrationFailed(quint8(registrationError), error.text());
 }
 
 void RegistrationManager::handlePasswordChanged(const QString &newPassword)
@@ -200,12 +198,12 @@ void RegistrationManager::handlePasswordChanged(const QString &newPassword)
 	AccountManager::instance()->storePassword();
 	AccountManager::instance()->setHasNewCredentials(false);
 	m_clientWorker->finishTask();
-	emit Kaidan::instance()->passwordChangeSucceeded();
+	Q_EMIT Kaidan::instance()->passwordChangeSucceeded();
 }
 
 void RegistrationManager::handlePasswordChangeFailed(const QXmppStanza::Error &error)
 {
-	emit Kaidan::instance()->passwordChangeFailed(error.text());
+	Q_EMIT Kaidan::instance()->passwordChangeFailed(error.text());
 	m_clientWorker->finishTask();
 }
 

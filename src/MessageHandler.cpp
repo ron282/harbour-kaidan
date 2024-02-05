@@ -53,6 +53,8 @@ public:
 #include <QXmppThumbnail.h>
 #include <QXmppUtils.h>
 // Kaidan
+#include "Account.h"
+#include "AccountDb.h"
 #include "AccountManager.h"
 #include "Algorithms.h"
 #include "ClientWorker.h"
@@ -65,6 +67,7 @@ public:
 #include "MediaUtils.h"
 #include "Notifications.h"
 #include "OmemoManager.h"
+#include "RosterManager.h"
 #include "RosterModel.h"
 
 // Number of messages fetched at once when loading MAM backlog
@@ -79,7 +82,6 @@ MessageHandler::MessageHandler(ClientWorker *clientWorker, QXmppClient *client, 
 	connect(client, &QXmppClient::messageReceived, this, [this](const QXmppMessage &msg) {
 		handleMessage(msg, MessageOrigin::Stream);
 	});
-	connect(this, &MessageHandler::sendMessageRequested, this, &MessageHandler::sendMessage);
 	connect(MessageModel::instance(), &MessageModel::sendCorrectedMessageRequested,
 	        this, &MessageHandler::sendCorrectedMessage);
 	connect(MessageModel::instance(), &MessageModel::sendChatStateRequested,
@@ -88,8 +90,6 @@ MessageHandler::MessageHandler(ClientWorker *clientWorker, QXmppClient *client, 
 	connect(client, &QXmppClient::connected, this, &MessageHandler::handleConnected);
 	connect(client->findExtension<QXmppRosterManager>(), &QXmppRosterManager::rosterReceived,
 	        this, &MessageHandler::handleRosterReceived);
-	connect(MessageDb::instance(), &MessageDb::lastMessageStampFetched,
-	        this, &MessageHandler::handleLastMessageStampFetched);
 
 	connect(&m_receiptManager, &QXmppMessageReceiptManager::messageDelivered,
 		this, [](const QString &, const QString &id) {
@@ -101,153 +101,97 @@ MessageHandler::MessageHandler(ClientWorker *clientWorker, QXmppClient *client, 
 
 	connect(this, &MessageHandler::retrieveBacklogMessagesRequested, this, &MessageHandler::retrieveBacklogMessages);
 	client->addExtension(&m_receiptManager);
-
-	connect(MessageModel::instance(), &MessageModel::pendingMessagesFetched,
-			this, &MessageHandler::handlePendingMessages);
-
-	// get last message stamp to retrieve all new messages from the server since then
-	MessageDb::instance()->fetchLastMessageStamp();
 }
 
-void MessageHandler::handleRosterReceived()
+QFuture<QXmpp::SendResult> MessageHandler::send(QXmppMessage &&message)
 {
-	// retrieve initial messages for each contact, if there is no last message locally
-	if (m_lastMessageLoaded && m_lastMessageStamp.isNull())
-		retrieveInitialMessages();
-}
+	QFutureInterface<QXmpp::SendResult> interface(QFutureInterfaceBase::Started);
 
-void MessageHandler::handleLastMessageStampFetched(const QDateTime &stamp)
-{
-	m_lastMessageStamp = stamp;
-	m_lastMessageLoaded = true;
+	const auto recipientJid = message.to();
 
-	// this is for the case that loading the last message took longer than connecting to
-	// the server:
+	auto sendEncrypted = [=, this]() mutable {
+		m_client->sendSensitive(std::move(message)).then(this, [=](QXmpp::SendResult result) mutable {
+			reportFinishedResult(interface, result);
+		});
+	};
 
-	// if already connected directly retrieve messages
-	if (m_client->isConnected()) {
-		// if there are no messages at all, load initial history,
-		// otherwise load all missed messages since last online.
-		if (stamp.isNull()) {
-			// only start if roster was received already
-			if (m_client->findExtension<QXmppRosterManager>()->isRosterReceived())
-				retrieveInitialMessages();
+	auto sendUnencrypted = [=, this]() mutable {
+		// Ensure that a message containing files but without a body is stored/archived via MAM by
+		// the server.
+		// That is not needed if the message is encrypted because that is handled by the
+		// corresponding encryption manager.
+		if (!message.sharedFiles().isEmpty() && message.body().isEmpty()) {
+			message.addHint(QXmppMessage::Store);
+		}
+
+		m_client->send(std::move(message)).then(this, [=](QXmpp::SendResult result) mutable {
+			reportFinishedResult(interface, result);
+		});
+	};
+
+	// If the message is sent for the current chat, its information is used to determine whether to
+	// send encrypted.
+	// Otherwise, that information is retrieved from the database.
+	runOnThread(MessageModel::instance(), [accountJid = AccountManager::instance()->jid(), recipientJid]() {
+		return MessageModel::instance()->isChatCurrentChat(accountJid, recipientJid);
+	}, this, [=, this](bool isChatCurrentChat) mutable {
+		if (isChatCurrentChat) {
+			runOnThread(MessageModel::instance(), []() {
+				return MessageModel::instance()->isOmemoEncryptionEnabled();
+			}, this, [=](bool isOmemoEncryptionEnabled) mutable {
+				if (isOmemoEncryptionEnabled) {
+					sendEncrypted();
+				} else {
+					sendUnencrypted();
+				}
+			});
 		} else {
-			retrieveCatchUpMessages(stamp);
-		}
-	}
-}
-
-void MessageHandler::handleMessage(const QXmppMessage &msg, MessageOrigin origin)
-{
-	if (msg.type() == QXmppMessage::Error) {
-		MessageDb::instance()->updateMessage(msg.id(), [errorText { msg.error().text() }](Message &msg) {
-			msg.deliveryState = Enums::DeliveryState::Error;
-			msg.errorText = errorText;
-		});
-		return;
-	}
-
-	const auto senderJid = QXmppUtils::jidToBareJid(msg.from());
-	const auto recipientJid = QXmppUtils::jidToBareJid(msg.to());
-	const auto isOwnMessage = senderJid == m_client->configuration().jidBare();
-
-	if (msg.state() != QXmppMessage::State::None) {
-		emit MessageModel::instance()->handleChatStateRequested(
-				senderJid, msg.state());
-	}
-
-	if (handleReadMarker(msg, senderJid, recipientJid, isOwnMessage)) {
-        return;
-    }
-
-	if (handleReaction(msg, senderJid)) {
-        return;
-	}
-
-	if (msg.body().isEmpty() && msg.outOfBandUrl().isEmpty() && msg.sharedFiles().isEmpty()) {
-        return;
-	}
-
-	// Close a notification for messages to which the user replied via another own resource.
-	if (isOwnMessage) {
-        emit Notifications::instance()->closeMessageNotificationRequested(senderJid, recipientJid);
-	}
-
-	Message message;
-	message.from = senderJid;
-	message.to = recipientJid;
-	message.isOwn = isOwnMessage;
-	message.id = msg.id();
-
-	if (auto e2eeMetadata = msg.e2eeMetadata()) {
-		message.encryption = Encryption::Enum(e2eeMetadata->encryption());
-		message.senderKey = e2eeMetadata->senderKey();
-    }
-
-	parseSharedFiles(msg, message);
-
-	if (auto encryptionName = msg.encryptionName();
-			!encryptionName.isEmpty() && message.encryption == Encryption::NoEncryption) {
-		message.body = tr("This message is encrypted with %1 but could not be decrypted").arg(encryptionName);
-	} else {
-		// Do not use the file sharing fallback body.
+			runOnThread(RosterModel::instance(), [accountJid = AccountManager::instance()->jid(), recipientJid]() {
+				return RosterModel::instance()->itemEncryption(accountJid, recipientJid).value_or(Encryption::NoEncryption);
+			}, this, [=, this](Encryption::Enum activeEncryption) mutable {
 #if defined(WITH_OMEMO_V03)
-        if (msg.body() != msg.outOfBandUrl() && message.files.count() == 0) {
-            message.body = msg.body();
-        }
+                if (const auto omemoEncryptionActive = activeEncryption == Encryption::Omemo0) {
 #else
-		if (msg.body() != msg.outOfBandUrl()) {
-			message.body = msg.body();
-		}
+                if (const auto omemoEncryptionActive = activeEncryption == Encryption::Omemo2) {
 #endif
-	}
+                    auto future = m_clientWorker->omemoManager()->hasUsableDevices({ recipientJid });
+					await(future, this, [=](bool hasUsableDevices) mutable {
+						const auto omemoEncryptionEnabled = omemoEncryptionActive && hasUsableDevices;
 
-	message.isSpoiler = msg.isSpoiler();
-	message.spoilerHint = msg.spoilerHint();
-	message.stanzaId = msg.stanzaId();
-	message.originId = msg.originId();
+//#if defined(WITH_OMEMO_V03)
+//        if (msg.body() != msg.outOfBandUrl() && message.files.count() == 0) {
+//            message.body = msg.body();
+//        }
+//#else
+//		if (msg.body() != msg.outOfBandUrl()) {
+//			message.body = msg.body();
+//		}
+//#endif
 
-	// get possible delay (timestamp)
-	message.stamp = (msg.stamp().isNull() || !msg.stamp().isValid())
-	                 ? QDateTime::currentDateTimeUtc()
-	                 : msg.stamp().toUTC();
+						if (omemoEncryptionEnabled) {
+							sendEncrypted();
+						} else {
+							sendUnencrypted();
+						}
+					});
+				} else {
+					sendUnencrypted();
+				}
+			});
+		}
+	});
 
-	// save the message to the database
-	// in case of message correction, replace old message
-	if (msg.replaceId().isEmpty()) {
-		MessageDb::instance()->addMessage(message, origin);
-	} else {
-		message.id.clear();
-		MessageDb::instance()->updateMessage(msg.replaceId(), [message](Message &m) {
-			// replace completely
-			m = message;
-		});
-	}
+	return interface.future();
 }
 
-void MessageHandler::sendMessage(const QString& toJid,
-                                 const QString& body,
-                                 bool isSpoiler,
-                                 const QString& spoilerHint)
+void MessageHandler::sendPendingMessages()
 {
-	Message msg;
-	msg.from = AccountManager::instance()->jid();
-	msg.to = toJid;
-	msg.body = body;
-	msg.id = QXmppUtils::generateStanzaUuid();
-	msg.originId = msg.id;
-	// MessageModel::activeEncryption() is thread-safe.
-	msg.encryption = MessageModel::instance()->activeEncryption();
-	msg.receiptRequested = true;
-	msg.isOwn = true;
-	msg.deliveryState = Enums::DeliveryState::Pending;
-	msg.stamp = QDateTime::currentDateTimeUtc();
-	msg.isSpoiler = isSpoiler;
-	msg.spoilerHint = spoilerHint;
-
-	MessageDb::instance()->addMessage(msg, MessageOrigin::UserInput);
-	sendPendingMessage(std::move(msg));
+	auto future = MessageDb::instance()->fetchPendingMessages(AccountManager::instance()->jid());
+	await(future, this, [this](QVector<Message> messages) {
+		for (Message message : messages) {
+			sendPendingMessage(std::move(message));
+		}
+	});
 }
 
 void MessageHandler::sendChatState(const QString &toJid, const QXmppMessage::State state)
@@ -264,7 +208,7 @@ void MessageHandler::sendCorrectedMessage(Message msg)
 	await(send(msg.toQXmpp()), this, [messageId](QXmpp::SendResult result) {
 		if (std::holds_alternative<QXmppError>(result)) {
 			// TODO store in the database only error codes, assign text messages right in the QML
-			emit Kaidan::instance()->passiveNotificationRequested(
+			Q_EMIT Kaidan::instance()->passiveNotificationRequested(
 						tr("Message correction was not successful"));
 
 			MessageDb::instance()->updateMessage(messageId, [](Message &message) {
@@ -304,14 +248,6 @@ QFuture<QXmpp::SendResult> MessageHandler::sendMessageReaction(const QString &ch
 	return send(std::move(message));
 }
 
-void MessageHandler::handleConnected()
-{
-	// retrieve missed messages, if the last saved message has been loaded and exists
-	if (m_lastMessageLoaded && !m_lastMessageStamp.isNull()) {
-		retrieveCatchUpMessages(m_lastMessageStamp);
-	}
-}
-
 void MessageHandler::sendPendingMessage(Message message)
 {
 
@@ -320,8 +256,10 @@ void MessageHandler::sendPendingMessage(Message message)
 		// I need to send it with the most recent stamp
 		// for that I'm gonna copy that message and update in the copy just the stamp
 		if (!message.replaceId.isEmpty()) {
-			message.stamp = QDateTime::currentDateTimeUtc();
+			message.timestamp = QDateTime::currentDateTimeUtc();
 		}
+
+		message.receiptRequested = true;
 
 		const auto messageId = message.id;
 		await(send(message.toQXmpp()), this, [messageId](QXmpp::SendResult result) {
@@ -332,7 +270,7 @@ void MessageHandler::sendPendingMessage(Message message)
 				// The error message of the message is saved untranslated. To make
 				// translation work in the UI, the tr() call of the passive
 				// notification must contain exactly the same string.
-				emit Kaidan::instance()->passiveNotificationRequested(tr("Message could not be sent."));
+				Q_EMIT Kaidan::instance()->passiveNotificationRequested(tr("Message could not be sent."));
 				MessageDb::instance()->updateMessage(messageId, [](Message &msg) {
 					msg.deliveryState = Enums::DeliveryState::Error;
 					msg.errorText = QStringLiteral("Message could not be sent.");
@@ -442,76 +380,97 @@ void MessageHandler::sendReadMarker(const QString &chatJid, const QString &messa
 	send(std::move(message));
 }
 
-void MessageHandler::handlePendingMessages(const QVector<Message> &messages)
+void MessageHandler::handleConnected()
 {
-	for (Message message : messages) {
-		sendPendingMessage(std::move(message));
-	}
+	// Fetch the stanza ID of the last message to retrieve all new messages from the server since
+	// then if the there is such a last message locally stored.
+	// That is not the case when the user's account is added to Kaidan.
+	await(AccountDb::instance()->fetchLatestMessageStanzaId(m_client->configuration().jidBare()), this, [this](QString &&stanzaId) {
+		if (!stanzaId.isEmpty()) {
+			retrieveCatchUpMessages(stanzaId);
+		}
+	});
+}
+
+void MessageHandler::handleRosterReceived()
+{
+	// Fetch the stanza ID of the last message to retrieve one initial message for each roster item
+	// from the server if there is no last message locally stored.
+	// That is the case when the user's account is added to Kaidan.
+	await(AccountDb::instance()->fetchLatestMessageStanzaId(m_client->configuration().jidBare()), this, [this](QString &&stanzaId) {
+		if (stanzaId.isEmpty()) {
+			retrieveInitialMessages();
+		}
+	});
 }
 
 void MessageHandler::retrieveInitialMessages()
 {
-	using Mam = QXmppMamManager;
-
-	QXmppResultSetQuery queryLimit;
-	// load only one message per user (the rest can be loaded when needed)
-	queryLimit.setMax(1);
-	// query last (newest) first
-	queryLimit.setBefore("");
-
-	const auto bareJids = m_client->findExtension<QXmppRosterManager>()->getRosterBareJids();
-	if (bareJids.isEmpty()) {
+	const auto jids = m_client->findExtension<QXmppRosterManager>()->getRosterBareJids();
+	if (jids.isEmpty()) {
 		return;
 	}
 
 	// start database transaction if no queries are running and we are going to request messages
-	if (!m_runningInitialMessageQueries && !bareJids.empty()) {
+	if (!m_runningInitialMessageQueries && !jids.empty()) {
 		Kaidan::instance()->database()->startTransaction();
 	}
 
-	for (const auto &jid : bareJids) {
+	for (const auto &jid : jids) {
 		m_runningInitialMessageQueries++;
-
-		m_mamManager->retrieveMessages(
-			QString(),
-			QString(),
-			jid,
-			QDateTime(),
-			QDateTime(),
-			queryLimit).then(this, [this](auto result) {
-			m_runningInitialMessageQueries--;
-
-			// process received message
-			if (std::holds_alternative<typename Mam::RetrievedMessages>(result)) {
-				auto messages = std::get<typename Mam::RetrievedMessages>(std::move(result));
-
-				if (!messages.messages.empty()) {
-					// TODO: request other message if this message is empty (e.g. no body)
-					handleMessage(messages.messages.first(), MessageOrigin::MamInitial);
-				}
-			}
-			// do nothing on error
-
-			// commit database transaction when all queries have finished
-			if (!m_runningInitialMessageQueries) {
-				Kaidan::instance()->database()->commitTransaction();
-
-				// so this won't be triggered again on reconnect
-				m_lastMessageStamp = QDateTime::currentDateTimeUtc();
-			}
-		});
+		retrieveInitialMessage(jid);
 	}
 }
 
-void MessageHandler::retrieveCatchUpMessages(const QDateTime &stamp)
+void MessageHandler::retrieveInitialMessage(const QString &jid, const QString &offsetMessageId)
 {
 	using Mam = QXmppMamManager;
 
 	QXmppResultSetQuery queryLimit;
+	queryLimit.setMax(1);
+	queryLimit.setBefore(offsetMessageId);
+
+	m_mamManager->retrieveMessages(
+		QString(),
+		QString(),
+		jid,
+		QDateTime(),
+		QDateTime(),
+		queryLimit).then(this, [this, jid](Mam::RetrieveResult result) {
+
+		// process received message
+		if (auto retrievedMessages = std::get_if<Mam::RetrievedMessages>(&result)) {
+			if (const auto messages = retrievedMessages->messages; !messages.empty()) {
+				const auto message = messages.constFirst();
+
+				if (message.body().isEmpty() && message.sharedFiles().isEmpty()) {
+					retrieveInitialMessage(jid, retrievedMessages->result.resultSetReply().first());
+					return;
+				}
+
+				handleMessage(message, MessageOrigin::MamInitial);
+			}
+		}
+		// do nothing on error
+
+		// commit database transaction when all queries have finished
+		if (!--m_runningInitialMessageQueries) {
+			Kaidan::instance()->database()->commitTransaction();
+		}
+	});
+}
+
+void MessageHandler::retrieveCatchUpMessages(const QString &latestMessageStanzaId)
+{
+	using Mam = QXmppMamManager;
+
+	QXmppResultSetQuery queryLimit;
+
+	queryLimit.setAfter(latestMessageStanzaId);
 	// no limit
 	queryLimit.setMax(-1);
 
-	m_mamManager->retrieveMessages({}, {}, {}, stamp, {}, queryLimit).then(this, [this](auto result) {
+	m_mamManager->retrieveMessages({}, {}, {}, {}, {}, queryLimit).then(this, [this](auto result) {
 		if (std::holds_alternative<typename Mam::RetrievedMessages>(result)) {
 			auto messages = std::get<typename Mam::RetrievedMessages>(std::move(result));
 
@@ -559,13 +518,120 @@ void MessageHandler::retrieveBacklogMessages(const QString &jid, const QDateTime
 			}
 			Kaidan::instance()->database()->commitTransaction();
 
-			emit MessageModel::instance()->mamBacklogRetrieved(ownJid, jid, lastTimestamp, messages.result.complete());
+			Q_EMIT MessageModel::instance()->mamBacklogRetrieved(ownJid, jid, lastTimestamp, messages.result.complete());
 
 		} else if (auto err = std::get_if<QXmppError>(&result)) {
 			qDebug() << "[MAM]" << "Error requesting MAM backlog:" << err->description;
-			emit MessageModel::instance()->mamBacklogRetrieved(ownJid, jid, stamp, false);
+			Q_EMIT MessageModel::instance()->mamBacklogRetrieved(ownJid, jid, stamp, false);
 		}
 	});
+}
+
+void MessageHandler::handleMessage(const QXmppMessage &msg, MessageOrigin origin)
+{
+	if (msg.type() == QXmppMessage::Error) {
+		MessageDb::instance()->updateMessage(msg.id(), [errorText { msg.error().text() }](Message &msg) {
+			msg.deliveryState = Enums::DeliveryState::Error;
+			msg.errorText = errorText;
+		});
+		return;
+	}
+
+	const auto accountJid = m_client->configuration().jidBare();
+	const auto senderJid = QXmppUtils::jidToBareJid(msg.from());
+	const auto recipientJid = QXmppUtils::jidToBareJid(msg.to());
+
+	Message message;
+	message.accountJid = accountJid;
+	message.senderId = senderJid;
+	message.chatJid = message.isOwn() ? recipientJid : senderJid;
+
+	if (msg.state() != QXmppMessage::State::None) {
+		Q_EMIT MessageModel::instance()->handleChatStateRequested(senderJid, msg.state());
+	}
+
+	if (handleReadMarker(msg, senderJid, recipientJid, message.isOwn())) {
+		return;
+	}
+
+	if (handleReaction(msg, senderJid)) {
+		return;
+	}
+
+	if (msg.body().isEmpty() && msg.outOfBandUrl().isEmpty() && msg.sharedFiles().isEmpty()) {
+		return;
+	}
+
+	// Close a notification for messages to which the user replied via another own resource.
+	if (message.isOwn()) {
+		Q_EMIT Notifications::instance()->closeMessageNotificationRequested(senderJid, recipientJid);
+	}
+
+	message.id = msg.id();
+
+	if (auto e2eeMetadata = msg.e2eeMetadata()) {
+		message.encryption = Encryption::Enum(e2eeMetadata->encryption());
+		message.senderKey = e2eeMetadata->senderKey();
+	}
+
+	parseSharedFiles(msg, message);
+
+	if (auto encryptionName = msg.encryptionName();
+			!encryptionName.isEmpty() && message.encryption == Encryption::NoEncryption) {
+		message.body = tr("This message is encrypted with %1 but could not be decrypted").arg(encryptionName);
+	} else {
+#if defined(WITH_OMEMO_V03)
+        if (msg.body() != msg.outOfBandUrl() && message.files.count() == 0) {
+            message.body = msg.body();
+        }
+#else
+        // Do not use the file sharing fallback body.
+		if (msg.body() != msg.outOfBandUrl()) {
+			message.body = msg.body();
+        }
+#endif
+    }
+
+	message.isSpoiler = msg.isSpoiler();
+	message.spoilerHint = msg.spoilerHint();
+	message.stanzaId = msg.stanzaId();
+	message.originId = msg.originId();
+
+	AccountDb::instance()->updateAccount(accountJid, [stanzaId = msg.stanzaId(), timestamp = msg.stamp().toUTC()](Account &account) {
+		// Check "<=" instead of "<" to update the ID in the rare case that the timestamps are equal
+		// (e.g., because the timestamps are not precise enough)
+		if (account.latestMessageTimestamp <= timestamp) {
+			account.latestMessageStanzaId = stanzaId;
+			account.latestMessageTimestamp = timestamp;
+		}
+	});
+
+	// save the message to the database
+	// in case of message correction, replace old message
+	if (msg.replaceId().isEmpty()) {
+		// get possible delay (timestamp)
+		message.timestamp = (msg.stamp().isNull() || !msg.stamp().isValid())
+						 ? QDateTime::currentDateTimeUtc()
+						 : msg.stamp().toUTC();
+
+		MessageDb::instance()->addMessage(message, origin);
+
+		// Add the message's sender to the roster if not already done and only for direct messages.
+		// Otherwise, the chat could only be opened via the message's notification and could not be
+		// opened again later.
+		if (msg.type() != QXmppMessage::GroupChat && !RosterModel::instance()->hasItem(senderJid)) {
+			m_clientWorker->rosterManager()->addContact(senderJid);
+		}
+	} else {
+		const auto replaceId = msg.replaceId();
+		message.replaceId = replaceId;
+		MessageDb::instance()->updateMessage(replaceId, [message](Message &m) {
+			// Replace the whole stored message but keep its original timestamp.
+			const auto timestamp = m.timestamp;
+			m = message;
+			m.timestamp = timestamp;
+		});
+	}
 }
 
 bool MessageHandler::handleReadMarker(const QXmppMessage &message, const QString &senderJid, const QString &recipientJid, bool isOwnMessage)
@@ -580,16 +646,16 @@ bool MessageHandler::handleReadMarker(const QXmppMessage &message, const QString
 			// count of read messages.
 			auto future = MessageDb::instance()->messageCount(recipientJid, senderJid, lastReadContactMessageId, markedId);
 			await(future, this, [recipientJid, markedId](int count) {
-				emit RosterModel::instance()->updateItemRequested(recipientJid, [=](RosterItem &item) {
+				Q_EMIT RosterModel::instance()->updateItemRequested(recipientJid, [=](RosterItem &item) {
 					item.unreadMessages = count == 0 ? item.unreadMessages - 1 : item.unreadMessages - count + 1;
 					item.lastReadContactMessageId = markedId;
 					item.readMarkerPending = false;
 				});
 			});
 
-			emit Notifications::instance()->closeMessageNotificationRequested(senderJid, recipientJid);
+			Q_EMIT Notifications::instance()->closeMessageNotificationRequested(senderJid, recipientJid);
 		} else {
-			emit RosterModel::instance()->updateItemRequested(senderJid, [markedId](RosterItem &item) {
+			Q_EMIT RosterModel::instance()->updateItemRequested(senderJid, [markedId](RosterItem &item) {
 				item.lastReadOwnMessageId = markedId;
 			});
 
@@ -749,70 +815,4 @@ void MessageHandler::parseSharedFiles(const QXmppMessage &message, Message &mess
         }
     }
 #endif
-}
-
-QFuture<QXmpp::SendResult> MessageHandler::send(QXmppMessage &&message)
-{
-	QFutureInterface<QXmpp::SendResult> interface(QFutureInterfaceBase::Started);
-
-	const auto recipientJid = message.to();
-
-	auto sendEncrypted = [=, this]() mutable {
-        m_client->sendSensitive(std::move(message)).then(this, [=](QXmpp::SendResult result) mutable {
-            reportFinishedResult(interface, result);
-		});
-	};
-
-	auto sendUnencrypted = [=, this]() mutable {
-		m_client->send(std::move(message)).then(this, [=](QXmpp::SendResult result) mutable {
-			reportFinishedResult(interface, result);
-		});
-	};
-
-	// If the message is sent for the current chat, its information is used to determine whether to
-	// send encrypted.
-	// Otherwise, that information is retrieved from the database.
-	runOnThread(MessageModel::instance(), [accountJid = AccountManager::instance()->jid(), recipientJid]() {
-		return MessageModel::instance()->isChatCurrentChat(accountJid, recipientJid);
-	}, this, [=, this](bool isChatCurrentChat) mutable {
-		if (isChatCurrentChat) {
-			runOnThread(MessageModel::instance(), []() {
-				return MessageModel::instance()->isOmemoEncryptionEnabled();
-			}, this, [=](bool isOmemoEncryptionEnabled) mutable {
-				if (isOmemoEncryptionEnabled) {
-					sendEncrypted();
-				} else {
-                    sendUnencrypted();
-				}
-			});
-		} else {
-			runOnThread(RosterModel::instance(), [accountJid = AccountManager::instance()->jid(), recipientJid]() {
-				return RosterModel::instance()->itemEncryption(accountJid, recipientJid).value_or(Encryption::NoEncryption);
-			}, this, [=, this](Encryption::Enum activeEncryption) mutable {
-#if defined(WITH_OMEMO_V03)
-                if (activeEncryption == Encryption::Omemo0) {
-#else
-                if (activeEncryption == Encryption::Omemo2) {
-#endif
-                    auto future = m_clientWorker->omemoManager()->hasUsableDevices({ recipientJid });
-					await(future, this, [=](bool hasUsableDevices) mutable {
-#if defined(WITH_OMEMO_V03)
-                        const auto isOmemoEncryptionEnabled = activeEncryption == Encryption::Omemo0 && hasUsableDevices;
-#else
-                        const auto isOmemoEncryptionEnabled = activeEncryption == Encryption::Omemo2 && hasUsableDevices;
-#endif
-						if (isOmemoEncryptionEnabled) {
-							sendEncrypted();
-						} else {
-                            sendUnencrypted();
-						}
-					});
-				} else {
-					sendUnencrypted();
-				}
-			});
-		}
-	});
-
-	return interface.future();
 }

@@ -25,14 +25,15 @@ ListItem {
 
 	property int modelIndex
 	property string msgId
-	property string senderJid
+	property string senderId
 	property string senderName
 	property string chatName
     property bool isOwn: true
 	property int encryption
 	property bool isTrusted
 	property string messageBody
-	property date dateTime
+	property string date
+	property string time
 	property int deliveryState
 	property string deliveryStateName
 	property url deliveryStateIcon
@@ -52,11 +53,11 @@ ListItem {
 	property var ownDetailedReactions
 
 	property bool isGroupBegin: {
-        return modelIndex < 1 ||
-			MessageModel.data(MessageModel.index(modelIndex - 1, 0), MessageModel.Sender) !== senderJid
-    }
+		return modelIndex < 1 ||
+			MessageModel.data(MessageModel.index(modelIndex - 1, 0), MessageModel.SenderId) !== senderId
+	}
 
-	signal messageEditRequested(string id, string body)
+	signal messageEditRequested(string replaceId, string body, string spoilerHint)
 	signal quoteRequested(string body)
 
     contentHeight: messageArea.height + (isGroupBegin ? Theme.paddingLarge : 0)
@@ -126,7 +127,7 @@ ListItem {
 					id: avatar
                     visible: !isOwn /*&& isGroupBegin*/
 					anchors.fill: parent
-					jid: root.senderJid
+					jid: root.senderId
 					name: root.senderName
 				}
 			}
@@ -183,6 +184,31 @@ ListItem {
                             width: height
                             color: isOwn ? Theme.highlightColor: Theme.primaryColor
                             source: isShowingSpoiler ? "image://theme/icon-splus-hide-password" : "image://theme/icon-splus-show-password"
+//						onPressAndHold: showContextMenu()
+//					}
+//				}
+
+//				contentItem: ColumnLayout {
+//					// spoiler hint area
+//					ColumnLayout {
+//						visible: isSpoiler
+//						Layout.minimumWidth: bubbleBackground.metaInfoWidth
+//						Layout.bottomMargin: isShowingSpoiler ? 0 : Kirigami.Units.largeSpacing * 2
+
+//						RowLayout {
+//							Controls.Label {
+//								text: spoilerHint == "" ? qsTr("Spoiler") : Utils.formatMessage(spoilerHint)
+//								textFormat: Text.StyledText
+//								wrapMode: Text.Wrap
+//								color: Kirigami.Theme.textColor
+//								Layout.fillWidth: true
+//							}
+
+//							ClickableIcon {
+//								source: isShowingSpoiler ? "password-show-off" : "password-show-on"
+//								Layout.leftMargin: Kirigami.Units.largeSpacing
+//								onClicked: isShowingSpoiler = !isShowingSpoiler
+//							}
 						}
                     }
 
@@ -270,6 +296,57 @@ ListItem {
                            width : parent.width
                        }
                     }
+//						Kirigami.Separator {
+//							visible: isShowingSpoiler
+//							Layout.fillWidth: true
+//							color: {
+//								const bgColor = Kirigami.Theme.backgroundColor
+//								const textColor = Kirigami.Theme.textColor
+//								return Qt.tint(textColor, Qt.rgba(bgColor.r, bgColor.g, bgColor.b, 0.7))
+//							}
+//						}
+//					}
+
+//					ColumnLayout {
+//						visible: isSpoiler && isShowingSpoiler || !isSpoiler
+
+//						Repeater {
+//							model: root.files
+
+//							Layout.preferredWidth: 200
+//							Layout.preferredHeight: 200
+
+//							delegate: MediaPreviewOther {
+//								required property var modelData
+
+//								messageId: root.msgId
+
+//								mediaSource: {
+//									if (modelData.localFilePath) {
+//										let local = MediaUtilsInstance.fromLocalFile(modelData.localFilePath);
+//										if (MediaUtilsInstance.localFileAvailable(local)) {
+//											return local;
+//										}
+//									}
+//									return "";
+//								}
+//								message: root
+//								file: modelData
+//							}
+//						}
+
+//						// message body
+//						Controls.Label {
+//							id: bodyLabel
+//							visible: messageBody
+//							text: Utils.formatMessage(messageBody) + bubble.paddingText
+//							textFormat: Text.StyledText
+//							wrapMode: Text.Wrap
+//							color: Kirigami.Theme.textColor
+//							onLinkActivated: Qt.openUrlExternally(link)
+//							Layout.maximumWidth: root.width - Kirigami.Units.gridUnit * 6
+//						}
+//					}
 
 					// message reactions (emojis in reaction to this message)
 
@@ -332,6 +409,46 @@ ListItem {
                         text: " "
                         font.pixelSize: Theme.fontSizeTiny
                     }
+//						Repeater {
+//							id: displayedReactionsArea
+//							model: root.displayedReactions
+
+//							MessageReactionDisplayButton {
+//								accentColor: bubble.backgroundColor
+//								ownReactionIncluded: modelData.ownReactionIncluded
+//								deliveryState: modelData.deliveryState
+//								isOwnMessage: root.isOwn
+//								text: modelData.count === 1 ? modelData.emoji : modelData.emoji + " " + modelData.count
+//								width: smallButtonWidth + (text.length < 3 ? 0 : (text.length - 2) * Kirigami.Theme.defaultFont.pixelSize * 0.6)
+//								onClicked: {
+//									if (ownReactionIncluded &&
+//										deliveryState !== MessageReactionDeliveryState.PendingRemovalAfterSent &&
+//										deliveryState !== MessageReactionDeliveryState.PendingRemovalAfterDelivered) {
+//										MessageModel.removeMessageReaction(root.msgId, modelData.emoji)
+//									} else {
+//										MessageModel.addMessageReaction(root.msgId, modelData.emoji)
+//									}
+//								}
+//							}
+//						}
+
+//						MessageReactionAdditionButton {
+//							id: messageReactionAdditionButton
+//							messageId: root.msgId
+//							emojiPicker: root.reactionEmojiPicker
+//							accentColor: bubble.backgroundColor
+//						}
+
+//						MessageReactionDetailsButton {
+//							messageId: root.msgId
+//							accentColor: bubble.backgroundColor
+//							isOwnMessage: root.isOwn
+//							detailedReactions: root.detailedReactions
+//							ownDetailedReactions: root.ownDetailedReactions
+//							detailsSheet: root.reactionDetailsSheet
+//						}
+//					}
+//>>>>>>> master
 				}
                 }
             }
@@ -362,4 +479,51 @@ ListItem {
             openMenu()
         }
     }
+//=======
+//			Item {
+//				Layout.fillWidth: true
+//			}
+//		}
+
+//		// Read marker text for own message
+//		RowLayout {
+//			visible: root.isLastRead && MessageModel.currentAccountJid !== MessageModel.currentChatJid
+//			spacing: Kirigami.Units.smallSpacing * 3
+//			Layout.topMargin: spacing
+//			Layout.leftMargin: spacing
+//			Layout.rightMargin: spacing
+
+//			Kirigami.Separator {
+//				opacity: 0.8
+//				Layout.fillWidth: true
+//			}
+
+//			ScalableText {
+//				text: qsTr("%1 has read up to this point").arg(chatName)
+//				color: Kirigami.Theme.disabledTextColor
+//				scaleFactor: 0.9
+//				elide: Text.ElideMiddle
+//				Layout.maximumWidth: parent.width - Kirigami.Units.largeSpacing * 10
+//			}
+
+//			Kirigami.Separator {
+//				opacity: 0.8
+//				Layout.fillWidth: true
+//			}
+//		}
+//	}
+
+//	/**
+//	 * Shows a context menu (if available) for this message.
+//	 *
+//	 * That is especially the case when this message is an element of the ChatPage.
+//	 */
+//	function showContextMenu() {
+//		if (contextMenu) {
+//			contextMenu.file = null
+//			contextMenu.message = this
+//			contextMenu.popup()
+//		}
+//	}
+//>>>>>>> master
 }

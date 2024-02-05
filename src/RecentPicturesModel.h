@@ -6,28 +6,41 @@
 
 #pragma once
 
-#include <QSortFilterProxyModel>
+#include <QtGlobal>
 
-class RecentPicturesModel : public QSortFilterProxyModel
+#if defined (SFOS)
+#include <QAbstractListModel>
+
+class RecentPicturesModel : public QAbstractListModel
 {
-	Q_OBJECT
-
-	enum Role {
-		FilePath = Qt::UserRole + 1
-	};
+    Q_OBJECT
 
 public:
-    RecentPicturesModel(QObject *parent = nullptr);
+    explicit RecentPicturesModel(QObject *parent = nullptr);
 
-    QHash<int, QByteArray> roleNames() const override;
+    int rowCount(const QModelIndex &) const override;
+    QVariant data(const QModelIndex &, int) const override;
 
-    QVariant data(const QModelIndex &index, int role) const override;
-
-//    bool subSortLessThan(const QModelIndex &left, const QModelIndex &right) const;
 };
+#else
 
+#ifdef Q_OS_ANDROID
+#include <QAbstractListModel>
 
-/*
+class RecentPicturesModel : public QAbstractListModel
+{
+    Q_OBJECT
+
+public:
+    explicit RecentPicturesModel(QObject *parent = nullptr);
+
+    int rowCount(const QModelIndex &) const override;
+    QVariant data(const QModelIndex &, int) const override;
+
+};
+#else
+#include <KDirSortFilterProxyModel>
+
 class RecentPicturesModel : public KDirSortFilterProxyModel
 {
     Q_OBJECT
@@ -45,4 +58,5 @@ public:
 
     bool subSortLessThan(const QModelIndex &left, const QModelIndex &right) const override;
 };
-*/
+#endif
+#endif

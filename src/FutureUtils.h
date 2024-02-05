@@ -32,6 +32,21 @@ QFuture<T> makeReadyFuture(T &&value)
 	return interface.future();
 }
 
+template<typename T>
+QXmppTask<T> makeReadyTask(T &&value)
+{
+	QXmppPromise<T> promise;
+	promise.finish(std::move(value));
+	return promise.task();
+}
+
+inline QXmppTask<void> makeReadyTask()
+{
+	QXmppPromise<void> promise;
+	promise.finish();
+	return promise.task();
+}
+
 template<typename T, typename Handler>
 void await(const QFuture<T> &future, QObject *context, Handler handler)
 {
@@ -242,6 +257,30 @@ auto runOnThread(QObject *targetObject, Function function, QObject *caller, Hand
 				handler(std::move(result));
 			});
 		}
+	});
+#endif
+}
+
+// Calls a function returning a QXmppTask on a remote thread and handles the result on the caller's
+// thread
+template<typename Function, typename Handler>
+auto callRemoteTask(QObject *target, Function function, QObject *caller, Handler handler)
+{
+#if defined(SFOS)
+    QTimer::singleShot(0, target, [f = std::move(function), caller, h = std::move(handler)]() mutable {
+        auto [task, taskContext] = f();
+        task.then(taskContext, [caller, h = std::move(h)](auto r) mutable {
+            QTimer::singleShot(0, caller,
+                [h = std::move(h), r = std::move(r)]() mutable { h(std::move(r)); });
+        });
+    });
+#else
+    QMetaObject::invokeMethod(target, [f = std::move(function), caller, h = std::move(handler)]() mutable {
+		auto [task, taskContext] = f();
+		task.then(taskContext, [caller, h = std::move(h)](auto r) mutable {
+			QMetaObject::invokeMethod(caller,
+				[h = std::move(h), r = std::move(r)]() mutable { h(std::move(r)); });
+		});
 	});
 #endif
 }

@@ -143,6 +143,102 @@ BackgroundItem {
                 }
             }
         }
+//=======
+//			Item {
+//				Layout.preferredHeight: Kirigami.Units.gridUnit * 3
+//				Layout.preferredWidth: Layout.preferredHeight
+//				Layout.alignment: Qt.AlignLeft
+
+//				Rectangle {
+//					id: fallbackCircle
+
+//					visible: !file.hasThumbnail
+//					radius: height / 2
+//					color: Qt.lighter(Kirigami.Theme.focusColor, 1.05)
+
+//					anchors {
+//						fill: parent
+//					}
+
+//					Kirigami.Icon {
+//						source: root.fileAvailable ? file.mimeTypeIcon : "download"
+//						isMask: !openButton.pressed && !openButton.containsMouse
+//						smooth: true
+//						height: 24 // we always want the 24x24 icon
+//						width: height
+
+//						anchors {
+//							centerIn: parent
+//						}
+//					}
+//				}
+//				Kirigami.Icon {
+//					id: thumbnailIcon
+//					visible: file.hasThumbnail
+//					source: file.thumbnailSquare
+
+//					anchors {
+//						fill: parent
+//					}
+
+//					layer.enabled: true
+//					layer.effect: OpacityMask {
+//						maskSource: Item {
+//							width: thumbnailIcon.paintedWidth
+//							height: thumbnailIcon.paintedHeight
+
+//							RoundedRectangle {
+//								anchors.centerIn: parent
+//								width: Math.min(thumbnailIcon.width, thumbnailIcon.height)
+//								height: width
+//							}
+//						}
+//					}
+
+//					Kirigami.Icon {
+//						source: "download"
+//						anchors.fill: thumbnailIcon
+//						visible: !root.fileAvailable
+//					}
+//				}
+//			}
+
+//			// right: file description
+//			ColumnLayout {
+//				Layout.fillHeight: true
+//				Layout.fillWidth: true
+//				spacing: Kirigami.Units.smallSpacing
+
+//				// file name
+//				Controls.Label {
+//					Layout.fillWidth: true
+//					text: file.name
+//					textFormat: Text.PlainText
+//					elide: Text.ElideRight
+//					maximumLineCount: 1
+//				}
+
+//				// file size
+//				Controls.Label {
+//					Layout.fillWidth: true
+//					text: Utils.formattedDataSize(file.size)
+//					textFormat: Text.PlainText
+//					elide: Text.ElideRight
+//					maximumLineCount: 1
+//					color: Kirigami.Theme.disabledTextColor
+//				}
+//			}
+//		}
+
+//		// progress bar for upload/download status
+//		Controls.ProgressBar {
+//			visible: transferWatcher.isLoading
+//			value: transferWatcher.progress
+
+//			Layout.fillWidth: true
+//			Layout.maximumWidth: Kirigami.Units.gridUnit * 14
+//		}
+//>>>>>>> master
 
 		FileProgressWatcher {
 			id: transferWatcher

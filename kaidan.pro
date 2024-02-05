@@ -45,17 +45,23 @@ DEFINES += BOOST_SIGNALS_NO_DEPRECATION_WARNING
 DEFINES += APPLICATION_ID=\\\"im.kaidan.kaidan\\\"
 DEFINES += APPLICATION_DISPLAY_NAME=\\\"SailKaidan\\\"
 DEFINES += APPLICATION_NAME=\\\"harbour-kaidan\\\"
-DEFINES += VERSION_STRING=\\\"0.0.3\\\"
+DEFINES += VERSION_MAJOR=0
+DEFINES += VERSION_MINOR=10
+DEFINES += VERSION_PATCH=0
+DEFINES += VERSION_STRING=\\\"0.10.0\\\"
 DEFINES += QSTRINGVIEW_EMULATE
 DEFINES += Q_COMPILER_UNICODE_STRINGS
 
 SOURCES += \
     3rdparty/QImagePainter/qimagepainter.cpp \
+    src/Account.cpp \
+    src/AccountDb.cpp \
     src/AccountManager.cpp \
     src/AtmManager.cpp \
     src/AudioDeviceModel.cpp \
     src/AvatarFileStorage.cpp \
     src/BitsOfBinaryImageProvider.cpp \
+    src/Blocking.cpp \
     src/CameraImageCapture.cpp \
     src/CameraModel.cpp \
     src/ChatHintModel.cpp \
@@ -88,6 +94,7 @@ SOURCES += \
     src/OmemoCache.cpp \
     src/OmemoDb.cpp \
     src/OmemoManager.cpp \
+    src/OmemoModel.cpp \
     src/OmemoWatcher.cpp \
     src/PresenceCache.cpp \
     src/ProviderListItem.cpp \
@@ -128,6 +135,8 @@ SOURCES += \
 
 HEADERS += \
     3rdparty/QImagePainter/qimagepainter.h \
+    src/Account.h \
+    src/AccountDb.h \
     src/AbstractNotifier.h \
     src/AccountManager.h \
     src/Algorithms.h \
@@ -135,6 +144,7 @@ HEADERS += \
     src/AudioDeviceModel.h \
     src/AvatarFileStorage.h \
     src/BitsOfBinaryImageProvider.h \
+    src/Blocking.h \
     src/CameraImageCapture.h \
     src/CameraModel.h \
     src/ChatHintModel.h \
@@ -173,6 +183,7 @@ HEADERS += \
     src/OmemoCache.h \
     src/OmemoDb.h \
     src/OmemoManager.h \
+    src/OmemoModel.h \
     src/OmemoWatcher.h \
     src/PresenceCache.h \
     src/ProviderListItem.h \

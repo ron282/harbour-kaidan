@@ -18,6 +18,8 @@
 #include "Encryption.h"
 #include "Kaidan.h"
 
+#include <optional>
+
 constexpr quint16 PORT_AUTODETECT = 0;
 
 /**
@@ -31,7 +33,8 @@ class Settings : public QObject
 
 	Q_PROPERTY(Kaidan::PasswordVisibility passwordVisibility READ authPasswordVisibility WRITE setAuthPasswordVisibility NOTIFY authPasswordVisibilityChanged)
 	Q_PROPERTY(Encryption::Enum encryption READ encryption WRITE setEncryption NOTIFY encryptionChanged)
-	Q_PROPERTY(bool qrCodePageExplanationVisible READ qrCodePageExplanationVisible WRITE setQrCodePageExplanationVisible NOTIFY qrCodePageExplanationVisibleChanged)
+	Q_PROPERTY(bool contactAdditionQrCodePageExplanationVisible READ contactAdditionQrCodePageExplanationVisible WRITE setContactAdditionQrCodePageExplanationVisible NOTIFY contactAdditionQrCodePageExplanationVisibleChanged)
+	Q_PROPERTY(bool keyAuthenticationPageExplanationVisible READ keyAuthenticationPageExplanationVisible WRITE setKeyAuthenticationPageExplanationVisible NOTIFY keyAuthenticationPageExplanationVisibleChanged)
 	Q_PROPERTY(QPoint windowPosition READ windowPosition WRITE setWindowPosition NOTIFY windowPositionChanged)
 	Q_PROPERTY(QSize windowSize READ windowSize WRITE setWindowSize NOTIFY windowSizeChanged)
     Q_PROPERTY(AccountManager::AutomaticMediaDownloadsRule automaticMediaDownloadsRule READ automaticMediaDownloadsRule WRITE setAutomaticMediaDownloadsRule NOTIFY automaticMediaDownloadsRuleChanged)
@@ -72,19 +75,11 @@ public:
 	Encryption::Enum encryption() const;
 	void setEncryption(Encryption::Enum encryption);
 
-	/**
-	 * Retrieves the visibility of the QrCodePage's explanation from the settings file.
-	 *
-	 * @return true if the explanation is set to be visible, otherwise false
-	 */
-	bool qrCodePageExplanationVisible() const;
+	bool contactAdditionQrCodePageExplanationVisible() const;
+	void setContactAdditionQrCodePageExplanationVisible(bool visible);
 
-	/**
-	 * Stores the visibility of the QrCodePage's explanation in the settings file.
-	 *
-	 * @param isVisible true if the explanation should be visible in the future, otherwise false
-	 */
-	void setQrCodePageExplanationVisible(bool isVisible);
+	bool keyAuthenticationPageExplanationVisible() const;
+	void setKeyAuthenticationPageExplanationVisible(bool visible);
 
 	QStringList favoriteEmojis() const;
 	void setFavoriteEmojis(const QStringList &emoji);
@@ -95,10 +90,10 @@ public:
 	QSize windowSize() const;
 	void setWindowSize(const QSize &windowSize);
 
-    AccountManager::AutomaticMediaDownloadsRule automaticMediaDownloadsRule() const;
-    void setAutomaticMediaDownloadsRule(AccountManager::AutomaticMediaDownloadsRule rule);
+	AccountManager::AutomaticMediaDownloadsRule automaticMediaDownloadsRule() const;
+	void setAutomaticMediaDownloadsRule(AccountManager::AutomaticMediaDownloadsRule rule);
 
-    void remove(const QStringList &keys);
+	void remove(const QStringList &keys);
 
 signals:
 	void authOnlineChanged();
@@ -109,13 +104,53 @@ signals:
 	void authPortChanged();
 	void authPasswordVisibilityChanged();
 	void encryptionChanged();
-	void qrCodePageExplanationVisibleChanged();
+	void contactAdditionQrCodePageExplanationVisibleChanged();
+	void keyAuthenticationPageExplanationVisibleChanged();
 	void favoriteEmojisChanged();
 	void windowPositionChanged();
 	void windowSizeChanged();
     void automaticMediaDownloadsRuleChanged();
 
 private:
+	template<typename T>
+	T value(const QString &key, const std::optional<T> &defaultValue = {}) const {
+		QMutexLocker locker(&m_mutex);
+
+		if (defaultValue) {
+			return m_settings.value(key, QVariant::fromValue(*defaultValue)).template value<T>();
+		}
+
+		return m_settings.value(key).template value<T>();
+	}
+
+	template<typename T, typename S, typename std::enable_if<int(QtPrivate::FunctionPointer<S>::ArgumentCount) <= 1, T> * = nullptr>
+	void setValue(const QString &key, const T &value, S s) {
+		QMutexLocker locker(&m_mutex);
+		if constexpr (!has_enum_type<T>::value && std::is_enum<T>::value) {
+			m_settings.setValue(key, static_cast<std::underlying_type_t<T>>(value));
+		} else if constexpr (has_enum_type<T>::value) {
+			m_settings.setValue(key, static_cast<typename T::Int>(value));
+		} else {
+			m_settings.setValue(key, QVariant::fromValue(value));
+		}
+		locker.unlock();
+
+		if constexpr (int(QtPrivate::FunctionPointer<S>::ArgumentCount) == 0) {
+			Q_EMIT(this->*s)();
+		} else {
+			Q_EMIT(this->*s)(value);
+		}
+	}
+
+	template<typename S, typename std::enable_if<int(QtPrivate::FunctionPointer<S>::ArgumentCount) == 0, S> * = nullptr>
+	void remove(const QString &key, S s) {
+		QMutexLocker locker(&m_mutex);
+		m_settings.remove(key);
+		locker.unlock();
+
+		Q_EMIT(this->*s)();
+	}
+
 	QSettings m_settings;
 	mutable QMutex m_mutex;
 };

@@ -4,7 +4,6 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-
 import im.kaidan.kaidan 1.0
 
 DetailsHeader {
@@ -29,12 +28,7 @@ DetailsHeader {
 				}
 			}
 
-			Component.onDestruction: {
-				if (root.sheet) {
-					root.sheet.open()
-					Kaidan.client.vCardManager.clientVCardRequested()
-				}
-			}
+//			openPage(avatarChangePage)
 		}
 	}
 

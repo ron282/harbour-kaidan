@@ -17,6 +17,7 @@ import Sailfish.Silica 1.0
 import im.kaidan.kaidan 1.0
 import Nemo.Notifications 1.0
 
+import "details"
 import "elements"
 import "registration"
 import "settings"
@@ -40,6 +41,11 @@ ApplicationWindow {
 
 	readonly property color secondaryBackgroundColor: {
 		return Theme.lightPrimaryColor
+	}
+
+	readonly property color tertiaryBackgroundColor: {
+		const accentColor = secondaryBackgroundColor
+		return Qt.tint(primaryBackgroundColor, Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.7))
 	}
 
 	// radius for using rounded corners
@@ -141,9 +147,6 @@ ApplicationWindow {
 	 * Opens the view with the roster and chat page.
 	 */
 	function openChatView() {
-
-//        globalDrawer.open = true
-//        dockedPanel().show()
 
         popLayersAboveLowest()
         popAllPages()

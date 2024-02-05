@@ -21,7 +21,13 @@ DetailsHeader {
         onClicked: Qt.openUrlExternally(Kaidan.avatarStorage.getAvatarUrl(jid))
     }
 
-    RosterItemWatcher {
+    Label {
+		text: qsTr("Messages in this chat are synchronized as notes across all your devices")
+		visible: accountJid === jid
+		wrapMode: Text.WordWrap
+	}
+
+	RosterItemWatcher {
 		id: contactWatcher
 		jid: root.jid
 	}

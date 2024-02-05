@@ -6,20 +6,37 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import Sailfish.Silica 1.0
+import QtQuick 2.2
+//import QtQuick.Layouts 1.14
+
+import im.kaidan.kaidan 1.0
 
 DetailsSheet {
 	id: root
 
+    property string accountJid
     property string jid
+//  required property string accountJid
+//	required property string jid
 
     ContactDetailsHeader {
         id: header
         jid: root.jid
     }
 
-    ContactDetailsContent {
-        sheet: root
-        jid: root.jid
-        width: parent.width
-    }
+	ContactDetailsContent {
+		sheet: root
+		accountJid: root.accountJid
+		jid: root.jid
+//		Layout.fillWidth: true
+	}
+
+	Connections {
+		target: Kaidan
+
+		// Close this sheet when the contact is removed.
+		function onCloseChatPageRequested() {
+			root.close()
+		}
+	}
 }

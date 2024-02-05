@@ -8,7 +8,6 @@
 
 #ifndef GLOBALS_H
 #define GLOBALS_H
-
 #include <QLatin1String>
 
 // Kaidan settings
@@ -25,7 +24,8 @@
 #define KAIDAN_SETTINGS_WINDOW_POSITION "window/position"
 #define KAIDAN_SETTINGS_WINDOW_SIZE "window/size"
 #define KAIDAN_SETTINGS_AUTOMATIC_MEDIA_DOWNLOADS_RULE "media/automaticDownloadsRule"
-#define KAIDAN_SETTINGS_HELP_VISIBILITY_QR_CODE_PAGE "helpVisibility/qrCodePage"
+#define KAIDAN_SETTINGS_EXPLANATION_VISIBILITY_CONTACT_ADDITION_QR_CODE_PAGE "explanationVisibility/contactAdditionQrCodePage"
+#define KAIDAN_SETTINGS_EXPLANATION_VISIBILITY_KEY_AUTHENTICATION_PAGE "explanationVisibility/keyAuthenticationPage"
 
 #define KAIDAN_JID_RESOURCE_DEFAULT_PREFIX APPLICATION_DISPLAY_NAME
 
@@ -41,7 +41,9 @@ constexpr auto MESSAGE_MAX_CHARS = 1e4;
 // SQL
 #define DB_FILE_BASE_NAME "kaidan"
 #define DB_TABLE_INFO "dbinfo"
+#define DB_TABLE_ACCOUNTS "accounts"
 #define DB_TABLE_ROSTER "roster"
+#define DB_TABLE_ROSTER_GROUPS "rosterGroups"
 #define DB_TABLE_MESSAGES "messages"
 #define DB_VIEW_CHAT_MESSAGES "chatMessages"
 #define DB_VIEW_DRAFT_MESSAGES "draftMessages"
@@ -50,6 +52,7 @@ constexpr auto MESSAGE_MAX_CHARS = 1e4;
 #define DB_TABLE_FILE_HTTP_SOURCES "fileHttpSources"
 #define DB_TABLE_FILE_ENCRYPTED_SOURCES "fileEncryptedSources"
 #define DB_TABLE_MESSAGE_REACTIONS "messageReactions"
+#define DB_TABLE_BLOCKED "blocked"
 #define DB_TABLE_TRUST_SECURITY_POLICIES "trustSecurityPolicies"
 #define DB_TABLE_TRUST_OWN_KEYS "trustOwnKeys"
 #define DB_TABLE_TRUST_KEYS "trustKeys"
@@ -116,6 +119,16 @@ constexpr auto THUMBNAIL_GENERATION_MAX_FILE_SIZE = 10 * 1024 * 1024;
 constexpr auto THUMBNAIL_PIXEL_SIZE = 200;
 #else
 constexpr auto THUMBNAIL_PIXEL_SIZE = 50;
+#endif
+
+// Count of encryption key ID characters that are grouped to be displayed for better readability
+constexpr int ENCRYPTION_KEY_ID_CHARACTER_GROUP_SIZE = 8;
+
+// Separator between grouped encryption key ID characters to be displayed for better readability
+#if defined(SFOS)
+#define ENCRYPTION_KEY_ID_CHARACTER_GROUP_SEPARATOR " "
+#else
+constexpr QStringView ENCRYPTION_KEY_ID_CHARACTER_GROUP_SEPARATOR = u" ";
 #endif
 
 #endif // GLOBALS_H

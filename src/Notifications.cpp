@@ -43,7 +43,9 @@ using namespace std::chrono_literals;
 #if defined(HAVE_KNOTIFICATIONS)
 constexpr QStringView NEW_MESSAGE_EVENT_ID = u"new-message";
 constexpr QStringView NEW_SUBSEQUENT_MESSAGE_EVENT_ID = u"new-subsequent-message";
+constexpr QStringView PRESENCE_SUBSCRIPTION_REQUEST_EVENT_ID = u"presence-subscription-request";
 #endif
+
 constexpr auto SUBSEQUENT_MESSAGE_INTERVAL = 5s;
 constexpr int MAXIMUM_NOTIFICATION_TEXT_LINE_COUNT = 6;
 
@@ -71,19 +73,17 @@ void Notifications::sendMessageNotification(const QString &accountJid, const QSt
 #endif
 
 	KNotification *notification = nullptr;
-	QUuid notificationId;
 
-	auto notificationWrapperItr = std::find_if(m_openNotifications.begin(), m_openNotifications.end(), [&accountJid, &chatJid](const auto &notificationWrapper) {
+	auto notificationWrapperItr = std::find_if(m_openMessageNotifications.begin(), m_openMessageNotifications.end(), [&accountJid, &chatJid](const auto &notificationWrapper) {
 		return notificationWrapper.accountJid == accountJid && notificationWrapper.chatJid == chatJid;
 	});
 
 	// Update an existing notification or create a new one.
-	if (notificationWrapperItr != m_openNotifications.end()) {
+	if (notificationWrapperItr != m_openMessageNotifications.end()) {
 		auto &messages = notificationWrapperItr->messages;
 		messages.append(messageBody);
 
 		// Initialize variables by known values.
-		notificationId = notificationWrapperItr->id;
 		notificationWrapperItr->latestMessageId = messageId;
 
 		QList<QString> notificationTextLines;
@@ -141,11 +141,9 @@ void Notifications::sendMessageNotification(const QString &accountJid, const QSt
 		notificationWrapperItr->notification = notification;
 	} else {
 		notification = new KNotification(NEW_MESSAGE_EVENT_ID.toString());
-		notificationId = QUuid::createUuid();
 		notification->setText(messageBody);
 
-		NotificationWrapper notificationWrapper {
-			.id = notificationId,
+		MessageNotificationWrapper notificationWrapper {
 			.accountJid = accountJid,
 			.chatJid = chatJid,
 			.initalTimestamp = QDateTime::currentDateTimeUtc(),
@@ -153,14 +151,10 @@ void Notifications::sendMessageNotification(const QString &accountJid, const QSt
 			.messages = { messageBody },
 			.notification = notification
 		};
-		m_openNotifications.append(notificationWrapper);
+		m_openMessageNotifications.append(notificationWrapper);
 	}
 
-	// Use bare JID for users that are not present in our roster, so foreign users can't choose a
-	// name that looks like a known contact.
-	auto rosterItem = RosterModel::instance()->findItem(chatJid);
-	auto chatName = rosterItem ? rosterItem->displayName() : chatJid;
-	notification->setTitle(chatName);
+	notification->setTitle(determineChatName(chatJid));
 
 #ifdef DESKTOP_LINUX_ALIKE_OS
 	if (IS_USING_GNOME) {
@@ -170,17 +164,15 @@ void Notifications::sendMessageNotification(const QString &accountJid, const QSt
 #ifdef Q_OS_ANDROID
 	notification->setIconName("kaidan-bw");
 #endif
-	notification->setDefaultAction("Open");
-	notification->setActions({
-		QObject::tr("Mark as read")
-	});
+	notification->setDefaultAction(tr("Open"));
+	notification->setActions({ tr("Mark as read") });
 
-	QObject::connect(notification, &KNotification::defaultActivated, this, [=] {
-		emit Kaidan::instance()->openChatPageRequested(accountJid, chatJid);
-		emit Kaidan::instance()->raiseWindowRequested();
+	connect(notification, &KNotification::defaultActivated, this, [=] {
+		Q_EMIT Kaidan::instance()->openChatPageRequested(accountJid, chatJid);
+		Q_EMIT Kaidan::instance()->raiseWindowRequested();
 	});
-	QObject::connect(notification, &KNotification::action1Activated, this, [=] {
-		emit RosterModel::instance()->updateItemRequested(chatJid, [=](RosterItem &item) {
+	connect(notification, &KNotification::action1Activated, this, [=] {
+		Q_EMIT RosterModel::instance()->updateItemRequested(chatJid, [=](RosterItem &item) {
 			item.lastReadContactMessageId = messageId;
 			item.unreadMessages = 0;
 		});
@@ -192,14 +184,14 @@ void Notifications::sendMessageNotification(const QString &accountJid, const QSt
 		}
 	});
 
-	QObject::connect(notification, &KNotification::closed, this, [=, this]() {
-		auto notificationWrapperItr = std::find_if(m_openNotifications.begin(), m_openNotifications.end(), [accountJid, chatJid](const NotificationWrapper &notificationWrapper) {
+	connect(notification, &KNotification::closed, this, [=, this]() {
+		auto notificationWrapperItr = std::find_if(m_openMessageNotifications.begin(), m_openMessageNotifications.end(), [accountJid, chatJid](const MessageNotificationWrapper &notificationWrapper) {
 			return notificationWrapper.accountJid == accountJid && notificationWrapper.chatJid == chatJid;
 		});
 
-		if (notificationWrapperItr != m_openNotifications.end()) {
+		if (notificationWrapperItr != m_openMessageNotifications.end()) {
 			if (notificationWrapperItr->isDeletionEnabled) {
-				m_openNotifications.erase(notificationWrapperItr);
+				m_openMessageNotifications.erase(notificationWrapperItr);
 			} else {
 				notificationWrapperItr->isDeletionEnabled = true;
 			}
@@ -211,13 +203,86 @@ void Notifications::sendMessageNotification(const QString &accountJid, const QSt
 
 void Notifications::closeMessageNotification(const QString &accountJid, const QString &chatJid)
 {
-	auto notificationWrapperItr = std::find_if(m_openNotifications.begin(), m_openNotifications.end(), [accountJid, chatJid](const NotificationWrapper &notificationWrapper) {
+	const auto notificationWrapperItr = std::find_if(m_openMessageNotifications.cbegin(), m_openMessageNotifications.cend(), [accountJid, chatJid](const MessageNotificationWrapper &notificationWrapper) {
 		return notificationWrapper.accountJid == accountJid && notificationWrapper.chatJid == chatJid;
 	});
 
-	if (notificationWrapperItr != m_openNotifications.end()) {
-		m_openNotifications.erase(notificationWrapperItr);
+	if (notificationWrapperItr != m_openMessageNotifications.cend()) {
+		notificationWrapperItr->notification->close();
 	}
+}
+
+void Notifications::sendPresenceSubscriptionRequestNotification(const QString &accountJid, const QString &chatJid)
+{
+#ifdef DESKTOP_LINUX_ALIKE_OS
+	static bool IS_USING_GNOME = qEnvironmentVariable("XDG_CURRENT_DESKTOP").contains("GNOME", Qt::CaseInsensitive);
+#endif
+
+	auto notificationWrapperItr = std::find_if(m_openMessageNotifications.begin(), m_openMessageNotifications.end(), [&accountJid, &chatJid](const auto &notificationWrapper) {
+		return notificationWrapper.accountJid == accountJid && notificationWrapper.chatJid == chatJid;
+	});
+
+	// Only create a new notification if none exists.
+	if (notificationWrapperItr != m_openMessageNotifications.end()) {
+		return;
+	}
+
+	KNotification *notification = new KNotification(PRESENCE_SUBSCRIPTION_REQUEST_EVENT_ID.toString());
+	notification->setTitle(determineChatName(chatJid));
+	notification->setText(tr("Requests to receive your personal data"));
+
+	PresenceSubscriptionRequestNotificationWrapper notificationWrapper {
+		.accountJid = accountJid,
+		.chatJid = chatJid,
+		.notification = notification
+	};
+	m_openPresenceSubscriptionRequestNotifications.append(notificationWrapper);
+
+#ifdef DESKTOP_LINUX_ALIKE_OS
+	if (IS_USING_GNOME) {
+		notification->setFlags(KNotification::Persistent);
+	}
+#endif
+#ifdef Q_OS_ANDROID
+	notification->setIconName("kaidan-bw");
+#endif
+
+	notification->setDefaultAction(tr("Open"));
+
+	connect(notification, &KNotification::defaultActivated, this, [=] {
+		Q_EMIT Kaidan::instance()->openChatPageRequested(accountJid, chatJid);
+		Q_EMIT Kaidan::instance()->raiseWindowRequested();
+		notification->close();
+	});
+
+	connect(notification, &KNotification::closed, this, [=, this]() {
+		auto notificationWrapperItr = std::find_if(m_openPresenceSubscriptionRequestNotifications.begin(), m_openPresenceSubscriptionRequestNotifications.end(), [accountJid, chatJid](const PresenceSubscriptionRequestNotificationWrapper &notificationWrapper) {
+			return notificationWrapper.accountJid == accountJid && notificationWrapper.chatJid == chatJid;
+		});
+
+		if (notificationWrapperItr != m_openPresenceSubscriptionRequestNotifications.end()) {
+			m_openPresenceSubscriptionRequestNotifications.erase(notificationWrapperItr);
+		}
+	});
+
+	notification->sendEvent();
+}
+
+void Notifications::closePresenceSubscriptionRequestNotification(const QString &accountJid, const QString &chatJid)
+{
+	const auto notificationWrapperItr = std::find_if(m_openPresenceSubscriptionRequestNotifications.cbegin(), m_openPresenceSubscriptionRequestNotifications.cend(), [accountJid, chatJid](const PresenceSubscriptionRequestNotificationWrapper &notificationWrapper) {
+		return notificationWrapper.accountJid == accountJid && notificationWrapper.chatJid == chatJid;
+	});
+
+	if (notificationWrapperItr != m_openPresenceSubscriptionRequestNotifications.cend()) {
+		notificationWrapperItr->notification->close();
+	}
+}
+
+QString Notifications::determineChatName(const QString &chatJid) const
+{
+	auto rosterItem = RosterModel::instance()->findItem(chatJid);
+	return rosterItem ? rosterItem->displayName() : chatJid;
 }
 #else
 void Notifications::sendMessageNotification(const QString &accountJid, const QString &chatJid, const QString &messageId, const QString &messageBody)
@@ -234,6 +299,14 @@ void Notifications::sendMessageNotification(const QString &accountJid, const QSt
 }
 
 void Notifications::closeMessageNotification(const QString &, const QString &)
+{
+}
+
+void Notifications::sendPresenceSubscriptionRequestNotification(const QString &accountJid, const QString &chatJid)
+{
+}
+
+void Notifications::closePresenceSubscriptionRequestNotification(const QString &accountJid, const QString &chatJid)
 {
 }
 #endif // HAVE_KNOTIFICATIONS

@@ -31,18 +31,10 @@ public:
 
 	QFuture<QXmpp::SendResult> send(QXmppMessage &&message);
 
-	void handleRosterReceived();
-	void handleLastMessageStampFetched(const QDateTime &stamp);
-
 	/**
-	 * Handles incoming messages from the server.
+	 * Sends pending messages again after searching them in the database.
 	 */
-	void handleMessage(const QXmppMessage &msg, MessageOrigin origin);
-
-	/**
-	 * Send a text message to any JID
-	 */
-	void sendMessage(const QString &toJid, const QString &body, bool isSpoiler, const QString &spoilerHint);
+	void sendPendingMessages();
 
 	/**
 	 * Sends a chat state notification to the server.
@@ -66,25 +58,27 @@ public:
 
 	void sendPendingMessage(Message message);
 
-signals:
-	void sendMessageRequested(const QString &toJid,
-				  const QString &body,
-				  bool isSpoiler,
-				  const QString &spoilerHint);
-
-	void retrieveBacklogMessagesRequested(const QString &jid, const QDateTime &stamp);
+	Q_SIGNAL void retrieveBacklogMessagesRequested(const QString &jid, const QDateTime &stamp);
 
 private:
 	void handleConnected();
+	void handleRosterReceived();
+	void retrieveInitialMessages();
 
 	/**
-	 * Handles pending messages found in the database.
+	 * Retrieves one message before offsetMessageId with a body or shared files.
+	 *
+	 * offsetMessageId must be "" instead of a default-consctructed string to retrieve the latest
+	 * message with the given JID
 	 */
-	void handlePendingMessages(const QVector<Message> &messages);
-
-	void retrieveInitialMessages();
-	void retrieveCatchUpMessages(const QDateTime &stamp);
+	void retrieveInitialMessage(const QString &jid, const QString &offsetMessageId = QLatin1String(""));
+	void retrieveCatchUpMessages(const QString &latestMessageStanzaId);
 	void retrieveBacklogMessages(const QString &jid, const QDateTime &last);
+
+	/**
+	 * Handles incoming messages from the server.
+	 */
+	void handleMessage(const QXmppMessage &msg, MessageOrigin origin);
 
 	/**
 	 * Handles a message that may contain a read marker.
@@ -102,9 +96,6 @@ private:
 	QXmppClient *m_client;
 	QXmppMessageReceiptManager m_receiptManager;
 	QXmppMamManager *m_mamManager;
-
-	QDateTime m_lastMessageStamp;
-	bool m_lastMessageLoaded = false;
 
 	uint m_runningInitialMessageQueries = 0;
 };

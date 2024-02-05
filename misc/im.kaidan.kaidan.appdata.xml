@@ -52,12 +52,14 @@ SPDX-License-Identifier: CC0-1.0
   <summary xml:lang="ka">მომხმარებლისთვის ადვილი და თანამედროვე ჩატის აპი ყველა მოწყობილობისთვის</summary>
   <summary xml:lang="ko">모든 장치에서 사용할 수 있는 사용자 편의적인 채팅 앱</summary>
   <summary xml:lang="nl">Gebruikersvriendelijke en moderne chat-toepassing voor elk apparaat</summary>
+  <summary xml:lang="pl">Przyjazna użytkownikom i nowoczesna aplikacja do rozmów na każdym urządzeniu</summary>
   <summary xml:lang="pt">Aplicação amigável e moderna de conversas para vários dispositivos</summary>
   <summary xml:lang="sl">Uporabniku prijazna in moderna aplikacija za klepet na vsaki napravi</summary>
   <summary xml:lang="sv">Användarvänligt och modernt chattprogram för alla enheter</summary>
   <summary xml:lang="tr">Her tür aygıt için kullanıcı dostu ve çağdaş sohbet uygulaması</summary>
   <summary xml:lang="uk">Зручна для користування та сучасна програма для спілкування на будь-якому пристрої</summary>
   <summary xml:lang="x-test">xxUser-friendly and modern chat app for every devicexx</summary>
+  <summary xml:lang="zh-CN">对每个设备用户友好的现代的聊天应用</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0+</project_license>
   <developer_name>Kaidan Developers &amp; Contributors</developer_name>
@@ -99,17 +101,19 @@ SPDX-License-Identifier: CC0-1.0
     <p xml:lang="es">Kaidan es una aplicación de chat moderna y fácil de usar para todos los dispositivos. Usa el protocolo de comunicación abierto XMPP (Jabber). A diferencia de otras aplicaciones de chat, no depende de un proveedor de servicios específico.</p>
     <p xml:lang="fi">Kaidan on joka laitteen käyttäjäystävällinen ja nykyaikainen keskustelusovellus. Se käyttää avointa XMPP-viestintäyhteyskäytäntöä (Jabber). Toisin kuin muissa keskustelusovelluksissa, et ole riippuvainen tietystä palveluntarjoajasta.</p>
     <p xml:lang="fr">Kaidan est une application moderne et conviviale de messagerie instantanée pour n'importe quel périphérique. Il utilise le protocole de communication libre « XMPP » (Jabber). Contrairement aux autres applications de messagerie instantanée, vous n'êtes dépendant d'aucun fournisseur de services spécifiques.</p>
-    <p xml:lang="gl">Kaidan é unha aplicación de charla moderna e amigábel para cada dispositivo. Utiliza o protocolo aberto de comunicacións XMPP (Jabber). Ao contrario que outras apps, non dependes dun provedor de servizos específico.</p>
+    <p xml:lang="gl">Kaidan é unha aplicación de charla moderna e amigábel para cada dispositivo. Usa o protocolo aberto de comunicacións XMPP (Jabber). Ao contrario que outras apps, non dependes dun provedor de servizos específico.</p>
     <p xml:lang="it">Kaidan è un programma di chat amichevole e moderno per qualsiasi dispositivo. Utilizza il protocollo di comunicazione aperto XMPP (Jabber). A differenza di altri programmi non sei dipendente da uno specifico fornitore di servizi.</p>
     <p xml:lang="ka">Kaidan არის მოსახერხებელი და თანამედროვე ჩეთის აპლიკაციაა ყველა მოწყობილობისთვის. ის იყენებს ღია საკომუნიკაციო პროტოკოლს XMPP (Jabber). სხვა ჩეთის აპებისგან განსხვავებით, თქვენ არ ხართ დამოკიდებული ერთ კონკრეტულ სერვისის პროვაიდერზე.</p>
     <p xml:lang="ko">Kaidan은 모든 장치에서 사용할 수 있는 사용자 편의적인 채팅 앱입니다. 개방형 통신 프로토콜 XMPP(Jabber)를 사용합니다. 다른 채팅 앱과는 다르게 하나의 서비스 공급자에 의존하지 않습니다.</p>
     <p xml:lang="nl">Kaidan is een gebruikersvriendelijke en moderne chat-toepassing voor elk apparaat. Het gebruikt het open communicatieprotocol XMPP (Jabber). Anders dan andere chat-toepassingen bent u niet afhankelijk van één specifieke serviceprovider.</p>
+    <p xml:lang="pl">Kaidan to przyjazna użytkownikom i nowoczesna aplikacja do rozmów na każdym urządzeniu. Używa otwartego protokołu porozumiewania się o nazwie XMPP (Jabber). W odróżnieniu od innych aplikacji do rozmów, nie jesteś zależny od jednego dostawcy tej usługi.</p>
     <p xml:lang="pt">O Kaidan é uma aplicação de conversas amigável e moderna para todos os tipos de dispositivos. Usa o protocolo aberto de comunicações XMPP (Jabber). Ao contrário das outras aplicações de conversas, não está dependente de um fornecedor de serviços específico.</p>
     <p xml:lang="sl">Kaidan je uporabniku prijazna in moderna aplikacija za klepet na vsaki napravi. Uporablja odprti komunikacijski protokol XMPP (Jabber). Za razliko od drugih aplikacij za klepet, niste odvisni od enega samega ponudnika storitev.</p>
     <p xml:lang="sv">Kaidan är ett användarvänligt och modernt chattprogram för alla enheter. Det använder det öppna kommunikationsprotokollet XMPP (Jabber). I motsats till andra chattprogram är du inte beroende av en specific tjänstleverantör.</p>
     <p xml:lang="tr">Kaidan, her tür aygıt için kullanıcı dostu ve çağdaş teknolojilerle yaratılmış bir sohbet uygulamasıdır. Açık bir sohbet protokolü olan XMPP'yi (Jabber) kullanır. Diğer sohbet uygulamalarının aksine, belirli bir hizmet sağlayıcıya bağlı kalmazsınız.</p>
     <p xml:lang="uk">Kaidan — зручна для користування та сучасна програма для спілкування на будь-якому пристрої. У ній використано відкрити протокол для спілкування XMPP (Jabber). На відміну від інших програм для спілкування, ви не залежатимете від одного певного надавача послуг зв'язку.</p>
     <p xml:lang="x-test">xxKaidan is a user-friendly and modern chat app for every device. It uses the open communication protocol XMPP (Jabber). Unlike other chat apps, you are not dependent on one specific service provider.xx</p>
+    <p xml:lang="zh-CN">Kaidan 是一个对每一个设备用户友好的，现代的聊天应用。它使用开放的通信协议 XMPP（Jabber）。与其他聊天应用不同的是，你不需要以来一个特定的服务运营商。</p>
     <p>Kaidan does not have all basic features yet and has still some stability issues. But we do our best to improve it!</p>
     <p xml:lang="ca">El Kaidan encara no té totes les característiques bàsiques i té alguns problemes d'estabilitat. Però fem tot el possible per a millorar-ho!</p>
     <p xml:lang="ca-valencia">Kaidan encara no té totes les característiques bàsiques i té alguns problemes d'estabilitat. Però fem tot el possible per a millorar-ho!</p>
@@ -123,12 +127,14 @@ SPDX-License-Identifier: CC0-1.0
     <p xml:lang="ka">Kaidan-ს ჯერ არ აქვს ყველა ძირითადი თვისება და ჯერ კიდევ აქვს სტაბილურობის პრობლემები. მაგრამ ჩვენ ყველაფერს ვაკეთებთ მის გასაუმჯობესებლად!</p>
     <p xml:lang="ko">Kaidan에는 아직 빠져 있는 기본 기능이 있으며 완벽히 안정적이지는 않습니다. 최선을 다해서 개선하고 있습니다!</p>
     <p xml:lang="nl">Kaidan heeft no niet alle basisfuncties en er zijn nog steeds enige stabiliteitsproblemen. Maar we doen ons best om het te verbeteren!</p>
+    <p xml:lang="pl">Kaidan nadal nie zapewnia wszystkich podstawowych możliwości i ma pewne kłopoty ze stabilnością. Mimo tego robimy wszystko, co możemy, aby zmienić ten stan na lepszy!</p>
     <p xml:lang="pt">O Kaidan ainda não tem todas as funcionalidades básicas, e tem à mesma algumas questões de estabilidade. Mas estamos a dar o nosso melhor para a aperfeiçoar!</p>
     <p xml:lang="sl">Kaidan še nima vseh osnovnih zmožnosti in ima še vedno nekaj težav s stabilnostjo. A se trudimo po najboljših močeh za izboljšave!</p>
     <p xml:lang="sv">Kaidan har inte alla grundfunktioner ännu och har fortfarande vissa stabilitetsproblem. Men vi gör vårt bästa för att förbättra det!</p>
     <p xml:lang="tr">Kaidan henüz kimi temel özellikleri desteklemez ve kararlılık sorunları olabilir. Ancak onu iyileştirmek için elimizden gelenin en iyisini yapıyoruz!</p>
     <p xml:lang="uk">У Kaidan поки немає усіх базових можливостей і є певні проблеми зі стабільністю. Але ми не припиняємо удосконалювати програму!</p>
     <p xml:lang="x-test">xxKaidan does not have all basic features yet and has still some stability issues. But we do our best to improve it!xx</p>
+    <p xml:lang="zh-CN">Kaidan 还没有所有的基本特征，仍然存在一些稳定性问题。但我们会尽最大努力改善它！</p>
   </description>
   <launchable type="desktop-id">im.kaidan.kaidan.desktop</launchable>
   <url type="homepage">https://kaidan.im</url>
@@ -157,12 +163,14 @@ SPDX-License-Identifier: CC0-1.0
       <caption xml:lang="ka">ჩატი კომპიუტერზე და მობილურზე</caption>
       <caption xml:lang="ko">데스크톱과 모바일 장치에서 대화</caption>
       <caption xml:lang="nl">Chat op een bureaublad en op een mobiel apparaat</caption>
+      <caption xml:lang="pl">Rozmawiaj na urządzeniu biurkowym i przenośnym</caption>
       <caption xml:lang="pt">Conversa num computador e num dispositivo móvel</caption>
       <caption xml:lang="sl">Klepet na namizju in na mobilni napravi</caption>
       <caption xml:lang="sv">Chatt på ett skrivbord och på en mobil</caption>
       <caption xml:lang="tr">Masaüstü ve taşınabilir bir aygıtta sohbet</caption>
       <caption xml:lang="uk">Спілкування на комп'ютері та на мобільному пристрої</caption>
       <caption xml:lang="x-test">xxChat on a desktop and mobile devicexx</caption>
+      <caption xml:lang="zh-CN">在桌面和移动设备上聊天</caption>
       <image type="source">https://www.kaidan.im/images/screenshot.png</image>
     </screenshot>
   </screenshots>

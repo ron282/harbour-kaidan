@@ -14,6 +14,11 @@
 #include "VCardManager.h"
 #include "FutureUtils.h"
 
+#if defined(SFOS)
+#else
+using namespace Enums;
+#endif
+
 VCardModel::VCardModel(QObject *parent)
 	: QAbstractListModel(parent)
 {
@@ -35,6 +40,7 @@ QHash<int, QByteArray> VCardModel::roleNames() const
 	QHash<int, QByteArray> roles;
 	roles[Key] = "key";
 	roles[Value] = "value";
+	roles[UriScheme] = "uriScheme";
 	return roles;
 }
 
@@ -54,11 +60,15 @@ QVariant VCardModel::data(const QModelIndex &index, int role) const
 	if (!index.isValid())
 		return {};
 
+	const auto item = m_vCardMap.at(index.row());
+
 	switch(role) {
 	case Key:
-		return m_vCardMap.at(index.row()).name;
+		return item.name;
 	case Value:
-		return m_vCardMap.at(index.row()).value(&m_vCard);
+		return item.value(&m_vCard);
+	case UriScheme:
+		return item.uriScheme;
 	}
 	return {};
 }
@@ -106,10 +116,14 @@ QString VCardModel::jid() const
 void VCardModel::setJid(const QString &jid)
 {
 	m_jid = jid;
-	emit jidChanged();
+	Q_EMIT jidChanged();
 
-	if (Kaidan::instance()->connectionState() == QXmppClient::ConnectedState) {
-		emit Kaidan::instance()->client()->vCardManager()->vCardRequested(jid);
+#if defined(SFOS)
+    if (Kaidan::instance()->connectionState() == Enums::ConnectionState::StateConnected) {
+#else
+    if (Kaidan::instance()->connectionState() == ConnectionState::StateConnected) {
+#endif
+        Q_EMIT Kaidan::instance()->client()->vCardManager()->vCardRequested(jid);
 	}
 }
 
@@ -120,12 +134,12 @@ void VCardModel::generateEntries()
 	auto fullName = Item { tr("Name"), &QXmppVCardIq::fullName,  &QXmppVCardIq::setFullName };
 	auto nickName = Item { tr("Nickname"), &QXmppVCardIq::nickName,  &QXmppVCardIq::setNickName };
 	auto description = Item { tr("About"), &QXmppVCardIq::description,  &QXmppVCardIq::setDescription };
-	auto email = Item { tr("Email"), &QXmppVCardIq::email, &QXmppVCardIq::setEmail };
+	auto email = Item { tr("Email"), &QXmppVCardIq::email, &QXmppVCardIq::setEmail, QStringLiteral("mailto") };
 	auto birthday = Item { tr("Birthday"),
-	    [](const QXmppVCardIq *vCard) { return vCard->birthday().toString(); },
-	    [](QXmppVCardIq *vCard, const QString &d) { return vCard->setBirthday(QDate::fromString(d, Qt::ISODate)); }
-    };
-    auto url = Item { tr("Website"), &QXmppVCardIq::url, &QXmppVCardIq::setUrl };
+		[](const QXmppVCardIq *vCard) { return vCard->birthday().toString(); },
+		[](QXmppVCardIq *vCard, const QString &d) { return vCard->setBirthday(QDate::fromString(d, Qt::ISODate)); }
+	};
+	auto url = Item { tr("Website"), &QXmppVCardIq::url, &QXmppVCardIq::setUrl, QStringLiteral("http") };
 
 	if (m_unsetEntriesProcessed) {
 		m_vCardMap = { fullName, nickName, description, email, birthday, url };

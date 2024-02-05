@@ -125,7 +125,7 @@ void QrCodeScannerFilterRunnable::processVideoFrameProbed(
 		qDebug() << "Image corresponding format:"
 		         << QVideoFrame::imageFormatFromPixelFormat(videoFrame.pixelFormat());
 
-		emit filter->unsupportedFormatReceived(format);
+		Q_EMIT filter->unsupportedFormatReceived(format);
 		return;
 	}
 

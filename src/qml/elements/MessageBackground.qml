@@ -85,6 +85,7 @@ BackgroundItem {
 
     Row {
 		id: metaInfo
+        spacing: Theme.paddingSmall
 		anchors {
 			bottom: parent.bottom
 //			right: mainBG.right
@@ -94,29 +95,32 @@ BackgroundItem {
 		}
 
         // warning for different encryption corner cases
+//        ScalableText {
         Label {
-            text: {
-                if (root.encryption === Encryption.NoEncryption) {
+            text:
+            {
+                if (backgroundRoot.message.encryption === Encryption.NoEncryption) {
                     if (MessageModel.isOmemoEncryptionEnabled) {
-                        // Encryption is set for the current chat but this message is
-                        // unencrypted.
-                        return qsTr("Unencrypted");
+                        // Encryption is set for the current chat but this message is unencrypted.
+                        return qsTr("Unencrypted")
                     }
                 } else if (MessageModel.encryption !== Encryption.NoEncryption && !backgroundRoot.message.isTrusted){
-                    // Encryption is set for the current chat but the key of this message's
-                    // sender is not trusted.
+                    // Encryption is set for the current chat but the key of this message's sender
+                    // is not trusted.
                     return qsTr("Untrusted")
                 }
 
                 return ""
             }
-
             visible: text.length
             color: isOwn ? Theme.highlightColor: Theme.primaryColor
+//          color: Kirigami.Theme.neutralTextColor
+//			scaleFactor: 0.9
             font.italic: true
             font.pixelSize: Theme.fontSizeTiny
         }
 
+//      ScalableText {
         Label {
             text: backgroundRoot.message.errorText
             visible: text.length
@@ -124,20 +128,27 @@ BackgroundItem {
             font.pixelSize: Theme.fontSizeTiny
         }
 
+//      ScalableText {
         Label {
             id: timestamp
             font.pixelSize: Theme.fontSizeTiny
-            text: refreshDate, getDateDiffFormated(backgroundRoot.message.dateTime)
+            text: backgroundRoot.message.time
+//          color: Kirigami.Theme.negativeTextColor
+//			scaleFactor: 0.9
         }
 
+//      Kirigami.Icon {
         Icon {
             source: "image://theme/icon-s-outline-secure"
             visible: backgroundRoot.message.encryption !== Encryption.NoEncryption
             width: Theme.iconSizeExtraSmall
             height: width
             anchors.bottom: timestamp.bottom
+//          Layout.preferredWidth: Kirigami.Units.iconSizes.small
+//          Layout.preferredHeight: Layout.preferredWidth
         }
 
+//      Kirigami.Icon {
         Icon {
             // TODO: Use "security-low-symbolic" for distrusted, "security-medium-symbolic" for automatically trusted and "security-high-symbolic" for authenticated
             source: backgroundRoot.message.isTrusted ? "image://theme/icon-m-vpn" : "image://theme/icon-s-warning"
@@ -145,6 +156,8 @@ BackgroundItem {
             width: Theme.iconSizeExtraSmall
             height: width
             anchors.bottom: timestamp.bottom
+//          Layout.preferredWidth: Kirigami.Units.iconSizes.small
+//          Layout.preferredHeight: Layout.preferredWidth
         }
 
 		Image {
@@ -167,33 +180,5 @@ BackgroundItem {
     Label {
         id: dummy
         text: "⠀"
-    }
-
-    function getDateDiffFormated(d) {
-        var n = new Date();
-        var diff = (n.getTime() - d.getTime()) / 1000;
-        var locale = Qt.locale();
-
-        if(diff < 0)
-            return "?"
-        else if(diff < 60)
-            return qsTr("now")
-        else if(diff < 60*2)
-            return qsTr("1 mn ago")
-        else if(diff < 60*30)
-            return qsTr ("") + Math.round(diff/60, 0)+ qsTr(" mns ago");
-
-        var s = d.toLocaleTimeString(locale, "hh:mm");
-
-        if(d.getFullYear() !== n.getFullYear())
-        {
-            s = d.toLocaleDateString(locale, "d MMM yyyy") + " " + s;
-        }
-        else if (d.getMonth() !== n.getMonth() || d.getDate() !== n.getDate())
-        {
-            s = d.toLocaleDateString(locale, "d MMM") + " " +s;
-        }
-
-        return s;
     }
 }

@@ -6,52 +6,74 @@
 
 #include "RecentPicturesModel.h"
 
+#if defined(SFOS)
 #include <QFileSystemModel>
-
 RecentPicturesModel::RecentPicturesModel(QObject *parent)
-    : QSortFilterProxyModel(parent)
+    : QAbstractListModel(parent)
 {
-    auto *dirModel = new QFileSystemModel(this);
-    setSourceModel(dirModel);
-    dirModel->setNameFilters(QStringList() << "*.png" << "*.jpg");
-#warning "Improve by filtering on mimeType not on name"
-//	dirModel->openUrl(QStringLiteral("recentlyused:/files/"));
-//	dirModel->dirLister()->setAutoErrorHandlingEnabled(false);
 }
 
-/*
-#include "RecentPicturesModel.h"
+int RecentPicturesModel::rowCount(const QModelIndex &) const
+{
+    return 0;
+}
 
+QVariant RecentPicturesModel::data(const QModelIndex &, int) const
+{
+    return {};
+}
+#else
+
+#ifdef Q_OS_ANDROID
+RecentPicturesModel::RecentPicturesModel(QObject *parent)
+	: QAbstractListModel(parent)
+{
+}
+
+int RecentPicturesModel::rowCount(const QModelIndex &) const
+{
+	return 0;
+}
+
+QVariant RecentPicturesModel::data(const QModelIndex &, int) const
+{
+	return {};
+}
+#else
 #include <KDirLister>
 #include <KDirModel>
 
 RecentPicturesModel::RecentPicturesModel(QObject *parent)
     : KDirSortFilterProxyModel{parent}
 {
-	auto *dirModel = new KDirModel(this);
-	setSourceModel(dirModel);
-	dirModel->dirLister()->setMimeFilter({QStringLiteral("image/png"), QStringLiteral("image/jpeg")});
-	dirModel->openUrl(QStringLiteral("recentlyused:/files/"));
-	dirModel->dirLister()->setAutoErrorHandlingEnabled(false);
+    auto *dirModel = new KDirModel(this);
+    setSourceModel(dirModel);
+    dirModel->dirLister()->setMimeFilter({QStringLiteral("image/png"), QStringLiteral("image/jpeg")});
+    dirModel->openUrl(QStringLiteral("recentlyused:/files/"));
+    dirModel->dirLister()->setAutoErrorHandlingEnabled(false);
 }
-*/
 
 QHash<int, QByteArray> RecentPicturesModel::roleNames() const {
-	return {
-		{Role::FilePath, "filePath"}
-	};
+    return {
+        {Role::FilePath, "filePath"}
+    };
 }
 
 QVariant RecentPicturesModel::data(const QModelIndex &index, int role) const {
-    return QSortFilterProxyModel::data(index, role);
+    if (role == Role::FilePath) {
+        auto fileItem = KDirSortFilterProxyModel::data(index, KDirModel::FileItemRole).value<KFileItem>();
+        return fileItem.mostLocalUrl();
+    }
+
+    return KDirSortFilterProxyModel::data(index, role);
 }
 
-/*
 bool RecentPicturesModel::subSortLessThan(const QModelIndex &left, const QModelIndex &right) const
 {
-	auto leftFile = left.data(KDirModel::FileItemRole).value<KFileItem>();
-	auto rightFile = right.data(KDirModel::FileItemRole).value<KFileItem>();
+    auto leftFile = left.data(KDirModel::FileItemRole).value<KFileItem>();
+    auto rightFile = right.data(KDirModel::FileItemRole).value<KFileItem>();
 
-	return leftFile.time(KFileItem::ModificationTime) > rightFile.time(KFileItem::ModificationTime);
+    return leftFile.time(KFileItem::ModificationTime) > rightFile.time(KFileItem::ModificationTime);
 }
-*/
+#endif
+#endif

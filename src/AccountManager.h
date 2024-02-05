@@ -32,11 +32,8 @@ public:
      * Default rule to automatically download media for all roster items of an account
      */
 
-#if QT_VERSION < QT_VERSION_CHECK(5,15,0)
     enum AutomaticMediaDownloadsRule {
-#else
-    enum class AutomaticMediaDownloadsRule {
-#endif
+//    enum class AutomaticMediaDownloadsRule {
         Never,        ///< Never automatically download files
         PresenceOnly, ///< Only for contacts receiving presence
         Always,       ///< Always automatically download files

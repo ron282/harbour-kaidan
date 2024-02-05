@@ -34,6 +34,11 @@ Page {
 	property alias explanation: explanationArea.data
 
 	/**
+	 * background of the explanation area
+	 */
+	property alias explanationAreaBackground: explanationAreaBackground
+
+	/**
 	 * content displayed while the explanation is not displayed
 	 */
 	property alias content: contentArea.data
@@ -111,4 +116,50 @@ Page {
             }
         }
     }
+
+//    Item {
+//		id: contentArea
+//		anchors.fill: parent
+//		anchors.margins: useMarginsForContent ? 20 : 0
+//		anchors.bottomMargin: useMarginsForContent ? parent.height - buttonArea.y : 0
+//	}
+
+	// background of overlay
+    RoundedRectangle {
+        id: explanationAreaBackground
+        z: 1
+        anchors.fill: overlay
+        anchors.margins: -8
+        color: "transparent"
+        opacity: 0.9
+        visible: explanationArea.visible
+    }
+
+//	ColumnLayout {
+//		id: overlay
+//		z: 2
+//		anchors.fill: parent
+//		anchors.margins: 18
+
+//		Item {
+//			id: explanationArea
+//			Layout.fillWidth: true
+//			Layout.fillHeight: true
+//			Layout.bottomMargin: Kirigami.Units.smallSpacing * 3
+//		}
+
+//		ColumnLayout {
+//			id: buttonArea
+//			Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
+//			Layout.maximumWidth: largeButtonWidth
+
+//			CenteredAdaptiveHighlightedButton {
+//				id: primaryButton
+//			}
+
+//			CenteredAdaptiveButton {
+//				id: secondaryButton
+//			}
+//		}
+//	}
 }

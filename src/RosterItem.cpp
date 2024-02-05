@@ -15,18 +15,20 @@ bool RosterItem::operator==(const RosterItem &o) const
         jid == o.jid &&
         name == o.name &&
         subscription == o.subscription &&
+        groups == o.groups &&
         encryption == o.encryption &&
         unreadMessages == o.unreadMessages &&
         lastMessageDateTime == o.lastMessageDateTime &&
         lastMessage == o.lastMessage &&
+        lastMessageDeliveryState == o.lastMessageDeliveryState &&
+        lastMessageSenderId == o.lastMessageSenderId &&
         lastReadOwnMessageId == o.lastReadOwnMessageId &&
         lastReadContactMessageId == o.lastReadContactMessageId &&
-        draftMessageId == o.draftMessageId &&
         readMarkerPending == o.readMarkerPending &&
         pinningPosition == o.pinningPosition &&
         chatStateSendingEnabled == o.chatStateSendingEnabled &&
         readMarkerSendingEnabled == o.readMarkerSendingEnabled &&
-        groups == o.groups &&
+        notificationsMuted == o.notificationsMuted &&
         automaticMediaDownloadsRule == o.automaticMediaDownloadsRule;
 }
 
@@ -38,8 +40,8 @@ bool RosterItem::operator!=(const RosterItem &o) const
 }
 #endif
 
-RosterItem::RosterItem(const QString &accountJid, const QXmppRosterIq::Item &item, const QDateTime &lastMessageDateTime)
-	: accountJid(accountJid), jid(item.bareJid()), name(item.name()), subscription(item.subscriptionType()), lastMessageDateTime(lastMessageDateTime)
+RosterItem::RosterItem(const QString &accountJid, const QXmppRosterIq::Item &item)
+	: accountJid(accountJid), jid(item.bareJid()), name(item.name()), subscription(item.subscriptionType())
 {
 	const auto rosterGroups = item.groups();
 #if defined(SFOS)
@@ -51,7 +53,22 @@ RosterItem::RosterItem(const QString &accountJid, const QXmppRosterIq::Item &ite
 
 QString RosterItem::displayName() const
 {
-    return name.isEmpty() ? QXmppUtils::jidToUser(jid) : name;
+	if (name.isEmpty()) {
+		if (jid == accountJid) {
+			return QObject::tr("Notes");
+		}
+
+		const auto username = QXmppUtils::jidToUser(jid);
+
+		// Return the domain in case of a server as a roster item (for service announcements).
+		if (username.isEmpty()) {
+			return QXmppUtils::jidToDomain(jid);
+		}
+
+		return username;
+	}
+
+	return name;
 }
 
 bool RosterItem::isSendingPresence() const

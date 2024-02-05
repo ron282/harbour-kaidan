@@ -51,8 +51,10 @@
 // Kaidan
 #include "AccountManager.h"
 #include "AudioDeviceModel.h"
+#include "AtmManager.h"
 #include "AvatarFileStorage.h"
 #include "BitsOfBinaryImageProvider.h"
+#include "Blocking.h"
 #include "CameraModel.h"
 #include "ChatHintModel.h"
 #include "CredentialsGenerator.h"
@@ -70,32 +72,34 @@
 #include "HostCompletionModel.h"
 #include "HostCompletionProxyModel.h"
 #include "Kaidan.h"
-#include "MediaUtils.h"
 #include "MediaRecorder.h"
+#include "MediaUtils.h"
 #include "Message.h"
 #include "MessageComposition.h"
-#include "MessageModel.h"
 #include "MessageHandler.h"
+#include "MessageModel.h"
+#include "OmemoModel.h"
 #include "OmemoManager.h"
 #include "OmemoWatcher.h"
+#include "ProviderListModel.h"
 #include "PublicGroupChatModel.h"
 #include "PublicGroupChatProxyModel.h"
 #include "PublicGroupChatSearchManager.h"
 #include "QmlUtils.h"
 #include "QrCodeGenerator.h"
 #include "QrCodeScannerFilter.h"
+#include "RecentPicturesModel.h"
 #include "RegistrationDataFormFilterModel.h"
 #include "RegistrationManager.h"
+#include "RosterFilterProxyModel.h"
 #include "RosterItemWatcher.h"
 #include "RosterManager.h"
 #include "RosterModel.h"
-#include "RosterFilterProxyModel.h"
 #include "ServerFeaturesCache.h"
-#include "ProviderListModel.h"
 #include "StatusBar.h"
 #include "UserDevicesModel.h"
-#include "VCardModel.h"
 #include "VCardManager.h"
+#include "VCardModel.h"
 #include "VersionManager.h"
 #include "RecentPicturesModel.h"
 #if defined(SFOS)
@@ -106,11 +110,11 @@ Q_DECLARE_METATYPE(Qt::ApplicationState)
 
 Q_DECLARE_METATYPE(QXmppClient::State)
 Q_DECLARE_METATYPE(QXmppMessage::State)
-Q_DECLARE_METATYPE(QXmppDiscoveryIq);
+Q_DECLARE_METATYPE(QXmppDiscoveryIq)
 Q_DECLARE_METATYPE(QXmppPresence)
 Q_DECLARE_METATYPE(QXmppStanza::Error)
-Q_DECLARE_METATYPE(QXmppResultSetReply);
-Q_DECLARE_METATYPE(QXmpp::TrustLevel);
+Q_DECLARE_METATYPE(QXmppResultSetReply)
+Q_DECLARE_METATYPE(QXmpp::TrustLevel)
 Q_DECLARE_METATYPE(QXmppUri)
 Q_DECLARE_METATYPE(QXmppVCardIq)
 Q_DECLARE_METATYPE(QXmppVersionIq)
@@ -273,6 +277,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qRegisterMetaType<RosterManager*>();
 	qRegisterMetaType<Message>();
 	qRegisterMetaType<MessageModel*>();
+	qRegisterMetaType<ChatHintModel*>();
 	qRegisterMetaType<MessageHandler*>();
 	qRegisterMetaType<DiscoveryManager*>();
 	qRegisterMetaType<VCardManager*>();
@@ -280,6 +285,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qRegisterMetaType<RegistrationManager*>();
 	qRegisterMetaType<FileSharingController *>();
 	qRegisterMetaType<OmemoManager *>();
+	qRegisterMetaType<OmemoManager::Device>();
 	qRegisterMetaType<AvatarFileStorage*>();
 	qRegisterMetaType<QmlUtils*>();
 	qRegisterMetaType<QVector<Message>>();
@@ -301,6 +307,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qRegisterMetaType<QXmppUri>();
 	qRegisterMetaType<QMap<QString, QUrl>>();
 	qRegisterMetaType<std::shared_ptr<Message>>();
+	qRegisterMetaType<AtmManager*>();
 
 	// Enums for c++ member calls using enums
 	qRegisterMetaType<Qt::ApplicationState>();
@@ -329,8 +336,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qRegisterMetaType<MessageReactionDeliveryState>();
 	qRegisterMetaType<FileModel::Role>();
 	qRegisterMetaType<FileProxyModel::Mode>();
-    qRegisterMetaType<AccountManager::AutomaticMediaDownloadsRule>();
-    qRegisterMetaType<RosterItem::AutomaticMediaDownloadsRule>();
+	qRegisterMetaType<AccountManager::AutomaticMediaDownloadsRule>();
+	qRegisterMetaType<RosterItem::AutomaticMediaDownloadsRule>();
 
 	// QXmpp
 	qRegisterMetaType<QXmppResultSetReply>();
@@ -449,6 +456,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qmlRegisterType<QrCodeScannerFilter>(APPLICATION_ID, 1, 0, "QrCodeScannerFilter");
 	qmlRegisterType<VCardModel>(APPLICATION_ID, 1, 0, "VCardModel");
 	qmlRegisterType<RosterFilterProxyModel>(APPLICATION_ID, 1, 0, "RosterFilterProxyModel");
+	qmlRegisterType<BlockingModel>(APPLICATION_ID, 1, 0, "BlockingModel");
+	qmlRegisterType<BlockingWatcher>(APPLICATION_ID, 1, 0, "BlockingWatcher");
+	qmlRegisterType<BlockingAction>(APPLICATION_ID, 1, 0, "BlockingAction");
 	qmlRegisterType<MessageComposition>(APPLICATION_ID, 1, 0, "MessageComposition");
 	qmlRegisterType<FileSelectionModel>(APPLICATION_ID, 1, 0, "FileSelectionModel");
 	qmlRegisterType<CameraModel>(APPLICATION_ID, 1, 0, "CameraModel");
@@ -476,10 +486,10 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qmlRegisterType<PublicGroupChatSearchManager>("PublicGroupChats", 1, 0, "SearchManager");
 	qmlRegisterType<PublicGroupChatModel>("PublicGroupChats", 1, 0, "Model");
 	qmlRegisterType<PublicGroupChatProxyModel>("PublicGroupChats", 1, 0, "ProxyModel");
+	qmlRegisterType<OmemoModel>(APPLICATION_ID, 1, 0, "OmemoModel");
 	qmlRegisterType<OmemoWatcher>(APPLICATION_ID, 1, 0, "OmemoWatcher");
 	qmlRegisterType<HostCompletionModel>(APPLICATION_ID, 1, 0, "HostCompletionModel");
 	qmlRegisterType<HostCompletionProxyModel>(APPLICATION_ID, 1, 0, "HostCompletionProxyModel");
-	qmlRegisterType<ChatHintModel>(APPLICATION_ID, 1, 0, "ChatHintModel");
 	qmlRegisterType<FileModel>(APPLICATION_ID, 1, 0, "FileModel");
 	qmlRegisterType<FileProxyModel>(APPLICATION_ID, 1, 0, "FileProxyModel");
 
@@ -507,7 +517,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qmlRegisterUncreatableType<PublicGroupChat>("PublicGroupChats", 1, 0, "PublicGroupChat", "Used by PublicGroupChatModel");
 	qmlRegisterUncreatableType<HostCompletionModel>(APPLICATION_ID, 1, 0, "HostCompletionModel", "Cannot create object; only enums defined!");
 	qmlRegisterUncreatableType<MessageReactionDeliveryState>(APPLICATION_ID, 1, 0, "MessageReactionDeliveryState", "Cannot create object; only enums defined!");
-    qmlRegisterUncreatableType<RosterItem>(APPLICATION_ID, 1, 0, "RosterItem", "Cannot create object; only enums defined!");
+	qmlRegisterUncreatableType<RosterItem>(APPLICATION_ID, 1, 0, "RosterItem", "Cannot create object; only enums defined!");
 
 #if defined(SFOS)
     qmlRegisterUncreatableType<ChatState>(APPLICATION_ID, 1, 0, "ChatState", "Can't create object; only enums defined!");
@@ -540,7 +550,10 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterSingletonType<MessageModel>("im.kaidan.kaidan", 1, 0, "MessageModel", [](QQmlEngine *, QJSEngine *) {
 		return static_cast<QObject *>(MessageModel::instance());
 	});
-    qmlRegisterSingletonType<HostCompletionModel>("im.kaidan.kaidan", 1, 0, "HostCompletionModel", [](QQmlEngine *, QJSEngine *) {
+	qmlRegisterSingletonType<ChatHintModel>(APPLICATION_ID, 1, 0, "ChatHintModel", [](QQmlEngine *, QJSEngine *) {
+		return static_cast<QObject *>(ChatHintModel::instance());
+	});
+	qmlRegisterSingletonType<HostCompletionModel>(APPLICATION_ID, 1, 0, "HostCompletionModel", [](QQmlEngine *, QJSEngine *) {
 		static auto self = new HostCompletionModel(qApp);
 		return static_cast<QObject *>(self);
 	});

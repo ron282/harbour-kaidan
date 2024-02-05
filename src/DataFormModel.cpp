@@ -38,7 +38,8 @@ QVariant DataFormModel::data(const QModelIndex &index, int role) const
 	if (!index.isValid() || !hasIndex(index.row(), index.column(), index.parent()))
 		return {};
 
-	const QXmppDataForm::Field &field = m_form.fields().at(index.row());
+	auto fields = m_form.fields();
+	const auto &field = fields.at(index.row());
 
 	switch(role) {
 	case Key:
@@ -91,7 +92,7 @@ bool DataFormModel::setData(const QModelIndex &index, const QVariant &value, int
 	}
 
 	m_form.fields()[index.row()] = field;
-	emit dataChanged(index, index, QVector<int>() << role);
+	Q_EMIT dataChanged(index, index, QVector<int>() << role);
 	return true;
 }
 
@@ -119,7 +120,7 @@ void DataFormModel::setForm(const QXmppDataForm &form)
 	m_form = form;
 	endResetModel();
 
-	emit formChanged();
+	Q_EMIT formChanged();
 }
 
 QString DataFormModel::instructions() const

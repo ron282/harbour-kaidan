@@ -18,11 +18,13 @@
 #include "ClientWorker.h"
 
 class QSize;
+class AccountDb;
 class Database;
 class DataFormModel;
 class Notifications;
 class RosterDb;
 class MessageDb;
+class BlockingController;
 class FileSharingController;
 
 /**
@@ -39,11 +41,12 @@ class Kaidan : public QObject
 	Q_OBJECT
 
 	Q_PROPERTY(ClientWorker* client READ client CONSTANT)
+	Q_PROPERTY(BlockingController *blockingController READ blockingController CONSTANT)
 	Q_PROPERTY(FileSharingController *fileSharingController READ fileSharingController CONSTANT)
 	Q_PROPERTY(AvatarFileStorage* avatarStorage READ avatarStorage NOTIFY avatarStorageChanged)
 	Q_PROPERTY(ServerFeaturesCache* serverFeaturesCache READ serverFeaturesCache CONSTANT)
 	Q_PROPERTY(Settings* settings READ settings CONSTANT)
-	Q_PROPERTY(quint8 connectionState READ connectionState NOTIFY connectionStateChanged)
+	Q_PROPERTY(quint8 connectionState READ connectionStateId NOTIFY connectionStateChanged)
 	Q_PROPERTY(QString connectionStateText READ connectionStateText NOTIFY connectionStateChanged)
 	Q_PROPERTY(quint8 connectionError READ connectionError NOTIFY connectionErrorChanged)
 
@@ -87,7 +90,7 @@ public:
 	 */
 	Q_INVOKABLE void logIn()
 	{
-		emit logInRequested();
+		Q_EMIT logInRequested();
 	}
 
 	/**
@@ -95,7 +98,7 @@ public:
 	 */
 	Q_INVOKABLE void requestRegistrationForm()
 	{
-		emit registrationFormRequested();
+		Q_EMIT registrationFormRequested();
 	}
 
 	/**
@@ -106,18 +109,16 @@ public:
 	 */
 	Q_INVOKABLE void logOut()
 	{
-		emit logOutRequested();
+		Q_EMIT logOutRequested();
 	}
 
 	/**
 	 * Returns the current ConnectionState
 	 */
-	quint8 connectionState() const
-	{
-		return quint8(m_connectionState);
-	}
-
+	quint8 connectionStateId() const { return quint8(m_connectionState); }
+	Enums::ConnectionState connectionState() const { return m_connectionState; }
 	QString connectionStateText() const;
+	bool connected() const { return connectionState() == Enums::ConnectionState::StateConnected; }
 
 	/**
 	 * Returns the last connection error.
@@ -125,6 +126,7 @@ public:
 	quint8 connectionError() const { return quint8(m_connectionError); }
 
 	ClientWorker *client() const { return m_client; }
+	BlockingController *blockingController() const { return m_blockingController.get(); }
 	FileSharingController *fileSharingController() const { return m_fileSharingController.get(); }
 	AvatarFileStorage *avatarStorage() const { return m_caches->avatarStorage; }
 	ServerFeaturesCache *serverFeaturesCache() const { return m_caches->serverFeaturesCache; }
@@ -176,13 +178,12 @@ public:
 	 */
 	Q_INVOKABLE Kaidan::TrustDecisionByUriResult makeTrustDecisionsByUri(const QString &uri, const QString &expectedJid = {});
 
-signals:
 	/**
 	 * Emitted when a data form for registration is received from the server.
 	 *
 	 * @param dataFormModel received model for the registration data form
 	 */
-	void registrationFormReceived(DataFormModel *dataFormModel);
+	Q_SIGNAL void registrationFormReceived(DataFormModel *dataFormModel);
 
 	/**
 	 * Emitted when an out-of-band URL for registration is received from the
@@ -190,13 +191,13 @@ signals:
 	 *
 	 * @param outOfBandUrl URL used for out-of-band registration
 	 */
-	void registrationOutOfBandUrlReceived(const QString &outOfBandUrl);
+	Q_SIGNAL void registrationOutOfBandUrlReceived(const QString &outOfBandUrl);
 
 	/**
 	 * Emitted to request a registration form from the server which is set as the
 	 * currently used JID.
 	 */
-	void registrationFormRequested();
+	Q_SIGNAL void registrationFormRequested();
 
 	/**
 	 * Emitted when the account registration failed.
@@ -204,58 +205,58 @@ signals:
 	 * @param error received error
 	 * @param errorMessage message describing the error
 	 */
-	void registrationFailed(quint8 error, const QString &errorMessage);
+	Q_SIGNAL void registrationFailed(quint8 error, const QString &errorMessage);
 
 	/**
 	 * Emitted to log in to the server with the set credentials.
 	 */
-	void logInRequested();
+	Q_SIGNAL void logInRequested();
 
 	/**
 	 * Emitted to log out of the server.
 	 *
 	 * @param isApplicationBeingClosed true if the application will be terminated directly after logging out, false otherwise
 	 */
-	void logOutRequested(bool isApplicationBeingClosed = false);
+	Q_SIGNAL void logOutRequested(bool isApplicationBeingClosed = false);
 
-	void avatarStorageChanged();
+	Q_SIGNAL void avatarStorageChanged();
 
 	/**
 	 * Emitted, when the client's connection state has changed (e.g. when
 	 * successfully connected or when disconnected)
 	 */
-	void connectionStateChanged();
+	Q_SIGNAL void connectionStateChanged();
 
 	/**
 	 * Emitted when the connection error changed.
 	 *
 	 * That is the case when the client failed to connect or it succeeded to connect after an error.
 	 */
-	void connectionErrorChanged();
+	Q_SIGNAL void connectionErrorChanged();
 
 	/**
 	 * Emitted when there are no (correct) credentials and new ones are needed.
 	 *
 	 * The client will be in disconnected state when this is emitted.
 	 */
-	void credentialsNeeded();
+	Q_SIGNAL void credentialsNeeded();
 
 	/**
 	 * Emitted when an authenticated connection to the server is established with new credentials for the first time.
 	 *
 	 * The client will be in connected state when this is emitted.
 	 */
-	void loggedInWithNewCredentials();
+	Q_SIGNAL void loggedInWithNewCredentials();
 
 	/**
 	 * Raises the window to the foreground so that it is on top of all other windows.
 	 */
-	void raiseWindowRequested();
+	Q_SIGNAL void raiseWindowRequested();
 
 	/**
 	 * Opens the view with the roster and empty chat page.
 	 */
-	void openChatViewRequested();
+	Q_SIGNAL void openChatViewRequested();
 
 	/**
 	 * Opens the chat page for a given chat.
@@ -263,20 +264,25 @@ signals:
 	 * @param accountJid JID of the account for that the chat page is opened
 	 * @param chatJid JID of the chat for that the chat page is opened
 	 */
-	void openChatPageRequested(const QString &accountJid, const QString &chatJid);
+	Q_SIGNAL void openChatPageRequested(const QString &accountJid, const QString &chatJid);
+
+	/**
+	 * Closes the chat page.
+	 */
+	Q_SIGNAL void closeChatPageRequested();
 
 	/**
 	 * Emitted when the removal state of the password on the account transfer page changed.
 	 */
-	void passwordVisibilityChanged();
+	Q_SIGNAL void passwordVisibilityChanged();
 
 	/**
 	 * Show passive notification
 	 */
-	void passiveNotificationRequested(QString text);
+	Q_SIGNAL void passiveNotificationRequested(QString text);
 
 #if defined (SFOS)
-    void messageNotification(const QString &chatJid, const QString &chatName, const QString &messageBody);
+    Q_SIGNAL void messageNotification(const QString &chatJid, const QString &chatName, const QString &messageBody);
 #endif
 
     /**
@@ -284,36 +290,35 @@ signals:
 	 *
 	 * Is called when Kaidan was used to open an XMPP URI (i.e. 'xmpp:kaidan@muc.kaidan.im?join')
 	 */
-    void xmppUriReceived(QString uri);
+	Q_SIGNAL void xmppUriReceived(QString uri);
 
 	/**
 	 * Emitted when changing of the user's password finished succfessully.
 	 */
-	void passwordChangeSucceeded();
+	Q_SIGNAL void passwordChangeSucceeded();
 
 	/**
 	 * Emitted when changing the user's password failed.
 	 *
 	 * @param errorMessage message describing the error
 	 */
-	void passwordChangeFailed(const QString &errorMessage);
+	Q_SIGNAL void passwordChangeFailed(const QString &errorMessage);
 
 	/**
 	 * Emitted when changing of the user's avatar finished succfessully.
 	 */
-	void avatarChangeSucceeded();
+	Q_SIGNAL void avatarChangeSucceeded();
 
 	/**
 	 * Deletes the account data from the client and server.
 	 */
-	void deleteAccountFromClientAndServer();
+	Q_SIGNAL void deleteAccountFromClientAndServer();
 
 	/**
 	 * Deletes the account data from the configuration file and database.
 	 */
-	void deleteAccountFromClient();
+	Q_SIGNAL void deleteAccountFromClient();
 
-public:
 	/**
 	 * Set current connection state
 	 */
@@ -336,11 +341,13 @@ public:
 private:
 	Notifications *m_notifications;
 	Database *m_database;
+	AccountDb *m_accountDb;
 	MessageDb *m_msgDb;
 	RosterDb *m_rosterDb;
 	QThread *m_cltThrd;
 	ClientWorker::Caches *m_caches;
 	ClientWorker *m_client;
+	std::unique_ptr<BlockingController> m_blockingController;
 	std::unique_ptr<FileSharingController> m_fileSharingController;
 
 	QString m_openUriCache;

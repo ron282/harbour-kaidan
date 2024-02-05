@@ -8,12 +8,14 @@
 #pragma once
 
 // Qt
+#include <QMap>
 #include <QObject>
 #if defined(SFOS)
 #include <QVector>
 #endif
 // QXmpp
 class QXmppClient;
+class QXmppPresence;
 class QXmppRosterManager;
 // Kaidan
 class AvatarFileStorage;
@@ -34,6 +36,7 @@ public:
 	void subscribeToPresence(const QString &contactJid);
 	void acceptSubscriptionToPresence(const QString &contactJid);
 	void refuseSubscriptionToPresence(const QString &contactJid);
+	QMap<QString, QString> unrespondedPresenceSubscriptionRequests();
 
 #if defined(SFOS)
     void updateGroups(const QString &jid, const QString &name, const QList<QString> &groups = {});
@@ -44,12 +47,6 @@ public:
 #endif
 
 signals:
-	/**
-	 * Requests to send subscription request answer (whether it was accepted
-	 * or declined by the user)
-	 */
-	void answerSubscriptionRequestRequested(const QString &jid, bool accepted);
-
 	/**
 	 * Add a contact to your roster
 	 *
@@ -77,11 +74,17 @@ signals:
 
 private:
 	void populateRoster();
+	void handleSubscriptionRequest(const QString &subscriberJid, const QXmppPresence &presence);
+	void processSubscriptionRequestFromStranger(const QString &subscriberJid, const QString &requestText);
+	void addUnrespondedSubscriptionRequest(const QString &subscriberJid, const QString &requestText);
 
 	ClientWorker *m_clientWorker;
 	QXmppClient *m_client;
 	AvatarFileStorage *m_avatarStorage;
 	VCardManager *m_vCardManager;
 	QXmppRosterManager *m_manager;
+	QMap<QString, QString> m_unprocessedSubscriptionRequests;
+	QMap<QString, QString> m_pendingSubscriptionRequests;
+	QMap<QString, QString> m_unrespondedSubscriptionRequests;
 	bool m_isItemBeingChanged = false;
 };

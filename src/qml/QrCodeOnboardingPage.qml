@@ -48,14 +48,13 @@ Page {
 
     QrCodeScanner {
 		id: scanner
+
+		property bool acceptResult: true
+
+		cornersRounded: false
 		anchors.fill: parent
-
-		LoadingArea {
-			anchors.centerIn: parent
-			description: qsTr("Connecting…")
-			visible: Kaidan.connectionState === Enums.StateConnecting
-		}
-
+//        zoomSliderArea.anchors.bottomMargin: Kirigami.Units.largeSpacing * 11
+//        zoomSliderArea.width: Math.min(largeButtonWidth, parent.width - Kirigami.Units.largeSpacing * 4)
 		filter.onScanningSucceeded: {
 			if (acceptResult) {
 				// Try to log in by the data from the decoded QR code.
@@ -73,7 +72,11 @@ Page {
 			}
 		}
 
-		property bool acceptResult: true
+		LoadingArea {
+			anchors.centerIn: parent
+			description: qsTr("Connecting…")
+			visible: Kaidan.connectionState === Enums.StateConnecting
+		}
 
 		// timer to accept the result again after an invalid login URI was scanned
 		Timer {

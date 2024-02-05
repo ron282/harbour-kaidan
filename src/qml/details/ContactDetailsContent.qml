@@ -175,7 +175,7 @@ DetailsContent {
 
 		OmemoWatcher {
 			id: accountOmemoWatcher
-			jid: AccountManager.jid
+			jid: root.accountJid
 		}
 
 		OmemoWatcher {
@@ -262,7 +262,7 @@ DetailsContent {
 
 			UserResourcesWatcher {
 				id: ownResourcesWatcher
-				jid: AccountManager.jid
+				jid: root.accountJid
 			}
 		}
 

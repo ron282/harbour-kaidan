@@ -11,12 +11,11 @@ import im.kaidan.kaidan 1.0
 /**
  * This is a QR code generated for a specified JID or the own JID.
  *
- * If "isForLogin" is true, a QR code with a login XMPP URI for logging in on
- * another device is generated.
-
+ * If "isForLogin" is true, a QR code with a login XMPP URI for logging in on another device is
+ * generated.
  * Otherwise, a QR code with a Trust Message URI is generated.
- * The Trust Message URI contains key IDs that other clients can use to make
- * trust decisions but they can also just add that contact.
+ * The Trust Message URI contains key IDs that other clients can use to make trust decisions but
+ * they can also just add that contact.
  * If a JID is provided, that JID is used for the URI.
  * Otherwise, the own JID is used.
  */

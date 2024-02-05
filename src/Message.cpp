@@ -95,26 +95,25 @@ bool Message::operator==(const Message &m) const
 {
 #warning FIXME
 	return 
-		id == m.id &&
-		to == m.to &&
-		from == m.from &&
+        accountJid == m.accountJid &&
+        chatJid == m.chatJid &&
+        senderId == m.senderId &&
+        id == m.id &&
+        originId == m.originId &&
+        stanzaId == m.stanzaId &&
+        replaceId == m.replaceId &&
+        timestamp == m.timestamp &&
 		body == m.body &&
-		stamp == m.stamp && 
+        encryption == m.encryption &&
+        senderKey == m.senderId &&
+        deliveryState == m.deliveryState &&
 		isSpoiler == m.isSpoiler &&
 		spoilerHint == m.spoilerHint &&
-		marker == m.marker &&
-		markerId == m.markerId &&
-		replaceId == m.replaceId &&
-		originId == m.originId &&
-		stanzaId == m.stanzaId &&
-		fileGroupId == m.fileGroupId &&
+        fileGroupId == m.fileGroupId &&
         files == m.files &&
-		receiptRequested == m.receiptRequested &&
-        encryption == m.encryption &&
-		senderKey == m.senderKey && 
-		isOwn == m.isOwn &&
-		deliveryState == m.deliveryState &&
-		errorText == m.errorText;
+        reactionSenders == m.reactionSenders &&
+        errorText == m.errorText &&
+        removed == m.removed;
 }
 
 bool Message::operator!=(const Message &m) const
@@ -326,19 +325,19 @@ QString File::details() const
 QXmppMessage Message::toQXmpp() const
 {
 	QXmppMessage msg;
+	msg.setFrom(isOwn() ? accountJid : chatJid);
+	msg.setTo(isOwn() ? chatJid : accountJid);
 	msg.setId(id);
-	msg.setTo(to);
-	msg.setFrom(from);
+	msg.setOriginId(originId);
+	msg.setStanzaId(stanzaId);
+	msg.setReplaceId(replaceId);
+	msg.setStamp(timestamp);
 	msg.setBody(body);
-	msg.setStamp(stamp);
 	msg.setIsSpoiler(isSpoiler);
 	msg.setSpoilerHint(spoilerHint);
 	msg.setMarkable(true);
 	msg.setMarker(marker);
 	msg.setMarkerId(markerId);
-	msg.setReplaceId(replaceId);
-	msg.setOriginId(originId);
-	msg.setStanzaId(stanzaId);
 	msg.setReceiptRequested(receiptRequested);
 
 	// attached files
@@ -364,6 +363,11 @@ QXmppMessage Message::toQXmpp() const
 	}));
 
 	return msg;
+}
+
+bool Message::isOwn() const
+{
+	return accountJid == senderId;
 }
 
 QString Message::previewText() const

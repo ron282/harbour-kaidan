@@ -14,10 +14,13 @@ import im.kaidan.kaidan 1.0
  * This is a scanner for QR codes which displays the camera input.
  */
 Item {
-	property bool cameraEnabled: false
+	id: root
 
-	property alias camera: camera
+	property bool cameraEnabled: false
+	property Camera camera
 	property alias filter: filter
+//    property alias zoomSliderArea: zoomSliderArea
+	property bool cornersRounded: true
 
 	// camera with continuous focus in the center of the video
 	Camera {
@@ -49,12 +52,41 @@ Item {
 
 	// video output from the camera which is shown on the screen and decoded by a filter
 	VideoOutput {
-		anchors.fill: parent
+//		visible: camera.cameraStatus === Camera.ActiveStatus
 		fillMode: VideoOutput.PreserveAspectCrop
 		source: camera
         autoOrientation: false
         orientation: 0
         filters: [filter]
+//        Rectangle {
+//            color: "transparent"
+//            border.color: secondaryBackgroundColor
+//            border.width: radius * 0.3
+//            radius: cameraStatusArea.radius * 1.5
+//            anchors.fill: parent
+//            anchors.margins: - border.width
+//        }
+
+//        Rectangle {
+//            id: zoomSliderArea
+//            color: primaryBackgroundColor
+//            opacity: 0.9
+//            radius: relativeRoundedCornersRadius(width, height) * 2
+//            width: parent.width - Theme.paddingLarge * 4
+//            height: Theme.paddingLarge * 4
+//            anchors.bottom: parent.bottom
+//            anchors.bottomMargin: Theme.paddingLarge * 2
+//            anchors.horizontalCenter: parent.horizontalCenter
+
+//            Slider {
+//                id: zoomSlider
+//                value: 1
+//                minimumValue: 1
+//                maximumValue: 3
+//                width: parent.width - Theme.paddingLarge * 3
+//                anchors.centerIn: parent
+//            }
+//        }
 	}
 
 	// hint for camera issues
@@ -82,4 +114,19 @@ Item {
 			}
 		}
 	}
+
+	// This timer is used to reload the camera device in case it is not available at the time of
+	// creation.
+	// Reloading is needed if the camera device is not plugged in or disabled.
+	// That approach ensures that a camera device is even detected again after plugging it out and
+	// plugging it in while the scanner is used.
+	//
+//	Timer {
+//		id: reloadingCameraTimer
+//		interval: Kirigami.Units.veryLongDuration
+//		onTriggered: {
+//			root.camera.destroy()
+//			cameraComponent.createObject()
+//		}
+//	}
 }

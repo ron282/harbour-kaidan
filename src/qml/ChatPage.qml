@@ -46,16 +46,70 @@ ChatPageBase {
     property alias messageReactionEmojiPicker: messageReactionEmojiPicker
     property alias messageReactionDetailsSheet: messageReactionDetailsSheet
 
-	property string messageToCorrect
-    readonly property bool cameraAvailable: QtMultimedia.availableCameras.length > 0
-	property bool viewPositioned: false
+	property ChatPageSendingPane sendingPane
+	property ChatInfo globalChatDate
+	readonly property bool cameraAvailable: Multimedia.QtMultimedia.availableCameras.length > 0
+    property bool viewPositioned: false
     onStatusChanged: {
         if (status === PageStatus.Active && forwardNavigation === false) {
             pageStack.pushAttached(contactDetailsPage)
         }
     }
 
-    // Message search bar
+/*	titleDelegate: Controls.ToolButton {
+		visible: !Kirigami.Settings.isMobile
+
+		contentItem: RowLayout {
+			// weirdly having an id here, although unused, fixes the layout
+			id: layout
+
+			Avatar {
+				Layout.leftMargin: Kirigami.Units.largeSpacing
+				Layout.preferredHeight: parent.height
+				Layout.preferredWidth: parent.height
+				jid: MessageModel.currentChatJid
+				name: chatItemWatcher.item.displayName
+			}
+			Kirigami.Heading {
+				Layout.fillWidth: true
+				Layout.leftMargin: Kirigami.Units.largeSpacing
+				Layout.rightMargin: Kirigami.Units.largeSpacing
+				text: chatItemWatcher.item.displayName
+			}
+		}
+
+		onClicked: openOverlay(contactDetailsSheet)
+	}
+	keyboardNavigationEnabled: true
+	contextualActions: [
+		Kirigami.Action {
+			visible: Kirigami.Settings.isMobile
+			icon.name: "avatar-default-symbolic"
+			text: qsTr("Details…")
+			onTriggered: openPage(contactDetailsPage)
+		},
+		// Action to toggle the message search bar
+		Kirigami.Action {
+			id: searchAction
+			text: qsTr("Search")
+			icon.name: "system-search-symbolic"
+			displayHint: Kirigami.DisplayHint.IconOnly
+			onTriggered: {
+				if (searchBar.active)
+					searchBar.close()
+				else
+					searchBar.open()
+			}
+		},
+		Kirigami.Action {
+			visible: !sendingPane.composition.isSpoiler
+			icon.name: "password-show-off"
+			text: qsTr("Add hidden message part")
+			displayHint: Kirigami.DisplayHint.IconOnly
+			onTriggered: sendingPane.composition.isSpoiler = true
+		}
+	]
+*/
 
 
     RosterItemWatcher {
@@ -67,6 +121,7 @@ ChatPageBase {
         id: contactDetailsSheet
 
         ContactDetailsSheet {
+            accountJid: MessageModel.currentAccountJid
             jid: MessageModel.currentChatJid
         }
     }
@@ -280,14 +335,15 @@ ChatPageBase {
             reactionDetailsSheet: root.messageReactionDetailsSheet
             modelIndex: index
             msgId: model.id
-            senderJid: model.sender
+            senderId: model.senderId
             senderName: model.isOwn ? "" : chatItemWatcher.item.displayName
             chatName: chatItemWatcher.item.displayName
             encryption: model.encryption
             isTrusted: model.isTrusted
             isOwn: model.isOwn
             messageBody: model.body
-            dateTime: new Date(model.timestamp)
+            date: model.date
+            time: model.time
             deliveryState: model.deliveryState
             deliveryStateName: model.deliveryStateName
             deliveryStateIcon: model.deliveryStateIcon
@@ -300,14 +356,10 @@ ChatPageBase {
             displayedReactions: model.displayedReactions
             detailedReactions: model.detailedReactions
             ownDetailedReactions: model.ownDetailedReactions
-			onMessageEditRequested: {
-				messageToCorrect = id
-
-				sendingPane.messageArea.text = body
-				sendingPane.messageArea.state = "edit"
-			}
-
-			onQuoteRequested: {
+            onMessageEditRequested: {
+                sendingPane.prepareMessageCorrection(replaceId, body, spoilerHint)
+            }
+            onQuoteRequested: {
                 var quotedText = ""
                 const lines = body.split("\n")
 

@@ -6,22 +6,25 @@
 
 #include "MessageComposition.h"
 
-// std
 // Kaidan
 #include "MessageHandler.h"
 #include "Kaidan.h"
 #include "FileSharingController.h"
 #include "Algorithms.h"
-#include "AccountManager.h"
 #include "MessageModel.h"
 #include "MediaUtils.h"
 #include "MessageDb.h"
 
+// Qt
 #include <QFileDialog>
 #include <QFutureWatcher>
+#include <QGuiApplication>
 #include <QMimeDatabase>
 
+// QXmpp
+#include <QXmppUtils.h>
 #ifndef SFOS
+// KF
 #include <KIO/PreviewJob>
 #include <KFileItem>
 #endif
@@ -29,31 +32,43 @@ constexpr auto THUMBNAIL_SIZE = 200;
 
 MessageComposition::MessageComposition()
 	: m_fileSelectionModel(new FileSelectionModel(this))
-	, m_fetchDraftWatcher(new QFutureWatcher<Message>(this))
-	, m_removeDraftWatcher(new QFutureWatcher<QString>(this))
 {
-	connect(m_fetchDraftWatcher, &QFutureWatcher<Message>::finished, this, [this]() {
-		const auto msg = m_fetchDraftWatcher->result();
-		emit draftFetched(msg.body, msg.isSpoiler, msg.spoilerHint);
-	});
-	connect(m_removeDraftWatcher, &QFutureWatcher<QString>::finished, this, [this]() {
-		setDraftId({});
+	connect(qGuiApp, &QGuiApplication::aboutToQuit, this, [this]() {
+		saveDraft();
 	});
 }
 
-void MessageComposition::setAccount(const QString &account)
+void MessageComposition::setAccountJid(const QString &accountJid)
 {
-	if (m_account != account) {
-		m_account = account;
-		emit accountChanged();
+	if (m_accountJid != accountJid) {
+		// Save the draft of the last chat when the current chat is changed.
+		saveDraft();
+
+		m_accountJid = accountJid;
+		Q_EMIT accountJidChanged();
+
+		loadDraft();
 	}
 }
 
-void MessageComposition::setTo(const QString &to)
+void MessageComposition::setChatJid(const QString &chatJid)
 {
-	if (m_to != to) {
-		m_to = to;
-		emit toChanged();
+	if (m_chatJid != chatJid) {
+		// Save the draft of the last chat when the current chat is changed.
+		saveDraft();
+
+		m_chatJid = chatJid;
+		Q_EMIT chatJidChanged();
+
+		loadDraft();
+	}
+}
+
+void MessageComposition::setReplaceId(const QString &replaceId)
+{
+	if (m_replaceId != replaceId) {
+		m_replaceId = replaceId;
+		Q_EMIT replaceIdChanged();
 	}
 }
 
@@ -61,7 +76,7 @@ void MessageComposition::setBody(const QString &body)
 {
 	if (m_body != body) {
 		m_body = body;
-		emit bodyChanged();
+		Q_EMIT bodyChanged();
 	}
 }
 
@@ -69,7 +84,7 @@ void MessageComposition::setSpoiler(bool spoiler)
 {
 	if (m_spoiler != spoiler) {
 		m_spoiler = spoiler;
-		emit isSpoilerChanged();
+		Q_EMIT isSpoilerChanged();
 	}
 }
 
@@ -77,89 +92,168 @@ void MessageComposition::setSpoilerHint(const QString &spoilerHint)
 {
 	if (m_spoilerHint != spoilerHint) {
 		m_spoilerHint = spoilerHint;
-		emit spoilerHintChanged();
+		Q_EMIT spoilerHintChanged();
 	}
 }
 
-void MessageComposition::setDraftId(const QString &id)
+void MessageComposition::setIsDraft(bool isDraft)
 {
-	if (m_draftId != id) {
-		m_draftId = id;
-		emit draftIdChanged();
+	if (m_isDraft != isDraft) {
+		m_isDraft = isDraft;
+		Q_EMIT isDraftChanged();
 
-		if (!m_draftId.isEmpty()) {
-			m_fetchDraftWatcher->setFuture(MessageDb::instance()->fetchDraftMessage(id));
+		if (!isDraft) {
+			MessageDb::instance()->removeDraftMessage(m_accountJid, m_chatJid);
 		}
 	}
 }
 
 void MessageComposition::send()
 {
-	Q_ASSERT(!m_account.isNull());
-	Q_ASSERT(!m_to.isNull());
+	Q_ASSERT(!m_accountJid.isNull());
+	Q_ASSERT(!m_chatJid.isNull());
+
+	Message message {
+		.accountJid = m_accountJid,
+		.chatJid = m_chatJid,
+		.senderId = m_accountJid,
+		.id = QXmppUtils::generateStanzaUuid(),
+		.originId = message.id,
+		.stanzaId = {},
+		.replaceId = {},
+		.timestamp = QDateTime::currentDateTimeUtc(),
+		.body = m_body,
+		.encryption = MessageModel::instance()->activeEncryption(),
+		.senderKey = {},
+#if defined (SFOS)
+        .deliveryState = Enums::DeliveryState::Pending,
+#else
+        .deliveryState = DeliveryState::Pending,
+#endif
+        .isSpoiler = m_spoiler,
+		.spoilerHint = m_spoilerHint,
+		.fileGroupId = {},
+		.files = m_fileSelectionModel->files(),
+		.markerId = {},
+		.receiptRequested = true,
+		.reactionSenders = {},
+		.errorText = {},
+	};
+
+	// generate file IDs if needed
+	if (m_fileSelectionModel->hasFiles()) {
+		message.fileGroupId = FileSharingController::generateFileId();
+
+		for (auto &file : message.files) {
+			file.fileGroupId = *message.fileGroupId;
+			file.id = FileSharingController::generateFileId();
+			file.name = QUrl::fromLocalFile(file.localFilePath).fileName();
+		}
+	}
+
+	// add pending message to database
+	MessageDb::instance()->addMessage(message, MessageOrigin::UserInput);
 
 	if (m_fileSelectionModel->hasFiles()) {
-		Message message;
-		message.to = m_to;
-		message.from = AccountManager::instance()->jid();
-		message.body = m_body;
-		message.files = m_fileSelectionModel->files();
-		message.receiptRequested = true;
-		message.encryption = MessageModel::instance()->activeEncryption();
+		// upload files and send message after uploading
 
+		// whether to symmetrically encrypt the files
 		bool encrypt = message.encryption != Encryption::NoEncryption;
-		Kaidan::instance()->fileSharingController()->sendMessage(std::move(message), encrypt);
+
+		auto *fSController = Kaidan::instance()->fileSharingController();
+		// upload files
+		fSController->sendFiles(message.files, encrypt).then(fSController, [message = std::move(message)](auto result) mutable {
+			if (auto files = std::get_if<QVector<File>>(&result)) {
+				// uploading succeeded
+
+				// set updated files with new metadata and uploaded sources
+				message.files = std::move(*files);
+
+				// update message in database
+				MessageDb::instance()->updateMessage(message.id, [files = message.files](auto &message) {
+					message.files = files;
+				});
+
+				// send message with file sources
+				runOnThread(Kaidan::instance()->client(), [message = std::move(message)]() mutable {
+					Kaidan::instance()->client()->messageHandler()->sendPendingMessage(std::move(message));
+				});
+			} else {
+				// uploading did not succeed
+				auto errorText = std::get<QXmppError>(std::move(result)).description;
+
+				// set error text in database
+				MessageDb::instance()->updateMessage(message.id, [errorText](auto &message) {
+					message.errorText = tr("Upload failed: %1").arg(errorText);
+				});
+			}
+		});
 		m_fileSelectionModel->clear();
 	} else {
-		emit Kaidan::instance()
-			->client()
-			->messageHandler()
-			->sendMessageRequested(m_to, m_body, m_spoiler, m_spoilerHint);
+		// directly send message
+		runOnThread(Kaidan::instance()->client(), [message = std::move(message)]() mutable {
+			Kaidan::instance()->client()->messageHandler()->sendPendingMessage(std::move(message));
+		});
 	}
 
+	// clean up
 	setSpoiler(false);
-
-	if (!m_draftId.isEmpty()) {
-		m_removeDraftWatcher->setFuture(MessageDb::instance()->removeDraftMessage(m_draftId));
-	}
+	setIsDraft(false);
 }
 
-Message MessageComposition::draft() const
+void MessageComposition::loadDraft()
 {
-	Message msg;
-	msg.id = m_draftId;
-#if defined(SFOS)
-	msg.deliveryState = Enums::DeliveryState::Draft;
-#else
-	msg.deliveryState = DeliveryState::Draft;
-#endif
-	msg.from = m_account;
-	msg.to = m_to;
-	msg.isSpoiler = m_spoiler;
-	msg.spoilerHint = m_spoilerHint;
-	msg.body = m_body;
-	return msg;
+	if (m_accountJid.isEmpty() || m_chatJid.isEmpty()) {
+		return;
+	}
+
+	auto future = MessageDb::instance()->fetchDraftMessage(m_accountJid, m_chatJid);
+	await(future, this, [this](std::optional<Message> message) {
+		if (message) {
+			setReplaceId(message->replaceId);
+			setBody(message->body);
+			setSpoiler(message->isSpoiler);
+			setSpoilerHint(message->spoilerHint);
+			setIsDraft(true);
+		}
+	});
 }
 
 void MessageComposition::saveDraft()
 {
-	if (m_account.isEmpty() || m_to.isEmpty()) {
+	if (m_accountJid.isEmpty() || m_chatJid.isEmpty()) {
 		return;
 	}
 
-	const Message msg = draft();
-	const bool canSave = !msg.spoilerHint.isEmpty() || !msg.body.isEmpty();
+	const bool savingNeeded = !m_body.isEmpty() || !m_spoilerHint.isEmpty();
 
-	if (msg.id.isEmpty()) {
-		if (canSave) {
-			MessageDb::instance()->addDraftMessage(msg);
-		}
-	} else {
-		if (canSave) {
-			MessageDb::instance()->updateDraftMessage(msg);
+	if (m_isDraft) {
+		if (savingNeeded) {
+			MessageDb::instance()->updateDraftMessage(m_accountJid, m_chatJid, [this](Message &message) {
+				message.replaceId = m_replaceId;
+				message.timestamp = QDateTime::currentDateTimeUtc();
+				message.body = m_body;
+				message.isSpoiler = m_spoiler;
+				message.spoilerHint = m_spoilerHint;
+			});
 		} else {
-			m_removeDraftWatcher->setFuture(MessageDb::instance()->removeDraftMessage(msg.id));
+			MessageDb::instance()->removeDraftMessage(m_accountJid, m_chatJid);
 		}
+	} else if (savingNeeded) {
+		Message message;
+		message.accountJid = m_accountJid;
+		message.chatJid = m_chatJid;
+		message.replaceId = m_replaceId;
+		message.timestamp = QDateTime::currentDateTimeUtc();
+		message.body = m_body;
+		message.isSpoiler = m_spoiler;
+		message.spoilerHint = m_spoilerHint;
+#if defined(SFOS)
+        message.deliveryState = Enums::DeliveryState::Draft;
+#else
+        message.deliveryState = DeliveryState::Draft;
+#endif
+		MessageDb::instance()->addDraftMessage(message);
 	}
 }
 

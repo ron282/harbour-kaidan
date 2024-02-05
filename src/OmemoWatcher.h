@@ -4,7 +4,10 @@
 
 #pragma once
 
+// Qt
 #include <QObject>
+// Kaidan
+#include "OmemoManager.h"
 
 class OmemoWatcher : public QObject
 {
@@ -12,9 +15,15 @@ class OmemoWatcher : public QObject
 
 	Q_PROPERTY(QString jid READ jid WRITE setJid NOTIFY jidChanged)
 
-	Q_PROPERTY(QList<QString> distrustedOmemoDevices READ distrustedOmemoDevices NOTIFY distrustedOmemoDevicesChanged)
-	Q_PROPERTY(QList<QString> usableOmemoDevices READ usableOmemoDevices NOTIFY usableOmemoDevicesChanged)
-	Q_PROPERTY(QList<QString> authenticatableOmemoDevices READ authenticatableOmemoDevices NOTIFY authenticatableOmemoDevicesChanged)
+#if defined(SFOS)
+    Q_PROPERTY(QList<QString> distrustedDevices READ distrustedDevices NOTIFY distrustedDevicesChanged)
+    Q_PROPERTY(QList<QString> usableDevices READ usableDevices NOTIFY usableDevicesChanged)
+    Q_PROPERTY(QList<QString> authenticatableDevices READ authenticatableDevices NOTIFY authenticatableDevicesChanged)
+#else
+    Q_PROPERTY(QList<OmemoManager::Device> distrustedDevices READ distrustedDevices NOTIFY distrustedDevicesChanged)
+    Q_PROPERTY(QList<OmemoManager::Device> usableDevices READ usableDevices NOTIFY usableDevicesChanged)
+    Q_PROPERTY(QList<OmemoManager::Device> authenticatableDevices READ authenticatableDevices NOTIFY authenticatableDevicesChanged)
+#endif
 
 public:
 	OmemoWatcher() = default;
@@ -23,24 +32,36 @@ public:
 	void setJid(const QString &jid);
 	Q_SIGNAL void jidChanged();
 
-	QList<QString> distrustedOmemoDevices() const;
-	Q_SIGNAL void distrustedOmemoDevicesChanged();
+#if defined(SFOS)
+    QList<QString> distrustedDevices() const;
+#else
+    QList<OmemoManager::Device> distrustedDevices() const;
+#endif
+    Q_SIGNAL void distrustedDevicesChanged();
 
-	QList<QString> usableOmemoDevices() const;
-	Q_SIGNAL void usableOmemoDevicesChanged();
+#if defined(SFOS)
+    QList<QString> usableDevices() const;
+#else
+    QList<OmemoManager::Device> usableDevices() const;
+#endif
+    Q_SIGNAL void usableDevicesChanged();
 
-	QList<QString> authenticatableOmemoDevices() const;
-	Q_SIGNAL void authenticatableOmemoDevicesChanged();
+#if defined(SFOS)
+    QList<QString> authenticatableDevices() const;
+#else
+    QList<OmemoManager::Device> authenticatableDevices() const;
+#endif
+    Q_SIGNAL void authenticatableDevicesChanged();
 
 private:
-	void handleDistrustedOmemoDevicesRetrieved(const QString &jid, const QList<QString> &deviceLabels);
-	void handleUsableOmemoDevicesRetrieved(const QString &jid, const QList<QString> &deviceLabels);
-	void handleAuthenticatableOmemoDevicesRetrieved(const QString &jid, const QList<QString> &deviceLabels);
+	void handleDistrustedDevicesUpdated(const QString &jid, const QList<OmemoManager::Device> &distrustedDevices);
+	void handleUsableDevicesUpdated(const QString &jid, const QList<OmemoManager::Device> &usableDevices);
+	void handleAuthenticatableDevicesUpdated(const QString &jid, const QList<OmemoManager::Device> &authenticatableDevices);
 
 	QString m_jid;
 
-	QList<QString> m_distrustedOmemoDevices;
-	QList<QString> m_usableOmemoDevices;
-	QList<QString> m_authenticatableOmemoDevices;
+	QList<OmemoManager::Device> m_distrustedDevices;
+	QList<OmemoManager::Device> m_usableDevices;
+	QList<OmemoManager::Device> m_authenticatableDevices;
 };
 

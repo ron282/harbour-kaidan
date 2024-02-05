@@ -1520,7 +1520,7 @@ void EmojiProxyModel::setGroup(Emoji::Group group)
 	}
 
 	m_group = group;
-	emit groupChanged();
+	Q_EMIT groupChanged();
 
 	invalidateFilter();
 }
@@ -1537,7 +1537,7 @@ void EmojiProxyModel::setFilter(const QString &filter)
 	}
 
 	setFilterWildcard(filter);
-	emit filterChanged();
+	Q_EMIT filterChanged();
 }
 
 bool EmojiProxyModel::hasFavoriteEmojis() const
@@ -1551,7 +1551,7 @@ void EmojiProxyModel::addFavoriteEmoji(int proxyRow)
 
 	if (!m_favoriteEmojis.contains(emoji.unicode())) {
 		m_favoriteEmojis << emoji.unicode();
-		emit hasFavoriteEmojisChanged();
+		Q_EMIT hasFavoriteEmojisChanged();
 
 		if (m_group == Emoji::Group::Favorites) {
 			invalidateFilter();

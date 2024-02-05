@@ -5,6 +5,10 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#if defined (SFOS)
+#include "../3rdparty/QEmuStringView/qemustringview.h"
+#endif
+
 #include "AccountManager.h"
 // Qt
 #include <QMutexLocker>
@@ -13,9 +17,11 @@
 // QXmpp
 #include <QXmppUtils.h>
 // Kaidan
+#include "Account.h"
+#include "AccountDb.h"
 #include "Globals.h"
 #include "Kaidan.h"
-#include "MessageModel.h"
+#include "MessageDb.h"
 #include "RosterModel.h"
 #include "Settings.h"
 #include "VCardCache.h"
@@ -37,7 +43,7 @@ AccountManager::AccountManager(Settings *settings, VCardCache *cache, QObject *p
 
 	connect(cache, &VCardCache::vCardChanged, this, [this](const QString &jid) {
 		if (m_jid == jid) {
-			emit displayNameChanged();
+			Q_EMIT displayNameChanged();
 		}
 	});
 }
@@ -56,8 +62,10 @@ void AccountManager::setJid(const QString &jid)
 		m_jid = jid;
 		m_hasNewCredentials = true;
 
+		AccountDb::instance()->addAccount(jid);
+
 		locker.unlock();
-		emit jidChanged();
+		Q_EMIT jidChanged();
 	}
 }
 
@@ -87,7 +95,7 @@ void AccountManager::setPassword(const QString &password)
 		m_hasNewCredentials = true;
 
 		locker.unlock();
-		emit passwordChanged();
+		Q_EMIT passwordChanged();
 	}
 }
 
@@ -106,7 +114,7 @@ void AccountManager::setHost(const QString &host)
 		m_hasNewConnectionSettings = true;
 
 		locker.unlock();
-		emit hostChanged();
+		Q_EMIT hostChanged();
 	}
 }
 
@@ -125,7 +133,7 @@ void AccountManager::setPort(const quint16 port)
 		m_hasNewConnectionSettings = true;
 
 		locker.unlock();
-		emit portChanged();
+		Q_EMIT portChanged();
 	}
 }
 
@@ -253,7 +261,7 @@ void AccountManager::deleteCredentials()
 	setPassword({});
 	resetCustomConnectionSettings();
 
-	emit credentialsNeeded();
+	Q_EMIT credentialsNeeded();
 }
 
 void AccountManager::deleteSettings()
@@ -262,7 +270,8 @@ void AccountManager::deleteSettings()
 		KAIDAN_SETTINGS_AUTH_ONLINE,
 		KAIDAN_SETTINGS_NOTIFICATIONS_MUTED,
 		KAIDAN_SETTINGS_FAVORITE_EMOJIS,
-		KAIDAN_SETTINGS_HELP_VISIBILITY_QR_CODE_PAGE,
+		KAIDAN_SETTINGS_EXPLANATION_VISIBILITY_CONTACT_ADDITION_QR_CODE_PAGE,
+		KAIDAN_SETTINGS_EXPLANATION_VISIBILITY_KEY_AUTHENTICATION_PAGE,
 	});
 }
 
@@ -271,8 +280,8 @@ void AccountManager::removeAccount(const QString &accountJid)
 	deleteSettings();
 	deleteCredentials();
 
-	emit MessageModel::instance()->removeMessagesRequested(accountJid);
-	emit RosterModel::instance()->removeItemsRequested(accountJid);
+	MessageDb::instance()->removeAllMessagesFromAccount(accountJid);
+	Q_EMIT RosterModel::instance()->removeItemsRequested(accountJid);
 }
 
 QString AccountManager::generateJidResourceWithRandomSuffix(unsigned int numberOfRandomSuffixCharacters) const

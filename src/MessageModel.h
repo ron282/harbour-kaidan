@@ -81,36 +81,40 @@ class MessageModel : public QAbstractListModel
 
 	Q_PROPERTY(QString currentAccountJid READ currentAccountJid NOTIFY currentAccountJidChanged)
 	Q_PROPERTY(QString currentChatJid READ currentChatJid NOTIFY currentChatJidChanged)
-	Q_PROPERTY(QString currentDraftMessageId READ currentDraftMessageId NOTIFY currentDraftMessageIdChanged)
 	Q_PROPERTY(bool isOmemoEncryptionEnabled READ isOmemoEncryptionEnabled NOTIFY isOmemoEncryptionEnabledChanged)
 	Q_PROPERTY(Encryption::Enum encryption READ encryption WRITE setEncryption NOTIFY encryptionChanged)
-	Q_PROPERTY(QList<QString> usableOmemoDevices READ usableOmemoDevices NOTIFY usableOmemoDevicesChanged)
-	Q_PROPERTY(QXmppMessage::State chatState READ chatState NOTIFY chatStateChanged)
+#if defined(SFOS)
+    Q_PROPERTY(QList<QString> usableOmemoDevices READ usableOmemoDevices NOTIFY usableOmemoDevicesChanged)
+#else
+    Q_PROPERTY(QList<OmemoManager::Device> usableOmemoDevices READ usableOmemoDevices NOTIFY usableOmemoDevicesChanged)
+#endif
+    Q_PROPERTY(QXmppMessage::State chatState READ chatState NOTIFY chatStateChanged)
 	Q_PROPERTY(bool mamLoading READ mamLoading NOTIFY mamLoadingChanged)
 
 public:
 	// Basically copy from QXmpp, but we need to expose this to QML
 	enum MessageRoles {
-		Timestamp = Qt::UserRole + 1,
+		SenderId = Qt::UserRole + 1,
 		Id,
-		Sender,
-		Recipient,
+		IsLastRead,
+		IsEdited,
+		Date,
+		NextDate,
+		Time,
+		Body,
 		Encryption,
 		IsTrusted,
-		Body,
-		IsOwn,
-		IsEdited,
 		DeliveryState,
-		IsLastRead,
-		IsSpoiler,
-		SpoilerHint,
-		ErrorText,
 		DeliveryStateIcon,
 		DeliveryStateName,
+		IsSpoiler,
+		SpoilerHint,
+		IsOwn,
 		Files,
 		DisplayedReactions,
 		DetailedReactions,
 		OwnDetailedReactions,
+		ErrorText,
 	};
 	Q_ENUM(MessageRoles)
 
@@ -132,8 +136,6 @@ public:
 	Q_INVOKABLE void setCurrentChat(const QString &accountJid, const QString &chatJid);
 	Q_INVOKABLE void resetCurrentChat();
 
-	QString currentDraftMessageId() const;
-
 	/**
 	 * Determines whether a chat is the currently open chat.
 	 *
@@ -144,6 +146,8 @@ public:
 	 */
 	bool isChatCurrentChat(const QString &accountJid, const QString &chatJid) const;
 
+	const RosterItemWatcher &rosterItemWatcher() const;
+
 	QHash<QString, QHash<QByteArray, QXmpp::TrustLevel>> keys();
 
 	Encryption::Enum activeEncryption();
@@ -152,8 +156,11 @@ public:
 	Encryption::Enum encryption() const;
 	void setEncryption(Encryption::Enum encryption);
 
-	QList<QString> usableOmemoDevices() const;
-
+#if defined (SFOS)
+    QList<QString> usableOmemoDevices() const;
+#else
+    QList<OmemoManager::Device> usableOmemoDevices() const;
+#endif
 	Q_INVOKABLE void resetComposingChatState();
 
 	Q_INVOKABLE void handleMessageRead(int readMessageIndex);
@@ -162,9 +169,7 @@ public:
 	Q_INVOKABLE void markMessageAsFirstUnread(int index);
 
 	/**
-	 * Adds a message reaction.
-	 *
-	 * It should only be called if the reaction to be added is not yet stored.
+	 * Adds a message reaction or undoes its pending/failed removal.
 	 *
 	 * @param messageId ID of the message to react to
 	 * @param emoji emoji in reaction to the message
@@ -172,9 +177,9 @@ public:
 	Q_INVOKABLE void addMessageReaction(const QString &messageId, const QString &emoji);
 
 	/**
-	 * Removes a message reaction.
+	 * Removes a message reaction or undoes its pending/failed addition.
 	 *
-	 * It must only be called if the reaction to be removed is already stored.
+	 * This must only be called if the reaction to be removed is already stored.
 	 *
 	 * @param messageId ID of the message to react to
 	 * @param emoji emoji in reaction to the message
@@ -184,7 +189,7 @@ public:
 	/**
 	 * Sends message reactions again in case their delivery failed.
 	 *
-	 * It should only be called if there is at least one message reaction with the deliveryState
+	 * This should only be called if there is at least one message reaction with the deliveryState
 	 * "ErrorOnAddition", "ErrorOnRemovalAfterSent" or "ErrorOnRemovalAfterDelivered".
 	 *
 	 * @param messageId ID of the message to react to
@@ -198,7 +203,7 @@ public:
 	/**
 	 * Correct the last message
 	 */
-	Q_INVOKABLE void correctMessage(const QString &msgId, const QString &message);
+	Q_INVOKABLE void correctMessage(const QString &replaceId, const QString &body, const QString &spoilerHint);
 
 	/**
 	 * Removes a message locally.
@@ -232,10 +237,13 @@ public:
 	Q_INVOKABLE int searchForMessageFromOldToNew(const QString &searchString, int startIndex = -1);
 
 	/**
+<<<<<<< HEAD
 	 * Sends pending messages again after searching them in the database.
 	 */
 	void sendPendingMessages();
 	/**
+=======
+>>>>>>> master
 	  * Returns the current chat state
 	  */
 	QXmppMessage::State chatState() const;
@@ -252,7 +260,6 @@ public:
 signals:
 	void currentAccountJidChanged(const QString &accountJid);
 	void currentChatJidChanged(const QString &currentChatJid);
-	void currentDraftMessageIdChanged(const QString &id);
 
 	void isOmemoEncryptionEnabledChanged();
 	void encryptionChanged();
@@ -264,20 +271,11 @@ signals:
 	void keysRetrieved(const QHash<QString, QHash<QByteArray, QXmpp::TrustLevel>> &keys);
 	void keysChanged();
 
-	void pendingMessagesFetched(const QVector<Message> &messages);
 	void sendCorrectedMessageRequested(const Message &msg);
 	void chatStateChanged();
 	void sendChatStateRequested(const QString &bareJid, QXmppMessage::State state);
 	void handleChatStateRequested(const QString &bareJid, QXmppMessage::State state);
 	void mamBacklogRetrieved(const QString &accountJid, const QString &jid, const QDateTime &lastStamp, bool complete);
-
-	/**
-	 * Emitted to remove all messages of an account or an account's chat.
-	 *
-	 * @param accountJid JID of the account whose messages are being removed
-	 * @param chatJid JID of the chat whose messages are being removed (optional)
-	 */
-	void removeMessagesRequested(const QString &accountJid, const QString &chatJid = {});
 
 	/**
 	 * Emitted when fetching messages for a query string is completed.
@@ -299,10 +297,9 @@ private:
     void handleMamBacklogRetrieved(const QString &accountJid, const QString &jid, const QDateTime &lastStamp, bool complete);
 
 	void addMessage(const Message &msg);
-	void updateMessage(const QString &id,
-	                   const std::function<void (Message &)> &updateMsg);
 
 	void handleMessage(Message msg, MessageOrigin origin);
+	void handleMessageUpdated(const Message &message);
 	void handleChatState(const QString &bareJid, QXmppMessage::State state);
 	void handleMessageRemoved(const QString &senderJid, const QString &recipientJid, const QString &messageId);
 
@@ -333,7 +330,55 @@ private:
 	 */
 	void showMessageNotification(const Message &message, MessageOrigin origin) const;
 
+	/**
+	 * Undoes a pending or failed removal of a message reaction.
+	 *
+	 * This should only be called if the removal of the reaction could not be submitted (yet).
+	 * That is either the case if Kaidan has not been connected since the user removed the reaction
+	 * or when there was an error on sending the change.
+	 *
+	 * @param messageId ID of the message to react to
+	 * @param senderJid JID of the reaction's sender
+	 * @param emoji emoji in reaction to the message
+	 * @param reactions message's reactions to be updated
+	 *
+	 * @return whether the message reaction's removal has been undone
+	 */
+	bool undoMessageReactionRemoval(const QString &messageId, const QString &senderJid, const QString &emoji, const QVector<MessageReaction> &reactions);
+
+	/**
+	 * Undoes a pending or failed addition of a message reaction.
+	 *
+	 * This should only be called if the addition of the reaction could not be submitted (yet).
+	 * That is either the case if Kaidan has not been connected since the user added the reaction
+	 * or when there was an error on sending the change.
+	 *
+	 * @param messageId ID of the message to react to
+	 * @param senderJid JID of the reaction's sender
+	 * @param emoji emoji in reaction to the message
+	 * @param reactions message's reactions to be updated
+	 *
+	 * @return whether the message reaction's addition has been undone
+	 */
+	bool undoMessageReactionAddition(const QString &messageId, const QString &senderJid, const QString &emoji, const QVector<MessageReaction> &reactions);
+
 	void updateMessageReactionsAfterSending(const QString &messageId, const QString &senderJid);
+
+	/**
+	 * Searches a message with a more recent date and returns that date.
+	 *
+	 * This is needed as a workaround for a bug in Qt Quick's implementation of the ListView section
+	 * for "verticalLayoutDirection: ListView.BottomToTop".
+	 * That bug results in each section label being displayed at the bottom of its corresponding
+	 * section instead of displaying it at the top of it.
+	 *
+	 * @param messageStartIndex index of the message to start the search with
+	 *
+	 * @return the date of the first message with a more recent date
+	 */
+	QDate searchNextDate(int messageStartIndex) const;
+
+	QString formatDate(QDate localDate) const;
 
 	QVector<Message> m_messages;
 	QString m_currentAccountJid;

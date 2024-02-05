@@ -51,6 +51,7 @@ public:
 		UnreadMessagesRole,
 		LastMessageRole,
 		LastMessageIsDraftRole,
+		LastMessageSenderIdRole,
 		PinnedRole,
 		NotificationsMutedRole,
 	};
@@ -68,6 +69,7 @@ public:
 	static RosterModel *instance();
 
 	RosterModel(QObject *parent = nullptr);
+	~RosterModel() override;
 
 	Q_REQUIRED_RESULT bool isEmpty() const;
 	Q_REQUIRED_RESULT int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -127,11 +129,10 @@ public:
 	 *
 	 * @param uriString XMPP URI string that contains only a JID
 	 */
-	Q_INVOKABLE RosterModel::AddContactByUriResult addContactByUri(const QString &uriString);
+	Q_INVOKABLE RosterModel::AddContactByUriResult addContactByUri(const QString &accountJid, const QString &uriString);
 
 	QString lastReadOwnMessageId(const QString &accountJid, const QString &jid) const;
 	QString lastReadContactMessageId(const QString &accountJid, const QString &jid) const;
-	QString draftMessageId(const QString &accountJid, const QString &jid) const;
 
 	/**
 	 * Sends read markers for all roster items that have unsent (pending) ones.
@@ -160,6 +161,7 @@ public:
 	Q_INVOKABLE void setChatStateSendingEnabled(const QString &accountJid, const QString &jid, bool chatStateSendingEnabled);
 	Q_INVOKABLE void setReadMarkerSendingEnabled(const QString &accountJid, const QString &jid, bool readMarkerSendingEnabled);
 	Q_INVOKABLE void setNotificationsMuted(const QString &accountJid, const QString &jid, bool notificationsMuted);
+	Q_INVOKABLE void setAutomaticMediaDownloadsRule(const QString &accountJid, const QString &jid, RosterItem::AutomaticMediaDownloadsRule rule);
 
 signals:
 	void addItemRequested(const RosterItem &item);
@@ -175,11 +177,6 @@ signals:
 	 */
 	void removeItemsRequested(const QString &accountJid, const QString &jid = {});
 
-	/**
-	 * Emitted, whan a subscription request was received
-	 */
-	void subscriptionRequestReceived(const QString &from, const QString &msg);
-
 private:
 	void handleItemsFetched(const QVector<RosterItem> &items);
 
@@ -189,7 +186,7 @@ private:
 	void updateLastMessage(QVector<RosterItem>::Iterator &itr,
 						   const Message &message,
 						   QVector<int> &changedRoles,
-						   bool onlyUpdateIfNewer = true);
+						   bool onlyUpdateIfNewerOrAtSameAge = true);
 
 	/**
 	 * Removes all roster items of an account or a specific roster item.
@@ -200,18 +197,18 @@ private:
 	void removeItems(const QString &accountJid, const QString &jid = {});
 
 	void handleMessageAdded(const Message &message, MessageOrigin origin);
+	void handleMessageUpdated(const Message &message);
 	void handleDraftMessageAdded(const Message &message);
 	void handleDraftMessageUpdated(const Message &message);
-	void handleDraftMessageRemoved(const QString &id);
-	void handleDraftMessageFetched(const Message &msg);
-	void handleMessageRemoved(std::shared_ptr<Message> newLastMessage);
+	void handleDraftMessageRemoved(const Message &newLastMessage);
+	void handleMessageRemoved(const Message &newLastMessage);
 
 	void insertItem(int index, const RosterItem &item);
 	void updateItemPosition(int currentIndex);
 	int positionToAdd(const RosterItem &item);
 	int positionToMove(int currentIndex);
 	
-	QString formattedLastMessageDateTime(const QDateTime &lastMessageDateTime) const;
+	QString formatLastMessageDateTime(const QDateTime &lastMessageDateTime) const;
 
 	QVector<RosterItem> m_items;
 

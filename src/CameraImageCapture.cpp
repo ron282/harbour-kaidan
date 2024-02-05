@@ -12,7 +12,7 @@ CameraImageCapture::CameraImageCapture(QMediaObject *mediaObject, QObject *paren
 		this, [this](int id, const QString &filePath) {
 			Q_UNUSED(id);
 			m_actualLocation = QUrl::fromLocalFile(filePath);
-			emit actualLocationChanged(m_actualLocation);
+			Q_EMIT actualLocationChanged(m_actualLocation);
 		});
 }
 
@@ -33,7 +33,7 @@ bool CameraImageCapture::setMediaObject(QMediaObject *mediaObject)
             Q_ARG(QMultimedia::AvailabilityStatus, availability()));
 #else
 		QMetaObject::invokeMethod(this, [this]() {
-				emit availabilityChanged(availability());
+				Q_EMIT availabilityChanged(availability());
 			}, Qt::QueuedConnection);
 #endif
 	}

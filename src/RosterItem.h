@@ -12,6 +12,7 @@
 #include <QXmppRosterIq.h>
 
 #include "Encryption.h"
+#include "Enums.h"
 
 /**
  * Item containing one contact / conversation.
@@ -55,7 +56,7 @@ public:
 #else
     RosterItem() = default;
 #endif
-    RosterItem(const QString &accountJid, const QXmppRosterIq::Item &item, const QDateTime &lastMessageDateTime = QDateTime::currentDateTimeUtc());
+    RosterItem(const QString &accountJid, const QXmppRosterIq::Item &item);
 
 	QString displayName() const;
 
@@ -107,19 +108,22 @@ public:
 	// Last activity of the conversation, e.g., when the last message was exchanged or a draft
 	// stored.
 	// This is used to display the date and to sort the contacts on the roster page´.
-	QDateTime lastMessageDateTime = QDateTime::currentDateTimeUtc();
+	QDateTime lastMessageDateTime;
 
 	// Last message of the conversation.
 	QString lastMessage;
+
+	// Delivery state of the last message.
+	Enums::DeliveryState lastMessageDeliveryState;
+
+	// JID of the Last message's sender.
+	QString lastMessageSenderId;
 
 	// Last message i.e read by the receiver.
 	QString lastReadOwnMessageId;
 
 	// Last message i.e read by the user.
 	QString lastReadContactMessageId;
-	
-	// Draft message i.e written by the user but not yet sent.
-	QString draftMessageId;
 
 	// Whether a read marker for lastReadContactMessageId is waiting to be sent.
 	bool readMarkerPending = false;
@@ -139,8 +143,8 @@ public:
 	// Whether notifications are muted.
 	bool notificationsMuted = false;
 
-    // Wheither files get downloaded automatically
-    RosterItem::AutomaticMediaDownloadsRule automaticMediaDownloadsRule = RosterItem::AutomaticMediaDownloadsRule::Default;
+	// Wheither files get downloaded automatically
+	RosterItem::AutomaticMediaDownloadsRule automaticMediaDownloadsRule = RosterItem::AutomaticMediaDownloadsRule::Default;
 };
 
 Q_DECLARE_METATYPE(RosterItem)

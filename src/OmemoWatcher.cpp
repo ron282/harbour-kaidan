@@ -19,48 +19,85 @@ void OmemoWatcher::setJid(const QString &jid)
 {
 	m_jid = jid;
 
-	connect(OmemoCache::instance(), &OmemoCache::distrustedOmemoDevicesRetrieved, this, &OmemoWatcher::handleDistrustedOmemoDevicesRetrieved);
-	connect(OmemoCache::instance(), &OmemoCache::usableOmemoDevicesRetrieved, this, &OmemoWatcher::handleUsableOmemoDevicesRetrieved);
-	connect(OmemoCache::instance(), &OmemoCache::authenticatableOmemoDevicesRetrieved, this, &OmemoWatcher::handleAuthenticatableOmemoDevicesRetrieved);
+	connect(OmemoCache::instance(), &OmemoCache::distrustedDevicesUpdated, this, &OmemoWatcher::handleDistrustedDevicesUpdated);
+	connect(OmemoCache::instance(), &OmemoCache::usableDevicesUpdated, this, &OmemoWatcher::handleUsableDevicesUpdated);
+	connect(OmemoCache::instance(), &OmemoCache::authenticatableDevicesUpdated, this, &OmemoWatcher::handleAuthenticatableDevicesUpdated);
+
+	m_distrustedDevices = OmemoCache::instance()->distrustedDevices(jid);
+	m_usableDevices = OmemoCache::instance()->usableDevices(jid);
+	m_authenticatableDevices = OmemoCache::instance()->authenticatableDevices(jid);
 
 	Q_EMIT jidChanged();
+	Q_EMIT distrustedDevicesChanged();
+	Q_EMIT usableDevicesChanged();
+	Q_EMIT authenticatableDevicesChanged();
 }
 
-QList<QString> OmemoWatcher::distrustedOmemoDevices() const
+#if defined (SFOS)
+QList<QString> OmemoWatcher::distrustedDevices() const
 {
-	return m_distrustedOmemoDevices;
+    QList<QString> ls;
+    for (const auto &d : m_distrustedDevices)
+        ls.append(d.label);
+    return ls;
 }
-
-QList<QString> OmemoWatcher::usableOmemoDevices() const
+#else
+QList<OmemoManager::Device> OmemoWatcher::distrustedDevices() const
 {
-	return m_usableOmemoDevices;
+	return m_distrustedDevices;
 }
+#endif
 
-QList<QString> OmemoWatcher::authenticatableOmemoDevices() const
+#if defined (SFOS)
+QList<QString> OmemoWatcher::usableDevices() const
 {
-	return m_authenticatableOmemoDevices;
+    QList<QString> ls;
+    for (const auto &d : m_usableDevices)
+        ls.append(d.label);
+    return ls;
 }
+#else
+QList<OmemoManager::Device> OmemoWatcher::usableDevices() const
+{
+	return m_usableDevices;
+}
+#endif
 
-void OmemoWatcher::handleDistrustedOmemoDevicesRetrieved(const QString &jid, const QList<QString> &deviceLabels)
+#if defined (SFOS)
+QList<QString> OmemoWatcher::authenticatableDevices() const
+{
+    QList<QString> ls;
+    for (const auto &d : m_authenticatableDevices)
+        ls.append(d.label);
+    return ls;
+}
+#else
+QList<OmemoManager::Device> OmemoWatcher::authenticatableDevices() const
+{
+	return m_authenticatableDevices;
+}
+#endif
+
+void OmemoWatcher::handleDistrustedDevicesUpdated(const QString &jid, const QList<OmemoManager::Device> &distrustedDevices)
 {
 	if (jid == m_jid) {
-		m_distrustedOmemoDevices = deviceLabels;
-		emit distrustedOmemoDevicesChanged();
+		m_distrustedDevices = distrustedDevices;
+		Q_EMIT distrustedDevicesChanged();
 	}
 }
 
-void OmemoWatcher::handleUsableOmemoDevicesRetrieved(const QString &jid, const QList<QString> &deviceLabels)
+void OmemoWatcher::handleUsableDevicesUpdated(const QString &jid, const QList<OmemoManager::Device> &usableDevices)
 {
 	if (jid == m_jid) {
-        m_usableOmemoDevices = deviceLabels;
-        emit usableOmemoDevicesChanged();
+		m_usableDevices = usableDevices;
+		Q_EMIT usableDevicesChanged();
 	}
 }
 
-void OmemoWatcher::handleAuthenticatableOmemoDevicesRetrieved(const QString &jid, const QList<QString> &deviceLabels)
+void OmemoWatcher::handleAuthenticatableDevicesUpdated(const QString &jid, const QList<OmemoManager::Device> &authenticatableDevices)
 {
 	if (jid == m_jid) {
-		m_authenticatableOmemoDevices = deviceLabels;
-		emit authenticatableOmemoDevicesChanged();
+		m_authenticatableDevices = authenticatableDevices;
+		Q_EMIT authenticatableDevicesChanged();
 	}
 }

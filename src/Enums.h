@@ -76,7 +76,8 @@ namespace Enums {
 	/**
 	 * Enumeration of different message delivery states
 	 */
-	enum class DeliveryState {
+    enum DeliveryState {
+//	enum class DeliveryState {
 		Pending,
 		Sent,
 		Delivered,

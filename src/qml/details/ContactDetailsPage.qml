@@ -10,6 +10,8 @@ DetailsPage {
 
     property string accountJid
     property string jid
+//	required property string accountJid
+//	required property string jid
 
     SilicaFlickable {
         anchors.fill: parent

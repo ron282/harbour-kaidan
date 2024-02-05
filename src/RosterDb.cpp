@@ -18,6 +18,8 @@
 #include <QSqlQuery>
 #include <QSqlRecord>
 
+Q_DECLARE_METATYPE(QXmppRosterIq::Item::SubscriptionType)
+
 using namespace SqlUtils;
 
 RosterDb *RosterDb::s_instance = nullptr;
@@ -54,16 +56,16 @@ void RosterDb::parseItemsFromQuery(QSqlQuery &query, QVector<RosterItem> &items)
 	int idxPinningPosition = rec.indexOf("pinningPosition");
 	int idxChateStateSendingEnabled = rec.indexOf("chatStateSendingEnabled");
 	int idxReadMarkerSendingEnabled = rec.indexOf("readMarkerSendingEnabled");
-	int idxDraftMessageId = rec.indexOf("draftMessageId");
 	int idxNotificationsMuted = rec.indexOf("notificationsMuted");
+	int idxAutomaticMediaDownloadsRule = rec.indexOf("automaticMediaDownloadsRule");
 
 	while (query.next()) {
 		RosterItem item;
 		item.accountJid = query.value(idxAccountJid).toString();
 		item.jid = query.value(idxJid).toString();
 		item.name = query.value(idxName).toString();
-		item.subscription = QXmppRosterIq::Item::SubscriptionType(query.value(idxSubscription).toInt());
-		item.encryption = Encryption::Enum(query.value(idxEncryption).toInt());
+		item.subscription = query.value(idxSubscription).value<QXmppRosterIq::Item::SubscriptionType>();
+		item.encryption = query.value(idxEncryption).value<Encryption::Enum>();
 		item.unreadMessages = query.value(idxUnreadMessages).toInt();
 		item.lastReadOwnMessageId = query.value(idxLastReadOwnMessageId).toString();
 		item.lastReadContactMessageId = query.value(idxLastReadContactMessageId).toString();
@@ -71,8 +73,8 @@ void RosterDb::parseItemsFromQuery(QSqlQuery &query, QVector<RosterItem> &items)
 		item.pinningPosition = query.value(idxPinningPosition).toInt();
 		item.chatStateSendingEnabled = query.value(idxChateStateSendingEnabled).toBool();
 		item.readMarkerSendingEnabled = query.value(idxReadMarkerSendingEnabled).toBool();
-		item.draftMessageId = query.value(idxDraftMessageId).toString();
 		item.notificationsMuted = query.value(idxNotificationsMuted).toBool();
+		item.automaticMediaDownloadsRule = query.value(idxAutomaticMediaDownloadsRule).value<RosterItem::AutomaticMediaDownloadsRule>();
 
 		items << std::move(item);
 	}
@@ -105,10 +107,10 @@ QSqlRecord RosterDb::createUpdateRecord(const RosterItem &oldItem, const RosterI
 		rec.append(createSqlField("chatStateSendingEnabled", newItem.chatStateSendingEnabled));
 	if (oldItem.readMarkerSendingEnabled != newItem.readMarkerSendingEnabled)
 		rec.append(createSqlField("readMarkerSendingEnabled", newItem.readMarkerSendingEnabled));
-	if (oldItem.draftMessageId != newItem.draftMessageId)
-		rec.append(createSqlField("draftMessageId", newItem.draftMessageId));
 	if (oldItem.notificationsMuted != newItem.notificationsMuted)
 		rec.append(createSqlField("notificationsMuted", newItem.notificationsMuted));
+	if (oldItem.automaticMediaDownloadsRule != newItem.automaticMediaDownloadsRule)
+		rec.append(createSqlField("automaticMediaDownloadsRule", static_cast<int>(newItem.automaticMediaDownloadsRule)));
 
 	return rec;
 }
@@ -144,8 +146,8 @@ QFuture<void> RosterDb::addItems(const QVector<RosterItem> &items)
 			query.addBindValue(item.pinningPosition);
 			query.addBindValue(item.chatStateSendingEnabled);
 			query.addBindValue(item.readMarkerSendingEnabled);
-			query.addBindValue(QString()); // draftMessageId
 			query.addBindValue(item.notificationsMuted);
+			query.addBindValue(static_cast<int>(item.automaticMediaDownloadsRule));
 			execQuery(query);
 
 #if QT_VERSION < QT_VERSION_CHECK(5,15,0)
@@ -166,7 +168,18 @@ QFuture<void> RosterDb::updateItem(const QString &jid,
 	return run([this, jid, updateItem]() {
 		// load current roster item from db
 		auto query = createQuery();
-		execQuery(query, "SELECT * FROM roster WHERE jid = ? LIMIT 1", {jid});
+		execQuery(
+			query,
+			QStringLiteral(R"(
+				SELECT *
+				FROM roster
+				WHERE jid = :jid
+				LIMIT 1
+			)"),
+			{
+				{ u":jid", jid },
+			}
+		);
 
 		QVector<RosterItem> items;
 		parseItemsFromQuery(query, items);
@@ -291,19 +304,21 @@ QFuture<void> RosterDb::replaceItem(const RosterItem &oldItem, const RosterItem 
 	});
 }
 
-QFuture<QVector<RosterItem>> RosterDb::fetchItems(const QString &accountId)
+QFuture<QVector<RosterItem>> RosterDb::fetchItems()
 {
-    return run([this, accountId]() {
-        auto query = createQuery();
-        execQuery(query, "SELECT * FROM roster");
+	return run([this]() {
+		auto query = createQuery();
+		execQuery(query, "SELECT * FROM roster");
 
         QVector<RosterItem> items;
         parseItemsFromQuery(query, items);
 
 		for (auto &item : items) {
-			Message lastMessage = MessageDb::instance()->_fetchLastMessage(accountId, item.jid);
-			item.lastMessageDateTime = lastMessage.stamp;
+			auto lastMessage = MessageDb::instance()->_fetchLastMessage(item.accountJid, item.jid);
+			item.lastMessageDateTime = lastMessage.timestamp;
 			item.lastMessage = lastMessage.previewText();
+			item.lastMessageDeliveryState = lastMessage.deliveryState;
+			item.lastMessageSenderId = lastMessage.senderId;
 		}
 
 		fetchGroups(items);
@@ -330,7 +345,7 @@ void RosterDb::updateItemByRecord(const QString &jid, const QSqlRecord &record)
 			false
 		) +
 		simpleWhereStatement(&driver, keyValuePairs)
-				);
+	);
 }
 
 void RosterDb::fetchGroups(QVector<RosterItem> &items)
@@ -341,9 +356,16 @@ void RosterDb::fetchGroups(QVector<RosterItem> &items)
 	for(auto &item : items) {
 		execQuery(
 			query,
-			"SELECT name FROM rosterGroups "
-			"WHERE accountJid = ? AND chatJid = ?",
-			{ item.accountJid, item.jid }
+			QStringLiteral(R"(
+				SELECT name
+				FROM rosterGroups
+				WHERE accountJid = :accountJid AND chatJid = :jid
+				LIMIT 1
+			)"),
+			{
+				{ u":accountJid", item.accountJid },
+				{ u":jid", item.jid },
+			}
 		);
 
 		// Iterate over all found groups.

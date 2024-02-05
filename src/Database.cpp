@@ -47,8 +47,8 @@ using namespace SqlUtils;
 	}
 
 // Both need to be updated on version bump:
-#define DATABASE_LATEST_VERSION 34
-#define DATABASE_CONVERT_TO_LATEST_VERSION() DATABASE_CONVERT_TO_VERSION(34)
+#define DATABASE_LATEST_VERSION 40
+#define DATABASE_CONVERT_TO_LATEST_VERSION() DATABASE_CONVERT_TO_VERSION(40)
 
 #define SQL_BOOL "BOOL"
 #define SQL_BOOL_NOT_NULL "BOOL NOT NULL"
@@ -394,6 +394,19 @@ void Database::createNewDatabase()
 		)
 	);
 
+	// accounts
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			DB_TABLE_ACCOUNTS,
+			SQL_ATTRIBUTE(jid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(name, SQL_TEXT)
+			SQL_ATTRIBUTE(latestMessageStanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(latestMessageTimestamp, SQL_TEXT)
+			"PRIMARY KEY(jid)"
+		)
+	);
+
 	// roster
 	execQuery(
 		query,
@@ -411,10 +424,9 @@ void Database::createNewDatabase()
 			SQL_ATTRIBUTE(pinningPosition, SQL_INTEGER_NOT_NULL)
 			SQL_ATTRIBUTE(chatStateSendingEnabled, SQL_BOOL)
 			SQL_ATTRIBUTE(readMarkerSendingEnabled, SQL_BOOL)
-			SQL_ATTRIBUTE(draftMessageId, SQL_TEXT)
 			SQL_ATTRIBUTE(notificationsMuted, SQL_BOOL)
-			"PRIMARY KEY(accountJid, jid),"
-			"FOREIGN KEY(draftMessageId) REFERENCES " DB_TABLE_MESSAGES " (id)"
+			SQL_ATTRIBUTE(automaticMediaDownloadsRule, SQL_INTEGER)
+			"PRIMARY KEY(accountJid, jid)"
 		)
 	);
 	execQuery(
@@ -435,24 +447,39 @@ void Database::createNewDatabase()
 		query,
 		SQL_CREATE_TABLE(
 			DB_TABLE_MESSAGES,
-			SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
-			SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(chatJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(senderId, SQL_TEXT)
+			SQL_ATTRIBUTE(id, SQL_TEXT)
+			SQL_ATTRIBUTE(originId, SQL_TEXT)
+			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(replaceId, SQL_TEXT)
 			SQL_ATTRIBUTE(timestamp, SQL_TEXT)
 			SQL_ATTRIBUTE(body, SQL_TEXT)
-			SQL_ATTRIBUTE(id, SQL_TEXT)
 			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
 			SQL_ATTRIBUTE(senderKey, SQL_BLOB)
 			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
-			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
 			SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
-			SQL_ATTRIBUTE(errorText, SQL_TEXT)
-			SQL_ATTRIBUTE(replaceId, SQL_TEXT)
-			SQL_ATTRIBUTE(originId, SQL_TEXT)
-			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
 			SQL_ATTRIBUTE(fileGroupId, SQL_INTEGER)
+			SQL_ATTRIBUTE(errorText, SQL_TEXT)
 			SQL_ATTRIBUTE(removed, SQL_BOOL_NOT_NULL)
-			"FOREIGN KEY(sender) REFERENCES " DB_TABLE_ROSTER " (jid),"
-			"FOREIGN KEY(recipient) REFERENCES " DB_TABLE_ROSTER " (jid)"
+			"FOREIGN KEY(accountJid, chatJid) REFERENCES roster (accountJid, jid)"
+		)
+	);
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			DB_TABLE_MESSAGE_REACTIONS,
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(chatJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(messageSenderId, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(messageId, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(senderJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(emoji, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(timestamp, SQL_INTEGER)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			"PRIMARY KEY(accountJid, chatJid, messageId, senderJid, emoji)"
 		)
 	);
 
@@ -504,22 +531,6 @@ void Database::createNewDatabase()
 			SQL_ATTRIBUTE(iv, SQL_BLOB_NOT_NULL)
 			SQL_ATTRIBUTE(encryptedDataId, SQL_INTEGER)
 			"PRIMARY KEY(fileId)"
-		)
-	);
-
-	// message reactions
-	execQuery(
-		query,
-		SQL_CREATE_TABLE(
-			DB_TABLE_MESSAGE_REACTIONS,
-			SQL_ATTRIBUTE(messageSender, SQL_TEXT_NOT_NULL)
-			SQL_ATTRIBUTE(messageRecipient, SQL_TEXT_NOT_NULL)
-			SQL_ATTRIBUTE(messageId, SQL_TEXT_NOT_NULL)
-			SQL_ATTRIBUTE(senderJid, SQL_TEXT_NOT_NULL)
-			SQL_ATTRIBUTE(emoji, SQL_TEXT_NOT_NULL)
-			SQL_ATTRIBUTE(timestamp, SQL_INTEGER)
-			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
-			"PRIMARY KEY(messageSender, messageRecipient, messageId, senderJid, emoji)"
 		)
 	);
 
@@ -623,6 +634,17 @@ void Database::createNewDatabase()
 		)
 	);
 
+	// blocked
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			DB_TABLE_BLOCKED,
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(jid, SQL_TEXT_NOT_NULL)
+			"PRIMARY KEY(accountJid, jid)"
+		)
+	);
+
 	execQuery(query, "CREATE VIEW " DB_VIEW_CHAT_MESSAGES " AS SELECT * FROM " DB_TABLE_MESSAGES
 					 " WHERE deliveryState != 4 AND removed != 1");
 	execQuery(query, "CREATE VIEW " DB_VIEW_DRAFT_MESSAGES " AS SELECT * FROM " DB_TABLE_MESSAGES
@@ -642,7 +664,7 @@ void Database::convertDatabaseToV2()
 			SQL_LAST_ATTRIBUTE(version, SQL_INTEGER_NOT_NULL)
 		)
 	);
-	execQuery(query, "INSERT INTO dbinfo VALUES (:1)", { QVariant(2) });
+	execQuery(query, "INSERT INTO dbinfo VALUES (:version)", {{ u":version", 2 }});
 	d->version = 2;
 }
 
@@ -918,203 +940,203 @@ void Database::convertDatabaseToV17()
 
 void Database::convertDatabaseToV18()
 {
-    DATABASE_CONVERT_TO_VERSION(17)
-    QSqlQuery query(currentDatabase());
+	DATABASE_CONVERT_TO_VERSION(17)
+	QSqlQuery query(currentDatabase());
 
-    // manually convert messages table
-    execQuery(
-        query,
-        SQL_CREATE_TABLE(
-            "messages_tmp",
-            SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(timestamp, SQL_TEXT)
-            SQL_ATTRIBUTE(message, SQL_TEXT)
-            SQL_ATTRIBUTE(id, SQL_TEXT)
-            SQL_ATTRIBUTE(encryption, SQL_INTEGER)
-            SQL_ATTRIBUTE(senderKey, SQL_BLOB)
-            SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
-            SQL_ATTRIBUTE(isMarkable, SQL_BOOL)
-            SQL_ATTRIBUTE(mediaUrl, SQL_TEXT)
-            SQL_ATTRIBUTE(mediaLocation, SQL_TEXT)
-            SQL_ATTRIBUTE(isEdited, SQL_BOOL)
-            SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
-            SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
-            SQL_ATTRIBUTE(errorText, SQL_TEXT)
-            SQL_ATTRIBUTE(replaceId, SQL_TEXT)
-            SQL_ATTRIBUTE(originId, SQL_TEXT)
-            SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
-            SQL_ATTRIBUTE(file_group_id, SQL_INTEGER)
-            "FOREIGN KEY(sender) REFERENCES " DB_TABLE_ROSTER " (jid),"
-            "FOREIGN KEY(recipient) REFERENCES " DB_TABLE_ROSTER " (jid)"
-        )
-    );
+	// manually convert messages table
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messages_tmp",
+			SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(timestamp, SQL_TEXT)
+			SQL_ATTRIBUTE(message, SQL_TEXT)
+			SQL_ATTRIBUTE(id, SQL_TEXT)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(senderKey, SQL_BLOB)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			SQL_ATTRIBUTE(isMarkable, SQL_BOOL)
+			SQL_ATTRIBUTE(mediaUrl, SQL_TEXT)
+			SQL_ATTRIBUTE(mediaLocation, SQL_TEXT)
+			SQL_ATTRIBUTE(isEdited, SQL_BOOL)
+			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
+			SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
+			SQL_ATTRIBUTE(errorText, SQL_TEXT)
+			SQL_ATTRIBUTE(replaceId, SQL_TEXT)
+			SQL_ATTRIBUTE(originId, SQL_TEXT)
+			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(file_group_id, SQL_INTEGER)
+			"FOREIGN KEY(sender) REFERENCES Roster (jid),"
+			"FOREIGN KEY(recipient) REFERENCES Roster (jid)"
+		)
+	);
 
-    execQuery(
-        query,
-        "INSERT INTO messages_tmp SELECT author, recipient, timestamp, message, id, encryption, "
-        "senderKey, deliveryState, isMarkable, mediaUrl, mediaLocation, edited, spoilerHint, "
-        "isSpoiler, errorText, replaceId, originId, stanzaId, NULL FROM Messages"
-    );
+	execQuery(
+		query,
+		"INSERT INTO messages_tmp SELECT author, recipient, timestamp, message, id, encryption, "
+		"senderKey, deliveryState, isMarkable, mediaUrl, mediaLocation, edited, spoilerHint, "
+		"isSpoiler, errorText, replaceId, originId, stanzaId, NULL FROM Messages"
+	);
 
-    execQuery(query, "DROP TABLE Messages");
+	execQuery(query, "DROP TABLE Messages");
 
-    execQuery(
-        query,
-        SQL_CREATE_TABLE(
-            "messages",
-            SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(timestamp, SQL_TEXT)
-            SQL_ATTRIBUTE(message, SQL_TEXT)
-            SQL_ATTRIBUTE(id, SQL_TEXT)
-            SQL_ATTRIBUTE(encryption, SQL_INTEGER)
-            SQL_ATTRIBUTE(senderKey, SQL_BLOB)
-            SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
-            SQL_ATTRIBUTE(isMarkable, SQL_BOOL)
-            SQL_ATTRIBUTE(mediaUrl, SQL_TEXT)
-            SQL_ATTRIBUTE(mediaLocation, SQL_TEXT)
-            SQL_ATTRIBUTE(isEdited, SQL_BOOL)
-            SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
-            SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
-            SQL_ATTRIBUTE(errorText, SQL_TEXT)
-            SQL_ATTRIBUTE(replaceId, SQL_TEXT)
-            SQL_ATTRIBUTE(originId, SQL_TEXT)
-            SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
-            SQL_ATTRIBUTE(file_group_id, SQL_INTEGER)
-            "FOREIGN KEY(sender) REFERENCES " DB_TABLE_ROSTER " (jid),"
-            "FOREIGN KEY(recipient) REFERENCES " DB_TABLE_ROSTER " (jid)"
-        )
-    );
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messages",
+			SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(timestamp, SQL_TEXT)
+			SQL_ATTRIBUTE(message, SQL_TEXT)
+			SQL_ATTRIBUTE(id, SQL_TEXT)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(senderKey, SQL_BLOB)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			SQL_ATTRIBUTE(isMarkable, SQL_BOOL)
+			SQL_ATTRIBUTE(mediaUrl, SQL_TEXT)
+			SQL_ATTRIBUTE(mediaLocation, SQL_TEXT)
+			SQL_ATTRIBUTE(isEdited, SQL_BOOL)
+			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
+			SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
+			SQL_ATTRIBUTE(errorText, SQL_TEXT)
+			SQL_ATTRIBUTE(replaceId, SQL_TEXT)
+			SQL_ATTRIBUTE(originId, SQL_TEXT)
+			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(file_group_id, SQL_INTEGER)
+			"FOREIGN KEY(sender) REFERENCES Roster (jid),"
+			"FOREIGN KEY(recipient) REFERENCES Roster (jid)"
+		)
+	);
 
-    execQuery(query, "INSERT INTO messages SELECT * FROM messages_tmp");
-    execQuery(query, "DROP TABLE messages_tmp");
+	execQuery(query, "INSERT INTO messages SELECT * FROM messages_tmp");
+	execQuery(query, "DROP TABLE messages_tmp");
 
-    d->version = 18;
+	d->version = 18;
 }
 
 void Database::convertDatabaseToV19()
 {
-    DATABASE_CONVERT_TO_VERSION(18)
-    QSqlQuery query(currentDatabase());
+	DATABASE_CONVERT_TO_VERSION(18)
+	QSqlQuery query(currentDatabase());
 
-    // file sharing
-    execQuery(
-        query,
-        SQL_CREATE_TABLE(
-            "files",
-            SQL_ATTRIBUTE(id, SQL_INTEGER_NOT_NULL)
-            SQL_ATTRIBUTE(file_group_id, SQL_INTEGER_NOT_NULL)
-            SQL_ATTRIBUTE(name, SQL_TEXT)
-            SQL_ATTRIBUTE(description, SQL_TEXT)
-            SQL_ATTRIBUTE(mime_type, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(size, SQL_INTEGER)
-            SQL_ATTRIBUTE(last_modified, SQL_INTEGER_NOT_NULL)
-            SQL_ATTRIBUTE(disposition, SQL_INTEGER_NOT_NULL)
-            SQL_ATTRIBUTE(thumbnail, SQL_BLOB)
-            SQL_ATTRIBUTE(local_file_path, SQL_TEXT)
-            "PRIMARY KEY(id)"
-        )
-    );
-    execQuery(
-        query,
-        SQL_CREATE_TABLE(
-            "file_hashes",
-            SQL_ATTRIBUTE(data_id, SQL_INTEGER_NOT_NULL)
-            SQL_ATTRIBUTE(hash_type, SQL_INTEGER_NOT_NULL)
-            SQL_ATTRIBUTE(hash_value, SQL_BLOB_NOT_NULL)
-            "PRIMARY KEY(data_id, hash_type)"
-        )
-    );
-    execQuery(
-        query,
-        SQL_CREATE_TABLE(
-            "file_http_sources",
-            SQL_ATTRIBUTE(file_id, SQL_INTEGER_NOT_NULL)
-            SQL_ATTRIBUTE(url, SQL_BLOB_NOT_NULL)
-            "PRIMARY KEY(file_id)"
-        )
-    );
-    execQuery(
-        query,
-        SQL_CREATE_TABLE(
-            "file_encrypted_sources",
-            SQL_ATTRIBUTE(file_id, SQL_INTEGER_NOT_NULL)
-            SQL_ATTRIBUTE(url, SQL_BLOB_NOT_NULL)
-            SQL_ATTRIBUTE(cipher, SQL_INTEGER_NOT_NULL)
-            SQL_ATTRIBUTE(key, SQL_BLOB_NOT_NULL)
-            SQL_ATTRIBUTE(iv, SQL_BLOB_NOT_NULL)
-            SQL_ATTRIBUTE(encrypted_data_id, SQL_INTEGER)
-            "PRIMARY KEY(file_id)"
-        )
-    );
+	// file sharing
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"files",
+			SQL_ATTRIBUTE(id, SQL_INTEGER_NOT_NULL)
+			SQL_ATTRIBUTE(file_group_id, SQL_INTEGER_NOT_NULL)
+			SQL_ATTRIBUTE(name, SQL_TEXT)
+			SQL_ATTRIBUTE(description, SQL_TEXT)
+			SQL_ATTRIBUTE(mime_type, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(size, SQL_INTEGER)
+			SQL_ATTRIBUTE(last_modified, SQL_INTEGER_NOT_NULL)
+			SQL_ATTRIBUTE(disposition, SQL_INTEGER_NOT_NULL)
+			SQL_ATTRIBUTE(thumbnail, SQL_BLOB)
+			SQL_ATTRIBUTE(local_file_path, SQL_TEXT)
+			"PRIMARY KEY(id)"
+		)
+	);
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"file_hashes",
+			SQL_ATTRIBUTE(data_id, SQL_INTEGER_NOT_NULL)
+			SQL_ATTRIBUTE(hash_type, SQL_INTEGER_NOT_NULL)
+			SQL_ATTRIBUTE(hash_value, SQL_BLOB_NOT_NULL)
+			"PRIMARY KEY(data_id, hash_type)"
+		)
+	);
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"file_http_sources",
+			SQL_ATTRIBUTE(file_id, SQL_INTEGER_NOT_NULL)
+			SQL_ATTRIBUTE(url, SQL_BLOB_NOT_NULL)
+			"PRIMARY KEY(file_id)"
+		)
+	);
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"file_encrypted_sources",
+			SQL_ATTRIBUTE(file_id, SQL_INTEGER_NOT_NULL)
+			SQL_ATTRIBUTE(url, SQL_BLOB_NOT_NULL)
+			SQL_ATTRIBUTE(cipher, SQL_INTEGER_NOT_NULL)
+			SQL_ATTRIBUTE(key, SQL_BLOB_NOT_NULL)
+			SQL_ATTRIBUTE(iv, SQL_BLOB_NOT_NULL)
+			SQL_ATTRIBUTE(encrypted_data_id, SQL_INTEGER)
+			"PRIMARY KEY(file_id)"
+		)
+	);
 
-    // manually convert messages table
-    execQuery(
-        query,
-        SQL_CREATE_TABLE(
-            "messages_tmp",
-            SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(timestamp, SQL_TEXT)
-            SQL_ATTRIBUTE(message, SQL_TEXT)
-            SQL_ATTRIBUTE(id, SQL_TEXT)
-            SQL_ATTRIBUTE(encryption, SQL_INTEGER)
-            SQL_ATTRIBUTE(senderKey, SQL_BLOB)
-            SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
-            SQL_ATTRIBUTE(isMarkable, SQL_BOOL)
-            SQL_ATTRIBUTE(isEdited, SQL_BOOL)
-            SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
-            SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
-            SQL_ATTRIBUTE(errorText, SQL_TEXT)
-            SQL_ATTRIBUTE(replaceId, SQL_TEXT)
-            SQL_ATTRIBUTE(originId, SQL_TEXT)
-            SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
-            SQL_ATTRIBUTE(file_group_id, SQL_INTEGER)
-            "FOREIGN KEY(sender) REFERENCES " DB_TABLE_ROSTER " (jid),"
-            "FOREIGN KEY(recipient) REFERENCES " DB_TABLE_ROSTER " (jid)"
-        )
-    );
+	// manually convert messages table
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messages_tmp",
+			SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(timestamp, SQL_TEXT)
+			SQL_ATTRIBUTE(message, SQL_TEXT)
+			SQL_ATTRIBUTE(id, SQL_TEXT)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(senderKey, SQL_BLOB)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			SQL_ATTRIBUTE(isMarkable, SQL_BOOL)
+			SQL_ATTRIBUTE(isEdited, SQL_BOOL)
+			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
+			SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
+			SQL_ATTRIBUTE(errorText, SQL_TEXT)
+			SQL_ATTRIBUTE(replaceId, SQL_TEXT)
+			SQL_ATTRIBUTE(originId, SQL_TEXT)
+			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(file_group_id, SQL_INTEGER)
+			"FOREIGN KEY(sender) REFERENCES Roster (jid),"
+			"FOREIGN KEY(recipient) REFERENCES Roster (jid)"
+		)
+	);
 
-    execQuery(
-        query,
-        "INSERT INTO messages_tmp SELECT sender, recipient, timestamp, message, id, encryption, "
-        "senderKey, deliveryState, isMarkable, isEdited, spoilerHint, isSpoiler, errorText, "
-        "replaceId, originId, stanzaId, file_group_id FROM messages"
-    );
+	execQuery(
+		query,
+		"INSERT INTO messages_tmp SELECT sender, recipient, timestamp, message, id, encryption, "
+		"senderKey, deliveryState, isMarkable, isEdited, spoilerHint, isSpoiler, errorText, "
+		"replaceId, originId, stanzaId, file_group_id FROM messages"
+	);
 
-    execQuery(query, "DROP TABLE messages");
+	execQuery(query, "DROP TABLE messages");
 
-    execQuery(
-        query,
-        SQL_CREATE_TABLE(
-            "messages",
-            SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(timestamp, SQL_TEXT)
-            SQL_ATTRIBUTE(message, SQL_TEXT)
-            SQL_ATTRIBUTE(id, SQL_TEXT)
-            SQL_ATTRIBUTE(encryption, SQL_INTEGER)
-            SQL_ATTRIBUTE(senderKey, SQL_BLOB)
-            SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
-            SQL_ATTRIBUTE(isMarkable, SQL_BOOL)
-            SQL_ATTRIBUTE(isEdited, SQL_BOOL)
-            SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
-            SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
-            SQL_ATTRIBUTE(errorText, SQL_TEXT)
-            SQL_ATTRIBUTE(replaceId, SQL_TEXT)
-            SQL_ATTRIBUTE(originId, SQL_TEXT)
-            SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
-            SQL_ATTRIBUTE(file_group_id, SQL_INTEGER)
-            "FOREIGN KEY(sender) REFERENCES " DB_TABLE_ROSTER " (jid),"
-            "FOREIGN KEY(recipient) REFERENCES " DB_TABLE_ROSTER " (jid)"
-        )
-    );
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messages",
+			SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(timestamp, SQL_TEXT)
+			SQL_ATTRIBUTE(message, SQL_TEXT)
+			SQL_ATTRIBUTE(id, SQL_TEXT)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(senderKey, SQL_BLOB)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			SQL_ATTRIBUTE(isMarkable, SQL_BOOL)
+			SQL_ATTRIBUTE(isEdited, SQL_BOOL)
+			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
+			SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
+			SQL_ATTRIBUTE(errorText, SQL_TEXT)
+			SQL_ATTRIBUTE(replaceId, SQL_TEXT)
+			SQL_ATTRIBUTE(originId, SQL_TEXT)
+			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(file_group_id, SQL_INTEGER)
+			"FOREIGN KEY(sender) REFERENCES Roster (jid),"
+			"FOREIGN KEY(recipient) REFERENCES Roster (jid)"
+		)
+	);
 
-    execQuery(query, "INSERT INTO messages SELECT * FROM messages_tmp");
-    execQuery(query, "DROP TABLE messages_tmp");
+	execQuery(query, "INSERT INTO messages SELECT * FROM messages_tmp");
+	execQuery(query, "DROP TABLE messages_tmp");
 
-    d->version = 19;
+	d->version = 19;
 }
 
 void Database::convertDatabaseToV20()
@@ -1135,133 +1157,198 @@ void Database::convertDatabaseToV21()
 
 void Database::convertDatabaseToV22()
 {
-    DATABASE_CONVERT_TO_VERSION(21);
-    QSqlQuery query(currentDatabase());
+	DATABASE_CONVERT_TO_VERSION(21);
+	QSqlQuery query(currentDatabase());
 
-    execQuery(
-        query,
-        SQL_CREATE_TABLE(
-            DB_TABLE_MESSAGE_REACTIONS,
-            SQL_ATTRIBUTE(messageSender, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(messageRecipient, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(messageId, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(senderJid, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(timestamp, SQL_INTEGER)
-            SQL_ATTRIBUTE(emoji, SQL_TEXT_NOT_NULL)
-            "PRIMARY KEY(messageSender, messageRecipient, messageId, senderJid, timestamp, emoji)"
-        )
-    );
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messageReactions",
+			SQL_ATTRIBUTE(messageSender, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(messageRecipient, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(messageId, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(senderJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(timestamp, SQL_INTEGER)
+			SQL_ATTRIBUTE(emoji, SQL_TEXT_NOT_NULL)
+			"PRIMARY KEY(messageSender, messageRecipient, messageId, senderJid, timestamp, emoji)"
+		)
+	);
 
-    d->version = 22;
+	d->version = 22;
 }
 
 void Database::convertDatabaseToV23()
 {
-    DATABASE_CONVERT_TO_VERSION(22)
-    QSqlQuery query(currentDatabase());
+	DATABASE_CONVERT_TO_VERSION(22)
+	QSqlQuery query(currentDatabase());
 
-    // Rename the table "Roster" to "roster".
-    // Remove the unused columns "lastExchanged" and "lastMessage".
-    execQuery(
-        query,
-        SQL_CREATE_TABLE(
-            "roster_tmp",
-            SQL_ATTRIBUTE(jid, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(name, SQL_TEXT)
-            SQL_ATTRIBUTE(subscription, SQL_INTEGER)
-            SQL_ATTRIBUTE(encryption, SQL_INTEGER)
-            SQL_ATTRIBUTE(unreadMessages, SQL_INTEGER)
-            SQL_ATTRIBUTE(lastReadOwnMessageId, SQL_TEXT)
-            SQL_ATTRIBUTE(lastReadContactMessageId, SQL_TEXT)
-            SQL_ATTRIBUTE(readMarkerPending, SQL_BOOL)
-            SQL_LAST_ATTRIBUTE(pinningPosition, SQL_INTEGER)
-        )
-    );
+	// Rename the table "Roster" to "roster".
+	// Remove the unused columns "lastExchanged" and "lastMessage".
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"roster_tmp",
+			SQL_ATTRIBUTE(jid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(name, SQL_TEXT)
+			SQL_ATTRIBUTE(subscription, SQL_INTEGER)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(unreadMessages, SQL_INTEGER)
+			SQL_ATTRIBUTE(lastReadOwnMessageId, SQL_TEXT)
+			SQL_ATTRIBUTE(lastReadContactMessageId, SQL_TEXT)
+			SQL_ATTRIBUTE(readMarkerPending, SQL_BOOL)
+			SQL_LAST_ATTRIBUTE(pinningPosition, SQL_INTEGER)
+		)
+	);
 
-    execQuery(
-        query,
-        "INSERT INTO roster_tmp SELECT jid, name, subscription, encryption, unreadMessages, "
-        "lastReadOwnMessageId, lastReadContactMessageId, readMarkerPending, pinningPosition "
-        " FROM Roster"
-    );
+	execQuery(
+		query,
+		"INSERT INTO roster_tmp SELECT jid, name, subscription, encryption, unreadMessages, "
+		"lastReadOwnMessageId, lastReadContactMessageId, readMarkerPending, pinningPosition "
+		" FROM Roster"
+	);
 
-    execQuery(query, "DROP TABLE Roster");
+	execQuery(query, "DROP TABLE Roster");
 
-    execQuery(
-        query,
-        SQL_CREATE_TABLE(
-            "roster",
-            SQL_ATTRIBUTE(jid, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(name, SQL_TEXT)
-            SQL_ATTRIBUTE(subscription, SQL_INTEGER)
-            SQL_ATTRIBUTE(encryption, SQL_INTEGER)
-            SQL_ATTRIBUTE(unreadMessages, SQL_INTEGER)
-            SQL_ATTRIBUTE(lastReadOwnMessageId, SQL_TEXT)
-            SQL_ATTRIBUTE(lastReadContactMessageId, SQL_TEXT)
-            SQL_ATTRIBUTE(readMarkerPending, SQL_BOOL)
-            SQL_LAST_ATTRIBUTE(pinningPosition, SQL_INTEGER)
-        )
-    );
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"roster",
+			SQL_ATTRIBUTE(jid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(name, SQL_TEXT)
+			SQL_ATTRIBUTE(subscription, SQL_INTEGER)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(unreadMessages, SQL_INTEGER)
+			SQL_ATTRIBUTE(lastReadOwnMessageId, SQL_TEXT)
+			SQL_ATTRIBUTE(lastReadContactMessageId, SQL_TEXT)
+			SQL_ATTRIBUTE(readMarkerPending, SQL_BOOL)
+			SQL_LAST_ATTRIBUTE(pinningPosition, SQL_INTEGER)
+		)
+	);
 
-    execQuery(query, "INSERT INTO roster SELECT * FROM roster_tmp");
-    execQuery(query, "DROP TABLE roster_tmp");
+	execQuery(query, "INSERT INTO roster SELECT * FROM roster_tmp");
+	execQuery(query, "DROP TABLE roster_tmp");
 
-    // Use camelCase for all tables.
+	// Adapt the foreign keys of table "messages" to new table name "roster".
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messages_tmp",
+			SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(timestamp, SQL_TEXT)
+			SQL_ATTRIBUTE(message, SQL_TEXT)
+			SQL_ATTRIBUTE(id, SQL_TEXT)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(senderKey, SQL_BLOB)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			SQL_ATTRIBUTE(isMarkable, SQL_BOOL)
+			SQL_ATTRIBUTE(isEdited, SQL_BOOL)
+			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
+			SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
+			SQL_ATTRIBUTE(errorText, SQL_TEXT)
+			SQL_ATTRIBUTE(replaceId, SQL_TEXT)
+			SQL_ATTRIBUTE(originId, SQL_TEXT)
+			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(file_group_id, SQL_INTEGER)
+			"FOREIGN KEY(sender) REFERENCES roster (jid),"
+			"FOREIGN KEY(recipient) REFERENCES roster (jid)"
+		)
+	);
 
-    execQuery(query, "ALTER TABLE messages RENAME COLUMN file_group_id TO fileGroupId");
+	execQuery(
+		query,
+		"INSERT INTO messages_tmp SELECT sender, recipient, timestamp, message, id, encryption, "
+		"senderKey, deliveryState, isMarkable, isEdited, spoilerHint, isSpoiler, errorText, "
+		"replaceId, originId, stanzaId, file_group_id FROM messages"
+	);
 
-    execQuery(query, "ALTER TABLE files RENAME COLUMN file_group_id TO fileGroupId");
-    execQuery(query, "ALTER TABLE files RENAME COLUMN mime_type TO mimeType");
-    execQuery(query, "ALTER TABLE files RENAME COLUMN last_modified TO lastModified");
-    execQuery(query, "ALTER TABLE files RENAME COLUMN local_file_path TO localFilePath");
+	execQuery(query, "DROP TABLE messages");
 
-    execQuery(query, "ALTER TABLE file_hashes RENAME TO fileHashes");
-    execQuery(query, "ALTER TABLE fileHashes RENAME COLUMN data_id TO dataId");
-    execQuery(query, "ALTER TABLE fileHashes RENAME COLUMN hash_type TO hashType");
-    execQuery(query, "ALTER TABLE fileHashes RENAME COLUMN hash_value TO hashValue");
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messages",
+			SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(timestamp, SQL_TEXT)
+			SQL_ATTRIBUTE(message, SQL_TEXT)
+			SQL_ATTRIBUTE(id, SQL_TEXT)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(senderKey, SQL_BLOB)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			SQL_ATTRIBUTE(isMarkable, SQL_BOOL)
+			SQL_ATTRIBUTE(isEdited, SQL_BOOL)
+			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
+			SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
+			SQL_ATTRIBUTE(errorText, SQL_TEXT)
+			SQL_ATTRIBUTE(replaceId, SQL_TEXT)
+			SQL_ATTRIBUTE(originId, SQL_TEXT)
+			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(file_group_id, SQL_INTEGER)
+			"FOREIGN KEY(sender) REFERENCES roster (jid),"
+			"FOREIGN KEY(recipient) REFERENCES roster (jid)"
+		)
+	);
 
-    execQuery(query, "ALTER TABLE file_http_sources RENAME TO fileHttpSources");
-    execQuery(query, "ALTER TABLE fileHttpSources RENAME COLUMN file_id TO fileId");
+	execQuery(query, "INSERT INTO messages SELECT * FROM messages_tmp");
+	execQuery(query, "DROP TABLE messages_tmp");
 
-    execQuery(query, "ALTER TABLE file_encrypted_sources RENAME TO fileEncryptedSources");
-    execQuery(query, "ALTER TABLE fileEncryptedSources RENAME COLUMN file_id TO fileId");
-    execQuery(query, "ALTER TABLE fileEncryptedSources RENAME COLUMN encrypted_data_id TO encryptedDataId");
+	// Use camelCase for all tables.
 
-    execQuery(query, "ALTER TABLE trust_security_policies RENAME TO trustSecurityPolicies");
-    execQuery(query, "ALTER TABLE trustSecurityPolicies RENAME COLUMN security_policy TO securityPolicy");
+	execQuery(query, "ALTER TABLE messages RENAME COLUMN file_group_id TO fileGroupId");
 
-    execQuery(query, "ALTER TABLE trust_own_keys RENAME TO trustOwnKeys");
-    execQuery(query, "ALTER TABLE trustOwnKeys RENAME COLUMN key_id TO keyId");
+	execQuery(query, "ALTER TABLE files RENAME COLUMN file_group_id TO fileGroupId");
+	execQuery(query, "ALTER TABLE files RENAME COLUMN mime_type TO mimeType");
+	execQuery(query, "ALTER TABLE files RENAME COLUMN last_modified TO lastModified");
+	execQuery(query, "ALTER TABLE files RENAME COLUMN local_file_path TO localFilePath");
 
-    execQuery(query, "ALTER TABLE trust_keys RENAME TO trustKeys");
-    execQuery(query, "ALTER TABLE trustKeys RENAME COLUMN owner_jid TO ownerJid");
-    execQuery(query, "ALTER TABLE trustKeys RENAME COLUMN key_id TO keyId");
-    execQuery(query, "ALTER TABLE trustKeys RENAME COLUMN trust_level TO trustLevel");
+	execQuery(query, "ALTER TABLE file_hashes RENAME TO fileHashes");
+	execQuery(query, "ALTER TABLE fileHashes RENAME COLUMN data_id TO dataId");
+	execQuery(query, "ALTER TABLE fileHashes RENAME COLUMN hash_type TO hashType");
+	execQuery(query, "ALTER TABLE fileHashes RENAME COLUMN hash_value TO hashValue");
 
-    execQuery(query, "ALTER TABLE trust_keys_unprocessed RENAME TO trustKeysUnprocessed");
-    execQuery(query, "ALTER TABLE trustKeysUnprocessed RENAME COLUMN sender_key_id TO senderKeyId");
-    execQuery(query, "ALTER TABLE trustKeysUnprocessed RENAME COLUMN owner_jid TO ownerJid");
-    execQuery(query, "ALTER TABLE trustKeysUnprocessed RENAME COLUMN key_id TO keyId");
+	execQuery(query, "ALTER TABLE file_http_sources RENAME TO fileHttpSources");
+	execQuery(query, "ALTER TABLE fileHttpSources RENAME COLUMN file_id TO fileId");
 
-    execQuery(query, "ALTER TABLE omemo_devices_own RENAME TO omemoDevicesOwn");
-    execQuery(query, "ALTER TABLE omemoDevicesOwn RENAME COLUMN private_key TO privateKey");
-    execQuery(query, "ALTER TABLE omemoDevicesOwn RENAME COLUMN public_key TO publicKey");
-    execQuery(query, "ALTER TABLE omemoDevicesOwn RENAME COLUMN latest_signed_pre_key_id TO latestSignedPreKeyId");
-    execQuery(query, "ALTER TABLE omemoDevicesOwn RENAME COLUMN latest_pre_key_id TO latestPreKeyId");
+	execQuery(query, "ALTER TABLE file_encrypted_sources RENAME TO fileEncryptedSources");
+	execQuery(query, "ALTER TABLE fileEncryptedSources RENAME COLUMN file_id TO fileId");
+	execQuery(query, "ALTER TABLE fileEncryptedSources RENAME COLUMN encrypted_data_id TO encryptedDataId");
 
-    execQuery(query, "ALTER TABLE omemo_devices RENAME TO omemoDevices");
-    execQuery(query, "ALTER TABLE omemoDevices RENAME COLUMN user_jid TO userJid");
-    execQuery(query, "ALTER TABLE omemoDevices RENAME COLUMN key_id TO keyId");
-    execQuery(query, "ALTER TABLE omemoDevices RENAME COLUMN unresponded_stanzas_sent TO unrespondedStanzasSent");
-    execQuery(query, "ALTER TABLE omemoDevices RENAME COLUMN unresponded_stanzas_received TO unrespondedStanzasReceived");
-    execQuery(query, "ALTER TABLE omemoDevices RENAME COLUMN removal_timestamp TO removalTimestamp");
+	execQuery(query, "ALTER TABLE trust_security_policies RENAME TO trustSecurityPolicies");
+	execQuery(query, "ALTER TABLE trustSecurityPolicies RENAME COLUMN security_policy TO securityPolicy");
 
-    execQuery(query, "ALTER TABLE omemo_pre_key_pairs RENAME TO omemoPreKeyPairs");
+	execQuery(query, "ALTER TABLE trust_own_keys RENAME TO trustOwnKeys");
+	execQuery(query, "ALTER TABLE trustOwnKeys RENAME COLUMN key_id TO keyId");
 
-    execQuery(query, "ALTER TABLE omemo_pre_key_pairs_signed RENAME TO omemoPreKeyPairsSigned");
-    execQuery(query, "ALTER TABLE omemoPreKeyPairsSigned RENAME COLUMN creation_timestamp TO creationTimestamp");
+	execQuery(query, "ALTER TABLE trust_keys RENAME TO trustKeys");
+	execQuery(query, "ALTER TABLE trustKeys RENAME COLUMN owner_jid TO ownerJid");
+	execQuery(query, "ALTER TABLE trustKeys RENAME COLUMN key_id TO keyId");
+	execQuery(query, "ALTER TABLE trustKeys RENAME COLUMN trust_level TO trustLevel");
 
-    d->version = 23;
+	execQuery(query, "ALTER TABLE trust_keys_unprocessed RENAME TO trustKeysUnprocessed");
+	execQuery(query, "ALTER TABLE trustKeysUnprocessed RENAME COLUMN sender_key_id TO senderKeyId");
+	execQuery(query, "ALTER TABLE trustKeysUnprocessed RENAME COLUMN owner_jid TO ownerJid");
+	execQuery(query, "ALTER TABLE trustKeysUnprocessed RENAME COLUMN key_id TO keyId");
+
+	execQuery(query, "ALTER TABLE omemo_devices_own RENAME TO omemoDevicesOwn");
+	execQuery(query, "ALTER TABLE omemoDevicesOwn RENAME COLUMN private_key TO privateKey");
+	execQuery(query, "ALTER TABLE omemoDevicesOwn RENAME COLUMN public_key TO publicKey");
+	execQuery(query, "ALTER TABLE omemoDevicesOwn RENAME COLUMN latest_signed_pre_key_id TO latestSignedPreKeyId");
+	execQuery(query, "ALTER TABLE omemoDevicesOwn RENAME COLUMN latest_pre_key_id TO latestPreKeyId");
+
+	execQuery(query, "ALTER TABLE omemo_devices RENAME TO omemoDevices");
+	execQuery(query, "ALTER TABLE omemoDevices RENAME COLUMN user_jid TO userJid");
+	execQuery(query, "ALTER TABLE omemoDevices RENAME COLUMN key_id TO keyId");
+	execQuery(query, "ALTER TABLE omemoDevices RENAME COLUMN unresponded_stanzas_sent TO unrespondedStanzasSent");
+	execQuery(query, "ALTER TABLE omemoDevices RENAME COLUMN unresponded_stanzas_received TO unrespondedStanzasReceived");
+	execQuery(query, "ALTER TABLE omemoDevices RENAME COLUMN removal_timestamp TO removalTimestamp");
+
+	execQuery(query, "ALTER TABLE omemo_pre_key_pairs RENAME TO omemoPreKeyPairs");
+
+	execQuery(query, "ALTER TABLE omemo_pre_key_pairs_signed RENAME TO omemoPreKeyPairsSigned");
+	execQuery(query, "ALTER TABLE omemoPreKeyPairsSigned RENAME COLUMN creation_timestamp TO creationTimestamp");
+
+	d->version = 23;
 }
 
 void Database::convertDatabaseToV24()
@@ -1275,73 +1362,73 @@ void Database::convertDatabaseToV24()
 
 void Database::convertDatabaseToV25()
 {
-    DATABASE_CONVERT_TO_VERSION(24);
-    QSqlQuery query(currentDatabase());
+	DATABASE_CONVERT_TO_VERSION(24);
+	QSqlQuery query(currentDatabase());
 
-    // Remove the column "isMarkable".
-    execQuery(
-        query,
-        SQL_CREATE_TABLE(
-            "messages_tmp",
-            SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(timestamp, SQL_TEXT)
-            SQL_ATTRIBUTE(message, SQL_TEXT)
-            SQL_ATTRIBUTE(id, SQL_TEXT)
-            SQL_ATTRIBUTE(encryption, SQL_INTEGER)
-            SQL_ATTRIBUTE(senderKey, SQL_BLOB)
-            SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
-            SQL_ATTRIBUTE(isEdited, SQL_BOOL)
-            SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
-            SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
-            SQL_ATTRIBUTE(errorText, SQL_TEXT)
-            SQL_ATTRIBUTE(replaceId, SQL_TEXT)
-            SQL_ATTRIBUTE(originId, SQL_TEXT)
-            SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
-            SQL_ATTRIBUTE(fileGroupId, SQL_INTEGER)
-            "FOREIGN KEY(sender) REFERENCES " DB_TABLE_ROSTER " (jid),"
-            "FOREIGN KEY(recipient) REFERENCES " DB_TABLE_ROSTER " (jid)"
-        )
-    );
+	// Remove the column "isMarkable".
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messages_tmp",
+			SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(timestamp, SQL_TEXT)
+			SQL_ATTRIBUTE(message, SQL_TEXT)
+			SQL_ATTRIBUTE(id, SQL_TEXT)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(senderKey, SQL_BLOB)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			SQL_ATTRIBUTE(isEdited, SQL_BOOL)
+			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
+			SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
+			SQL_ATTRIBUTE(errorText, SQL_TEXT)
+			SQL_ATTRIBUTE(replaceId, SQL_TEXT)
+			SQL_ATTRIBUTE(originId, SQL_TEXT)
+			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(fileGroupId, SQL_INTEGER)
+			"FOREIGN KEY(sender) REFERENCES roster (jid),"
+			"FOREIGN KEY(recipient) REFERENCES roster (jid)"
+		)
+	);
 
-    execQuery(
-        query,
-        "INSERT INTO messages_tmp SELECT sender, recipient, timestamp, message, id, encryption, "
-        "senderKey, deliveryState, isEdited, spoilerHint, isSpoiler, errorText, replaceId, "
-        "originId, stanzaId, fileGroupId FROM messages"
-    );
+	execQuery(
+		query,
+		"INSERT INTO messages_tmp SELECT sender, recipient, timestamp, message, id, encryption, "
+		"senderKey, deliveryState, isEdited, spoilerHint, isSpoiler, errorText, replaceId, "
+		"originId, stanzaId, fileGroupId FROM messages"
+	);
 
-    execQuery(query, "DROP TABLE messages");
+	execQuery(query, "DROP TABLE messages");
 
-    execQuery(
-        query,
-        SQL_CREATE_TABLE(
-            "messages",
-            SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(timestamp, SQL_TEXT)
-            SQL_ATTRIBUTE(message, SQL_TEXT)
-            SQL_ATTRIBUTE(id, SQL_TEXT)
-            SQL_ATTRIBUTE(encryption, SQL_INTEGER)
-            SQL_ATTRIBUTE(senderKey, SQL_BLOB)
-            SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
-            SQL_ATTRIBUTE(isEdited, SQL_BOOL)
-            SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
-            SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
-            SQL_ATTRIBUTE(errorText, SQL_TEXT)
-            SQL_ATTRIBUTE(replaceId, SQL_TEXT)
-            SQL_ATTRIBUTE(originId, SQL_TEXT)
-            SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
-            SQL_ATTRIBUTE(fileGroupId, SQL_INTEGER)
-            "FOREIGN KEY(sender) REFERENCES " DB_TABLE_ROSTER " (jid),"
-            "FOREIGN KEY(recipient) REFERENCES " DB_TABLE_ROSTER " (jid)"
-        )
-    );
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messages",
+			SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(timestamp, SQL_TEXT)
+			SQL_ATTRIBUTE(message, SQL_TEXT)
+			SQL_ATTRIBUTE(id, SQL_TEXT)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(senderKey, SQL_BLOB)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			SQL_ATTRIBUTE(isEdited, SQL_BOOL)
+			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
+			SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
+			SQL_ATTRIBUTE(errorText, SQL_TEXT)
+			SQL_ATTRIBUTE(replaceId, SQL_TEXT)
+			SQL_ATTRIBUTE(originId, SQL_TEXT)
+			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(fileGroupId, SQL_INTEGER)
+			"FOREIGN KEY(sender) REFERENCES roster (jid),"
+			"FOREIGN KEY(recipient) REFERENCES roster (jid)"
+		)
+	);
 
-    execQuery(query, "INSERT INTO messages SELECT * FROM messages_tmp");
-    execQuery(query, "DROP TABLE messages_tmp");
+	execQuery(query, "INSERT INTO messages SELECT * FROM messages_tmp");
+	execQuery(query, "DROP TABLE messages_tmp");
 
-    d->version = 25;
+	d->version = 25;
 }
 
 void Database::convertDatabaseToV26()
@@ -1490,129 +1577,373 @@ void Database::convertDatabaseToV31()
 
 void Database::convertDatabaseToV32()
 {
-    DATABASE_CONVERT_TO_VERSION(31);
-    QSqlQuery query(currentDatabase());
+	DATABASE_CONVERT_TO_VERSION(31);
+	QSqlQuery query(currentDatabase());
 
-    // Remove the column "isEdited".
-    execQuery(
-        query,
-        SQL_CREATE_TABLE(
-            "messages_tmp",
-            SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(timestamp, SQL_TEXT)
-            SQL_ATTRIBUTE(body, SQL_TEXT)
-            SQL_ATTRIBUTE(id, SQL_TEXT)
-            SQL_ATTRIBUTE(encryption, SQL_INTEGER)
-            SQL_ATTRIBUTE(senderKey, SQL_BLOB)
-            SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
-            SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
-            SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
-            SQL_ATTRIBUTE(errorText, SQL_TEXT)
-            SQL_ATTRIBUTE(replaceId, SQL_TEXT)
-            SQL_ATTRIBUTE(originId, SQL_TEXT)
-            SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
-            SQL_ATTRIBUTE(fileGroupId, SQL_INTEGER)
-            SQL_ATTRIBUTE(removed, SQL_BOOL_NOT_NULL)
-            "FOREIGN KEY(sender) REFERENCES " DB_TABLE_ROSTER " (jid),"
-            "FOREIGN KEY(recipient) REFERENCES " DB_TABLE_ROSTER " (jid)"
-        )
-    );
+	// Remove the column "isEdited".
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messages_tmp",
+			SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(timestamp, SQL_TEXT)
+			SQL_ATTRIBUTE(body, SQL_TEXT)
+			SQL_ATTRIBUTE(id, SQL_TEXT)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(senderKey, SQL_BLOB)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
+			SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
+			SQL_ATTRIBUTE(errorText, SQL_TEXT)
+			SQL_ATTRIBUTE(replaceId, SQL_TEXT)
+			SQL_ATTRIBUTE(originId, SQL_TEXT)
+			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(fileGroupId, SQL_INTEGER)
+			SQL_ATTRIBUTE(removed, SQL_BOOL_NOT_NULL)
+			"FOREIGN KEY(sender) REFERENCES roster (jid),"
+			"FOREIGN KEY(recipient) REFERENCES roster (jid)"
+		)
+	);
 
-    execQuery(
-        query,
-        "INSERT INTO messages_tmp SELECT sender, recipient, timestamp, body, id, encryption, "
-        "senderKey, deliveryState, spoilerHint, isSpoiler, errorText, replaceId, "
-        "originId, stanzaId, fileGroupId, removed FROM messages"
-    );
+	execQuery(
+		query,
+		"INSERT INTO messages_tmp SELECT sender, recipient, timestamp, body, id, encryption, "
+		"senderKey, deliveryState, spoilerHint, isSpoiler, errorText, replaceId, "
+		"originId, stanzaId, fileGroupId, removed FROM messages"
+	);
 
-    execQuery(query, "DROP TABLE messages");
+	execQuery(query, "DROP TABLE messages");
 
-    execQuery(
-        query,
-        SQL_CREATE_TABLE(
-            "messages",
-            SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(timestamp, SQL_TEXT)
-            SQL_ATTRIBUTE(body, SQL_TEXT)
-            SQL_ATTRIBUTE(id, SQL_TEXT)
-            SQL_ATTRIBUTE(encryption, SQL_INTEGER)
-            SQL_ATTRIBUTE(senderKey, SQL_BLOB)
-            SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
-            SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
-            SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
-            SQL_ATTRIBUTE(errorText, SQL_TEXT)
-            SQL_ATTRIBUTE(replaceId, SQL_TEXT)
-            SQL_ATTRIBUTE(originId, SQL_TEXT)
-            SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
-            SQL_ATTRIBUTE(fileGroupId, SQL_INTEGER)
-            SQL_ATTRIBUTE(removed, SQL_BOOL_NOT_NULL)
-            "FOREIGN KEY(sender) REFERENCES " DB_TABLE_ROSTER " (jid),"
-            "FOREIGN KEY(recipient) REFERENCES " DB_TABLE_ROSTER " (jid)"
-        )
-    );
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messages",
+			SQL_ATTRIBUTE(sender, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(recipient, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(timestamp, SQL_TEXT)
+			SQL_ATTRIBUTE(body, SQL_TEXT)
+			SQL_ATTRIBUTE(id, SQL_TEXT)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(senderKey, SQL_BLOB)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
+			SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
+			SQL_ATTRIBUTE(errorText, SQL_TEXT)
+			SQL_ATTRIBUTE(replaceId, SQL_TEXT)
+			SQL_ATTRIBUTE(originId, SQL_TEXT)
+			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(fileGroupId, SQL_INTEGER)
+			SQL_ATTRIBUTE(removed, SQL_BOOL_NOT_NULL)
+			"FOREIGN KEY(sender) REFERENCES roster (jid),"
+			"FOREIGN KEY(recipient) REFERENCES roster (jid)"
+		)
+	);
 
-    execQuery(query, "INSERT INTO messages SELECT * FROM messages_tmp");
-    execQuery(query, "DROP TABLE messages_tmp");
+	execQuery(query, "INSERT INTO messages SELECT * FROM messages_tmp");
+	execQuery(query, "DROP TABLE messages_tmp");
 
-    d->version = 32;
+	d->version = 32;
 }
 
 void Database::convertDatabaseToV33()
 {
-    DATABASE_CONVERT_TO_VERSION(32);
-    QSqlQuery query(currentDatabase());
+	DATABASE_CONVERT_TO_VERSION(32);
+	QSqlQuery query(currentDatabase());
 
-    // Add the column "accountJid" and set a new primary key.
-    // The value for the new column "accountJid" cannot be determined by the database.
-    // Thus, the table "roster" is removed and recreated in order to store the latest values from
-    // the server (e.g., "name") in the database again and include the new "accountJid".
-    // Unfortunately, all data not stored on the server (e.g., "encryption") is lost.
-    execQuery(query, "DROP TABLE roster");
-    execQuery(
-        query,
-        SQL_CREATE_TABLE(
-            "roster",
-            SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(jid, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(name, SQL_TEXT)
-            SQL_ATTRIBUTE(subscription, SQL_INTEGER)
-            SQL_ATTRIBUTE(encryption, SQL_INTEGER)
-            SQL_ATTRIBUTE(unreadMessages, SQL_INTEGER)
-            SQL_ATTRIBUTE(lastReadOwnMessageId, SQL_TEXT)
-            SQL_ATTRIBUTE(lastReadContactMessageId, SQL_TEXT)
-            SQL_ATTRIBUTE(readMarkerPending, SQL_BOOL)
-            SQL_ATTRIBUTE(pinningPosition, SQL_INTEGER_NOT_NULL)
-            SQL_ATTRIBUTE(chatStateSendingEnabled, SQL_BOOL)
-            SQL_ATTRIBUTE(readMarkerSendingEnabled, SQL_BOOL)
-            SQL_ATTRIBUTE(draftMessageId, SQL_TEXT)
-            SQL_ATTRIBUTE(notificationsMuted, SQL_BOOL)
-            "PRIMARY KEY(accountJid, jid),"
-            "FOREIGN KEY(draftMessageId) REFERENCES " DB_TABLE_MESSAGES " (id)"
-        )
-    );
+	// Add the column "accountJid" and set a new primary key.
+	// The value for the new column "accountJid" cannot be determined by the database.
+	// Thus, the table "roster" is removed and recreated in order to store the latest values from
+	// the server (e.g., "name") in the database again and include the new "accountJid".
+	// Unfortunately, all data not stored on the server (e.g., "encryption") is lost.
+	execQuery(query, "DROP TABLE roster");
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"roster",
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(jid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(name, SQL_TEXT)
+			SQL_ATTRIBUTE(subscription, SQL_INTEGER)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(unreadMessages, SQL_INTEGER)
+			SQL_ATTRIBUTE(lastReadOwnMessageId, SQL_TEXT)
+			SQL_ATTRIBUTE(lastReadContactMessageId, SQL_TEXT)
+			SQL_ATTRIBUTE(readMarkerPending, SQL_BOOL)
+			SQL_ATTRIBUTE(pinningPosition, SQL_INTEGER_NOT_NULL)
+			SQL_ATTRIBUTE(chatStateSendingEnabled, SQL_BOOL)
+			SQL_ATTRIBUTE(readMarkerSendingEnabled, SQL_BOOL)
+			SQL_ATTRIBUTE(draftMessageId, SQL_TEXT)
+			SQL_ATTRIBUTE(notificationsMuted, SQL_BOOL)
+			"PRIMARY KEY(accountJid, jid),"
+			"FOREIGN KEY(draftMessageId) REFERENCES messages (id)"
+		)
+	);
 
-    d->version = 33;
+	d->version = 33;
 }
 
 void Database::convertDatabaseToV34()
 {
-    DATABASE_CONVERT_TO_VERSION(33);
-    QSqlQuery query(currentDatabase());
+	DATABASE_CONVERT_TO_VERSION(33);
+	QSqlQuery query(currentDatabase());
 
-    execQuery(
-        query,
-        SQL_CREATE_TABLE(
-            "rosterGroups",
-            SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(chatJid, SQL_TEXT_NOT_NULL)
-            SQL_ATTRIBUTE(name, SQL_TEXT_NOT_NULL)
-            "PRIMARY KEY(accountJid, chatJid, name),"
-            "FOREIGN KEY(accountJid) REFERENCES " DB_TABLE_ROSTER " (accountJid),"
-            "FOREIGN KEY(chatJid) REFERENCES " DB_TABLE_ROSTER " (jid)"
-        )
-    );
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"rosterGroups",
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(chatJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(name, SQL_TEXT_NOT_NULL)
+			"PRIMARY KEY(accountJid, chatJid, name),"
+			"FOREIGN KEY(accountJid) REFERENCES roster (accountJid),"
+			"FOREIGN KEY(chatJid) REFERENCES roster (jid)"
+		)
+	);
 
-    d->version = 34;
+	d->version = 34;
+}
+
+void Database::convertDatabaseToV35()
+{
+	DATABASE_CONVERT_TO_VERSION(34);
+	QSqlQuery query(currentDatabase());
+
+	// Remove the column "draftMessageId".
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"roster_tmp",
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(jid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(name, SQL_TEXT)
+			SQL_ATTRIBUTE(subscription, SQL_INTEGER)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(unreadMessages, SQL_INTEGER)
+			SQL_ATTRIBUTE(lastReadOwnMessageId, SQL_TEXT)
+			SQL_ATTRIBUTE(lastReadContactMessageId, SQL_TEXT)
+			SQL_ATTRIBUTE(readMarkerPending, SQL_BOOL)
+			SQL_ATTRIBUTE(pinningPosition, SQL_INTEGER_NOT_NULL)
+			SQL_ATTRIBUTE(chatStateSendingEnabled, SQL_BOOL)
+			SQL_ATTRIBUTE(readMarkerSendingEnabled, SQL_BOOL)
+			SQL_ATTRIBUTE(notificationsMuted, SQL_BOOL)
+			"PRIMARY KEY(accountJid, jid)"
+		)
+	);
+
+	execQuery(
+		query,
+		"INSERT INTO roster_tmp SELECT accountJid, jid, name, subscription, encryption, unreadMessages, "
+		"lastReadOwnMessageId, lastReadContactMessageId, readMarkerPending, pinningPosition, "
+		"chatStateSendingEnabled, readMarkerSendingEnabled, notificationsMuted FROM roster"
+	);
+
+	execQuery(query, "DROP TABLE roster");
+
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"roster",
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(jid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(name, SQL_TEXT)
+			SQL_ATTRIBUTE(subscription, SQL_INTEGER)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(unreadMessages, SQL_INTEGER)
+			SQL_ATTRIBUTE(lastReadOwnMessageId, SQL_TEXT)
+			SQL_ATTRIBUTE(lastReadContactMessageId, SQL_TEXT)
+			SQL_ATTRIBUTE(readMarkerPending, SQL_BOOL)
+			SQL_ATTRIBUTE(pinningPosition, SQL_INTEGER_NOT_NULL)
+			SQL_ATTRIBUTE(chatStateSendingEnabled, SQL_BOOL)
+			SQL_ATTRIBUTE(readMarkerSendingEnabled, SQL_BOOL)
+			SQL_ATTRIBUTE(notificationsMuted, SQL_BOOL)
+			"PRIMARY KEY(accountJid, jid)"
+		)
+	);
+
+	execQuery(query, "INSERT INTO roster SELECT * FROM roster_tmp");
+	execQuery(query, "DROP TABLE roster_tmp");
+
+	d->version = 35;
+}
+
+void Database::convertDatabaseToV36()
+{
+	DATABASE_CONVERT_TO_VERSION(35);
+	QSqlQuery query(currentDatabase());
+
+	// Replace the columns "sender" and "recipient" with "accountJid", "chatJid" and "senderId".
+	// Set new foreign keys.
+	// The values for the new columns cannot be determined by the database.
+	// Thus, the table "messages" is removed and recreated in order to store the latest values from
+	// the server in the database again and include the values for the new columns.
+	// Unfortunately, all data not stored on the server (e.g., "removed") is lost.
+	execQuery(query, "DROP TABLE messages");
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messages",
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(chatJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(senderId, SQL_TEXT)
+			SQL_ATTRIBUTE(timestamp, SQL_TEXT)
+			SQL_ATTRIBUTE(body, SQL_TEXT)
+			SQL_ATTRIBUTE(id, SQL_TEXT)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(senderKey, SQL_BLOB)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
+			SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
+			SQL_ATTRIBUTE(errorText, SQL_TEXT)
+			SQL_ATTRIBUTE(replaceId, SQL_TEXT)
+			SQL_ATTRIBUTE(originId, SQL_TEXT)
+			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(fileGroupId, SQL_INTEGER)
+			SQL_ATTRIBUTE(removed, SQL_BOOL_NOT_NULL)
+			"FOREIGN KEY(accountJid, chatJid) REFERENCES roster (accountJid, jid)"
+		)
+	);
+
+	// Replace the columns "messageSender" and "messageRecipient" with "accountJid", "chatJid" and
+	// "senderId".
+	// Set a new primary key accordingly.
+	// The values for the new columns cannot be determined by the database.
+	// Thus, the table "messageReactions" is removed and recreated in order to store the latest
+	// values from the server in the database again and include the values for the new columns.
+	// Unfortunately, all data not stored on the server (e.g., "deliveryState") is lost.
+	execQuery(query, "DROP TABLE messageReactions");
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messageReactions",
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(chatJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(messageSenderId, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(messageId, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(senderJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(emoji, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(timestamp, SQL_INTEGER)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			"PRIMARY KEY(accountJid, chatJid, messageSenderId, messageId, senderJid, emoji)"
+		)
+	);
+
+	d->version = 36;
+}
+
+void Database::convertDatabaseToV37()
+{
+	DATABASE_CONVERT_TO_VERSION(36);
+	QSqlQuery query(currentDatabase());
+
+	// Reorder various columns for a consistent order through the whole code base.
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messages_tmp",
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(chatJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(senderId, SQL_TEXT)
+			SQL_ATTRIBUTE(id, SQL_TEXT)
+			SQL_ATTRIBUTE(originId, SQL_TEXT)
+			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(replaceId, SQL_TEXT)
+			SQL_ATTRIBUTE(timestamp, SQL_TEXT)
+			SQL_ATTRIBUTE(body, SQL_TEXT)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(senderKey, SQL_BLOB)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
+			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
+			SQL_ATTRIBUTE(fileGroupId, SQL_INTEGER)
+			SQL_ATTRIBUTE(errorText, SQL_TEXT)
+			SQL_ATTRIBUTE(removed, SQL_BOOL_NOT_NULL)
+			"FOREIGN KEY(accountJid, chatJid) REFERENCES roster (accountJid, jid)"
+		)
+	);
+
+	execQuery(
+		query,
+		"INSERT INTO messages_tmp SELECT accountJid, chatJid, senderId, id, originId, stanzaId, "
+		"replaceId, timestamp, body, encryption, senderKey, deliveryState, isSpoiler, spoilerHint, "
+		"fileGroupId, errorText, removed FROM messages"
+	);
+
+	execQuery(query, "DROP TABLE messages");
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"messages",
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(chatJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(senderId, SQL_TEXT)
+			SQL_ATTRIBUTE(id, SQL_TEXT)
+			SQL_ATTRIBUTE(originId, SQL_TEXT)
+			SQL_ATTRIBUTE(stanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(replaceId, SQL_TEXT)
+			SQL_ATTRIBUTE(timestamp, SQL_TEXT)
+			SQL_ATTRIBUTE(body, SQL_TEXT)
+			SQL_ATTRIBUTE(encryption, SQL_INTEGER)
+			SQL_ATTRIBUTE(senderKey, SQL_BLOB)
+			SQL_ATTRIBUTE(deliveryState, SQL_INTEGER)
+			SQL_ATTRIBUTE(isSpoiler, SQL_BOOL)
+			SQL_ATTRIBUTE(spoilerHint, SQL_TEXT)
+			SQL_ATTRIBUTE(fileGroupId, SQL_INTEGER)
+			SQL_ATTRIBUTE(errorText, SQL_TEXT)
+			SQL_ATTRIBUTE(removed, SQL_BOOL_NOT_NULL)
+			"FOREIGN KEY(accountJid, chatJid) REFERENCES roster (accountJid, jid)"
+		)
+	);
+
+	execQuery(query, "INSERT INTO messages SELECT * FROM messages_tmp");
+	execQuery(query, "DROP TABLE messages_tmp");
+
+	d->version = 37;
+}
+
+void Database::convertDatabaseToV38()
+{
+	DATABASE_CONVERT_TO_VERSION(37);
+	QSqlQuery query(currentDatabase());
+	execQuery(query, "ALTER TABLE Roster ADD automaticMediaDownloadsRule " SQL_INTEGER);
+	d->version = 38;
+}
+
+void Database::convertDatabaseToV39()
+{
+	DATABASE_CONVERT_TO_VERSION(38)
+	QSqlQuery query(currentDatabase());
+
+	// blocked
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"blocked",
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(jid, SQL_TEXT_NOT_NULL)
+			"PRIMARY KEY(accountJid, jid)"
+		)
+	);
+
+	d->version = 39;
+}
+
+void Database::convertDatabaseToV40()
+{
+	DATABASE_CONVERT_TO_VERSION(39)
+	QSqlQuery query(currentDatabase());
+
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			"accounts",
+			SQL_ATTRIBUTE(jid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(name, SQL_TEXT)
+			SQL_ATTRIBUTE(latestMessageStanzaId, SQL_TEXT)
+			SQL_ATTRIBUTE(latestMessageTimestamp, SQL_TEXT)
+			"PRIMARY KEY(jid)"
+		)
+	);
+
+	d->version = 40;
 }

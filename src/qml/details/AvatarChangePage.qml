@@ -22,6 +22,15 @@ Page {
 	property string imagePath: Kaidan.avatarStorage.getAvatarUrl(AccountManager.jid)
 
 	BusyIndicator {
+//=======
+
+//	property string imagePath: Kaidan.avatarStorage.getAvatarUrl(AccountManager.jid)
+
+//	title: qsTr("Change profile image")
+//	Component.onDestruction: openView(accountDetailsSheet, accountDetailsPage)
+
+//	Controls.BusyIndicator {
+//>>>>>>> master
 		id: busyIndicator
 		visible: false
 		anchors.centerIn: parent

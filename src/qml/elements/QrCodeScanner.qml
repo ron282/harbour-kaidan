@@ -54,6 +54,7 @@ Item {
 	VideoOutput {
 //		visible: camera.cameraStatus === Camera.ActiveStatus
 		fillMode: VideoOutput.PreserveAspectCrop
+        width: parent.width
 		source: camera
         autoOrientation: false
         orientation: 0

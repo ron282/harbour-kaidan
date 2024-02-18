@@ -10,5 +10,5 @@ import QtQuick 2.0
  * It should be used to maintain a consistent look of the corners fitting the rectangle's size.
  */
 Rectangle {
-	radius: relativeRoundedCornersRadius(width, height)
+//	radius: relativeRoundedCornersRadius(width, height)
 }

@@ -63,13 +63,6 @@ Page {
         }
     }
 
-    Component {
-        id: qrCodePage
-
-        QrCodePage {}
-    }
-
-
     SilicaListView {
         id: rosterListView
 
@@ -113,15 +106,17 @@ Page {
 
         delegate: RosterListItem {
             listView: rosterListView
-//FIXME     contextMenu: itemContextMenu
+            menu: itemContextMenu
             accountJid: AccountManager.jid
             jid: model ? model.jid : ""
             name: model ? (model.name ? model.name : model.jid) : ""
             lastMessage: model ? model.lastMessage : ""
             lastMessageIsDraft: model ? model.lastMessageIsDraft : false
+            lastMessageSenderId: model ? model.lastMessageSenderId : ""
             unreadMessages: model ? model.unreadMessages : 0
             pinned: model ? model.pinned : false
             notificationsMuted: model ? model.notificationsMuted : false
+
             contentHeight: Theme.itemSizeLarge;
             onClicked: {
                 // Open the chatPage only if it is not yet open.
@@ -134,30 +129,41 @@ Page {
         Connections {
             target: Kaidan
 
-            onOpenChatPageRequested: {
-                console.log("[roster.qml] onOpenChatPageRequested")
-/*                if (true) {
-                    toggleSearchBar()
-                } else {
-                    searchField.text = ""
-                }
-*/
-/*                for (var i = 0; i < pageStack.items.length; ++i) {
-                    var page = pageStack.items[i];
+            /**
+             * Opens the chat page for the chat JID currently set in the message model.
+             *
+             * @param accountJid JID of the account for that the chat page is opened
+             * @param chatJid JID of the chat for that the chat page is opened
+             */
+             onOpenChatPageRequested: {
+//				if (Kirigami.Settings.isMobile) {
+//                    toggleSearchBar()
+//				} else {
+//					searchField.text = ""
+//				}
 
-                    if (page instanceof ChatPage) {
-                        page.saveDraft();
-
-                }
-*/
                 MessageModel.setCurrentChat(accountJid, chatJid)
 
-                // Close all pages (especially the chat page) except the roster page.
-                while (pageStack.depth > 2) {
-                    pageStack.navigateBack(PageStackAction.Immediate)
-                }
-//                popLayersAboveLowest()
-                pageStack.push(chatPage, PageStackAction.Immediate)
+                closePagesExceptRosterPage()
+                popLayersAboveLowest()
+                pageStack.push(chatPage)
+            }
+
+            onCloseChatPageRequested: {
+                closePagesExceptRosterPage()
+                resetChatView()
+            }
+
+            /**
+             * Closes all pages (especially the chat page) on the same layer except the roster page.
+             */
+            function closePagesExceptRosterPage() {
+                popAllPages()
+
+                pageStack.push(globalDrawer, {}, PageStackAction.Immediate)
+                pageStack.pushAttached(rosterPage, {}, PageStackAction.Immediate)
+                pageStack.navigateForward(PageStackAction.Immediate)
+                pageStack.completeAnimation()
             }
         }
     }

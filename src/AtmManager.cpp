@@ -64,7 +64,12 @@ void AtmManager::makeTrustDecisionsByUri(const QXmppUri &uri)
 
 void AtmManager::makeTrustDecisions(const QString &jid, const QList<QByteArray> &keyIdsForAuthentication, const QList<QByteArray> &keyIdsForDistrusting)
 {
-	m_manager->makeTrustDecisions(QStringLiteral("urn:xmpp:omemo:2"), jid, keyIdsForAuthentication, keyIdsForDistrusting);
+    qDebug() << "makeTrustDecisions jid:" << jid;
+#if defined(WITH_OMEMO_V03)
+    m_manager->makeTrustDecisions(QStringLiteral("eu.siacs.conversations.axolotl"), jid, keyIdsForAuthentication, keyIdsForDistrusting);
+#else
+    m_manager->makeTrustDecisions(QStringLiteral("urn:xmpp:omemo:2"), jid, keyIdsForAuthentication, keyIdsForDistrusting);
+#endif
 }
 
 QList<QByteArray> AtmManager::keyIdsFromHex(const QList<QString> &keyIds)

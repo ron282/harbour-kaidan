@@ -51,7 +51,11 @@ namespace Enums {
 	/**
 	 * Enumeration of possible connection states.
 	 */
-	enum class ConnectionState {
+#if defined(SFOS)
+    enum ConnectionState {
+#else
+    enum class ConnectionState {
+#endif
 		StateDisconnected = QXmppClient::DisconnectedState,
 		StateConnecting = QXmppClient::ConnectingState,
 		StateConnected = QXmppClient::ConnectedState
@@ -61,8 +65,12 @@ namespace Enums {
 	/**
 	 * Enumeration of different media/message types
 	 */
-	enum class MessageType {
-		MessageUnknown = -1,
+#if defined(SFOS)
+    enum MessageType {
+#else
+    enum class MessageType {
+#endif
+        MessageUnknown = -1,
 		MessageText,
 		MessageFile,
 		MessageImage,
@@ -76,8 +84,11 @@ namespace Enums {
 	/**
 	 * Enumeration of different message delivery states
 	 */
+#if defined(SFOS)
     enum DeliveryState {
-//	enum class DeliveryState {
+#else
+    enum class DeliveryState {
+#endif
 		Pending,
 		Sent,
 		Delivered,
@@ -89,7 +100,11 @@ namespace Enums {
 	/**
 	 * State which specifies how the XMPP login URI was used
 	 */
-	enum class LoginByUriState {
+#if defined(SFOS)
+    enum class LoginByUriState {
+#else
+    enum LoginByUriState {
+#endif
 		Connecting,         ///< The JID and password are included in the URI and the client is connecting.
 		PasswordNeeded,     ///< The JID is included in the URI but not the password.
 		InvalidLoginUri     ///< The URI cannot be used to log in.

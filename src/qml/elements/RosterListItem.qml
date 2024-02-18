@@ -20,7 +20,8 @@ UserListItem {
     property bool lastMessageIsDraft
     property alias lastMessageDateTime: lastMessageDateTimeText.text
     property string lastMessage
-	property int unreadMessages
+    property string lastMessageSenderId
+    property int unreadMessages
 	property bool pinned
     property bool notificationsMuted
 
@@ -57,7 +58,7 @@ UserListItem {
             Label {
                 id: lastMessageDateTimeText
                 text: root.lastMessageDateTime
-                visible: text
+                visible: text && root.lastMessageDateTime
             }
         }
         Row {
@@ -66,11 +67,27 @@ UserListItem {
             anchors.right: parent.right
 
             Label {
-                id: draft
-                visible: lastMessageIsDraft
+                id: lastMessagePrefix
+                visible: text && (lastMessageIsDraft || lastMessageSenderId === root.accountJid)
                 textFormat: Text.PlainText
-                text: qsTr("Draft:")
+                text: {
+                    if (lastMessageIsDraft) {
+                        return qsTr("Draft:")
+                    } else {
+                        // Omit the sender in case of the chat with oneself.
+                        if (root.jid == root.accountJid) {
+                            return ""
+                        }
+
+//                        if (lastMessageSenderId === root.accountJid) {
+                            return qsTr("Me:")
+//                        }
+
+//                        return qsTr("%1:").arg(root.name)
+                    }
+                }
                 font {
+                    pixelSize: Theme.fontSizeSmall
                     weight: Font.Light
                     italic: true
                 }
@@ -84,6 +101,7 @@ UserListItem {
                 text: Utils.removeNewLinesFromString(lastMessage)
                 textFormat: Text.PlainText
                 font.weight: Font.Light
+                font.pixelSize: Theme.fontSizeSmall
             }
         }
     }
@@ -120,7 +138,7 @@ UserListItem {
         }
     }
 
- /*   MouseArea {
+/*    MouseArea {
         parent: root
         anchors.fill: parent
         acceptedButtons: Qt.RightButton
@@ -133,7 +151,7 @@ UserListItem {
 
         onPressAndHold: showContextMenu()
     }
-*/
+
     function showContextMenu() {
         console.log("[RosterListItem.qml] showContextMenu")
         if (contextMenu) {
@@ -142,5 +160,6 @@ UserListItem {
             contextMenu.open(root)
         }
     }
+*/
 }
 

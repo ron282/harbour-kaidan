@@ -214,7 +214,13 @@ Page {
     }
 
     function openViewFromGlobalDrawer(overlayComponent, pageComponent) {
-        return openView(overlayComponent, pageComponent)
+          popLayersAboveLowest()
+          if (pageStack.currentPage != root) {
+              console.log("pageStack.currentPage != root")
+              pageStack.navigateBack(PageStackAction.Immediate)
+          }
+
+          return openView(overlayComponent, pageComponent)
     }
 
     Connections {

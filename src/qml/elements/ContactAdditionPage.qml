@@ -15,6 +15,7 @@ Page {
 
     PageHeader
     {
+        id: header
         title: qsTr("Add contact")
     }
 
@@ -22,12 +23,6 @@ Page {
 
 	ContactAdditionContent {
         id: content
-    }
-    Connections {
-        target: Kaidan
-
-        function onOpenChatPageRequested(accountJid, chatJid) {
-            pageStack.pop(rosterPage, PageStackAction.Immediate)
-        }
+        anchors.top: header.bottom
     }
 }

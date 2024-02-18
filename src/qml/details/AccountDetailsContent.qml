@@ -68,8 +68,8 @@ DetailsContent {
                 width: vCardDelegate.width
                 rightItem: IconButton {
                     id: vCardConfirmationButton
-                    icon.source: editing ? "image://theme/icon-m-right" : "image://theme/icon-s-edit"
-                    width: Theme.iconSizeSmall
+                    icon.source: editing ? "image://theme/icon-m-right" : "image://theme/icon-splus-edit"
+                    width: Theme.iconSizeSmallPlus
                     height: width
                     onClicked: {
                         if(editing) {
@@ -91,77 +91,6 @@ DetailsContent {
         }
     }
 
-        rosterGroupArea: Column {
-        id: colRoster
-        width: parent.width
-
-        SectionHeader {
-            text: qsTr("Labels")
-        }
-        ColumnView {
-            id: rosterGroupListView
-            model: RosterModel.groups
-            visible: true
-            itemHeight: Theme.itemSizeSmall
-            delegate: BackgroundItem {
-                id: rosterGroupDelegate
-                width: rosterGroupListView.width
-                Row {
-                    id: rosterGroupRow
-                    Label {
-                        id: rosterGroupText
-                        text: modelData
-                        textFormat: Text.PlainText
-                        maximumLineCount: 1
-                        elide: Text.ElideRight
-                        visible: !rosterGroupTextField.visible
-                        height: rosterGroupTextField.height
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: rosterGroupDelegate.width - 2*rosterGroupRow.spacing - rosterGroupEditingButton.width - rosterGroupRemovalButton.width
-                        leftPadding: Theme.horizontalPageMargin
-                    }
-                    TextField {
-                        id: rosterGroupTextField
-                        text: modelData
-                        visible: false
-                        width: rosterGroupDelegate.width - 2*rosterGroupRow.spacing - rosterGroupEditingButton.width - rosterGroupRemovalButton.width
-                    }
-                    IconButton {
-                        id: rosterGroupEditingButton
-                        icon.source: rosterGroupTextField.visible ? "image://theme/icon-splus-right" : "image://theme/icon-m-edit"
-                        icon.sourceSize.width: Theme.iconSizeSmallPlus
-                        icon.sourceSize.height: Theme.iconSizeSmallPlus
-                        // Ensure that the button can be used within "rosterGroupDelegate"
-                        // which acts as an overlay to toggle this button when clicked.
-                        // Otherwise, this button would be toggled by "rosterGroupDelegate"
-                        // and by this button's own visible area at the same time resulting
-                        // in resetting the toggling on each click.
-                        onClicked: {
-                            if (rosterGroupText.visible) {
-                                rosterGroupTextField.visible = true
-                                rosterGroupTextField.forceActiveFocus()
-                                rosterGroupTextField.selectAll()
-                            } else {
-                                rosterGroupTextField.visible = false
-
-                                if (rosterGroupTextField.text !== modelData) {
-                                    RosterModel.updateGroup(modelData, rosterGroupTextField.text)
-                                }
-                            }
-                        }
-                    }
-                    IconButton {
-                        id: rosterGroupRemovalButton
-                        icon.source: "image://theme/icon-splus-delete"
-                        onClicked: {
-                            rosterGroupTextField.visible = false
-                            RosterModel.removeGroup(modelData)
-                        }
-                    }
-                }
-            }
-        }
-    }
     encryptionArea: Column {
         width: parent.width
 
@@ -269,6 +198,78 @@ DetailsContent {
         }
     }
 
+    rosterGroupArea: Column {
+    id: colRoster
+    width: parent.width
+
+    SectionHeader {
+        text: qsTr("Labels")
+    }
+    ColumnView {
+        id: rosterGroupListView
+        model: RosterModel.groups
+        visible: true
+        itemHeight: Theme.itemSizeSmall
+        delegate: BackgroundItem {
+            id: rosterGroupDelegate
+            width: rosterGroupListView.width
+            Row {
+                id: rosterGroupRow
+                Label {
+                    id: rosterGroupText
+                    text: modelData
+                    textFormat: Text.PlainText
+                    maximumLineCount: 1
+                    elide: Text.ElideRight
+                    visible: !rosterGroupTextField.visible
+                    height: rosterGroupTextField.height
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: rosterGroupDelegate.width - 2*rosterGroupRow.spacing - rosterGroupEditingButton.width - rosterGroupRemovalButton.width
+                    leftPadding: Theme.horizontalPageMargin
+                }
+                TextField {
+                    id: rosterGroupTextField
+                    text: modelData
+                    visible: false
+                    width: rosterGroupDelegate.width - 2*rosterGroupRow.spacing - rosterGroupEditingButton.width - rosterGroupRemovalButton.width
+                }
+                IconButton {
+                    id: rosterGroupEditingButton
+                    icon.source: rosterGroupTextField.visible ? "image://theme/icon-splus-right" : "image://theme/icon-m-edit"
+                    icon.sourceSize.width: Theme.iconSizeSmallPlus
+                    icon.sourceSize.height: Theme.iconSizeSmallPlus
+                    // Ensure that the button can be used within "rosterGroupDelegate"
+                    // which acts as an overlay to toggle this button when clicked.
+                    // Otherwise, this button would be toggled by "rosterGroupDelegate"
+                    // and by this button's own visible area at the same time resulting
+                    // in resetting the toggling on each click.
+                    onClicked: {
+                        if (rosterGroupText.visible) {
+                            rosterGroupTextField.visible = true
+                            rosterGroupTextField.forceActiveFocus()
+                            rosterGroupTextField.selectAll()
+                        } else {
+                            rosterGroupTextField.visible = false
+
+                            if (rosterGroupTextField.text !== modelData) {
+                                RosterModel.updateGroup(modelData, rosterGroupTextField.text)
+                            }
+                        }
+                    }
+                }
+                IconButton {
+                    id: rosterGroupRemovalButton
+                    icon.source: "image://theme/icon-splus-delete"
+                    onClicked: {
+                        rosterGroupTextField.visible = false
+                        RosterModel.removeGroup(modelData)
+                    }
+                }
+            }
+        }
+    }
+}
+
     Component {
         id: contactAdditionSheet
         RosterAddContactSheet {
@@ -276,87 +277,297 @@ DetailsContent {
         }
     }
 
-     Column {
-         id: providerArea
-         width: parent.width
-         visible: providerUrl  || chatSupportList.length || groupChatSupportList.length
+    Column {
+     id: providerArea
+     width: parent.width
+     visible: providerUrl  || chatSupportList.length || groupChatSupportList.length
 
-         readonly property string providerUrl: {
-             const domain = root.jid.split('@')[1]
-             const provider = providerListModel.provider(domain)
+     readonly property string providerUrl: {
+         const domain = root.jid.split('@')[1]
+         const provider = providerListModel.provider(domain)
 
-             return providerListModel.chooseWebsite(provider.websites)
-         }
+         return providerListModel.chooseWebsite(provider.websites)
+     }
 
-         readonly property var chatSupportList: providerListModel.providerFromBareJid(root.jid).chatSupportList
-         readonly property var groupChatSupportList: providerListModel.providerFromBareJid(root.jid).groupChatSupportList
+     readonly property var chatSupportList: providerListModel.providerFromBareJid(root.jid).chatSupportList
+     readonly property var groupChatSupportList: providerListModel.providerFromBareJid(root.jid).groupChatSupportList
 
-        ProviderListModel {
-            id: providerListModel
+    ProviderListModel {
+        id: providerListModel
+    }
+
+    ChatSupportSheet {
+        id: chatSupportSheet
+        chatSupportList: providerArea.chatSupportList
+    }
+
+    SectionHeader {
+        text: qsTr("Provider")
+    }
+
+    ValueButton {
+        value: qsTr("Visit website")
+        description: qsTr("Open your provider's website in a web browser")
+        visible: providerArea.providerUrl
+        onClicked: Qt.openUrlExternally(providerArea.providerUrl)
+    }
+
+    ValueButton {
+        value: qsTr("Copy website address")
+        description: qsTr("Copy your provider's web address to the clipboard")
+        visible: providerArea.providerUrl
+        onClicked: {
+            Utils.copyToClipboard(providerArea.providerUrl)
+            passiveNotification(qsTr("Website address copied to clipboard"))
         }
+    }
 
-        ChatSupportSheet {
-            id: chatSupportSheet
-            chatSupportList: providerArea.chatSupportList
-        }
-
-        SectionHeader {
-            text: qsTr("Provider")
-        }
-
-        ValueButton {
-            value: qsTr("Visit website")
-            description: qsTr("Open your provider's website in a web browser")
-            visible: providerArea.providerUrl
-            onClicked: Qt.openUrlExternally(providerArea.providerUrl)
-        }
-
-        ValueButton {
-            value: qsTr("Copy website address")
-            description: qsTr("Copy your provider's web address to the clipboard")
-            visible: providerArea.providerUrl
-            onClicked: {
-                Utils.copyToClipboard(providerArea.providerUrl)
-                passiveNotification(qsTr("Website address copied to clipboard"))
+    ValueButton {
+        value: qsTr("Open support chat")
+        description: qsTr("Start chat with your provider's support contact")
+        visible: providerArea.chatSupportList.length > 0
+        onClicked: {
+            if (providerArea.chatSupportList.length === 1) {
+                if (!contactAdditionSheet.sheetOpen) {
+                    contactAdditionSheet.jid = providerArea.chatSupportList[0]
+                    contactAdditionSheet.nickname = qsTr("Support")
+                    root.sheet.close()
+                    contactAdditionSheet.open()
+                }
+            } else if (!chatSupportSheet.sheetOpen) {
+                root.sheet.close()
+                chatSupportSheet.open()
             }
         }
+    }
 
-        ValueButton {
-            value: qsTr("Open support chat")
-            description: qsTr("Start chat with your provider's support contact")
-            visible: providerArea.chatSupportList.length > 0
-            onClicked: {
-                if (providerArea.chatSupportList.length === 1) {
-                    if (!contactAdditionSheet.sheetOpen) {
-                        contactAdditionSheet.jid = providerArea.chatSupportList[0]
-                        contactAdditionSheet.nickname = qsTr("Support")
-                        root.sheet.close()
-                        contactAdditionSheet.open()
-                    }
-                } else if (!chatSupportSheet.sheetOpen) {
-                    root.sheet.close()
+    ValueButton {
+        value: qsTr("Open support group")
+        description: qsTr("Join your provider's public support group")
+        visible: providerArea.groupChatSupportList.length > 0
+        onClicked: {
+            if (providerArea.groupChatSupportList.length === 1) {
+                Qt.openUrlExternally(Utils.groupChatUri(providerArea.groupChatSupportList[0]))
+            } else {
+                chatSupportSheet.isGroupChatSupportSheet = true
+
+                if (!chatSupportSheet.sheetOpen) {
                     chatSupportSheet.open()
                 }
             }
         }
-
-        ValueButton {
-            value: qsTr("Open support group")
-            description: qsTr("Join your provider's public support group")
-            visible: providerArea.groupChatSupportList.length > 0
-            onClicked: {
-                if (providerArea.groupChatSupportList.length === 1) {
-                    Qt.openUrlExternally(Utils.groupChatUri(providerArea.groupChatSupportList[0]))
-                } else {
-                    chatSupportSheet.isGroupChatSupportSheet = true
-
-                    if (!chatSupportSheet.sheetOpen) {
-                        chatSupportSheet.open()
-                    }
-                }
-            }
-        }
     }
+}
+
+     Column {
+         width: parent.width
+         spacing: 0
+
+         SectionHeader {
+             text: qsTr("Blocked Chat Addresses")
+         }
+
+         Label {
+             width: parent.width - 2*Theme.horizontalPageMargin
+             leftPadding: Theme.horizontalPageMargin
+             wrapMode: Text.WordWrap
+             font.pixelSize: Theme.fontSizeExtraSmall
+             color: Theme.secondaryColor
+             text: qsTr("Block a specific user (e.g., user@example.org) or all users of the same server (e.g., example.org)")
+         }
+
+
+         ListView {
+             id: blockingListView
+             model: BlockingModel {}
+             visible: blockingExpansionButton.checked
+             implicitHeight: contentHeight
+             width: parent.width
+             header: Column {
+                 width: parent.width
+                 spacing: Theme.paddingLarge
+
+                 Label {
+                     text: qsTr("You must be connected to block or unblock chat addresses")
+                     visible: Kaidan.connectionState !== Enums.StateConnected
+                     width: parent.width
+                 }
+
+                 TextField {
+                     id: blockingTextField
+                     placeholderText: qsTr("user@example.org")
+                     visible: Kaidan.connectionState === Enums.StateConnected
+                     enabled: !blockingAction.loading
+                     width: parent.width
+                     focus: false
+                     onAcceptableInputChanged: blockingButton.clicked()
+                     onVisibleChanged: {
+                         if (visible) {
+                             text = ""
+                             forceActiveFocus()
+                         }
+                     }
+                     rightItem : IconButton {
+                         id: blockingButton
+    //                     Controls.ToolTip.text: qsTr("Block chat address")
+                         icon.source: "image://theme/icon-splus-add"
+                         visible: !blockingAction.loading && Kaidan.connectionState === Enums.StateConnected
+                         enabled: blockingTextField.text.length
+    //                     flat: !hovered
+    //                     Layout.preferredWidth: Layout.preferredHeight
+    //                     Layout.preferredHeight: blockingTextField.implicitHeight
+    //                     Layout.rightMargin: Kirigami.Units.largeSpacing
+                         onClicked: {
+                             const jid = blockingTextField.text
+                             if (blockingListView.model.contains(jid)) {
+                                 blockingTextField.text = ""
+                             } else if (enabled) {
+                                 blockingAction.block(jid)
+                                 blockingTextField.text = ""
+                             } else {
+                                 blockingTextField.forceActiveFocus()
+                             }
+                         }
+                     }
+                 }
+
+                 BusyIndicator {
+                     visible: blockingAction.loading
+//                     Layout.preferredWidth: blockingButton.Layout.preferredWidth
+//                     Layout.preferredHeight: Layout.preferredWidth
+//                     Layout.rightMargin: blockingButton.Layout.rightMargin
+                 }
+             }
+
+             section.property: "type"
+                 section.delegate: Label {
+                     text: section
+                     padding: Theme.paddingLarge
+                     font.pixelSize: Theme.fontSizeSmall
+                     color: Theme.highlightColor
+                     leftPadding: Theme.horizontalPageMargin
+                     anchors.left: parent.left
+                     anchors.right: parent.right
+        //                     background: Rectangle {
+        //                         color: tertiaryBackgroundColor
+        //                     }
+                 }
+             delegate: BackgroundItem {
+                 id: blockingDelegate
+                 width: ListView.view.width
+                 Row {
+                     spacing: 0
+                     width: parent.width
+                     Label {
+                         id: blockingText
+                         text: model.jid
+                         textFormat: Text.PlainText
+                         elide: Text.ElideMiddle
+                         visible: !blockingEditingTextField.visible
+                         height: blockingEditingTextField.height
+                         anchors.verticalCenter: blockingEditingTextField.textVerticalCenterOffset
+                         width: parent.width - blockingEditingButton.width - blockingUnblockButton.width
+                         leftPadding: Theme.horizontalPageMargin
+                     }
+
+                     TextField {
+                         id: blockingEditingTextField
+                         text: model.jid
+                         visible: false
+//                         font.pixelSize: Theme.fontSizeSmall
+                         width: parent.width - blockingEditingButton.width - blockingUnblockButton.width
+                     }
+
+                     IconButton {
+                         id: blockingEditingButton
+//                           text: qsTr("Change chat address…")
+                         icon.source: blockingText.visible ? "image://theme/icon-m-edit" : "image://theme/icon-m-edit-selected"
+                         icon.sourceSize.width: Theme.iconSizeSmallPlus
+                         icon.sourceSize.height: Theme.iconSizeSmallPlus
+                         anchors.verticalCenter: blockingEditingTextField.textVerticalCenterOffset
+//                             display: Controls.AbstractButton.IconOnly
+          //             checked: !blockingText.visible
+//                             flat: !hovered
+//                             Controls.ToolTip.text: text
+                         // Ensure that the button can be used within "blockingDelegate"
+                         // which acts as an overlay to toggle this button when clicked.
+                         // Otherwise, this button would be toggled by "blockingDelegate"
+                         // and by this button's own visible area at the same time resulting
+                         // in resetting the toggling on each click.
+//                             autoRepeat: true
+                         onClicked: {
+                             if (blockingText.visible) {
+                                 blockingEditingTextField.visible = true
+                                 blockingEditingTextField.forceActiveFocus()
+                                 blockingEditingTextField.selectAll()
+                             } else {
+                                 blockingEditingTextField.visible = false
+
+                                 if (blockingEditingTextField.text !== model.jid) {
+                                     blockingAction.block(blockingEditingTextField.text)
+                                     blockingAction.unblock(model.jid)
+                                 }
+                             }
+                         }
+                     }
+
+                     IconButton {
+                         id: blockingUnblockButton
+//                             text: qsTr("Unblock")
+                         icon.source: "image://theme/icon-splus-delete"
+                         anchors.verticalCenter: blockingEditingTextField.textVerticalCenterOffset
+                         visible: Kaidan.connectionState === Enums.StateConnected
+//                             display: Controls.AbstractButton.IconOnly
+//                             flat: !blockingDelegate.hovered
+//                             Controls.ToolTip.text: text
+                         onClicked: blockingAction.unblock(model.jid)
+                     }
+                 }
+             }
+         }
+
+//         FormExpansionButton {
+//             id: blockingExpansionButton
+//         }
+     }
+
+     Column {
+         id: notesAdditionArea
+         visible: !RosterModel.hasItem(root.jid)
+         width: parent.width
+         spacing: 0
+
+         SectionHeader {
+             text: qsTr("Notes")
+         }
+
+         // TODO: Find a solution (hide button or add local-only chat) to servers not allowing to add oneself to the roster (such as Prosody)
+         ValueButton {
+             value: qsTr("Add chat for notes")
+             description: qsTr("Add a chat for synchronizing your notes across all your devices")
+//               icon.source: "note-symbolic"
+             onClicked: {
+                 Kaidan.client.rosterManager.addContactRequested(root.jid)
+                 Kaidan.openChatPageRequested(root.jid, root.jid)
+             }
+
+             Connections {
+                 target: RosterModel
+
+                 function onAddItemRequested(item) {
+                     if (item.jid === root.jid) {
+                         notesAdditionArea.visible = false
+                     }
+                 }
+
+                 function onRemoveItemsRequested(accountJid, jid) {
+                     if (accountJid === jid) {
+                         notesAdditionArea.visible = true
+                     }
+                 }
+             }
+         }
+     }
 
      Column {
         visible: Kaidan.serverFeaturesCache.inBandRegistrationSupported
@@ -473,7 +684,7 @@ DetailsContent {
         }
     }
 
-     Column {
+    Column {
         visible: Kaidan.settings.passwordVisibility !== Kaidan.PasswordInvisible
         width: parent.width
         spacing: Theme.paddingLarge

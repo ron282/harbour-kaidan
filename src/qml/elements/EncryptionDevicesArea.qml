@@ -2,43 +2,36 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import QtQuick.Controls 2.14 as Controls
-import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 /**
  * This area is used to interact with encryption devices and their keys.
  */
-GridLayout {
+Flow {
 	property alias header: header
 	property alias listView: listView
 
-	Layout.maximumHeight: parent.flow === GridLayout.LeftToRight ? parent.height : parent.height / 2 - parent.rowSpacing * 2
+    height: parent.flow === Flow.LeftToRight ? parent.height : parent.height / 2 - parent.rowSpacing * 2
+    width:  parent.width
 
-	MobileForm.FormCard {
-		Layout.fillWidth: true
-		Layout.maximumHeight: parent.height
-		Layout.alignment: Qt.AlignCenter
+    Column {
+        width: parent.width
+        height: parent.height
 
-		contentItem: ColumnLayout {
-			spacing: 0
+        spacing: 0
 
-			MobileForm.FormCardHeader {
-				id: header
-			}
+        SectionHeader {
+            id: header
+        }
 
-			Controls.ScrollView {
-				Layout.fillWidth: true
-				Layout.fillHeight: true
-				Layout.preferredWidth: contentWidth
-				Layout.preferredHeight: contentHeight
-				clip: true
+        SilicaListView {
+            id: listView
+            width: parent.width
+            height: parent.height - header.height
 
-				ListView {
-					id: listView
-				}
-			}
-		}
-	}
+            clip: true
+        }
+    }
 }
+

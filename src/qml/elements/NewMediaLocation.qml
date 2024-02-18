@@ -12,7 +12,7 @@
 import QtQuick 2.2
 import Sailfish.Silica 1.0
 import QtPositioning 5.2 as Positioning
-//import QtLocation 5.6 as Location
+import QtLocation 5.2 as Location
 
 import im.kaidan.kaidan 1.0
 import MediaUtils 0.1
@@ -32,7 +32,6 @@ MediaPreview {
 	//FIXME Layout.maximumWidth: message ? messageSize : -1
 
 	Column {
-        /*
 		anchors {
 			fill: parent
 		}
@@ -81,11 +80,11 @@ MediaPreview {
 
             // onCopyrightLinkActivated: Qt.openUrlExternally(link)
 
-			onErrorChanged: {
-				if (map.error !== Location.Map.NoError) {
-					console.log("***", map.errorString)
-				}
-			}
+//			onErrorChanged: {
+//				if (map.error !== Location.Map.NoError) {
+//					console.log("***", map.errorString)
+//				}
+//			}
 
 			Positioning.PositionSource {
 				id: currentPosition
@@ -110,9 +109,9 @@ MediaPreview {
 					}
 				}
 
-                onUpdateTimeout: {
-					console.log("***", "Position lookup timeout.")
-				}
+//                onUpdateTimeout: {
+//					console.log("***", "Position lookup timeout.")
+//				}
 			}
 
 			Location.MapQuickItem {
@@ -142,7 +141,7 @@ MediaPreview {
 				anchorPoint: Qt.point(sourceItem.width / 2, sourceItem.height)
 
                 sourceItem: Image {
-					source: MediaUtilsInstance.newMediaIconName(Enums.MessageType.MessageGeoLocation)
+                    source: MediaUtilsInstance.newMediaIconName(Enums.MessageGeoLocation)
 					height: 48
 					width: height
                     //FIXME color: "#e41e25"
@@ -150,19 +149,18 @@ MediaPreview {
 				}
 			}
 
-            Switch {
+            IconButton {
 				id: followMe
+
 
 				visible: !root.message
 				enabled: currentPosition.supportedPositioningMethods !== Positioning.PositionSource.NoPositioningMethods
-                //FIXME checkable: true
-				checked: true
+//              checkable: true
+                property bool checked: true
 
-                icon: Image {
-                    source: checked
-						  ? MediaUtilsInstance.newMediaIconName(Enums.MessageType.MessageGeoLocation)
-						  : 'find-location-symbolic'
-				}
+                icon.source: checked ?
+                            MediaUtilsInstance.newMediaIconName(Enums.MessageGeoLocation)
+                          : 'image://theme/icon-m-location'
 
 				anchors {
 					right: parent.right
@@ -189,13 +187,15 @@ MediaPreview {
 //					}
 //				}
 
-				onCheckedChanged: {
+                onClicked: {
 					if (checked) {
 						root.selectedGeoLocation = currentPosition.position.coordinate
 						map.center = root.selectedGeoLocation
+                        checked = !checked
 					} else {
 						root.selectedGeoLocation = map.center
-					}
+                        checked = !checked
+                    }
 				}
 			}
 
@@ -207,14 +207,14 @@ MediaPreview {
                 maximumValue: map.maximumZoomLevel
                 //FIXME orientation : Qt.Vertical
 				value: map.zoomLevel
-				width: Kirigami.Units.gridUnit * 1.4
+//				width: Kirigami.Units.gridUnit * 1.4
 				z: map.z + 3
 
 				anchors {
 					left: parent.left
 					top: parent.top
 					bottom: parent.bottom
-					margins: Kirigami.Units.gridUnit
+//					margins: Kirigami.Units.gridUnit
 				}
 
 				onValueChanged: {
@@ -237,6 +237,5 @@ MediaPreview {
 				}
 			}
 		}
-        */
 	}
 }

@@ -134,6 +134,14 @@ ChatPageBase {
 		}
 	}
 
+    Component {
+        id: contactDetailsKeyAuthenticationPage
+
+        KeyAuthenticationPage {
+//          Component.onDestruction: openView(contactDetailsSheet, contactDetailsPage)
+        }
+    }
+
     SendMediaSheet {
         id: sendMediaSheet
         composition: sendingPane.composition

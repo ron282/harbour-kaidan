@@ -19,7 +19,7 @@ ContextMenu {
 
     MenuItem {
 		text: root.item && root.item.pinned ? qsTr("Unpin") : qsTr("Pin")
-		visible: root.item
+//		visible: root.item
         onClicked: {
 			if (root.item.pinned) {
 				RosterModel.unpinItem(root.item.accountJid, root.item.jid)

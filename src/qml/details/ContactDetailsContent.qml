@@ -47,36 +47,164 @@ DetailsContent {
         model: VCardModel {
             jid: root.jid
         }
-        delegate: BackgroundItem {
+        delegate: ValueButton {
             id: vCardDelegate
-
-            Column {
-                width: parent.width
-                Label {
-                    text: Utils.formatMessage(model.value)
-                    textFormat: Text.StyledText
-                    wrapMode: Text.WordWrap
-                    visible: !vCardDelegate.editMode
-                    width: parent.width
-                    rightPadding: Theme.paddingLarge
-                    leftPadding: Theme.paddingLarge
-                    onLinkActivated: Qt.openUrlExternally(link)
-                }
-
-                Label {
-                    text: model.key
-                    color: Theme.secondaryColor
-                    font.pixelSize: Theme.fontSizeSmall
-                    textFormat: Text.PlainText
-                    wrapMode: Text.WordWrap
-                    width: parent.width
-                    rightPadding: Theme.paddingLarge
-                    leftPadding: Theme.paddingLarge
+            label: model.value
+            description: model.key
+            enabled: model.uriScheme === "mailto" || model.uriScheme === "http"
+            onClicked: {
+                if (model.uriScheme === "mailto") {
+                    Qt.openUrlExternally(model.uriScheme + ":" + model.value)
+                } else if (model.uriScheme === "http") {
+                    Qt.openUrlExternally(model.value)
                 }
             }
+            width: parent.width
         }
     }
 
+    encryptionArea: Column {
+        width: parent.width
+        spacing: 0
+
+        OmemoWatcher {
+            id: accountOmemoWatcher
+            jid: root.accountJid
+        }
+
+        OmemoWatcher {
+            id: contactOmemoWatcher
+            jid: root.jid
+        }
+
+        SectionHeader {
+            text: qsTr("Encryption")
+        }
+
+        TextSwitch {
+            text: qsTr("OMEMO 0")
+            description: qsTr("End-to-end encryption with OMEMO ensures that nobody else than you and your chat partners can read or modify the data you exchange.")
+            enabled: MessageModel.usableOmemoDevices.length
+            checked: MessageModel.isOmemoEncryptionEnabled
+            // The switch is toggled by setting the user's preference on using encryption.
+            // Note that 'checked' has already the value after the button is clicked.
+            onClicked: MessageModel.encryption = checked ? Encryption.Omemo0 : Encryption.NoEncryption
+        }
+
+        ValueButton {
+            label: {
+                if (!MessageModel.usableOmemoDevices.length) {
+                    if (accountOmemoWatcher.distrustedDevices.length) {
+                        return qsTr("Scan your devices")
+                    } else if (ownResourcesWatcher.resourcesCount > 1) {
+                        return qsTr("No scan for your devices")
+                    } else if (root.isChatWithOneself) {
+                        return qsTr("No scan for your devices")
+                    }
+                } else if (accountOmemoWatcher.authenticatableDevices.length) {
+                    if (accountOmemoWatcher.authenticatableDevices.length === accountOmemoWatcher.distrustedDevices.length) {
+                        return qsTr("Scan your devices")
+                    }
+
+                    return qsTr("Scan your devices")
+                }
+
+                return ""
+            }
+            description: {
+                if (!MessageModel.usableOmemoDevices.length) {
+                    if (accountOmemoWatcher.distrustedDevices.length) {
+                        return qsTr("Scan the QR codes of <b>your</b> devices to encrypt for them")
+                    } else if (ownResourcesWatcher.resourcesCount > 1) {
+                        return qsTr("<b>Your</b> other devices don't use OMEMO 0")
+                    } else if (root.isChatWithOneself) {
+                        return qsTr("<b>You</b> have no other devices supporting OMEMO 0")
+                    }
+                } else if (accountOmemoWatcher.authenticatableDevices.length) {
+                    if (accountOmemoWatcher.authenticatableDevices.length === accountOmemoWatcher.distrustedDevices.length) {
+                        return qsTr("Scan the QR codes of <b>your</b> devices to encrypt for them")
+                    }
+
+                    return qsTr("Scan the QR codes of <b>your</b> devices for maximum security")
+                }
+
+                return ""
+            }
+            visible: label
+            enabled: accountOmemoWatcher.authenticatableDevices.length
+            onClicked: root.openKeyAuthenticationPage(contactDetailsKeyAuthenticationPage, root.accountJid, root.accountJid)
+
+            UserResourcesWatcher {
+                id: ownResourcesWatcher
+                jid: root.accountJid
+            }
+        }
+
+        ValueButton {
+            label: {
+                if(root.isChatWithOneself) {
+                    return ""
+                }
+
+                if (!MessageModel.usableOmemoDevices.length) {
+                    if (contactOmemoWatcher.distrustedDevices.length) {
+                        return qsTr("Scan contact")
+                    }
+
+                    return qsTr("No scan for contact")
+                } else if (contactOmemoWatcher.authenticatableDevices.length) {
+                    if (contactOmemoWatcher.authenticatableDevices.length === contactOmemoWatcher.distrustedDevices.length) {
+                        return qsTr("Scan contact")
+                    }
+
+                    return qsTr("Scan contact")
+                }
+
+                return ""
+            }
+            description: {
+                if(root.isChatWithOneself) {
+                    return ""
+                }
+
+                if (!MessageModel.usableOmemoDevices.length) {
+                    if (contactOmemoWatcher.distrustedDevices.length) {
+                        return qsTr("Scan the QR code of your <b>contact</b> to enable encryption")
+                    }
+
+                    return qsTr("Your <b>contact</b> doesn't use OMEMO")
+                } else if (contactOmemoWatcher.authenticatableDevices.length) {
+                    if (contactOmemoWatcher.authenticatableDevices.length === contactOmemoWatcher.distrustedDevices.length) {
+                        return qsTr("Scan the QR codes of your <b>contact's</b> devices to encrypt for them")
+                    }
+
+                    return qsTr("Scan the QR code of your <b>contact</b> for maximum security")
+                }
+
+                return ""
+            }
+//			icon.source: {
+//                if (!MessageModel.usableDevices.length) {
+//                    if (contactOmemoWatcher.distrustedDevices.length) {
+//                        return "image://theme/icon-m-warning"
+//					}
+
+//                    return "image://theme/icon-m-warning"
+//                } else if (contactOmemoWatcher.authenticatableDevices.length) {
+//                    if (contactOmemoWatcher.authenticatableDevices.length === contactOmemoWatcher.distrustedDevices.length) {
+//                        return "image://theme/icon-m-warning"
+//					}
+
+//                    return "image://theme/icon-m-device-lock"
+//				}
+
+//				return ""
+//			}
+            visible: label
+            enabled: contactOmemoWatcher.authenticatableDevices.length
+            onClicked: root.openKeyAuthenticationPage(contactDetailsKeyAuthenticationPage, root.accountJid, root.jid)
+        }
+    }
 
     rosterGroupArea: Column {
         id: colRoster
@@ -90,7 +218,6 @@ DetailsContent {
             placeholderText: qsTr("New label")
             enabled: !rosterGroupBusyIndicator.running
             width: parent.width
-            focus: false
 
 //          onAccepted: rosterGroupAdditionButton.clicked()
 
@@ -169,169 +296,6 @@ DetailsContent {
         }
     }
 
-    encryptionArea: Column {
-        width: parent.width
-		spacing: 0
-
-		OmemoWatcher {
-			id: accountOmemoWatcher
-			jid: root.accountJid
-		}
-
-		OmemoWatcher {
-			id: contactOmemoWatcher
-			jid: root.jid
-		}
-
-		SectionHeader {
-            text: qsTr("Encryption")
-		}
-
-		TextSwitch {
-            text: qsTr("OMEMO 0")
-            description: qsTr("End-to-end encryption with OMEMO ensures that nobody else than you and your chat partners can read or modify the data you exchange.")
-			enabled: MessageModel.usableOmemoDevices.length
-			checked: MessageModel.isOmemoEncryptionEnabled
-			// The switch is toggled by setting the user's preference on using encryption.
-			// Note that 'checked' has already the value after the button is clicked.
-            onClicked: MessageModel.encryption = checked ? Encryption.Omemo0 : Encryption.NoEncryption
-		}
-
-        ValueButton {
-            label: {
-				if (!MessageModel.usableOmemoDevices.length) {
-					if (accountOmemoWatcher.distrustedOmemoDevices.length) {
-                        return qsTr("Scan your devices")
-					} else if (ownResourcesWatcher.resourcesCount > 1) {
-                        return qsTr("No scan for your devices")
-					} else if (root.isChatWithOneself) {
-                        return qsTr("No scan for your devices")
-					}
-				} else if (accountOmemoWatcher.authenticatableOmemoDevices.length) {
-					if (accountOmemoWatcher.authenticatableOmemoDevices.length === accountOmemoWatcher.distrustedOmemoDevices.length) {
-                        return qsTr("Scan your devices")
-					}
-
-                    return qsTr("Scan your devices")
-				}
-
-				return ""
-			}
-            description: {
-                if (!MessageModel.usableOmemoDevices.length) {
-                    if (accountOmemoWatcher.distrustedOmemoDevices.length) {
-                        return qsTr("Scan the QR codes of <b>your</b> devices to encrypt for them")
-                    } else if (ownResourcesWatcher.resourcesCount > 1) {
-                        return qsTr("<b>Your</b> other devices don't use OMEMO 0")
-                    } else if (root.isChatWithOneself) {
-                        return qsTr("<b>You</b> have no other devices supporting OMEMO 0")
-                    }
-                } else if (accountOmemoWatcher.authenticatableOmemoDevices.length) {
-                    if (accountOmemoWatcher.authenticatableOmemoDevices.length === accountOmemoWatcher.distrustedOmemoDevices.length) {
-                        return qsTr("Scan the QR codes of <b>your</b> devices to encrypt for them")
-                    }
-
-                    return qsTr("Scan the QR codes of <b>your</b> devices for maximum security")
-                }
-
-                return ""
-            }
-//            icon.source: {
-//               if (!MessageModel.usableOmemoDevices.length) {
-//					if (accountOmemoWatcher.distrustedOmemoDevices.length) {
-//                        return "image://theme/icon-m-vpn"
-//					} else if (ownResourcesWatcher.resourcesCount > 1) {
-//                        return "image://theme/icon-m-warning"
-//					} else if (root.isChatWithOneself) {
-//                        return "image://theme/icon-m-warning"
-//					}
-//				} else if (accountOmemoWatcher.authenticatableOmemoDevices.length) {
-//					if (accountOmemoWatcher.authenticatableOmemoDevices.length === accountOmemoWatcher.distrustedOmemoDevices.length) {
-//                        return "image://theme/icon-m-device-lock"
-//					}
-//
-//                    return "image://theme/icon-m-device-lock"
-//				}
-//
-//				return ""
-//			}
-
-            visible: label
-			enabled: accountOmemoWatcher.authenticatableOmemoDevices.length
-            onClicked: pageStack.push(qrCodePage, { isForOwnDevices: true })
-
-			UserResourcesWatcher {
-				id: ownResourcesWatcher
-				jid: root.accountJid
-			}
-		}
-
-        ValueButton {
-            label: {
-                if(root.isChatWithOneself) {
-                    return ""
-                }
-
-                if (!MessageModel.usableOmemoDevices.length) {
-                    if (contactOmemoWatcher.distrustedOmemoDevices.length) {
-                        return qsTr("Scan contact")
-                    }
-
-                    return qsTr("No scan for contact")
-                } else if (contactOmemoWatcher.authenticatableOmemoDevices.length) {
-                    if (contactOmemoWatcher.authenticatableOmemoDevices.length === contactOmemoWatcher.distrustedOmemoDevices.length) {
-                        return qsTr("Scan contact")
-                    }
-
-                    return qsTr("Scan contact")
-                }
-
-                return ""
-            }
-            description: {
-                if(root.isChatWithOneself) {
-                    return ""
-                }
-
-                if (!MessageModel.usableOmemoDevices.length) {
-                    if (contactOmemoWatcher.distrustedOmemoDevices.length) {
-                        return qsTr("Scan the QR code of your <b>contact</b> to enable encryption")
-                    }
-
-                    return qsTr("Your <b>contact</b> doesn't use OMEMO")
-                } else if (contactOmemoWatcher.authenticatableOmemoDevices.length) {
-                    if (contactOmemoWatcher.authenticatableOmemoDevices.length === contactOmemoWatcher.distrustedOmemoDevices.length) {
-                        return qsTr("Scan the QR codes of your <b>contact's</b> devices to encrypt for them")
-                    }
-
-                    return qsTr("Scan the QR code of your <b>contact</b> for maximum security")
-                }
-
-                return ""
-            }
-/*			icon.source: {
-				if (!MessageModel.usableOmemoDevices.length) {
-					if (contactOmemoWatcher.distrustedOmemoDevices.length) {
-                        return "image://theme/icon-m-warning"
-					}
-
-                    return "image://theme/icon-m-warning"
-				} else if (contactOmemoWatcher.authenticatableOmemoDevices.length) {
-					if (contactOmemoWatcher.authenticatableOmemoDevices.length === contactOmemoWatcher.distrustedOmemoDevices.length) {
-                        return "image://theme/icon-m-warning"
-					}
-
-                    return "image://theme/icon-m-device-lock"
-				}
-
-				return ""
-			}
-*/
-            visible: label
-			enabled: contactOmemoWatcher.authenticatableOmemoDevices.length
-            onClicked: pageStack.push(qrCodePage, { contactJid: root.jid })
-		}
-    }
 
     Component {
         id: qrCodeDialog
@@ -350,11 +314,6 @@ DetailsContent {
         }
     }
 
-    RosterItemWatcher {
-        id: contactWatcher
-        jid: root.jid
-    }
-
     extraContentArea: Column {
         spacing: 0
         width: parent.width
@@ -363,11 +322,26 @@ DetailsContent {
             text: qsTr("Sharing")
         }
 
-        ValueButton {
-            label: qsTr("Show QR code")
+        TextSwitch {
+            text: qsTr("Show QR code")
             description: qsTr("Share this contact's chat address via QR code")
-//            icon.source: "image://theme/icon-m-qr"
-            onClicked: pageStack.push(qrCodeDialog)
+            checked: false
+//          icon.source: "image://theme/icon-m-qr"
+            onClicked:  qrCodeArea.visible = !qrCodeArea.visible
+        }
+
+        BackgroundItem {
+            id: qrCodeArea
+            visible: false
+            width: parent.width - 2 * Theme.horizontalPageMargin
+            height: width
+            anchors.horizontalCenter: parent.horizontalCenter
+
+            QrCode {
+                jid: root.jid
+                width: parent.width
+                height: parent.width
+            }
         }
 
         ValueButton {
@@ -446,6 +420,24 @@ DetailsContent {
             }
         }
 
+        TextSwitch {
+            text: qsTr("Block")
+            description: qsTr("Block all communication including status and notifications")
+            enabled: !blockingAction.loading && Kaidan.connectionState === Enums.StateConnected
+            checked: blockingWatcher.blocked
+            onCheckedChanged: {
+                if (checked) {
+                    blockingAction.block(root.jid)
+                } else {
+                    blockingAction.unblock(root.jid)
+                }
+            }
+            BlockingWatcher {
+                id: blockingWatcher
+                jid: root.jid
+            }
+        }
+
         SectionHeader {
             text: qsTr("Removal")
         }
@@ -470,6 +462,10 @@ DetailsContent {
                 removalButton.enabled = false
                 Kaidan.client.rosterManager.removeContactRequested(jid)
             }
+        }
+        RosterItemWatcher {
+            id: contactWatcher
+            jid: root.jid
         }
     }
 }

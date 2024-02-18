@@ -8,30 +8,30 @@ import Sailfish.Silica 1.0
 /**
  * This is used for actions without instantaneous results.
  */
-Column {
-    property alias contentArea: contentAreaZone.data
-	property alias loadingArea: loadingArea
-
-    anchors.top: parent.top
-    anchors.topMargin: Theme.itemSizeLarge
+Item {
+    default property alias __data: contentArea.data
+    property alias loadingArea: loadingArea
+    property int currentIndex: 0
     width: parent.width
 
     Column {
-        id: contentAreaZone
+        id: contentArea
+        visible: currentIndex == 0
+        spacing: Theme.paddingLarge * 2
         width: parent.width
-	}
+    }
 
-	LoadingArea {
-		id: loadingArea
-        anchors.fill: parent
-//		background.color: secondaryBackgroundColor
-	}
+    LoadingArea {
+        id: loadingArea
+        visible: currentIndex == 1
+        background.color: secondaryBackgroundColor
+    }
 
-	function showLoadingView() {
-        loadingArea.running = true
-	}
+    function showLoadingView() {
+        currentIndex = 1
+    }
 
-	function hideLoadingView() {
-        loadingArea.running = false
+    function hideLoadingView() {
+        currentIndex = 0
     }
 }

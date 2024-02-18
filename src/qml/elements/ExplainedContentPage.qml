@@ -62,16 +62,14 @@ Page {
         id: pageHeader
     }
 
-    Column {
+    Item {
         id: contentArea
-        spacing: 0
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin: useMarginsForContent ?  Theme.horizontalPageMargin : 0
-        anchors.rightMargin: useMarginsForContent ?  Theme.horizontalPageMargin : 0
-        anchors.topMargin: Theme.itemSizeMedium
-        anchors.bottomMargin: useMarginsForContent ? parent.height - buttonArea.y : 0
+        anchors.top: pageHeader.bottom
+        anchors.bottom:  parent.bottom
+        anchors.margins: useMarginsForContent ?  Theme.horizontalPageMargin : 0
+        anchors.bottomMargin: useMarginsForContent ? parent.height - pageHeader.height - buttonArea.y : 0
     }
 
 
@@ -84,27 +82,27 @@ Page {
         visible: explanationArea.visible
     }
 
-    SilicaItem {
+    Item {
         id: overlay
+        z: 2
 
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: pageHeader.bottom
+        anchors.bottom: parent.bottom
 
-        Column {
+
+        Item {
             id: explanationArea
-            spacing: 0
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            width: parent.width
-            anchors.topMargin: Theme.itemSizeMedium
-            anchors.bottomMargin: useMarginsForContent ? parent.height - buttonArea.y : 0
+            anchors.fill: parent
+            anchors.bottomMargin: Theme.itemSizeMedium
         }
 
         Column {
             id: buttonArea
+            width: Theme.buttonWidthLarge
+            anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: Theme.paddingLarge
-            width: parent.width
             spacing: Theme.paddingLarge
 
             CenteredAdaptiveHighlightedButton {
@@ -117,14 +115,8 @@ Page {
         }
     }
 
-//    Item {
-//		id: contentArea
-//		anchors.fill: parent
-//		anchors.margins: useMarginsForContent ? 20 : 0
-//		anchors.bottomMargin: useMarginsForContent ? parent.height - buttonArea.y : 0
-//	}
 
-	// background of overlay
+    // background of overlay
     RoundedRectangle {
         id: explanationAreaBackground
         z: 1
@@ -134,32 +126,4 @@ Page {
         opacity: 0.9
         visible: explanationArea.visible
     }
-
-//	ColumnLayout {
-//		id: overlay
-//		z: 2
-//		anchors.fill: parent
-//		anchors.margins: 18
-
-//		Item {
-//			id: explanationArea
-//			Layout.fillWidth: true
-//			Layout.fillHeight: true
-//			Layout.bottomMargin: Kirigami.Units.smallSpacing * 3
-//		}
-
-//		ColumnLayout {
-//			id: buttonArea
-//			Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
-//			Layout.maximumWidth: largeButtonWidth
-
-//			CenteredAdaptiveHighlightedButton {
-//				id: primaryButton
-//			}
-
-//			CenteredAdaptiveButton {
-//				id: secondaryButton
-//			}
-//		}
-//	}
 }

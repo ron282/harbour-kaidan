@@ -60,7 +60,9 @@ ListItem {
 	signal messageEditRequested(string replaceId, string body, string spoilerHint)
 	signal quoteRequested(string body)
 
-    contentHeight: messageArea.height + (isGroupBegin ? Theme.paddingLarge : 0)
+    contentHeight: messageArea.height + (isGroupBegin ? Theme.paddingLarge : Theme.paddingSmall)
+//  alwaysVisibleActions: false
+
     menu: contextMenu
 
 /*	actions: [
@@ -68,14 +70,8 @@ ListItem {
 		// display all actions at the bottom / at the top of the message bubble
 		Button {
 			text: "Add message reaction"
-<<<<<<< HEAD
-			icon.source: "smiley-add"
-			// TODO: Remove " && Kaidan.connectionState === Enums.StateConnected" once offline queue for message reactions is implemented
-			visible: !root.isOwn && !Object.keys(root.reactions).length && Kaidan.connectionState === Enums.StateConnected
-=======
 			icon.name: "smiley-add"
 			visible: !root.displayedReactions.length
->>>>>>> master
 			onTriggered: {
 				root.reactionEmojiPicker.messageId = root.msgId
 				root.reactionEmojiPicker.open()

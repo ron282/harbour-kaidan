@@ -67,7 +67,7 @@ QVariant OmemoModel::data(const QModelIndex &index, int role) const
 
 void OmemoModel::setJid(const QString &jid)
 {
-	if (m_jid != jid) {
+    if (m_jid != jid) {
 		m_jid = jid;
 		setUp();
 	}
@@ -97,14 +97,14 @@ void OmemoModel::setUp()
 	disconnect(Kaidan::instance()->client()->caches()->omemoCache, nullptr, this, nullptr);
 
 	if (m_ownAuthenticatedKeysProcessed) {
-		connect(Kaidan::instance()->client()->caches()->omemoCache, &OmemoCache::ownDeviceUpdated, this, [this](const OmemoManager::Device &ownDevice) {
-			setOwnDevice(ownDevice);
+        connect(Kaidan::instance()->client()->caches()->omemoCache, &OmemoCache::ownDeviceUpdated, this, [this](const OmemoManager::Device &ownDevice) {
+            setOwnDevice(ownDevice);
 		});
 
 		setOwnDevice(OmemoCache::instance()->ownDevice());
 
 		connect(Kaidan::instance()->client()->caches()->omemoCache, &OmemoCache::authenticatedDevicesUpdated, this, [this](const QString &jid, const QList<OmemoManager::Device> &authenticatedDevices) {
-			if (jid == m_jid) {
+            if (jid == m_jid) {
 				setDevices(authenticatedDevices);
 			}
 		});
@@ -123,8 +123,12 @@ void OmemoModel::setUp()
 
 void OmemoModel::setOwnDevice(OmemoManager::Device ownDevice)
 {
-	ownDevice.label += " · " + tr("This device");
-	beginInsertRows(QModelIndex(), 0, 0);
+#if defined (SFOS)
+    ownDevice.label = tr("This device") + " · " + ownDevice.label;
+#else
+    ownDevice.label += " · " + tr("This device");
+#endif
+    beginInsertRows(QModelIndex(), 0, 0);
 	m_ownDevice = ownDevice;
 	endInsertRows();
 }

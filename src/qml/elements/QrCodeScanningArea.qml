@@ -5,14 +5,12 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.14
-import QtQuick.Controls 2.14 as Controls
-import QtQuick.Layouts 1.14
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
 
-GridLayout {
+Flow {
 	id: root
 
 	property string accountJid
@@ -22,13 +20,16 @@ GridLayout {
 	readonly property bool forOwnDevices: accountJid === chatJid
 	readonly property bool onlyForTrustDecisions: forOwnDevices || chatJid
 
+    spacing: Theme.paddingLarge * 2
+    readonly property int rowSpacing: spacing
+    readonly property int columnSpacing: spacing
+
 	property alias scanner: scanner
 
-	flow: parent.width > parent.height ? GridLayout.LeftToRight : GridLayout.TopToBottom
-	rowSpacing: Kirigami.Units.largeSpacing * 2
-	columnSpacing: rowSpacing
-	width: flow === GridLayout.LeftToRight ? parent.width : Math.min(parent.width, parent.height / 2 - rowSpacing * 2)
-	height: flow === GridLayout.TopToBottom ? parent.height : Math.min(parent.height, parent.width / 2 - columnSpacing * 2)
+    flow: parent.width > parent.height ? Flow.LeftToRight : Flow.TopToBottom
+    width:  flow === Flow.LeftToRight ? parent.width : Math.min(parent.width, parent.height / 2 - rowSpacing * 2)
+    height: flow === Flow.TopToBottom ? parent.height : Math.min(parent.height, parent.width / 2 - columnSpacing * 2)
+
 
 	QrCodeScanner {
 		id: scanner
@@ -36,17 +37,14 @@ GridLayout {
 		property bool isAcceptingResult: true
 		property bool isBusy: false
 
-		Layout.fillWidth: parent.flow === GridLayout.TopToBottom
-		Layout.fillHeight: parent.flow === GridLayout.LeftToRight
-		Layout.preferredWidth: height
-		Layout.preferredHeight: width
-		Layout.alignment: Qt.AlignCenter
+        width: parent.flow === Flow.TopToBottom ? parent.width : parent.height
+        height: parent.flow === Flow.LeftToRight ? parent.height : parent.width
 
 		// Use the data from the decoded QR code.
 		filter.onScanningSucceeded: {
 			if (isAcceptingResult) {
 				isBusy = true
-				let processTrust = true
+                var processTrust = true
 
 				// Try to add a contact.
 				if (!root.onlyForTrustDecisions) {
@@ -65,7 +63,7 @@ GridLayout {
 
 				// Try to authenticate or distrust keys.
 				if (processTrust) {
-					let expectedJid = ""
+                    var expectedJid = ""
 
 					if (root.onlyForTrustDecisions) {
 						expectedJid = root.chatJid
@@ -105,7 +103,7 @@ GridLayout {
 		// timer to accept the result again after an invalid URI was scanned
 		Timer {
 			id: resetAcceptResultTimer
-			interval: Kirigami.Units.veryLongDuration * 4
+            interval: 4000
 			onTriggered: scanner.isAcceptingResult = true
 		}
 
@@ -116,21 +114,23 @@ GridLayout {
 		}
 	}
 
-	Kirigami.Separator {
-		Layout.fillWidth: parent.flow === GridLayout.TopToBottom
-		Layout.fillHeight: !Layout.fillWidth
-		Layout.topMargin: parent.flow === GridLayout.LeftToRight ? parent.height * 0.1 : 0
-		Layout.bottomMargin: Layout.topMargin
-		Layout.leftMargin: parent.flow === GridLayout.TopToBottom ? parent.width * 0.1 : 0
-		Layout.rightMargin: Layout.leftMargin
-		Layout.alignment: Qt.AlignCenter
-	}
+    Separator {
+        width: parent.flow === Flow.TopToBottom ? parent.width : undefined
+        height: parent.flow === Flow.LeftToRight ? parent.height: undefined
+        anchors.topMargin: parent.flow === Flow.LeftToRight ? parent.height * 0.1 : 0
+        anchors.bottomMargin: anchors.topMargin
+        anchors.leftMargin: parent.flow === Flow.TopToBottom ? parent.width * 0.1 : 0
+        anchors.rightMargin: anchors.leftMargin
+//		Layout.alignment: Qt.AlignCenter
+    }
 
 	QrCode {
-		Layout.fillWidth: parent.flow === GridLayout.TopToBottom
-		Layout.fillHeight: parent.flow === GridLayout.LeftToRight
-		Layout.preferredWidth: height
-		Layout.preferredHeight: width
-		Layout.alignment: Qt.AlignCenter
-	}
+//		Layout.fillWidth: parent.flow === GridLayout.TopToBottom
+//		Layout.fillHeight: parent.flow === GridLayout.LeftToRight
+//		Layout.preferredWidth: height
+//		Layout.preferredHeight: width
+//		Layout.alignment: Qt.AlignCenter
+        width: parent.flow === Flow.TopToBottom ? parent.width : undefined
+        height: parent.flow === Flow.LeftToRight ? parent.height: undefined
+    }
 }

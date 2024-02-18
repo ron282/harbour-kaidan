@@ -5,11 +5,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.14
-import QtQuick.Layouts 1.14
-import QtQuick.Controls 2.14 as Controls
-import org.kde.kirigami 2.19 as Kirigami
-import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileForm
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
 
@@ -26,7 +23,7 @@ ExplanationOptionsTogglePage {
 	readonly property bool forOwnDevices: accountJid === chatJid
 
 	title: qsTr("Verify devices")
-	explanationInitiallyVisible: Kaidan.settings.keyAuthenticationPageExplanationVisible
+    explanationInitiallyVisible: Kaidan.settings.keyAuthenticationPageExplanationVisible
 	primaryButton.text: state === "primaryAreaDisplayed" ? qsTr("Show explanation") : qsTr("Scan QR codes")
 	primaryButton.onClicked: {
 		if (Kaidan.settings.keyAuthenticationPageExplanationVisible) {
@@ -50,36 +47,39 @@ ExplanationOptionsTogglePage {
 		accountJid: root.accountJid
 		chatJid: root.chatJid
 		visible: !Kaidan.settings.keyAuthenticationPageExplanationVisible
-		anchors.centerIn: parent
+        anchors.centerIn: parent
 	}
-	secondaryArea: GridLayout {
+    secondaryArea: Flow {
 		anchors.fill: parent
-		flow: parent.width > parent.height ? GridLayout.LeftToRight : GridLayout.TopToBottom
-		rowSpacing: Kirigami.Units.largeSpacing * 2
-		columnSpacing: rowSpacing
+        flow: parent.width > parent.height ? Flow.LeftToRight : Flow.TopToBottom
+        spacing: Theme.paddingSmall
+        property int rowSpacing: spacing
+        property int columnSpacing: rowSpacing
 
-		EncryptionDevicesArea {
+        EncryptionDevicesArea {
 			id: contactDevicesArea
-			header.title: root.forOwnDevices ? qsTr("Unverified own devices") : qsTr("Unverified contact devices")
+			header.text: root.forOwnDevices ? qsTr("Unverified own devices") : qsTr("Unverified contact devices")
 			listView.model: OmemoModel {
 				jid: root.chatJid
 			}
-			listView.header: MobileForm.FormCard {
-				width: ListView.view.width
-				Kirigami.Theme.colorSet: Kirigami.Theme.Window
-				contentItem: MobileForm.AbstractFormDelegate {
-					background: Item {}
-					contentItem: RowLayout {
-						spacing: Kirigami.Units.largeSpacing * 3
+			listView.header: Row {
+                width: ListView.view.width
+                height: encryptionKeyField.height
+//				Kirigami.Theme.colorSet: Kirigami.Theme.Window
+//				contentItem: MobileForm.AbstractFormDelegate {
+//					background: Item {}
+                        spacing: 0
 
-						Controls.TextField {
+                        TextArea {
 							id: encryptionKeyField
 							onTextChanged: text = Utils.displayableEncryptionKeyId(text)
 							placeholderText: "899bdd30 74f346c3 34cec4bb 536be448 c33886f3 057a912a 1f299b0f 32193d6c"
-							inputMethodHints: Qt.ImhPreferLatin | Qt.ImhPreferLowercase | Qt.ImhLatinOnly
+                            font.family: "monospace"
+                            inputMethodHints: Qt.ImhPreferLatin | Qt.ImhPreferLowercase | Qt.ImhLatinOnly
 							enabled: !encryptionKeyBusyIndicator.visible
-							Layout.fillWidth: true
-							onAccepted: encryptionKeyAuthenticationButton.clicked()
+                            font.pixelSize: Theme.fontSizeSmall
+                            width: parent.width - encryptionKeyAuthenticationButton.width
+//							onAccepted: encryptionKeyAuthenticationButton.clicked()
 							onVisibleChanged: {
 								if (visible) {
 									forceActiveFocus()
@@ -87,15 +87,14 @@ ExplanationOptionsTogglePage {
 							}
 						}
 
-						Button {
+						IconButton {
 							id: encryptionKeyAuthenticationButton
-							Controls.ToolTip.text: qsTr("Verify device")
-							icon.name: "emblem-ok-symbolic"
+//							Controls.ToolTip.text: qsTr("Verify device")
+							icon.source: "image://theme/icon-splus-add"
 							visible: !encryptionKeyBusyIndicator.visible
-							flat: !hovered
-							Layout.preferredWidth: Layout.preferredHeight
-							Layout.preferredHeight: encryptionKeyField.implicitHeight
-							Layout.rightMargin: Kirigami.Units.largeSpacing
+//							flat: !hovered
+                            width: Theme.iconSizeSmallPlus
+//							Layout.rightMargin: Kirigami.Units.largeSpacing
 							onClicked: {
 								// Remove empty spaces from the key ID and convert it to lower case.
 								const keyId = encryptionKeyField.text.replace(/\s/g, "").toLowerCase()
@@ -121,75 +120,101 @@ ExplanationOptionsTogglePage {
 							}
 						}
 
-						Controls.BusyIndicator {
+						BusyIndicator {
 							id: encryptionKeyBusyIndicator
 							visible: false
-							Layout.preferredWidth: encryptionKeyAuthenticationButton.Layout.preferredWidth
-							Layout.preferredHeight: Layout.preferredWidth
-							Layout.rightMargin: encryptionKeyAuthenticationButton.Layout.rightMargin
+                            width: encryptionKeyAuthenticationButton.width
+                            height: encryptionKeyAuthenticationButton.height
 						}
-					}
-				}
 			}
-			listView.delegate: MobileForm.FormTextDelegate {
-				text: model.label
-				description: "`" + Utils.displayableEncryptionKeyId(model.keyId) + "`"
-				descriptionItem.textFormat: Text.MarkdownText
-				width: ListView.view.width
-			}
+			
+            listView.delegate: Column {
+                width: ListView.view.width
+                Label {
+                    text: model.label ? model.label : qsTr("no name")
+                    font.pixelSize: Theme.fontSizeSmall
+    //				descriptionItem.textFormat: Text.MarkdownText
+                    width: parent.width
+                }
+                Row {
+                    width: parent.width
+                    Label {
+                            text: Utils.displayableEncryptionKeyId(model.keyId)
+                            wrapMode: Label.WordWrap
+                            width: parent.width - buttonAddKey.width - parent.spacing
+                            font.pixelSize: Theme.fontSizeExtraSmall
+                            font.family: "monospace"
+                            color: Theme.secondaryColor
+                        }
+                        IconButton {
+                            id: buttonAddKey
+                            icon.source: "image://theme/icon-splus-add"
+                            onClicked: {
+                                console.log("jid:"+contactDevicesArea.listView.model.jid)
+                                Kaidan.client.atmManager.makeTrustDecisionsRequested(contactDevicesArea.listView.model.jid, [model.keyId], [])
+                                passiveNotification(qsTr("Device verified"))
+                            }
+                        }
+                }
+                Separator {
+                    height: 5
+                }
+            }
 		}
 
-		Kirigami.Separator {
-			Layout.fillWidth: parent.flow === GridLayout.TopToBottom
-			Layout.fillHeight: !Layout.fillWidth
-			Layout.topMargin: parent.flow === GridLayout.LeftToRight ? parent.height * 0.1 : 0
-			Layout.bottomMargin: Layout.topMargin
-			Layout.leftMargin: parent.flow === GridLayout.TopToBottom ? parent.width * 0.1 : 0
-			Layout.rightMargin: Layout.leftMargin
-			Layout.alignment: Qt.AlignCenter
-		}
+        Separator {
+            width: parent.flow === Flow.TopToBottom ? parent.width : 1
+            height: parent.flow === Flow.LeftToRight? parent.height : 1
+        }
 
 		EncryptionDevicesArea {
-			header.title: qsTr("Verified own devices")
+			header.text: qsTr("Verified own devices")
 			listView.model: OmemoModel {
 				jid: root.accountJid
 				ownAuthenticatedKeysProcessed: true
 			}
-			listView.delegate: MobileForm.AbstractFormDelegate {
+			listView.delegate: Row {
 				id: encryptionKeyDelegate
-				width: ListView.view.width
-				leftPadding: 0
-				verticalPadding: 0
-				contentItem: RowLayout {
-					MobileForm.FormTextDelegate {
-						id: encryptionKeyText
-						text: model.label
-						description: "`" + Utils.displayableEncryptionKeyId(model.keyId) + "`"
-						descriptionItem.textFormat: Text.MarkdownText
-						Layout.fillWidth: true
-						onClicked: encryptionKeyCopyButton.clicked()
-					}
-
-					Button {
-						id: encryptionKeyCopyButton
-						text: qsTr("Copy fingerprint")
-						icon.name: "edit-copy-symbolic"
-						display: Controls.AbstractButton.IconOnly
-						flat: !hovered && !encryptionKeyDelegate.hovered
-						Controls.ToolTip.text: text
-						onClicked: {
-							Utils.copyToClipboard(model.keyId)
-							passiveNotification(qsTr("Fingerprint copied to clipboard"))
-						}
-					}
+                width: ListView.view.width
+                height: Theme.itemSizeSmall
+//				leftPadding: 0
+//				verticalPadding: 0
+//				contentItem: RowLayout {
+                spacing: 0
+                Label {
+                    text: model.label
+                    width: parent.width
+                }
+                Row {
+                    width: parent.width
+                    Label {
+                        id: encryptionKeyText
+                        font.pixelSize: Theme.fontSizeSmall
+                        font.family: "monospace"
+                        text: Utils.displayableEncryptionKeyId(model.keyId)
+//						descriptionItem.textFormat: Text.MarkdownText
+                        width: parent.width - encryptionKeyCopyButton.width
+                    }
+                    IconButton {
+                        id: encryptionKeyCopyButton
+//						text: qsTr("Copy fingerprint")
+                        icon.source: "image://theme/icon-m-clipboard"
+                        icon.sourceSize: Qt.size(Theme.iconSizeSmallPlus, Theme.iconSizeSmallPlus)
+//						display: Controls.AbstractButton.IconOnly
+//						flat: !hovered && !encryptionKeyDelegate.hovered
+//						Controls.ToolTip.text: text
+                        onClicked: {
+                            Utils.copyToClipboard(model.keyId)
+                            passiveNotification(qsTr("Fingerprint copied to clipboard"))
+                        }
+                    }
 				}
 			}
 		}
-	}
-
-	Component.onCompleted: {
-		if (!Kaidan.settings.keyAuthenticationPageExplanationVisible) {
-			qrCodeScanningArea.scanner.cameraEnabled = true
-		}
-	}
+    }
+    Component.onCompleted: {
+        if (!Kaidan.settings.keyAuthenticationPageExplanationVisible) {
+            qrCodeScanningArea.scanner.cameraEnabled = true
+        }
+    }
 }

@@ -288,7 +288,7 @@ BackgroundItem {
                     }
                 }
                 Button {
-                    visible: false // TO DEBUG
+                    visible: false //FIXME
                     width: parent.width
                     icon.source: "image://theme/icon-m-camera"
                     text: qsTr("Take picture")
@@ -299,7 +299,7 @@ BackgroundItem {
                     }
                 }
                 Button {
-                    visible: false // TO DEBUG
+                    visible: false //FIXME
                     width: parent.width
                     icon.source: "image://theme/icon-m-video"
                     text: qsTr("Record video")
@@ -328,13 +328,13 @@ BackgroundItem {
                     }
                 }
                 Button {
-                    visible: false // TO DEBUG
+                    visible: false //FIXME
                     width: parent.width
                     icon.source: "image://theme/icon-m-location"
                     text: qsTr("Share location")
 
                     onClicked: {
-                        chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageType.MessageGeoLocation)
+                        chatPage.newMediaSheet.sendNewMessageType(MessageModel.currentChatJid, Enums.MessageGeoLocation)
                         mediaPopup.hide()
                     }
                 }

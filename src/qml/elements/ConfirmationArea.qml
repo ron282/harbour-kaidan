@@ -9,9 +9,16 @@ import Sailfish.Silica 1.0
  * This is used for a single action without an instantaneous result.
  */
 LoadingStackArea {
-	property alias confirmationButton: confirmationButton
+    default property alias __data: contentArea.data
+    property alias confirmationButton: confirmationButton
 
-	CenteredAdaptiveHighlightedButton {
-		id: confirmationButton
-	}
+    Column {
+        id: contentArea
+        width: parent.width
+        spacing: Theme.paddingLarge
+    }
+
+    CenteredAdaptiveHighlightedButton {
+        id: confirmationButton
+    }
 }

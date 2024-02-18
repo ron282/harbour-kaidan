@@ -11,7 +11,7 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-//import QtLocation 5.6
+import QtLocation 5.2
 
 import im.kaidan.kaidan 1.0
 import MediaUtils 0.1
@@ -19,12 +19,11 @@ import MediaUtils 0.1
 MediaPreview {
 	id: root
 
-	// //FIXME Layout.preferredHeight: message ? messageSize : Kirigami.Units.gridUnit * 18
+    //FIXME Layout.preferredHeight: message ? messageSize : Kirigami.Units.gridUnit * 18
 	//FIXME Layout.preferredWidth: Kirigami.Units.gridUnit * 32
 	//FIXME Layout.maximumWidth: message ? messageSize : -1
 
 	Column {
-        /*
 		anchors {
 			fill: parent
 		}
@@ -91,6 +90,5 @@ MediaPreview {
 				}
 			}
 		}
-    */
     }
 }

@@ -1,7 +1,7 @@
 Name:	    harbour-kaidan
 Summary:    QXmpp Client Application
-Version:    0.0.3
-Release:    3
+Version:    0.10.0
+Release:    1
 Group:      Qt/Qt
 Source:     master.zip
 URL:        https://github.com/ron282/kaidan.git

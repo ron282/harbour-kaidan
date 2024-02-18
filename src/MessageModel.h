@@ -237,13 +237,6 @@ public:
 	Q_INVOKABLE int searchForMessageFromOldToNew(const QString &searchString, int startIndex = -1);
 
 	/**
-<<<<<<< HEAD
-	 * Sends pending messages again after searching them in the database.
-	 */
-	void sendPendingMessages();
-	/**
-=======
->>>>>>> master
 	  * Returns the current chat state
 	  */
 	QXmppMessage::State chatState() const;

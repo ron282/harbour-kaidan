@@ -2,15 +2,15 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.14
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 /**
  * This page shows two options and an explanation.
  */
 ExplainedContentPage {
-	required property Item primaryArea
-	required property Item secondaryArea	
+    property Item primaryArea
+    property Item secondaryArea
 	property bool explanationInitiallyVisible: true
 
 	primaryButton.onClicked: state = state === "primaryAreaDisplayed" ? "explanationAreaDisplayed" : "primaryAreaDisplayed"

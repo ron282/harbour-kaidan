@@ -72,7 +72,7 @@ Column {
                     var parent = menu
                     for (var i=0; i < menu.children.length; i++) {
                         var child = menu.children[i]
-                        if( child.value == value)
+                        if( child.value === value)
                             return i;
                     }
                     return -1
@@ -169,12 +169,7 @@ Column {
                     spacing: Theme.paddingMedium
                     Icon {
                         id: deviceIcon
-                        source: {
-                            if (model.os.indexOf("Android") < 0 && model.os.indexOf("Sailfish") < 0 )
-                                return "image://theme/icon-l-computer"
-                            else
-                                return "image://theme/icon-m-device"
-                        }
+                        source: "image://theme/icon-m-tether"
                         sourceSize: Qt.size(Theme.iconSizeMedium, Theme.iconSizeMedium)
                         anchors.verticalCenter: parent.verticalCenter
                     }
@@ -194,7 +189,6 @@ Column {
                             wrapMode: Text.WordWrap
                             width: parent.width
                         }
-
                         Label {
                             text: model.os
                             color: Theme.secondaryColor
@@ -212,6 +206,17 @@ Column {
             width: parent.width
         }
     }
+
+    function openKeyAuthenticationPage(keyAuthenticationPageComponent, accountJid, chatJid) {
+        if (root.sheet) {
+            root.sheet.close()
+        }
+
+        var keyAuthenticationPage = openPage(keyAuthenticationPageComponent)
+        keyAuthenticationPage.accountJid = accountJid
+        keyAuthenticationPage.chatJid = chatJid
+    }
+
 //=======
 //	default property alias __data: mainArea.data
 //	property Kirigami.OverlaySheet sheet
@@ -411,14 +416,5 @@ Column {
 //		}
 //	}
 
-//	function openKeyAuthenticationPage(keyAuthenticationPageComponent, accountJid, chatJid) {
-//		if (root.sheet) {
-//			root.sheet.close()
-//		}
-
-//		var keyAuthenticationPage = openPage(keyAuthenticationPageComponent)
-//		keyAuthenticationPage.accountJid = accountJid
-//		keyAuthenticationPage.chatJid = chatJid
-//	}
 //>>>>>>> master
 }

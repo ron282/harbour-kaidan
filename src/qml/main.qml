@@ -62,29 +62,35 @@ ApplicationWindow {
 //		color: Material.Material.color(Material.Material.Green, Material.Material.Shade700)
 //	}
 
-	// Global and Contextual Drawers
-	// It is initialized as invisible.
-	// That way, it does not pop up for a moment before the startPage is opened.
-    property Item _dockedPanel
-
-    bottomMargin: _dockedPanel ? _dockedPanel.visibleSize : 0
-
 //  globalDrawer: GlobalDrawer {
 //        enabled: false
 //  }
-
-    function dockedPanel() {
-        if (!_dockedPanel) _dockedPanel = globalDrawer.createObject(contentItem)
-        return _dockedPanel
-    }
 
 //	contextDrawer: Kirigami.ContextDrawer {
 //		id: contextDrawer
 //	}
 
-
-    SubRequestAcceptSheet {
-        id: subReqAcceptSheet
+    // Needed to be outside of the DetailsSheet to not be destroyed with it.
+    // Otherwise, the undo action of "showPassiveNotification()" would point to a destroyed object.
+    BlockingAction {
+        id: blockingAction
+        onSucceeded: {
+            // Show a passive notification when a JID that is not in the roster is blocked and
+            // provide an option to undo that.
+            // JIDs in the roster can be blocked again via their details.
+            if (!block && !RosterModel.hasItem(jid)) {
+//FIXME               showPassiveNotification(qsTr("Unblocked %1").arg(jid), "long", qsTr("Undo"), () => {
+//                    blockingAction.block(jid)
+//                })
+            }
+        }
+        onErrorOccurred: {
+            if (block) {
+                showPassiveNotification(qsTr("Could not block %1: %2").arg(jid).arg(errorText))
+            } else {
+                showPassiveNotification(qsTr("Could not unblock %1: %2").arg(jid).arg(errorText))
+            }
+        }
     }
 
     // components for all main pages
@@ -99,10 +105,21 @@ ApplicationWindow {
     Component {id: chatPage; ChatPage {}}
     Component {id: emptyChatPage; EmptyChatPage {}}
     Component {id: settingsPage; SettingsPage {}}
+//  Component {id: accountDetailsSheet; AccountDetailsSheet {}}
+//	Component {id: accountDetailsPage; AccountDetailsPage {}}
+    Component {id: avatarChangePage; AvatarChangePage {}}
     Component {id: qrCodeOnboardingPage; QrCodeOnboardingPage {}}
     Component {id: contactAdditionPage; ContactAdditionPage {}}
     Component {id: contactAdditionDialog; ContactAdditionDialog {}}
     Component {id: messageNotification; Notification {}}
+
+    Component {
+            id: accountDetailsKeyAuthenticationPage
+
+            KeyAuthenticationPage {
+                Component.onDestruction: openView(accountDetailsSheet, accountDetailsPage)
+            }
+    }
 
 //	onWideScreenChanged: showRosterPageForNarrowWindow()
 
@@ -147,7 +164,7 @@ ApplicationWindow {
 	 * Opens the view with the roster and chat page.
 	 */
 	function openChatView() {
-
+        console.log("[main.qml] openChatView")
         popLayersAboveLowest()
         popAllPages()
 
@@ -181,7 +198,8 @@ ApplicationWindow {
 	}
 
 	function openPage(pageComponent) {
-        //popLayersAboveLowest()
+        console.log("[main.qml] openPage depth="+pageStack.depth)
+        popLayersAboveLowest()
         return pageStack.push(pageComponent)
 	}
 
@@ -197,22 +215,21 @@ ApplicationWindow {
 	 * @param countOfLayersToPop count of layers which are popped
 	 */
 	function popLayers(countOfLayersToPop) {
-        for (i = 0; i < countOfLayersToPop; i++)
-            pageStack.navigateBack(PageStackAction.Immediate)
+//        for (i = 0; i < countOfLayersToPop; i++)
+//            pageStack.navigateBack(PageStackAction.Immediate)
 	}
 
 	/**
 	 * Pops all layers except the layer with index 0 from the page stack.
 	 */
 	function popLayersAboveLowest() {
-        while (pageStack.depth > 2)
-            pageStack.navigateBack(PageStackAction.Immediate)
 	}
 
 	/**
 	 * Pops all pages from the page stack.
 	 */
 	function popAllPages() {
+        console.log("[main.qml] popAllPages")
         pageStack.clear()
     }
 
@@ -269,7 +286,7 @@ ApplicationWindow {
     Connections {
 		target: RosterModel
 
-        function onSubscriptionRequestReceived(from, msg) {
+        onSubscriptionRequestReceived: {
 			Kaidan.client.vCardManager.vCardRequested(from)
 
 			subReqAcceptSheet.from = from

@@ -286,7 +286,10 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qRegisterMetaType<FileSharingController *>();
 	qRegisterMetaType<OmemoManager *>();
 	qRegisterMetaType<OmemoManager::Device>();
-	qRegisterMetaType<AvatarFileStorage*>();
+#if defined (SFOS)
+    qRegisterMetaType<QList<OmemoManager::Device>>();
+#endif
+    qRegisterMetaType<AvatarFileStorage*>();
 	qRegisterMetaType<QmlUtils*>();
 	qRegisterMetaType<QVector<Message>>();
 	qRegisterMetaType<QVector<RosterItem>>();

@@ -5,35 +5,31 @@
 import QtQuick 2.2
 import Sailfish.Silica 1.0
 
-BusyLabel {
-	property alias background: background
-	property alias description: description.text
+Item {
+    id: root
 
-    id: description
-    text: qsTr("Loading…")
+    property alias background: background
+    property alias description: description.text
 
     RoundedRectangle {
-		id: background
-		anchors.fill: content
-		anchors.margins: -8
-		color: primaryBackgroundColor
-		opacity: 0.9
-	}
+        id: background
+        anchors.fill: content
+        anchors.margins: -8
+        color: primaryBackgroundColor
+        opacity: 0.9
+    }
 
-/*	ColumnLayout {
-		id: content
-		anchors.centerIn: parent
+    Column {
+        id: content
+        anchors.centerIn: parent
 
-		Controls.BusyIndicator {
-			Layout.alignment: Qt.AlignHCenter
-		}
+        BusyIndicator {
+        }
 
-		Controls.Label {
-			id: description
-			text: qsTr("Loading…")
-			font.italic: true
-			color: Kirigami.Theme.textColor
-		}
-	}
-*/
+        Label {
+            id: description
+            text: qsTr("Loading…")
+            font.italic: true
+        }
+    }
 }

@@ -64,11 +64,10 @@ ExplanationOptionsTogglePage {
 			}
 			listView.header: Row {
                 width: ListView.view.width
-                height: encryptionKeyField.height
+//             height: encryptionKeyField.height
 //				Kirigami.Theme.colorSet: Kirigami.Theme.Window
 //				contentItem: MobileForm.AbstractFormDelegate {
 //					background: Item {}
-                        spacing: 0
 
                         TextArea {
 							id: encryptionKeyField
@@ -77,23 +76,27 @@ ExplanationOptionsTogglePage {
                             font.family: "monospace"
                             inputMethodHints: Qt.ImhPreferLatin | Qt.ImhPreferLowercase | Qt.ImhLatinOnly
 							enabled: !encryptionKeyBusyIndicator.visible
-                            font.pixelSize: Theme.fontSizeSmall
-                            width: parent.width - encryptionKeyAuthenticationButton.width
+                            font.pixelSize: Theme.fontSizeExtraSmall
+                            textLeftMargin: 0
+                            readOnly: true
+                            width: parent.width - encryptionKeyAuthenticationButton.width - parent.spacing
 //							onAccepted: encryptionKeyAuthenticationButton.clicked()
 							onVisibleChanged: {
-								if (visible) {
-									forceActiveFocus()
-								}
-							}
+                                if(!visible)
+                                    readOnly = true
+                            }
+                            onClicked: {
+                                readOnly = false
+                                forceActiveFocus()
+                            }
 						}
 
 						IconButton {
 							id: encryptionKeyAuthenticationButton
 //							Controls.ToolTip.text: qsTr("Verify device")
-							icon.source: "image://theme/icon-splus-add"
+                            icon.source: "image://theme/icon-m-add"
 							visible: !encryptionKeyBusyIndicator.visible
 //							flat: !hovered
-                            width: Theme.iconSizeSmallPlus
 //							Layout.rightMargin: Kirigami.Units.largeSpacing
 							onClicked: {
 								// Remove empty spaces from the key ID and convert it to lower case.
@@ -131,7 +134,7 @@ ExplanationOptionsTogglePage {
             listView.delegate: Column {
                 width: ListView.view.width
                 Label {
-                    text: model.label ? model.label : qsTr("no name")
+                    text: model.label ? model.label : qsTr("no device name")
                     font.pixelSize: Theme.fontSizeSmall
     //				descriptionItem.textFormat: Text.MarkdownText
                     width: parent.width
@@ -145,16 +148,15 @@ ExplanationOptionsTogglePage {
                             font.pixelSize: Theme.fontSizeExtraSmall
                             font.family: "monospace"
                             color: Theme.secondaryColor
+                    }
+                    IconButton {
+                        id: buttonAddKey
+                        icon.source: "image://theme/icon-m-add"
+                        onClicked: {
+                            Kaidan.client.atmManager.makeTrustDecisionsRequested(contactDevicesArea.listView.model.jid, [model.keyId], [])
+                            passiveNotification(qsTr("Device verified"))
                         }
-                        IconButton {
-                            id: buttonAddKey
-                            icon.source: "image://theme/icon-splus-add"
-                            onClicked: {
-                                console.log("jid:"+contactDevicesArea.listView.model.jid)
-                                Kaidan.client.atmManager.makeTrustDecisionsRequested(contactDevicesArea.listView.model.jid, [model.keyId], [])
-                                passiveNotification(qsTr("Device verified"))
-                            }
-                        }
+                    }
                 }
                 Separator {
                     height: 5
@@ -173,33 +175,31 @@ ExplanationOptionsTogglePage {
 				jid: root.accountJid
 				ownAuthenticatedKeysProcessed: true
 			}
-			listView.delegate: Row {
-				id: encryptionKeyDelegate
+            listView.delegate: Column {
+                id: encryptionKeyDelegate
                 width: ListView.view.width
-                height: Theme.itemSizeSmall
-//				leftPadding: 0
-//				verticalPadding: 0
-//				contentItem: RowLayout {
-                spacing: 0
                 Label {
-                    text: model.label
                     width: parent.width
+                    text: model.label ? model.label : qsTr("no device name")
+                    font.pixelSize: Theme.fontSizeSmall
                 }
                 Row {
                     width: parent.width
                     Label {
                         id: encryptionKeyText
-                        font.pixelSize: Theme.fontSizeSmall
+                        font.pixelSize: Theme.fontSizeExtraSmall
                         font.family: "monospace"
+                        wrapMode: Label.WordWrap
                         text: Utils.displayableEncryptionKeyId(model.keyId)
 //						descriptionItem.textFormat: Text.MarkdownText
-                        width: parent.width - encryptionKeyCopyButton.width
+                        color: Theme.secondaryColor
+                        width: parent.width - encryptionKeyCopyButton.width - parent.spacing
                     }
                     IconButton {
                         id: encryptionKeyCopyButton
 //						text: qsTr("Copy fingerprint")
                         icon.source: "image://theme/icon-m-clipboard"
-                        icon.sourceSize: Qt.size(Theme.iconSizeSmallPlus, Theme.iconSizeSmallPlus)
+//                      icon.sourceSize: Qt.size(Theme.iconSizeSmallPlus, Theme.iconSizeSmallPlus)
 //						display: Controls.AbstractButton.IconOnly
 //						flat: !hovered && !encryptionKeyDelegate.hovered
 //						Controls.ToolTip.text: text
@@ -208,7 +208,10 @@ ExplanationOptionsTogglePage {
                             passiveNotification(qsTr("Fingerprint copied to clipboard"))
                         }
                     }
-				}
+                }
+                Separator {
+                    height: 5
+                }
 			}
 		}
     }

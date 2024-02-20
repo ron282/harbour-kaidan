@@ -54,11 +54,11 @@ Item {
 	VideoOutput {
 //		visible: camera.cameraStatus === Camera.ActiveStatus
 		fillMode: VideoOutput.PreserveAspectCrop
-        width: parent.width
 		source: camera
         autoOrientation: false
         orientation: 0
         filters: [filter]
+        anchors.fill: parent
 //        Rectangle {
 //            color: "transparent"
 //            border.color: secondaryBackgroundColor

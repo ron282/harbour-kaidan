@@ -38,7 +38,7 @@ Flow {
 		property bool isBusy: false
 
         width: parent.flow === Flow.TopToBottom ? parent.width : parent.height
-        height: parent.flow === Flow.LeftToRight ? parent.height : parent.width
+        height: width
 
 		// Use the data from the decoded QR code.
 		filter.onScanningSucceeded: {
@@ -50,14 +50,14 @@ Flow {
 				if (!root.onlyForTrustDecisions) {
 					switch (RosterModel.addContactByUri(root.accountJid, result)) {
 					case RosterModel.AddingContact:
-						showPassiveNotification(qsTr("Contact added - Continue with step 2"), Kirigami.Units.veryLongDuration * 4)
+                        showPassiveNotification(qsTr("Contact added - Continue with step 2"), 1000 * 4)
 						break
 					case RosterModel.ContactExists:
 						processTrust = false
 						break
 					case RosterModel.InvalidUri:
 						processTrust = false
-						showPassiveNotification(qsTr("This QR code does not contain a contact"), Kirigami.Units.veryLongDuration * 4)
+                        showPassiveNotification(qsTr("This QR code does not contain a contact"), 1000 * 4)
 					}
 				}
 
@@ -72,24 +72,24 @@ Flow {
 					switch (Kaidan.makeTrustDecisionsByUri(result, expectedJid)) {
 					case Kaidan.MakingTrustDecisions:
 						if (root.forOwnDevices) {
-							showPassiveNotification(qsTr("Trust decisions made for other own device - Continue with step 2"), Kirigami.Units.veryLongDuration * 4)
+                            showPassiveNotification(qsTr("Trust decisions made for other own device - Continue with step 2"), 1000 * 4)
 						} else {
-							showPassiveNotification(qsTr("Trust decisions made for contact - Continue with step 2"), Kirigami.Units.veryLongDuration * 4)
+                            showPassiveNotification(qsTr("Trust decisions made for contact - Continue with step 2"), 1000 * 4)
 						}
 
 						break
 					case Kaidan.JidUnexpected:
 						if (root.onlyForTrustDecisions) {
 							if (root.forOwnDevices) {
-								showPassiveNotification(qsTr("This QR code is not for your other device"), Kirigami.Units.veryLongDuration * 4)
+                                showPassiveNotification(qsTr("This QR code is not for your other device"), 1000 * 4)
 							} else {
-								showPassiveNotification(qsTr("This QR code is not for your contact"), Kirigami.Units.veryLongDuration * 4)
+                                showPassiveNotification(qsTr("This QR code is not for your contact"), 1000 * 4)
 							}
 						}
 						break
 					case Kaidan.InvalidUri:
 						if (root.onlyForTrustDecisions) {
-							showPassiveNotification(qsTr("This QR code is not for trust decisions"), Kirigami.Units.veryLongDuration * 4)
+                            showPassiveNotification(qsTr("This QR code is not for trust decisions"), 1000 * 4)
 						}
 					}
 				}
@@ -115,8 +115,7 @@ Flow {
 	}
 
     Separator {
-        width: parent.flow === Flow.TopToBottom ? parent.width : undefined
-        height: parent.flow === Flow.LeftToRight ? parent.height: undefined
+        width: parent.flow === Flow.TopToBottom ? parent.width : parent.height
         anchors.topMargin: parent.flow === Flow.LeftToRight ? parent.height * 0.1 : 0
         anchors.bottomMargin: anchors.topMargin
         anchors.leftMargin: parent.flow === Flow.TopToBottom ? parent.width * 0.1 : 0
@@ -130,7 +129,7 @@ Flow {
 //		Layout.preferredWidth: height
 //		Layout.preferredHeight: width
 //		Layout.alignment: Qt.AlignCenter
-        width: parent.flow === Flow.TopToBottom ? parent.width : undefined
-        height: parent.flow === Flow.LeftToRight ? parent.height: undefined
+        width: parent.flow === Flow.TopToBottom ? parent.width : parent.height
+        height: width
     }
 }

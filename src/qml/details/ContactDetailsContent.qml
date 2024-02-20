@@ -218,8 +218,17 @@ DetailsContent {
             placeholderText: qsTr("New label")
             enabled: !rosterGroupBusyIndicator.running
             width: parent.width
+            readOnly: true
 
 //          onAccepted: rosterGroupAdditionButton.clicked()
+            onClicked: {
+                readOnly = false
+                forceActiveFocus()
+            }
+            onVisibleChanged: {
+                if (!visible)
+                    readOnly = true;
+            }
 
             rightItem: IconButton {
                 id: rosterGroupAdditionButton

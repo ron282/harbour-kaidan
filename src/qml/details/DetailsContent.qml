@@ -159,43 +159,48 @@ Column {
 
             ColumnView {
                 id: deviceRepeater
-                itemHeight: Theme.itemSizeSmall
+                itemHeight: Theme.itemSizeMedium
                 model: UserDevicesModel {
                     jid: root.jid
                 }
-                delegate: Row {
-                    x: Theme.horizontalPageMargin
-                    width: parent.width - 2*Theme.horizontalPageMargin - Theme.paddingMedium
-                    spacing: Theme.paddingMedium
-                    Icon {
-                        id: deviceIcon
-                        source: "image://theme/icon-m-tether"
-                        sourceSize: Qt.size(Theme.iconSizeMedium, Theme.iconSizeMedium)
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                    Column {
-                        width: parent.width - deviceIcon.width - Theme.paddingMedium
-                        Label {
-                            text: {
-                                if (model.name) {
-                                    if (model.version) {
-                                        return model.name + " " + model.version
-                                    }
-                                    return model.name
-                                }
-                                return model.resource
-                            }
-                            textFormat: Text.PlainText
-                            wrapMode: Text.WordWrap
-                            width: parent.width
+                delegate: BackgroundItem {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.leftMargin: Theme.horizontalPageMargin
+                    anchors.rightMargin: Theme.horizontalPageMargin
+                    Row {
+                        width: parent.width
+                        spacing: Theme.paddingMedium
+                        Icon {
+                            id: deviceIcon
+                            source: "image://theme/icon-m-tether"
+                            sourceSize: Qt.size(Theme.iconSizeMedium, Theme.iconSizeMedium)
+                            anchors.verticalCenter: parent.verticalCenter
                         }
-                        Label {
-                            text: model.os
-                            color: Theme.secondaryColor
-                            font.pixelSize: Theme.fontSizeSmall
-                            textFormat: Text.PlainText
-                            wrapMode: Text.WordWrap
-                            width: parent.width
+                        Column {
+                            width: parent.width - deviceIcon.width - Theme.paddingMedium
+                            Label {
+                                text: {
+                                    if (model.name) {
+                                        if (model.version) {
+                                            return model.name + " " + model.version
+                                        }
+                                        return model.name
+                                    }
+                                    return model.resource
+                                }
+                                textFormat: Text.PlainText
+                                wrapMode: Text.WordWrap
+                                width: parent.width
+                            }
+                            Label {
+                                text: model.os
+                                color: Theme.secondaryColor
+                                font.pixelSize: Theme.fontSizeSmall
+                                textFormat: Text.PlainText
+                                wrapMode: Text.WordWrap
+                                width: parent.width
+                            }
                         }
                     }
                 }

@@ -19,139 +19,146 @@ Column {
 	spacing: 0
 
     TextSwitch {
-        id: accountFilteringSwitch
-        width: parent.width
-        text: qsTr("Filter by accounts")
-        description: qsTr("Show only chats of selected accounts")
-        enabled: checked
-        checked: root.rosterFilterProxyModel.selectedAccountJids.length
-        onCheckedChanged: root.rosterFilterProxyModel.selectedAccountJids = []
-
-        // TODO: Remove this once fixed in Kirigami Addons.
-        // Add a connection as a work around to reset the switch because
-        // "MobileForm.FormSwitchDelegate" does not listen to changes of
-        // "root.rosterFilterProxyModel".
-        Connections {
-            target: root.rosterFilterProxyModel
-
-            onSelectedAccountJidsChanged: {
-                accountFilteringSwitch.checked = root.rosterFilterProxyModel.selectedAccountJids.length
-            }
-        }
+            id: chatFilteringSwitch
+            text: qsTr("Filter by availability")
+            description: qsTr("Show only available contacts")
+            checked: root.rosterFilterProxyModel.onlyAvailableContactsShown
+            onCheckedChanged: root.rosterFilterProxyModel.onlyAvailableContactsShown = checked
     }
 
-    ColumnView {
-		id: accountListView
-		model: RosterModel.accountJids
-        anchors.left: parent.left
-        anchors.right: parent.right
+    SilicaListView {
+        id: accountListView
+        model: RosterModel.accountJids
+        visible: count > 1
+        width: parent.width
+        implicitHeight: contentHeight
+        header: TextSwitch {
+            id: accountFilteringSwitch
+            text: qsTr("Filter by accounts")
+            description: qsTr("Show only chats of selected accounts")
+            enabled: checked
+            checked: root.rosterFilterProxyModel.selectedAccountJids.length
+            onCheckedChanged: root.rosterFilterProxyModel.selectedAccountJids = []
+
+            // TODO: Remove this once fixed in Kirigami Addons.
+            // Add a connection as a work around to reset the switch because
+            // "MobileForm.FormSwitchDelegate" does not listen to changes of
+            // "root.rosterFilterProxyModel".
+            Connections {
+                target: root.rosterFilterProxyModel
+
+                function onSelectedAccountJidsChanged() {
+                    accountFilteringSwitch.checked = root.rosterFilterProxyModel.selectedAccountJids.length
+                }
+            }
+        }
+
         delegate: TextSwitch {
-			id: accountDelegate
-			text: modelData
-			checked: root.rosterFilterProxyModel.selectedAccountJids.includes(modelData)
-            width: root.width
+            id: accountDelegate
+            text: modelData
+            checked: root.rosterFilterProxyModel.selectedAccountJids.indexOf(modelData) !== -1
+            width: ListView.view.width
             onCheckedChanged: {
-				if(checked) {
-					root.rosterFilterProxyModel.selectedAccountJids.push(modelData)
-				} else {
-					root.rosterFilterProxyModel.selectedAccountJids.splice(root.rosterFilterProxyModel.selectedAccountJids.indexOf(modelData), 1)
-				}
-			}
+                if(checked) {
+                    root.rosterFilterProxyModel.selectedAccountJids.push(modelData)
+                } else {
+                    root.rosterFilterProxyModel.selectedAccountJids.splice(root.rosterFilterProxyModel.selectedAccountJids.indexOf(modelData), 1)
+                }
+            }
 
-			// TODO: Remove this once fixed in Kirigami Addons.
-			// Add a connection as a work around to reset the switch because
-			// "MobileForm.FormSwitchDelegate" does not listen to changes of
-			// "root.rosterFilterProxyModel".
-			Connections {
-				target: root.rosterFilterProxyModel
+            // TODO: Remove this once fixed in Kirigami Addons.
+            // Add a connection as a work around to reset the switch because
+            // "MobileForm.FormSwitchDelegate" does not listen to changes of
+            // "root.rosterFilterProxyModel".
+            Connections {
+                target: root.rosterFilterProxyModel
 
-                onSelectedAccountJidsChanged: {
-					accountDelegate.checked = root.rosterFilterProxyModel.selectedAccountJids.includes(modelData)
-				}
-			}
-		}
+                function onSelectedAccountJidsChanged() {
+                    accountDelegate.checked = root.rosterFilterProxyModel.selectedAccountJids.indexOf(modelData) !== -1
+                }
+            }
+        }
 
-		Connections {
-			target: RosterModel
+        Connections {
+            target: RosterModel
 
-            onAccountJidsChanged: {
-				// Remove selected account JIDs that have been removed from the main model.
-				const selectedAccountJids = root.rosterFilterProxyModel.selectedAccountJids
+            function onAccountJidsChanged() {
+                // Remove selected account JIDs that have been removed from the main model.
+                const selectedAccountJids = root.rosterFilterProxyModel.selectedAccountJids
                 for (var i = 0; i < selectedAccountJids.length; i++) {
-					if (!RosterModel.accountJids.includes(selectedAccountJids[i])) {
-						root.rosterFilterProxyModel.selectedAccountJids.splice(i, 1)
-					}
-				}
-			}
-		}
-	}
-
-    TextSwitch {
-        id: groupFilteringSwitch
-        width: parent.width
-        text: qsTr("Filter by labels")
-        description: qsTr("Show only chats with selected labels")
-        enabled: checked
-        checked: root.rosterFilterProxyModel.selectedGroups.length
-        onCheckedChanged: root.rosterFilterProxyModel.selectedGroups = []
-
-        // TODO: Remove this once fixed in Kirigami Addons.
-        // Add a connection as a work around to reset the switch because
-        // "MobileForm.FormSwitchDelegate" does not listen to changes of
-        // "root.rosterFilterProxyModel".
-        Connections {
-            target: root.rosterFilterProxyModel
-
-            onSelectedGroupsChanged: {
-                groupFilteringSwitch.checked = root.rosterFilterProxyModel.selectedGroups.length
+                    if (!RosterModel.accountJids.indexOf(selectedAccountJids[i]) !== -1) {
+                        root.rosterFilterProxyModel.selectedAccountJids.splice(i, 1)
+                    }
+                }
             }
         }
     }
 
-    ColumnView {
-		id: groupListView
-		model: RosterModel.groups
-        anchors.left: parent.left
-        anchors.right: parent.right
+    SilicaListView {
+        id: groupListView
+        model: RosterModel.groups
+        visible: count
+        width: parent.width
+        implicitHeight: contentHeight
+        header: TextSwitch {
+            id: groupFilteringSwitch
+            text: qsTr("Filter by labels")
+            description: qsTr("Show only chats with selected labels")
+            enabled: checked
+            checked: root.rosterFilterProxyModel.selectedGroups.length
+            onCheckedChanged: root.rosterFilterProxyModel.selectedGroups = []
+
+            // TODO: Remove this once fixed in Kirigami Addons.
+            // Add a connection as a work around to reset the switch because
+            // "MobileForm.FormSwitchDelegate" does not listen to changes of
+            // "root.rosterFilterProxyModel".
+            Connections {
+                target: root.rosterFilterProxyModel
+
+                function onSelectedGroupsChanged() {
+                    groupFilteringSwitch.checked = root.rosterFilterProxyModel.selectedGroups.length
+                }
+            }
+        }
         delegate: TextSwitch {
-			id: groupDelegate
-			text: modelData
-			checked: root.rosterFilterProxyModel.selectedGroups.includes(modelData)
-            width: root.width
+            id: groupDelegate
+            text: modelData
+            checked: root.rosterFilterProxyModel.selectedGroups.indexOf(modelData) !== -1
+            width: ListView.view.width
             onCheckedChanged: {
-				if (checked) {
-					root.rosterFilterProxyModel.selectedGroups.push(modelData)
-				} else {
-					root.rosterFilterProxyModel.selectedGroups.splice(root.rosterFilterProxyModel.selectedGroups.indexOf(modelData), 1)
-				}
-			}
+                if (checked) {
+                    root.rosterFilterProxyModel.selectedGroups.push(modelData)
+                } else {
+                    root.rosterFilterProxyModel.selectedGroups.splice(root.rosterFilterProxyModel.selectedGroups.indexOf(modelData), 1)
+                }
+            }
 
-			// TODO: Remove this once fixed in Kirigami Addons.
-			// Add a connection as a work around to reset the switch because
-			// "MobileForm.FormSwitchDelegate" does not listen to changes of
-			// "root.rosterFilterProxyModel".
-			Connections {
-				target: root.rosterFilterProxyModel
+            // TODO: Remove this once fixed in Kirigami Addons.
+            // Add a connection as a work around to reset the switch because
+            // "MobileForm.FormSwitchDelegate" does not listen to changes of
+            // "root.rosterFilterProxyModel".
+            Connections {
+                target: root.rosterFilterProxyModel
 
-                onSelectedGroupsChanged: {
-					groupDelegate.checked = root.rosterFilterProxyModel.selectedGroups.includes(modelData)
-				}
-			}
-		}
+                function onSelectedGroupsChanged() {
+                    groupDelegate.checked = root.rosterFilterProxyModel.selectedGroups.indexOf(modelData) !== -1
+                }
+            }
+        }
 
-		Connections {
-			target: RosterModel
+        Connections {
+            target: RosterModel
 
-            onGroupsChanged: {
-				// Remove selected groups that have been removed from the main model.
-				const selectedGroups = root.rosterFilterProxyModel.selectedGroups
+            function onGroupsChanged() {
+                // Remove selected groups that have been removed from the main model.
+                const selectedGroups = root.rosterFilterProxyModel.selectedGroups
                 for (var i = 0; i < selectedGroups.length; i++) {
-					const selectedGroup = selectedGroups[i]
-                    if (!RosterModel.groupsList.includes(selectedGroups[i])) {
-						root.rosterFilterProxyModel.selectedGroups.splice(i, 1)
-					}
-				}
-			}
-		}
-	}
+                    const selectedGroup = selectedGroups[i]
+                    if (RosterModel.groups.indexOf(selectedGroups[i]) === -1) {
+                        root.rosterFilterProxyModel.selectedGroups.splice(i, 1)
+                    }
+                }
+            }
+        }
+    }
 }

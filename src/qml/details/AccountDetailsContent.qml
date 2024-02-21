@@ -400,13 +400,10 @@ DetailsContent {
                      enabled: !blockingAction.loading
                      width: parent.width
                      focus: false
+                     softwareInputPanelEnabled: false
                      onAcceptableInputChanged: blockingButton.clicked()
-                     onVisibleChanged: {
-                         if (visible) {
-                             text = ""
-                             forceActiveFocus()
-                         }
-                     }
+                     onClicked: Qt.inputMethod.show()
+
                      rightItem : IconButton {
                          id: blockingButton
     //                     Controls.ToolTip.text: qsTr("Block chat address")

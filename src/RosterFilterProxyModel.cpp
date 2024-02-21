@@ -27,6 +27,17 @@ bool RosterFilterProxyModel::onlyAvailableContactsShown() const
 	return m_onlyAvailableContactsShown;
 }
 
+#if defined(SFOS)
+void RosterFilterProxyModel::setSelectedAccountJids(const QList<QString> &selectedAccountJids)
+{
+	if (m_selectedAccountJids != selectedAccountJids.toVector()) {
+		m_selectedAccountJids = selectedAccountJids.toVector();
+		invalidate();
+		Q_EMIT selectedAccountJidsChanged();
+	}
+
+}
+#else
 void RosterFilterProxyModel::setSelectedAccountJids(const QVector<QString> &selectedAccountJids)
 {
 	if (m_selectedAccountJids != selectedAccountJids) {
@@ -36,12 +47,30 @@ void RosterFilterProxyModel::setSelectedAccountJids(const QVector<QString> &sele
 	}
 
 }
+#endif
 
+#if defined(SFOS)
+QList<QString> RosterFilterProxyModel::selectedAccountJids() const
+{
+	return m_selectedAccountJids.toList();
+}
+#else
 QVector<QString> RosterFilterProxyModel::selectedAccountJids() const
 {
 	return m_selectedAccountJids;
 }
+#endif
 
+#if defined(SFOS)
+void RosterFilterProxyModel::setSelectedGroups(const QList<QString> &selectedGroups)
+{
+	if (m_selectedGroups != selectedGroups.toVector()) {
+		m_selectedGroups = selectedGroups.toVector();
+		invalidate();
+		Q_EMIT selectedGroupsChanged();
+	}
+}
+#else
 void RosterFilterProxyModel::setSelectedGroups(const QVector<QString> &selectedGroups)
 {
 	if (m_selectedGroups != selectedGroups) {
@@ -51,11 +80,19 @@ void RosterFilterProxyModel::setSelectedGroups(const QVector<QString> &selectedG
 	}
 
 }
+#endif
 
+#if defined(SFOS)
+QList<QString> RosterFilterProxyModel::selectedGroups() const
+{
+	return m_selectedGroups.toList();
+}
+#else
 QVector<QString> RosterFilterProxyModel::selectedGroups() const
 {
 	return m_selectedGroups;
 }
+#endif
 
 bool RosterFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
 {

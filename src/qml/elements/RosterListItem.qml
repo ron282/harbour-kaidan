@@ -38,7 +38,7 @@ UserListItem {
             left: avatar.right;
             right: parent.right
             top: parent.top
-            margins: Theme.paddingMedium;
+            leftMargin: Theme.paddingMedium;
         }
 
 		// name
@@ -51,13 +51,14 @@ UserListItem {
                 textFormat: Text.PlainText
                 elide: Text.ElideRight
                 maximumLineCount: 1
-                width: parent.width - mutedIcon.width - pinnedIcon.width - counter.width
+                width: parent.width - Theme.itemSizeMedium - parent.spacing
                 font.pixelSize: Theme.fontSizeMedium;
             }
             // last (exchanged/draft) message date/time
             Label {
                 id: lastMessageDateTimeText
                 text: root.lastMessageDateTime
+                width: nameText.width
                 visible: text && root.lastMessageDateTime
             }
         }
@@ -96,7 +97,7 @@ UserListItem {
             Label {
                 id: lastMessageText
                 elide: Text.ElideRight
-                width: parent.width - draft.width
+                width: parent.width - lastMessagePrefix.width - parent.spacing
                 maximumLineCount: 1
                 text: Utils.removeNewLinesFromString(lastMessage)
                 textFormat: Text.PlainText
@@ -107,6 +108,7 @@ UserListItem {
     }
 
     Column {
+        id: colIcons
         anchors.right: parent.right
         anchors.top: parent.top
         width: Theme.iconSizeMedium

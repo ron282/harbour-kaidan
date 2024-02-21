@@ -11,25 +11,16 @@ Item {
     property alias background: background
     property alias description: description.text
 
-    RoundedRectangle {
+    Rectangle {
         id: background
-        anchors.fill: content
-        anchors.margins: -8
-        color: primaryBackgroundColor
-        opacity: 0.9
+        anchors.fill: parent
+        color: "transparent"
     }
 
-    Column {
-        id: content
-        anchors.centerIn: parent
-
-        BusyIndicator {
-        }
-
-        Label {
-            id: description
-            text: qsTr("Loading…")
-            font.italic: true
-        }
+    BusyLabel {
+        id: description
+        text: qsTr("Loading…")
+        running: root.visible
+        anchors.fill: parent
     }
 }

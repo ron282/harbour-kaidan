@@ -20,6 +20,12 @@ ListItem {
 	property string name
 	property bool isSelected: false
     height: Theme.iconSizeExtraLarge
+    anchors {
+        left: parent.left
+        right: parent.right
+        leftMargin: Theme.horizontalPageMargin
+        rightMargin: Theme.horizontalPageMargin
+    }
 
     // left border: presence
     Rectangle {
@@ -28,7 +34,6 @@ ListItem {
         height: parent.height
         color: userPresence.availabilityColor
         anchors.left: parent.left
-        anchors.leftMargin: Theme.paddingMedium
 
         UserPresenceWatcher {
             id: userPresence

@@ -19,8 +19,10 @@ import im.kaidan.kaidan 1.0
 
 import "elements"
 
-Page {
+SearchBarPage {
     id: root
+
+    listView: rosterListView
 
     Component {
         id: rosterFilteringDialog
@@ -68,19 +70,22 @@ Page {
 
         PullDownMenu {
                 MenuItem {
+                    text: qsTr("Filter")
+                    onClicked: openView(rosterFilteringDialog, rosterFilteringPage)
+                }
+                MenuItem {
                     text: qsTr("Search")
-                    visible: false // isSearchActionShown
                     onClicked: {
                         toggleSearchBar()
                     }
                 }
-                MenuItem {
-                    text: qsTr("Filter")
-                    onClicked: openView(rosterFilteringDialog, rosterFilteringPage)
-                }
             }
 
-        header:
+        header: Column {
+            anchors {
+                right: parent.right
+                left: parent.left
+            }
             PageHeader {
                 title: {
                     Kaidan.connectionState === Enums.StateConnecting ? qsTr("Connecting…") :
@@ -88,6 +93,18 @@ Page {
                     qsTr("Contacts")
                 }
             }
+            SearchBarPageSearchField {
+                listView: rosterListView
+                visible: false
+                anchors {
+                    right: parent.right
+                    left: parent.left
+                }
+                Component.onCompleted: {
+                    root.searchField = this
+                }
+            }
+        }
 
         anchors {
             fill: parent

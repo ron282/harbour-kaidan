@@ -9,6 +9,6 @@
  */
 ExplainedContentPage {
 	id: root
-    //FIXME primaryButton.checkable: true
+    primaryButton.checkable: true
 	primaryButton.onClicked: explanationArea.visible = !explanationArea.visible
 }

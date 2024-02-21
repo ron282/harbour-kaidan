@@ -16,42 +16,21 @@ Page {
 	id: root
 
     property SilicaListView listView
-    property PullDownMenu pullDownMenu
     property SearchBarPageSearchField searchField
 	property bool isSearchActionShown: true
 
-    pullDownMenu : PullDownMenu {
-        MenuItem {
-			text: qsTr("Search")
-			visible: isSearchActionShown
-            onClicked: {
-                toggleSearchBar()
-			}
-		}
-	}
-
-	Component {
-		id: mobileSearchBarComponent
-
-        SearchBarPageSearchField {
-            id: searchField
-            listView: root.listView
-            anchors {
-                right: parent.right
-                left: parent.left
-            }
+    function toggleSearchBar() {
+        if(searchField) {
+            searchField.visible = !searchField.visible
+            if(searchField.visible)
+                Qt.inputMethod.show()
+            else
+                Qt.inputMethod.hide()
         }
-    }
-
-	function toggleSearchBar() {
-        if (listView.header) {
-            searchField.visible = false
-		} else {
-            searchField.visible = true
-		}
 	}
 
 	function resetSearchBar() {
-        searchField.visible = false
+        if(searchField)
+            searchField.visible = false
     }
 }

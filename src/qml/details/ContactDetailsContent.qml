@@ -218,16 +218,11 @@ DetailsContent {
             placeholderText: qsTr("New label")
             enabled: !rosterGroupBusyIndicator.running
             width: parent.width
-            readOnly: true
+            softwareInputPanelEnabled: false
 
-//          onAccepted: rosterGroupAdditionButton.clicked()
             onClicked: {
-                readOnly = false
+                Qt.inputMethod.show()
                 forceActiveFocus()
-            }
-            onVisibleChanged: {
-                if (!visible)
-                    readOnly = true;
             }
 
             rightItem: IconButton {

@@ -25,6 +25,13 @@ Page {
         QrCodePage {}
     }
 
+
+    Component {
+        id: contactAdditionQrCodePage
+
+        ContactAdditionQrCodePage {}
+    }
+
     Component {
         id: accountDetailsSheet
 
@@ -41,6 +48,7 @@ Page {
         id: searchPublicGroupChatSheet
         SearchPublicGroupChatSheet {}
     }
+
     Component {
         id: settingsSheet
         SettingsSheet {}
@@ -126,7 +134,7 @@ Page {
                 text : qsTr("Add contact by QR code")
                 icon.source: "image://theme/icon-m-qr"
                 onClicked: {
-                    pageStack.push(qrCodePage)
+                    pageStack.push(contactAdditionQrCodePage)
                 }
             }
             Button {
@@ -138,7 +146,7 @@ Page {
             }
 
             Button {
-                visible: false // To debug
+                visible: true
                 width:Theme.buttonWidthLarge
                 anchors.horizontalCenter: parent.horizontalCenter
                 id: publicGroupChatSearchButton
@@ -162,7 +170,7 @@ Page {
                 }
             }
 
-            Button{
+            Button {
                 width:Theme.buttonWidthLarge
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: qsTr("Switch device")

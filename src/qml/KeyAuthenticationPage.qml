@@ -61,7 +61,8 @@ ExplanationOptionsTogglePage {
 			header.text: root.forOwnDevices ? qsTr("Unverified own devices") : qsTr("Unverified contact devices")
 			listView.model: OmemoModel {
 				jid: root.chatJid
-			}
+            }
+            listView.spacing: Theme.paddingMedium
 			listView.header: Row {
                 width: ListView.view.width
 //             height: encryptionKeyField.height
@@ -76,19 +77,15 @@ ExplanationOptionsTogglePage {
                             font.family: "monospace"
                             inputMethodHints: Qt.ImhPreferLatin | Qt.ImhPreferLowercase | Qt.ImhLatinOnly
 							enabled: !encryptionKeyBusyIndicator.visible
-                            font.pixelSize: Theme.fontSizeExtraSmall
-                            textLeftMargin: 0
-                            readOnly: true
-                            width: parent.width - encryptionKeyAuthenticationButton.width - parent.spacing
+							font.pixelSize: Theme.fontSizeExtraSmall
+							textLeftMargin: 0
+							softwareInputPanelEnabled: false
+							width: parent.width - encryptionKeyAuthenticationButton.width - parent.spacing
 //							onAccepted: encryptionKeyAuthenticationButton.clicked()
-							onVisibleChanged: {
-                                if(!visible)
-                                    readOnly = true
-                            }
-                            onClicked: {
-                                readOnly = false
-                                forceActiveFocus()
-                            }
+							onClicked: {
+								Qt.inputMethod.show()
+								forceActiveFocus()
+							}
 						}
 
 						IconButton {
@@ -131,93 +128,96 @@ ExplanationOptionsTogglePage {
 						}
 			}
 			
-            listView.delegate: Column {
-                width: ListView.view.width
-                Label {
-                    text: model.label ? model.label : qsTr("no device name")
-                    font.pixelSize: Theme.fontSizeSmall
-    //				descriptionItem.textFormat: Text.MarkdownText
-                    width: parent.width
-                }
-                Row {
-                    width: parent.width
-                    Label {
-                            text: Utils.displayableEncryptionKeyId(model.keyId)
-                            wrapMode: Label.WordWrap
-                            width: parent.width - buttonAddKey.width - parent.spacing
-                            font.pixelSize: Theme.fontSizeExtraSmall
-                            font.family: "monospace"
-                            color: Theme.secondaryColor
-                    }
-                    IconButton {
-                        id: buttonAddKey
-                        icon.source: "image://theme/icon-m-add"
-                        onClicked: {
-                            Kaidan.client.atmManager.makeTrustDecisionsRequested(contactDevicesArea.listView.model.jid, [model.keyId], [])
-                            passiveNotification(qsTr("Device verified"))
-                        }
-                    }
-                }
-                Separator {
-                    height: 5
-                }
-            }
+            listView.delegate: BackgroundItem {
+				width: ListView.view.width
+				height: colDevice.height
+				Column {
+					id: colDevice
+					width: parent.width
+					Label {
+						text: model.label ? model.label : qsTr("no device name")
+						font.pixelSize: Theme.fontSizeSmall
+						width: parent.width
+					}
+					Row {
+						width: parent.width
+						Label {
+							text: Utils.displayableEncryptionKeyId(model.keyId)
+							wrapMode: Label.WordWrap
+							width: parent.width - buttonAddKey.width - parent.spacing
+							font.pixelSize: Theme.fontSizeExtraSmall
+							font.family: "monospace"
+							color: Theme.secondaryColor
+						}
+						IconButton {
+							id: buttonAddKey
+							icon.source: "image://theme/icon-m-add"
+							onClicked: {
+								Kaidan.client.atmManager.makeTrustDecisionsRequested(contactDevicesArea.listView.model.jid, [model.keyId], [])
+								passiveNotification(qsTr("Device verified"))
+							}
+						}
+					}
+				}
+			}
 		}
 
-        Separator {
-            width: parent.flow === Flow.TopToBottom ? parent.width : 1
-            height: parent.flow === Flow.LeftToRight? parent.height : 1
-        }
+		Separator {
+			width: parent.flow === Flow.TopToBottom ? parent.width : 1
+			height: parent.flow === Flow.LeftToRight? parent.height : 1
+		}
 
 		EncryptionDevicesArea {
 			header.text: qsTr("Verified own devices")
+			listView.spacing: Theme.paddingMedium
 			listView.model: OmemoModel {
 				jid: root.accountJid
 				ownAuthenticatedKeysProcessed: true
 			}
-            listView.delegate: Column {
-                id: encryptionKeyDelegate
-                width: ListView.view.width
-                Label {
-                    width: parent.width
-                    text: model.label ? model.label : qsTr("no device name")
-                    font.pixelSize: Theme.fontSizeSmall
-                }
-                Row {
-                    width: parent.width
-                    Label {
-                        id: encryptionKeyText
-                        font.pixelSize: Theme.fontSizeExtraSmall
-                        font.family: "monospace"
-                        wrapMode: Label.WordWrap
-                        text: Utils.displayableEncryptionKeyId(model.keyId)
-//						descriptionItem.textFormat: Text.MarkdownText
-                        color: Theme.secondaryColor
-                        width: parent.width - encryptionKeyCopyButton.width - parent.spacing
-                    }
-                    IconButton {
-                        id: encryptionKeyCopyButton
-//						text: qsTr("Copy fingerprint")
-                        icon.source: "image://theme/icon-m-clipboard"
-//                      icon.sourceSize: Qt.size(Theme.iconSizeSmallPlus, Theme.iconSizeSmallPlus)
-//						display: Controls.AbstractButton.IconOnly
-//						flat: !hovered && !encryptionKeyDelegate.hovered
-//						Controls.ToolTip.text: text
-                        onClicked: {
-                            Utils.copyToClipboard(model.keyId)
-                            passiveNotification(qsTr("Fingerprint copied to clipboard"))
+			listView.delegate: BackgroundItem {
+				width: ListView.view.width
+				height: encryptionKeyDelegate.height
+				Column {
+					id: encryptionKeyDelegate
+					width: parent.width
+					Label {
+						width: parent.width
+						text: model.label ? model.label : qsTr("no device name")
+						font.pixelSize: Theme.fontSizeSmall
+					}
+                    Row {
+                        width: parent.width
+                        Label {
+                            id: encryptionKeyText
+                            font.pixelSize: Theme.fontSizeExtraSmall
+                            font.family: "monospace"
+                            wrapMode: Label.WordWrap
+                            text: Utils.displayableEncryptionKeyId(model.keyId)
+    //						descriptionItem.textFormat: Text.MarkdownText
+                            color: Theme.secondaryColor
+                            width: parent.width - encryptionKeyCopyButton.width - parent.spacing
                         }
-                    }
-                }
-                Separator {
-                    height: 5
-                }
+                        IconButton {
+							id: encryptionKeyCopyButton
+    //						text: qsTr("Copy fingerprint")
+							icon.source: "image://theme/icon-m-clipboard"
+							//                      icon.sourceSize: Qt.size(Theme.iconSizeSmallPlus, Theme.iconSizeSmallPlus)
+    //						display: Controls.AbstractButton.IconOnly
+    //						flat: !hovered && !encryptionKeyDelegate.hovered
+    //						Controls.ToolTip.text: text
+							onClicked: {
+								Utils.copyToClipboard(model.keyId)
+								passiveNotification(qsTr("Fingerprint copied to clipboard"))
+							}
+						}
+					}
+				}
 			}
 		}
-    }
-    Component.onCompleted: {
-        if (!Kaidan.settings.keyAuthenticationPageExplanationVisible) {
-            qrCodeScanningArea.scanner.cameraEnabled = true
-        }
-    }
+	}
+	Component.onCompleted: {
+		if (!Kaidan.settings.keyAuthenticationPageExplanationVisible) {
+			qrCodeScanningArea.scanner.cameraEnabled = true
+		}
+	}
 }

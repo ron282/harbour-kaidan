@@ -61,7 +61,7 @@ ExplanationOptionsTogglePage {
 			header.text: root.forOwnDevices ? qsTr("Unverified own devices") : qsTr("Unverified contact devices")
 			listView.model: OmemoModel {
 				jid: root.chatJid
-			}
+            }
 			listView.header: Row {
                 width: ListView.view.width
 //             height: encryptionKeyField.height

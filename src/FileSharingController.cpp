@@ -225,7 +225,13 @@ FileSharingController::FileSharingController(QXmppClient *client)
 qint64 FileSharingController::generateFileId()
 {
 #if defined(SFOS)
-    return generateFileId();
+    std::random_device rd;
+
+    std::mt19937_64 e2(rd());
+
+    std::uniform_int_distribution<long long int> dist(std::llround(std::pow(2,61)), std::llround(std::pow(2,62)));
+
+    return dist(e2);
 #else
     return QRandomGenerator::system()->generate64();
 #endif

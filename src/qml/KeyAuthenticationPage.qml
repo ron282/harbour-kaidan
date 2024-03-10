@@ -85,8 +85,7 @@ ExplanationOptionsTogglePage {
 							onClicked: {
 								Qt.inputMethod.show()
 								forceActiveFocus()
-							}
-						}
+							}						}
 
 						IconButton {
 							id: encryptionKeyAuthenticationButton

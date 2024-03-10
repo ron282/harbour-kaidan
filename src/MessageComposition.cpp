@@ -169,12 +169,24 @@ void MessageComposition::send()
 				// set updated files with new metadata and uploaded sources
 				message.files = std::move(*files);
 
-				// update message in database
+#if defined(WITH_OMEMO_V03)
+                // Support XEP-0454
+                if(! message.files.first().encryptedSources.isEmpty()) {
+                    auto encryptedSource = message.files.first().encryptedSources.first();
+                    QUrl url = encryptedSource.url;
+
+                    url.setScheme("aesgcm");
+                    url.setFragment(encryptedSource.iv.toHex()+encryptedSource.key.toHex());
+                    message.body = url.toString();
+                }
+#endif
+
+                // update message in database
 				MessageDb::instance()->updateMessage(message.id, [files = message.files](auto &message) {
 					message.files = files;
 				});
 
-				// send message with file sources
+                // send message with file sources
 				runOnThread(Kaidan::instance()->client(), [message = std::move(message)]() mutable {
 					Kaidan::instance()->client()->messageHandler()->sendPendingMessage(std::move(message));
 				});

@@ -21,6 +21,6 @@ BinaryDecisionPage {
 
 	bottomAction: Button {
 		text: qsTr("Cancel")
-		onTriggered: canceled()
+		onClicked: canceled()
 	}
 }

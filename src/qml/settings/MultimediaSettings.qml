@@ -71,26 +71,26 @@ SettingsPageBase {
 //					displayMode: MobileForm.FormComboBoxDelegate.Dialog
 
                     label: qsTr('Audio Input')
-					dialog:Controls.Menu {
-						z:60000
-						width: parent.width
+//					dialog:Controls.Menu {
+//						z:60000
+//						width: parent.width
 
-						id: audioInputsMenu
-						Instantiator {
-							id:audioInputsInstanciator
-							model: recorder.audioDeviceModel
-							onObjectAdded: audioInputsMenu.insertItem(index, object)
-							onObjectRemoved: audioInputsMenu.removeItem(object)
-							delegate: Controls.MenuItem {
-								property string description
-								property int index
-								text: description
-								onClicked: {
-									recorder.audioDeviceModel.currentIndex = index
-								}
-							}
-						}
-					}
+//						id: audioInputsMenu
+//						Instantiator {
+//							id:audioInputsInstanciator
+//							model: recorder.audioDeviceModel
+//							onObjectAdded: audioInputsMenu.insertItem(index, object)
+//							onObjectRemoved: audioInputsMenu.removeItem(object)
+//							delegate: Controls.MenuItem {
+//								property string description
+//								property int index
+//								text: description
+//								onClicked: {
+//									recorder.audioDeviceModel.currentIndex = index
+//								}
+//							}
+//						}
+//					}
 
 					displayText: audioInputsInstanciator.model.currentAudioDevice.description
 					width: parent.width
@@ -103,34 +103,34 @@ SettingsPageBase {
 				spacing: 0
 
 				SectionHeader {
-					title: qsTr("Video Output")
+					text: qsTr("Video Output")
 				}
-                Controls.ItemDelegate {
-					id: item
-					width: parent.width
-					//FIXME Layout.fillHeight: true
+//                Controls.ItemDelegate {
+//					id: item
+//					width: parent.width
+//					//FIXME Layout.fillHeight: true
 
-					padding: 1
+//					padding: 1
 
-					hoverEnabled: true
-					background: MobileForm.FormDelegateBackground {
-						control: item
-					}
+//					hoverEnabled: true
+//					background: MobileForm.FormDelegateBackground {
+//						control: item
+//					}
 
-					 Multimedia.VideoOutput {
-						id: output
-						source: recorder
+//					 Multimedia.VideoOutput {
+//						id: output
+//						source: recorder
 
-						autoOrientation: true
+//						autoOrientation: true
 
-						implicitWidth: contentRect.width < parent.width
-									   && contentRect.height
-									   < parent.height ? contentRect.width : parent.width
-						implicitHeight: contentRect.width < parent.width
-										&& contentRect.height
-										< parent.height ? contentRect.height : parent.height
-					}
-				}
+//						implicitWidth: contentRect.width < parent.width
+//									   && contentRect.height
+//									   < parent.height ? contentRect.width : parent.width
+//						implicitHeight: contentRect.width < parent.width
+//										&& contentRect.height
+//										< parent.height ? contentRect.height : parent.height
+//					}
+//				}
 			}
         }
 		Item {

@@ -137,7 +137,7 @@ SettingsPageBase {
 					background: Item {}
 					contentItem: ColumnLayout {
 						Controls.Label {
-							text: "© 2016-2023 Kaidan developers and contributors"
+							text: "© 2016-2024 Kaidan developers and contributors"
 							textFormat: Text.PlainText
 							wrapMode: Text.WordWrap
 							Layout.fillWidth: true
@@ -145,6 +145,27 @@ SettingsPageBase {
 
 						Controls.Label {
 							text: "Copyright"
+							font: Kirigami.Theme.smallFont
+							color: Kirigami.Theme.disabledTextColor
+							wrapMode: Text.WordWrap
+							Layout.fillWidth: true
+						}
+					}
+				}
+
+				MobileForm.AbstractFormDelegate {
+					Layout.fillWidth: true
+					background: Item {}
+					contentItem: ColumnLayout {
+						Controls.Label {
+							text: "Kaidan is a project of the international free software community KDE"
+							textFormat: Text.PlainText
+							wrapMode: Text.WordWrap
+							Layout.fillWidth: true
+						}
+
+						Controls.Label {
+							text: "Community"
 							font: Kirigami.Theme.smallFont
 							color: Kirigami.Theme.disabledTextColor
 							wrapMode: Text.WordWrap

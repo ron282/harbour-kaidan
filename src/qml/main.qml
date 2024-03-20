@@ -96,11 +96,8 @@ ApplicationWindow {
     // components for all main pages
 	Component {id: startPage; StartPage {}}
     Component {id: globalDrawer; GlobalDrawer {}}
-    Component {id: registrationLoginDecisionPage; RegistrationLoginDecisionPage {}}
-    Component {id: registrationDecisionPage; RegistrationDecisionPage {}}
     Component {id: automaticRegistrationPage; AutomaticRegistrationPage {}}
     Component {id: manualRegistrationPage; ManualRegistrationPage {}}
-    Component {id: loginPage; LoginPage {}}
     Component {id: rosterPage; RosterPage {}}
     Component {id: chatPage; ChatPage {}}
     Component {id: emptyChatPage; EmptyChatPage {}}
@@ -114,29 +111,13 @@ ApplicationWindow {
     Component {id: messageNotification; Notification {}}
 
     Component {
-            id: accountDetailsKeyAuthenticationPage
+		id: accountDetailsKeyAuthenticationPage
 
-            KeyAuthenticationPage {
-                Component.onDestruction: openView(accountDetailsSheet, accountDetailsPage)
-            }
+		KeyAuthenticationPage {
+			Component.onDestruction: openView(accountDetailsSheet, accountDetailsPage)
+		}
     }
 
-//	onWideScreenChanged: showRosterPageForNarrowWindow()
-
-//	onClosing: {
-//		if (currentChatPage) {
-//			if (!currentDraftSaved) {
-//				currentChatPage.saveDraft();
-//
-//				close.accepted = false;
-//
-//				Qt.callLater(function() {
-//					root.currentDraftSaved = true;
-//					root.close();
-//				});
-//			}
-//		}
-//	}
 	/**
 	 * Shows a passive notification for a long period.
 	 */

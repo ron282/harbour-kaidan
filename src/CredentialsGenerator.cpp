@@ -7,6 +7,9 @@
 #ifndef SFOS
 #include <QRandomGenerator>
 #endif
+#if defined (SFOS)
+#include "../3rdparty/QEmuStringView/qemustringview.h"
+#endif
 // Kaidan
 #include "CredentialsGenerator.h"
 #include "Globals.h"

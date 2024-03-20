@@ -44,8 +44,8 @@ DetailsContent {
         FormExpansionButton {
             id: vCardExpansionButton
             anchors.right: parent.right
-            checked: vCardRepeater.model.unsetEntriesProcessed
-            onCheckedChanged: vCardRepeater.model.unsetEntriesProcessed = checked
+			checked: vCardRepeater.model.unsetEntriesProcessed
+			onCheckedChanged: vCardRepeater.model.unsetEntriesProcessed = checked
         }
     ]
     vCardRepeater {
@@ -68,9 +68,8 @@ DetailsContent {
                 width: vCardDelegate.width
                 rightItem: IconButton {
                     id: vCardConfirmationButton
-                    icon.source: editing ? "image://theme/icon-m-right" : "image://theme/icon-splus-edit"
-                    width: Theme.iconSizeSmallPlus
-                    height: width
+					icon.source: editing ? "image://theme/icon-m-right" : "image://theme/icon-m-edit"
+					icon.sourceSize: Qt.size(Theme.iconSizeSmallPlus, Theme.iconSizeSmallPlus)
                     onClicked: {
                         if(editing) {
                             vCardBusyIndicator.visible = true
@@ -91,35 +90,15 @@ DetailsContent {
         }
     }
 
-    encryptionArea: Column {
-        width: parent.width
-
+	encryptionArea: Column {
+		width: parent.width
+		spacing: 0
         Component.onCompleted: {
-            // Retrieve the own devices if they are not loaded yet on a mobile device.
-            if (!root.sheet && MessageModel.currentAccountJid != root.jid) {
-                Kaidan.client.omemoManager.initializeChatRequested(root.jid)
-            }
-
-            passwordVerificationField.initialize()
-            passwordField.initialize()
-        }
-        Connections {
-            target: root.sheet
-
-            onSheetOpenChanged: {
-                if (root.sheet.sheetOpen) {
-                    // Retrieve the own devices if they are not loaded yet on a desktop device.
-                    if (MessageModel.currentAccountJid != root.jid) {
-                        Kaidan.client.omemoManager.initializeChatRequested(root.jid)
-                    }
-
-                    passwordVerificationField.initialize()
-                    passwordField.initialize()
-                    passwordChangeErrorMessage.visible = false
-                    connectionSettingsErrorMessage.visible = false
-                }
-            }
-        }
+			// Retrieve the own devices if they are not loaded yet.
+			if (MessageModel.currentAccountJid != root.jid) {
+				Kaidan.client.omemoManager.initializeChatRequested(root.jid)
+			}
+		}
 
         OmemoWatcher {
             id: omemoWatcher
@@ -154,18 +133,15 @@ DetailsContent {
                 if (!omemoWatcher.usableOmemoDevices.length) {
                     if (omemoWatcher.distrustedOmemoDevices.length) {
                         return qsTr("Scan <b>your</b> devices")
-//                        return qsTr("Scan the QR codes of <b>your</b> devices to encrypt for them")
                     } else if (ownResourcesWatcher.resourcesCount > 1) {
                         return qsTr("<b>Not used on your</b> other devices")
                     }
                 } else if (omemoWatcher.authenticatableOmemoDevices.length) {
                     if (omemoWatcher.authenticatableOmemoDevices.length === omemoWatcher.distrustedOmemoDevices.length) {
                         return qsTr("Scan <b>your</b> devices")
-//                        return qsTr("Scan the QR codes of <b>your</b> devices to encrypt for them")
                     }
 
                     return qsTr("Scan <b>your</b> devices")
-//                  return qsTr("Scan the QR codes of <b>your</b> devices for maximum security")
                 }
 
                 return ""
@@ -173,16 +149,16 @@ DetailsContent {
             icon.source: {
                 if (!omemoWatcher.usableOmemoDevices.length) {
                     if (omemoWatcher.distrustedOmemoDevices.length) {
-                        return "image://theme/icon-m-qr"
+						return "image://theme/icon-s-checkmark"
                     } else if (ownResourcesWatcher.resourcesCount > 1) {
-                        return "image://theme/icon-m-warning"
+						return "image://theme/icon-s-filled-warning"
                     }
                 } else if (omemoWatcher.authenticatableOmemoDevices.length) {
                     if (omemoWatcher.authenticatableOmemoDevices.length === omemoWatcher.distrustedOmemoDevices.length) {
-                        return "image://theme/icon-m-qr"
+						return "image://theme/icon-s-outline-secure"
                     }
 
-                    return "image://theme/icon-m-qr"
+					return "image://theme/icon-s-secure"
                 }
 
                 return ""
@@ -198,21 +174,10 @@ DetailsContent {
         }
     }
 
-    rosterGroupArea: Column {
-    id: colRoster
-    width: parent.width
-
-    SectionHeader {
-        text: qsTr("Labels")
-    }
-    ColumnView {
-        id: rosterGroupListView
-        model: RosterModel.groups
-        visible: true
-        itemHeight: Theme.itemSizeSmall
-        delegate: BackgroundItem {
+	rosterGoupListView {
+		delegate: BackgroundItem {
             id: rosterGroupDelegate
-            width: rosterGroupListView.width
+			width: rosterGoupListView.width
             Row {
                 id: rosterGroupRow
                 Label {
@@ -235,7 +200,7 @@ DetailsContent {
                 }
                 IconButton {
                     id: rosterGroupEditingButton
-                    icon.source: rosterGroupTextField.visible ? "image://theme/icon-splus-right" : "image://theme/icon-m-edit"
+					icon.source: rosterGroupTextField.visible ? "image://theme/icon-splus-right" : "image://theme/icon-m-edit"
                     icon.sourceSize.width: Theme.iconSizeSmallPlus
                     icon.sourceSize.height: Theme.iconSizeSmallPlus
                     // Ensure that the button can be used within "rosterGroupDelegate"
@@ -268,49 +233,36 @@ DetailsContent {
             }
         }
     }
-}
-
-    Component {
-        id: contactAdditionSheet
-        RosterAddContactSheet {
-
-        }
-    }
 
     Column {
      id: providerArea
-     width: parent.width
-     visible: providerUrl  || chatSupportList.length || groupChatSupportList.length
 
-     readonly property string providerUrl: {
-         const domain = root.jid.split('@')[1]
-         const provider = providerListModel.provider(domain)
+	 readonly property url providerUrl: providerListModel.providerFromBareJid(root.jid).chosenWebsite
+	 readonly property var chatSupportList: providerListModel.providerFromBareJid(root.jid).chosenChatSupport
+	 readonly property var groupChatSupportList: providerListModel.providerFromBareJid(root.jid).chosenGroupChatSupport
 
-         return providerListModel.chooseWebsite(provider.websites)
-     }
+	 width: parent.width
+	 visible: providerUrl.length || chatSupportList.length || groupChatSupportList.length
 
-     readonly property var chatSupportList: providerListModel.providerFromBareJid(root.jid).chatSupportList
-     readonly property var groupChatSupportList: providerListModel.providerFromBareJid(root.jid).groupChatSupportList
-
-    ProviderListModel {
+	 ProviderListModel {
         id: providerListModel
-    }
+	 }
 
-    ChatSupportSheet {
+	 ChatSupportSheet {
         id: chatSupportSheet
         chatSupportList: providerArea.chatSupportList
-    }
+	 }
 
-    SectionHeader {
+	 SectionHeader {
         text: qsTr("Provider")
-    }
+	 }
 
-    ValueButton {
-        value: qsTr("Visit website")
-        description: qsTr("Open your provider's website in a web browser")
-        visible: providerArea.providerUrl
-        onClicked: Qt.openUrlExternally(providerArea.providerUrl)
-    }
+	 ValueButton {
+		 value: qsTr("Visit website")
+		 description: qsTr("Open your provider's website in a web browser")
+		 visible: providerArea.providerUrl
+		 onClicked: Qt.openUrlExternally(providerArea.providerUrl)
+	 }
 
     ValueButton {
         value: qsTr("Copy website address")
@@ -326,19 +278,19 @@ DetailsContent {
         value: qsTr("Open support chat")
         description: qsTr("Start chat with your provider's support contact")
         visible: providerArea.chatSupportList.length > 0
-        onClicked: {
-            if (providerArea.chatSupportList.length === 1) {
-                if (!contactAdditionSheet.sheetOpen) {
-                    contactAdditionSheet.jid = providerArea.chatSupportList[0]
-                    contactAdditionSheet.nickname = qsTr("Support")
-                    root.sheet.close()
-                    contactAdditionSheet.open()
-                }
-            } else if (!chatSupportSheet.sheetOpen) {
-                root.sheet.close()
-                chatSupportSheet.open()
-            }
-        }
+		onClicked: {
+			if (providerArea.chatSupportList.length === 1) {
+				var contactAdditionContainer = openView(contactAdditionDialog, contactAdditionPage)
+				contactAdditionContainer.jid = providerArea.chatSupportList[0]
+				contactAdditionContainer.name = qsTr("Support")
+
+				if (root.sheet) {
+					root.sheet.close()
+				}
+			} else {
+				chatSupportSheet.open()
+			}
+		}
     }
 
     ValueButton {
@@ -355,7 +307,7 @@ DetailsContent {
                     chatSupportSheet.open()
                 }
             }
-        }
+		}
     }
 }
 
@@ -375,7 +327,6 @@ DetailsContent {
              color: Theme.secondaryColor
              text: qsTr("Block a specific user (e.g., user@example.org) or all users of the same server (e.g., example.org)")
          }
-
 
          ListView {
              id: blockingListView
@@ -406,14 +357,9 @@ DetailsContent {
 
                      rightItem : IconButton {
                          id: blockingButton
-    //                     Controls.ToolTip.text: qsTr("Block chat address")
                          icon.source: "image://theme/icon-splus-add"
                          visible: !blockingAction.loading && Kaidan.connectionState === Enums.StateConnected
                          enabled: blockingTextField.text.length
-    //                     flat: !hovered
-    //                     Layout.preferredWidth: Layout.preferredHeight
-    //                     Layout.preferredHeight: blockingTextField.implicitHeight
-    //                     Layout.rightMargin: Kirigami.Units.largeSpacing
                          onClicked: {
                              const jid = blockingTextField.text
                              if (blockingListView.model.contains(jid)) {
@@ -430,9 +376,6 @@ DetailsContent {
 
                  BusyIndicator {
                      visible: blockingAction.loading
-//                     Layout.preferredWidth: blockingButton.Layout.preferredWidth
-//                     Layout.preferredHeight: Layout.preferredWidth
-//                     Layout.rightMargin: blockingButton.Layout.rightMargin
                  }
              }
 
@@ -445,9 +388,6 @@ DetailsContent {
                      leftPadding: Theme.horizontalPageMargin
                      anchors.left: parent.left
                      anchors.right: parent.right
-        //                     background: Rectangle {
-        //                         color: tertiaryBackgroundColor
-        //                     }
                  }
              delegate: BackgroundItem {
                  id: blockingDelegate
@@ -471,27 +411,15 @@ DetailsContent {
                          id: blockingEditingTextField
                          text: model.jid
                          visible: false
-//                         font.pixelSize: Theme.fontSizeSmall
                          width: parent.width - blockingEditingButton.width - blockingUnblockButton.width
                      }
 
                      IconButton {
                          id: blockingEditingButton
-//                           text: qsTr("Change chat address…")
                          icon.source: blockingText.visible ? "image://theme/icon-m-edit" : "image://theme/icon-m-edit-selected"
                          icon.sourceSize.width: Theme.iconSizeSmallPlus
                          icon.sourceSize.height: Theme.iconSizeSmallPlus
                          anchors.verticalCenter: blockingEditingTextField.textVerticalCenterOffset
-//                             display: Controls.AbstractButton.IconOnly
-          //             checked: !blockingText.visible
-//                             flat: !hovered
-//                             Controls.ToolTip.text: text
-                         // Ensure that the button can be used within "blockingDelegate"
-                         // which acts as an overlay to toggle this button when clicked.
-                         // Otherwise, this button would be toggled by "blockingDelegate"
-                         // and by this button's own visible area at the same time resulting
-                         // in resetting the toggling on each click.
-//                             autoRepeat: true
                          onClicked: {
                              if (blockingText.visible) {
                                  blockingEditingTextField.visible = true
@@ -510,22 +438,14 @@ DetailsContent {
 
                      IconButton {
                          id: blockingUnblockButton
-//                             text: qsTr("Unblock")
                          icon.source: "image://theme/icon-splus-delete"
                          anchors.verticalCenter: blockingEditingTextField.textVerticalCenterOffset
                          visible: Kaidan.connectionState === Enums.StateConnected
-//                             display: Controls.AbstractButton.IconOnly
-//                             flat: !blockingDelegate.hovered
-//                             Controls.ToolTip.text: text
                          onClicked: blockingAction.unblock(model.jid)
                      }
                  }
              }
          }
-
-//         FormExpansionButton {
-//             id: blockingExpansionButton
-//         }
      }
 
      Column {
@@ -542,7 +462,6 @@ DetailsContent {
          ValueButton {
              value: qsTr("Add chat for notes")
              description: qsTr("Add a chat for synchronizing your notes across all your devices")
-//               icon.source: "note-symbolic"
              onClicked: {
                  Kaidan.client.rosterManager.addContactRequested(root.jid)
                  Kaidan.openChatPageRequested(root.jid, root.jid)
@@ -587,8 +506,7 @@ DetailsContent {
             id: passwordVerificationField
             label: qsTr("Current password")
             placeholderText: "Enter your current password"
-            // invalidHintText: qsTr("Enter correct password")
-            visible: true // Kaidan.settings.passwordVisibility !== Kaidan.PasswordVisible
+			visible: Kaidan.settings.passwordVisibility !== Kaidan.PasswordVisible
             enabled: !passwordBusyIndicator.visible
             onTextChanged: {
                 valid = text === AccountManager.password
@@ -607,8 +525,6 @@ DetailsContent {
             label: passwordVerificationField.visible ? qsTr("New password") : qsTr("Password")
             id: passwordField
             placeholderText: "Enter your new password"
-            //invalidHintText: qsTr("Enter different password to change it")
-            //invalidHintMayBeShown: true
             enabled: !passwordBusyIndicator.visible
             onTextChanged: {
                 valid = credentialsValidator.isPasswordValid(text) && text !== AccountManager.password
@@ -687,7 +603,7 @@ DetailsContent {
         spacing: Theme.paddingLarge
 
         SectionHeader {
-            text: qsTr("Password Security")
+			text: qsTr("Password Visibility")
         }
 
         Label {
@@ -699,34 +615,42 @@ DetailsContent {
             text: qsTr("Configure this device to not expose your password for changing it or switching to another device. If you want to change your password or use your account on another device later, <b>consider storing the password somewhere else. This cannot be undone!</b>")
         }
 
-        Button {
-            text: qsTr("Don't show password as text")
-            anchors.horizontalCenter: parent.horizontalCenter
+		ValueButton {
+			label: qsTr("Don't show password as text")
+			description: qsTr("Allow to add additional devices using the login QR code but never show the password")
+			// icon.source: "image://theme/icon-splus-hide-password"
+			anchors.horizontalCenter: parent.horizontalCenter
             visible: Kaidan.settings.passwordVisibility === Kaidan.PasswordVisible
-            //description: qsTr("Allow to add additional devices using the login QR code but never show the password")
-            icon.source: "image://theme/icon-splus-hide-password"
             onClicked: {
                 Kaidan.settings.passwordVisibility = Kaidan.PasswordVisibleQrOnly
                 passwordField.initialize()
             }
         }
 
-        Button {
-            text: qsTr("Don't expose password")
-            anchors.horizontalCenter: parent.horizontalCenter
+		ValueButton {
+			label: qsTr("Don't expose password")
+			description: qsTr("Neither allow to add additional devices using the login QR code nor show the password")
+			anchors.horizontalCenter: parent.horizontalCenter
             visible: Kaidan.settings.passwordVisibility !== Kaidan.PasswordInvisible
-            //FIXME description: qsTr("Neither allow to add additional devices using the login QR code nor show the password")
-            icon.source: "image://theme/icon-s-outline-secure"
-            onClicked: {
-                const oldPasswordVisibility = Kaidan.settings.passwordVisibility
-                Kaidan.settings.passwordVisibility = Kaidan.PasswordInvisible
-
-                // Do not initialize passwordField when the password is already hidden.
-                if (oldPasswordVisibility === Kaidan.PasswordVisible) {
-                    passwordField.initialize()
-                }
-            }
+			//icon.source: "image://theme/icon-s-outline-secure"
+			onClicked: passwordRemovalConfirmationButton.visible = !passwordRemovalConfirmationButton.visible
         }
+
+		Button {
+			id: passwordRemovalConfirmationButton
+			text: qsTr("Confirm")
+			visible: false
+			anchors.horizontalCenter: parent.horizontalCenter
+			onClicked: {
+				const oldPasswordVisibility = Kaidan.settings.passwordVisibility
+				Kaidan.settings.passwordVisibility = Kaidan.PasswordInvisible
+
+				// Do not initialize passwordField when the password is already hidden.
+				if (oldPasswordVisibility === Kaidan.PasswordVisible) {
+					passwordField.initialize()
+				}
+			}
+		}
     }
 
      Column {
@@ -791,7 +715,6 @@ DetailsContent {
             width: parent.width
             Rectangle {
                 color: Theme.errorColor
-//                          radius: roundedCornersRadius
             }
         }
 

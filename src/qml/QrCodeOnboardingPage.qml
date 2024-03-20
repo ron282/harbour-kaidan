@@ -53,13 +53,12 @@ Page {
 
 		cornersRounded: false
 		anchors.fill: parent
-//        zoomSliderArea.anchors.bottomMargin: Kirigami.Units.largeSpacing * 11
-//        zoomSliderArea.width: Math.min(largeButtonWidth, parent.width - Kirigami.Units.largeSpacing * 4)
 		filter.onScanningSucceeded: {
 			if (acceptResult) {
 				// Try to log in by the data from the decoded QR code.
 				switch (Kaidan.logInByUri(result)) {
 				case Enums.Connecting:
+					acceptResult = false
 					break
 				case Enums.PasswordNeeded:
                     pageStack.push(loginPage)

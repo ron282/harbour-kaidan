@@ -16,25 +16,36 @@ BackgroundItem {
 
     property alias accountJid: fileModel.accountJid
     property alias chatJid: fileModel.chatJid
-    property int tabBarCurrentIndex: -1
+	property int tabBarCurrentIndex: 0
     property bool selectionMode: false
     readonly property alias totalFilesCount: fileModel.rowCount
     readonly property alias visibleFilesCount: fileProxyModel.rowCount
 
-    width: parent.width
-    Component.onCompleted: loadDownloadedFiles()
+	height: Screen.height/3
+	Component.onCompleted: loadDownloadedFiles()
+	anchors.left: parent.left
+	anchors.leftMargin: Theme.horizontalPageMargin
+	anchors.right: parent.right
+	anchors.rightMargin: Theme.horizontalPageMargin
 
     SilicaGridView {
+
+		VerticalScrollDecorator {
+			flickable: gridView
+		}
+
+		id: gridView
         width: parent.width
-        height: Screen.height / 3
+		height: parent.height
+		clip: true
 
         cellWidth: {
             switch (root.tabBarCurrentIndex) {
             case 0:
             case 1:
-                return root.width / 4
-            case 2:
-                return width
+				return root.width / 4
+			case 2:
+				return width
             }
 
             return 0
@@ -43,9 +54,9 @@ BackgroundItem {
             switch (root.tabBarCurrentIndex) {
             case 0:
             case 1:
-                return root.width / 4
+				return cellWidth
             case 2:
-                return Theme.iconSizeLarge
+				return Theme.itemSizeSmall
             }
 
             return 0
@@ -56,41 +67,31 @@ BackgroundItem {
                 id: tabBar
                 visible: !root.selectionMode
                 spacing: 0
-                Switch {
+				IconButton {
                     id: imageTab
                     width: root.width / 3
-                    iconSource: "image://theme/icon-m-file-image"
-                    checked: true
-                    automaticCheck: false
+					highlighted: tabBarCurrentIndex == 0
+					icon.source: "image://theme/icon-m-file-image"
                     onClicked: {
                         tabBarCurrentIndex = 0
-                        imageTab.checked = true
-                        videoTab.checked = false
-                        otherTab.checked = false
                     }
                 }
-                Switch {
+				IconButton {
                     id: videoTab
                     width: root.width / 3
-                    iconSource: "image://theme/icon-m-file-video"
-                    automaticCheck: false
+					highlighted: tabBarCurrentIndex == 1
+					icon.source: "image://theme/icon-m-file-video"
                     onClicked: {
                         tabBarCurrentIndex = 1
-                        imageTab.checked = false
-                        videoTab.checked = true
-                        otherTab.checked = false
                     }
                 }
-                Switch {
+				IconButton {
                     id: otherTab
                     width: root.width / 3
-                    iconSource: "image://theme/icon-m-file-other-dark"
-                    automaticCheck: false
+					highlighted: tabBarCurrentIndex == 2
+					icon.source: "image://theme/icon-m-file-other-dark"
                     onClicked: {
-                        tabBarCurrentIndex = 2
-                        videoTab.checked = false
-                        imageTab.checked = false
-                        otherTab.checked = true
+						tabBarCurrentIndex = 2
                     }
                 }
            }
@@ -105,7 +106,7 @@ BackgroundItem {
 
                 IconButton {
                     id: iconClear
-                    icon.source: "image://theme/icon-s-checkmark"
+					icon.source: "image://theme/icon-m-cancel"
                     onClicked: {
                         root.selectionMode = false
                         fileProxyModel.clearChecked()
@@ -115,12 +116,13 @@ BackgroundItem {
                 Label {
                     text: qsTr("%1/%2 selected").arg(fileProxyModel.checkedCount).arg(fileProxyModel.rowCount)
                     width: parent.width - iconClear.width - iconCheckAll.width - iconDeleteChecked.width
+					anchors.verticalCenter: parent.verticalCenter
                 }
 
                 IconButton {
                     id: iconCheckAll
-                    visible: fileProxyModel.checkedCount !== fileProxyModel.rowCount
-                    icon.source: "image://theme/icon-s-group-chat"
+					enabled: fileProxyModel.checkedCount !== fileProxyModel.rowCount
+					icon.source: "image://theme/icon-m-select-all"
                     onClicked: {
                         fileProxyModel.checkAll()
                     }
@@ -128,126 +130,128 @@ BackgroundItem {
 
                 IconButton {
                     id: iconDeleteChecked
-                    icon.source: "image://theme/icon-s-decline"
+					icon.source: "image://theme/icon-m-delete"
                     onClicked: {
                         fileProxyModel.deleteChecked()
                         root.selectionMode = false
                     }
                 }
             }
+			Rectangle {
+				color: "transparent"
+				width: parent.width
+				height: Theme.paddingSmall*2
+			}
         }
         model: FileProxyModel {
             id: fileProxyModel
             mode: {
 
-                /*switch (root.tabBarCurrentIndex) {
+				switch (root.tabBarCurrentIndex) {
                 case 0:
                     return FileProxyModel.Images
                 case 1:
                     return FileProxyModel.Videos
                 case 2:
                     return FileProxyModel.Other
-                }*/
+				}
 
                 return FileProxyModel.All
             }
             sourceModel: FileModel {
                 id: fileModel
             }
-//            onFilesDeleted: (files, errors) => {
-//                if (errors.length > 0) {
-//                    passiveNotification(qsTr("Not all files could be deleted:\n%1").arg(errors[0]))
-//                    console.warn("Not all files could be deleted:", errors)
-//                }
+			onFilesDeleted: {
+				if (errors.length > 0) {
+					passiveNotification(qsTr("Not all files could be deleted:\n%1").arg(errors[0]))
+					console.warn("Not all files could be deleted:", errors)
+				}
 
-//                root.loadDownloadedFiles()
-//            }
+				root.loadDownloadedFiles()
+			}
         }
         delegate: {
-            return otherDelegate
 
-/*            switch (root.tabBarCurrentIndex) {
+			switch (root.tabBarCurrentIndex) {
             case 0:
-                return imageDelegate
+				return imageDelegate
             case 1:
                 return videoDelegate
             case 2:
-                return otherDelegate
+				return otherDelegate
             }
 
             return null
-*/
         }
 
         Component {
             id: imageDelegate
 
-            SelectablePreview {
-                id: preview
-//                checkable: root.selectionMode
-//                checked: checkable && model.checkState === Qt.Checked
-//                onToggled: {
-//                    model.checkState = checked ? Qt.Checked : Qt.Unchecked
-//                }
-                onClicked: {
-                    if (root.selectionMode) {
-                        if (fileProxyModel.checkedCount === 0) {
-                            root.selectionMode = false
-                        }
-                    } else {
-                        Qt.openUrlExternally(model.file.localFileUrl)
-                    }
-                }
-                onPressAndHold: {
-                    root.selectionMode = true
-                }
+			SelectablePreview {
+				id: preview				
+				checkable: root.selectionMode
+				checked: checkable && model.checkState === Qt.Checked
+				onToggled: {
+					model.checkState = checked ? Qt.Checked : Qt.Unchecked
+				}
+				onClicked: {
+					if (root.selectionMode) {
+						if (fileProxyModel.checkedCount === 0) {
+							root.selectionMode = false
+						}
+					} else {
+						Qt.openUrlExternally(model.file.localFileUrl)
+					}
+				}
+				onPressAndHold: {
+					root.selectionMode = true
+				}
 
-                Image {
-                    source: model.file.localFileUrl
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                    sourceSize.width: parent.availableWidth
-                    sourceSize.height: parent.availableHeight
-                    anchors.fill: parent
+				Image {
+					source: model.file.localFileUrl
+					fillMode: Image.PreserveAspectCrop
+					asynchronous: true
+					anchors.fill: parent
 
-                    SelectionMarker {
-                        visible: preview.containsMouse || checked
-                        //checked: preview.checked
-                        anchors.top: parent.top
-                        anchors.right: parent.right
-                        anchors.topMargin: Theme.paddingSmall
-                        anchors.rightMargin: anchors.topMargin
-                        onClicked: {
-                            root.selectionMode = true
-                            model.checkState = checkState
-                            preview.toggled()
-                            preview.clicked()
-                        }
-                    }
-                }
-            }
-        }
+					SelectionMarker {
+						visible: preview.containsMouse || checked
+						checked: preview.checked
+						anchors.top: parent.top
+						anchors.right: parent.right
+						anchors.topMargin: Theme.paddingSmall
+						anchors.rightMargin: anchors.topMargin
+						onClicked: {
+							root.selectionMode = true
+							model.checkState = checked ? Qt.Checked : Qt.Unchecked
+							preview.toggled()
+							preview.clicked()
+						}
+					}
+				}
+			}
+		}
 
         Component {
             id: videoDelegate
 
             SelectablePreview {
                 id: preview
-//                checkable: root.selectionMode
-//                checked: checkable && model.checkState === Qt.Checked
-//                onToggled: {
-//                    model.checkState = checked ? Qt.Checked : Qt.Unchecked
-//                }
-                onClicked: {
-                    if (root.selectionMode) {
-                        if (fileProxyModel.checkedCount === 0) {
-                            root.selectionMode = false
-                        }
-                    } else {
-                        Qt.openUrlExternally(model.file.localFileUrl)
-                    }
-                }
-                onPressAndHold: {
+				checkable: root.selectionMode
+				checked: checkable && model.checkState === Qt.Checked
+				anchors.leftMargin: Theme.horizontalPageMargin
+				onToggled: {
+					model.checkState = checked ? Qt.Checked : Qt.Unchecked
+				}
+				onClicked: {
+					if (root.selectionMode) {
+						if (fileProxyModel.checkedCount === 0) {
+							root.selectionMode = false
+						}
+					} else {
+						Qt.openUrlExternally(model.file.localFileUrl)
+					}
+				}
+				onPressAndHold: {
                     root.selectionMode = true
                 }
 
@@ -256,17 +260,18 @@ BackgroundItem {
                     autoPlay: true
                     fillMode: Multimedia.VideoOutput.PreserveAspectCrop
                     anchors.fill: parent
+					muted: true
 
                     SelectionMarker {
                         visible: preview.containsMouse || checked
                         checked: preview.checked
                         anchors.top: parent.top
                         anchors.right: parent.right
-                        anchors.topMargin: Kirigami.Units.smallSpacing
+						anchors.topMargin: Theme.paddingSmall
                         anchors.rightMargin: anchors.topMargin
                         onClicked: {
                             root.selectionMode = true
-                            model.checkState = checkState
+							model.checkState = checked ? Qt.Checked : Qt.Unchecked
                             preview.toggled()
                             preview.clicked()
                         }
@@ -284,60 +289,69 @@ BackgroundItem {
         Component {
             id: otherDelegate
 
-            BackgroundItem {
+			GridItem {
                 id: control
-                width: GridView.view.cellWidth
+				width: GridView.view.cellWidth
                 height: GridView.view.cellHeight
-//                autoExclusive: false
-//                checkable: root.selectionMode
-//                checked: checkable && model.checkState === Qt.Checked
-//                topPadding: Theme.paddingLarge
-//                bottomPadding: topPadding
-                  MouseArea {
-                    id: selectionArea
-                    hoverEnabled: true
-                    acceptedButtons: Qt.NoButton
+				property bool checkable: root.selectionMode
+				property bool checked: checkable && model.checkState === Qt.Checked
+				signal toggled
 
-                    Column {
-                      width: parent.width
+				MouseArea {
+					id: selectionArea
+					hoverEnabled: true
+					acceptedButtons: Qt.NoButton
+					width: parent.width
+					property bool checked: false
 
-                        Icon {
-                            source: model.file.mimeTypeIcon
-                        }
+					  Row {
+							width: parent.width
+							Icon {
+								source: model.file.mimeTypeIcon
+								sourceSize: Qt.size(Theme.iconSizeMedium, Theme.iconSizeMedium)
+							}
 
-                        Label {
-                            text: model.file.name
-                            width: parent.width
-                            elide: Qt.ElideRight
-                            font.bold: true
-                        }
+							Column {
+								width: parent.width - parent.spacing - Theme.iconSizeMedium
+								Label {
+									text: model.file.name
+									width: parent.width
+									elide: Qt.ElideRight
+									font.bold: true
+									font.pixelSize: Theme.fontSizeExtraSmall
+								}
 
-                        Label {
-                            width: parent.width
-                            elide: Qt.ElideRight
-                            text: model.file.details
-                        }
+								Label {
+									width: parent.width
+									elide: Qt.ElideRight
+									text: model.file.details
+									font.pixelSize: Theme.fontSizeExtraSmall
+								}
+							}
+					  }
 
-                        SelectionMarker {
-                            visible: selectionArea.containsMouse || checked
-                            // checked: control.checked
-                            onClicked: {
-                                root.selectionMode = true
-                                model.checkState = checkState
-                                control.toggled()
-                                control.clicked()
-                            }
-                        }
-                    }
-                }
-//                onToggled: {
-//                    model.checkState = checked ? Qt.Checked : Qt.Unchecked
-//                }
+					  SelectionMarker {
+						  visible: selectionArea.containsMouse || checked
+						  checked: control.checked
+						  onClicked: {
+							  root.selectionMode = true
+							  control.checked = !control.checked
+							  model.checkState = checked ? Qt.Checked : Qt.Unchecked
+						  }
+					  }
+				  }
+				onToggled: {
+					model.checkState = checked ? Qt.Checked : Qt.Unchecked
+				}
                 onClicked: {
                     if (root.selectionMode) {
                         if (fileProxyModel.checkedCount === 0) {
                             root.selectionMode = false
-                        }
+						} else
+						{
+							control.checked != checked
+							model.checkState = checked ? Qt.Checked : Qt.Unchecked
+						}
                     } else {
                         Qt.openUrlExternally(model.file.localFileUrl)
                     }
@@ -346,7 +360,7 @@ BackgroundItem {
                     root.selectionMode = true
                 }
             }
-        }
+		}
     }
 
     function loadFiles() {
@@ -354,6 +368,6 @@ BackgroundItem {
     }
 
     function loadDownloadedFiles() {
-        fileModel.loadDownloadedFiles()
+		fileModel.loadDownloadedFiles()
     }
 }

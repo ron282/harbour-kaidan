@@ -49,10 +49,11 @@ int VCardModel::rowCount(const QModelIndex &parent) const
 	// For list models only the root node (an invalid parent) should return the
 	// list's size. For all other (valid) parents, rowCount() should return 0 so
 	// that it does not become a tree model.
-	if (parent.isValid())
+    if (parent.isValid()) {
 		return 0;
+    }
 
-	return m_vCardMap.size();
+    return m_vCardMap.size();
 }
 
 QVariant VCardModel::data(const QModelIndex &index, int role) const
@@ -100,10 +101,10 @@ bool VCardModel::setData(const QModelIndex &index, const QVariant &value, int ro
 
 void VCardModel::handleVCardReceived(const QXmppVCardIq &vCard)
 {
-	if (vCard.from() == m_jid) {
+    if (vCard.from() == m_jid || vCard.from().isEmpty()) {
 		beginResetModel();
 		m_vCard = vCard;
-		generateEntries();
+        generateEntries();
 		endResetModel();
 	}
 }

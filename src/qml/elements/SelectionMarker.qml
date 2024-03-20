@@ -10,25 +10,23 @@ import im.kaidan.kaidan 1.0
 /**
  * Used to select an item inside of it.
  */
-IconTextSwitch {
+IconButton {
     id: root
-//    padding: 3
-//    implicitWidth: 2 * padding + Math.max(implicitIndicatorWidth, implicitBackgroundWidth)
-//    implicitHeight: 2 * padding + Math.max(implicitIndicatorHeight, implicitBackgroundHeight)
+	property bool checked: false
 
-//    background: Rectangle {
-//        color: Kirigami.Theme.highlightColor
-//        opacity: root.hovered ? 1 : 0.8
-//        implicitWidth: 20
-//        implicitHeight: 20
-//        radius: implicitWidth
-//    }
+	height: Theme.iconSizeSmall
+	width: Theme.iconSizeSmall
 
-//    indicator: Kirigami.Icon {
-//        source: "emblem-ok-symbolic"
-//        color: Kirigami.Theme.highlightedTextColor
-//        implicitWidth: Kirigami.Units.iconSizes.small
-//        implicitHeight: implicitWidth
-//        anchors.centerIn: parent
-//    }
+	onClicked: {
+		checked = !checked
+	}
+
+	Rectangle {
+		color: Theme.highlightColor
+		opacity: 0.8
+		radius: width*0.5
+		anchors.fill: parent
+	}
+
+	icon.source: "image://theme/icon-s-checkmark"
 }

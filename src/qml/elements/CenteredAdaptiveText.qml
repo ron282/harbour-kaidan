@@ -17,11 +17,4 @@ Label {
 	wrapMode: Text.WordWrap
     elide: Text.ElideRight
     font.pixelSize: Theme.fontSizeMedium * scaleFactor
-//=======
-//ScalableText {
-//	Layout.fillWidth: true
-//	horizontalAlignment: Text.AlignHCenter
-//	wrapMode: Text.WordWrap
-//	elide: Text.ElideRight
-//>>>>>>> master
 }

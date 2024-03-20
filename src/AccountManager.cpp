@@ -5,10 +5,6 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#if defined (SFOS)
-#include "../3rdparty/QEmuStringView/qemustringview.h"
-#endif
-
 #include "AccountManager.h"
 // Qt
 #include <QMutexLocker>

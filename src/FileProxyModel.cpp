@@ -196,7 +196,7 @@ bool FileProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourcePa
 
 bool FileProxyModel::filterAcceptsImage(const File &file) const
 {
-	if (file.mimeType.isValid()) {
+    if (file.mimeType.isValid()) {
 		return file.mimeType.name().startsWith(QStringLiteral("image/"));
 	}
 

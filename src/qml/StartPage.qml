@@ -34,13 +34,22 @@ Page {
 
         CenteredAdaptiveText {
             text: "Kaidan"
-            scaleFactor: 5
+			scaleFactor: 4
         }
 
         CenteredAdaptiveText {
             text: qsTr("Enjoy free communication on every device!")
-            scaleFactor: 1
+			scaleFactor: 1.5
         }
+
+		SectionHeader {
+			text: qsTr("Login")
+		}
+
+		IconButton {
+
+			onClicked: loginArea.visible = !loginArea.visible
+		}
 
         CenteredAdaptiveHighlightedButton {
             id: startButton
@@ -48,9 +57,50 @@ Page {
             onClicked: pageStack.push(qrCodeOnboardingPage)
             anchors.horizontalCenter: parent.horizontalCenter
         }
-    }
 
-    Connections {
+		LoginArea {
+			id: loginArea
+			visible: false
+			onVisibleChanged: {
+				if (visible) {
+					initialize()
+				} else {
+					reset()
+				}
+			}
+
+			Connections {
+				target: pageStack.layers
+
+				function onCurrentItemChanged() {
+					if (AccountManager.jid) {
+						loginArea.visible = true
+					}
+				}
+			}
+		}
+
+		Button {
+			text: qsTr("Scan login QR code of old device")
+			onClicked: openPage(qrCodeOnboardingPage)
+		}
+	}
+
+	SectionHeader {
+		text: qsTr("or Register")
+	}
+
+	Button {
+		text: qsTr("Generate account automatically")
+		onClicked: openPage(automaticRegistrationPage)
+	}
+
+	Button {
+		text: qsTr("Create account manually")
+		onClicked: openPage(manualRegistrationPage)
+	}
+
+	Connections {
 		target: Kaidan
 
 		function onConnectionErrorChanged() {

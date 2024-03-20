@@ -9,29 +9,18 @@ import Sailfish.Silica 1.0
 /**
  * Used to show a selectable preview (e.g., of an image or video).
  */
-BackgroundItem {
+GridItem {
     id: root
 
-    default property alias __data: selectionArea.data
-    property alias containsMouse: selectionArea.containsMouse
+	property bool checkable : true
+	property bool checked : false
+	signal toggled
 
-    implicitWidth: GridView.view.cellWidth
-    implicitHeight: GridView.view.cellHeight
-//    autoExclusive: false
-//    padding: 0
-//    background: Rectangle {}
-    MouseArea {
-        id: selectionArea
-        hoverEnabled: true
-        acceptedButtons: Qt.NoButton
+	width: GridView.view.cellWidth
+	height: GridView.view.cellHeight
 
-        // overlay to indicate the currently hovered or selected medium
-        Rectangle {
-            color: Theme.highlightColor
-            opacity: 0.1
-            z: 1
-            /*visible: root.hovered || root.checked*/
-            anchors.fill: parent
-        }
-    }
+	onClicked: {
+		checked = !checked
+		root.toggled()
+	}
 }

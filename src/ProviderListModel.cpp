@@ -33,14 +33,6 @@
 #include "ProviderListItem.h"
 #include "Globals.h"
 
-#if defined(SFOS)
-const QStringView DEFAULT_LANGUAGE_CODE = u"EN";
-const QStringView DEFAULT_COUNTRY_CODE = u"US";
-#else
-constexpr QStringView DEFAULT_LANGUAGE_CODE = u"EN";
-constexpr QStringView DEFAULT_COUNTRY_CODE = u"US";
-#endif
-
 ProviderListModel::ProviderListModel(QObject *parent)
 	: QAbstractListModel(parent)
 {
@@ -95,7 +87,7 @@ QVariant ProviderListModel::data(const QModelIndex &index, int role) const
 	case SupportsInBandRegistrationRole:
 		return item.supportsInBandRegistration();
 	case RegistrationWebPageRole:
-		return item.registrationWebPage();
+		return item.registrationWebPages().pickBySystemLocale();
 	case LanguagesRole:
 		return QStringList(item.languages().toList()).join(QStringLiteral(", "));
 	case CountriesRole:
@@ -105,7 +97,7 @@ QVariant ProviderListModel::data(const QModelIndex &index, int role) const
 	case IsCustomProviderRole:
 		return item.isCustomProvider();
 	case WebsiteRole:
-		return chooseWebsite(item.websites());
+		return item.websites().pickBySystemLocale();
 	case OnlineSinceRole:
 		if (item.onlineSince() == -1)
 			return QString();
@@ -244,22 +236,6 @@ QVector<ProviderListItem> ProviderListModel::providersWithSystemLocale(const QVe
 int ProviderListModel::indexOfRandomlySelectedProvider(const QVector<ProviderListItem> &preSelectedProviders) const
 {
 	return m_items.indexOf(preSelectedProviders.at(QRandomGenerator::global()->generate() % preSelectedProviders.size()));
-}
-
-QString ProviderListModel::chooseWebsite(const QMap<QString, QUrl> &websites) const
-{
-	QUrl website;
-
-	// Use the system-wide language website if available.
-	// Use the English website if no system-wide language website is available but English is.
-	// Use the first website if also no English version is available but another one is.
-	if (website = websites.value(systemLocale().languageCode); website.isEmpty()) {
-		if (website = websites.value("EN"); website.isEmpty() && !websites.isEmpty()) {
-			website = websites.first();
-		}
-	}
-
-	return website.toString();
 }
 
 ProviderListModel::Locale ProviderListModel::systemLocale() const

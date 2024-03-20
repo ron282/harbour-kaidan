@@ -17,8 +17,11 @@
 // std
 #include <unordered_map>
 // Qt
+#include <QLocale>
 #include <QSharedDataPointer>
 #include <QVariantList>
+// Kaidan
+#include "Globals.h"
 
 class QUrl;
 class QJsonObject;
@@ -28,15 +31,43 @@ class ProviderListItemPrivate;
 class ProviderListItem
 {
 	Q_GADGET
+
+	Q_PROPERTY(QUrl chosenWebsite READ chosenWebsite CONSTANT)
+	Q_PROPERTY(QVector<QString> chosenChatSupport READ chosenChatSupport CONSTANT)
+	Q_PROPERTY(QVector<QString> chosenGroupChatSupport READ chosenGroupChatSupport CONSTANT)
+
 public:
-	Q_PROPERTY(QString jid READ jid CONSTANT)
-	Q_PROPERTY(QMap<QString, QUrl> websites READ websites CONSTANT)
-	Q_PROPERTY(QVector<QString> chatSupport READ chatSupport CONSTANT)
-	Q_PROPERTY(QVector<QString> groupChatSupport READ groupChatSupport CONSTANT)
-#if defined(SFOS)
-    Q_PROPERTY(QStringList chatSupportList READ chatSupportList CONSTANT)
-    Q_PROPERTY(QStringList groupChatSupportList READ groupChatSupportList CONSTANT)
-#endif
+	template<typename T>
+	struct LanguageVariants
+		: QMap<QString, T>
+	{
+		T pickBySystemLocale() const
+		{
+			const auto languageCode = QLocale::system().name().split(u'_').first().toUpper();
+
+			// Use the system-wide language variant if available.
+			const auto systemLanguageItr = this->find(languageCode);
+			if (systemLanguageItr != this->cend() && !systemLanguageItr.value().isEmpty()) {
+				return systemLanguageItr.value();
+			}
+
+			// Use the English variant if no system-wide language variant is available but English
+			// is.
+			const auto defaultLanguageItr = this->find(DEFAULT_LANGUAGE_CODE.toString());
+			if (defaultLanguageItr != this->cend() && !defaultLanguageItr.value().isEmpty()) {
+				return defaultLanguageItr.value();
+			}
+
+			// Use the first language variant if also no English variant is available but another
+			// one is.
+			if (!this->empty()) {
+				return this->cbegin().value();
+			}
+
+			return {};
+		}
+	};
+
 	static ProviderListItem fromJson(const QJsonObject &object);
 
 	ProviderListItem(bool isCustomProvider = false);
@@ -54,8 +85,8 @@ public:
 	bool supportsInBandRegistration() const;
 	void setSupportsInBandRegistration(bool supportsInBandRegistration);
 
-	QUrl registrationWebPage() const;
-	void setRegistrationWebPage(const QUrl &registrationWebPage);
+	LanguageVariants<QUrl> registrationWebPages() const;
+	void setRegistrationWebPages(const LanguageVariants<QUrl> &registrationWebPages);
 
 	QVector<QString> languages() const;
 
@@ -64,8 +95,9 @@ public:
 
 	QVector<QString> flags() const;
 
-	QMap<QString, QUrl> websites() const;
-	void setWebsites(const QMap<QString, QUrl> &websites);
+	LanguageVariants<QUrl> websites() const;
+	void setWebsites(const LanguageVariants<QUrl> &websites);
+	QUrl chosenWebsite() const;
 
 	int onlineSince() const;
 	void setOnlineSince(int onlineSince);
@@ -76,20 +108,14 @@ public:
 	int messageStorageDuration() const;
 	void setMessageStorageDuration(int messageStorageDuration);
 
-	QVector<QString> chatSupport() const;
-#if defined(SFOS)
-    QStringList chatSupportList() const;
-    void setChatSupport(QMap<QString, QVector<QString>> &&chatSupport);
-#else
-	void setChatSupport(std::unordered_map<QString, QVector<QString>> &&chatSupport);
-#endif
-	QVector<QString> groupChatSupport() const;
-#if defined(SFOS)
-    QStringList groupChatSupportList() const;
-    void setGroupChatSupport(QMap<QString, QVector<QString>> &&groupChatSupport);
-#else
-	void setGroupChatSupport(std::unordered_map<QString, QVector<QString>> &&groupChatSupport);
-#endif
+	LanguageVariants<QVector<QString>> chatSupport() const;
+	void setChatSupport(const LanguageVariants<QVector<QString>> &chatSupport);
+	QVector<QString> chosenChatSupport() const;
+
+	LanguageVariants<QVector<QString>> groupChatSupport() const;
+	void setGroupChatSupport(const LanguageVariants<QVector<QString>> &groupChatSupport);
+	QVector<QString> chosenGroupChatSupport() const;
+
 	bool operator<(const ProviderListItem &other) const;
 	bool operator>(const ProviderListItem &other) const;
 	bool operator<=(const ProviderListItem &other) const;
@@ -98,5 +124,16 @@ public:
 	bool operator==(const ProviderListItem &other) const;
 
 private:
-	QSharedDataPointer<ProviderListItemPrivate> d;
+	template<typename T>
+	static LanguageVariants<T> parseStringLanguageVariants(const QJsonObject &stringLanguageVariants);
+
+	template<typename T>
+	static LanguageVariants<T> parseStringListLanguageVariants(const QJsonObject &stringListLanguageVariants);
+
+#if !defined(SFOS)
+    template<typename T>
+    static LanguageVariants<T> parseLanguageVariants(const QJsonObject &LanguageVariants, const std::function<T (const QJsonValue &)> &convertToTargetType);
+#endif
+
+    QSharedDataPointer<ProviderListItemPrivate> d;
 };

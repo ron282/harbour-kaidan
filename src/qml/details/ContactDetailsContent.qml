@@ -63,9 +63,9 @@ DetailsContent {
         }
     }
 
-    encryptionArea: Column {
-        width: parent.width
+	encryptionArea: Column {
         spacing: 0
+		width: parent.width
 
         OmemoWatcher {
             id: accountOmemoWatcher
@@ -206,98 +206,90 @@ DetailsContent {
         }
     }
 
-    rosterGroupArea: Column {
-        id: colRoster
-        width: parent.width
+	rosterGoupListView {
+		header: Row {
+			width: parent.width
+			TextField {
+				id: rosterGroupField
+				placeholderText: qsTr("New label")
+				enabled: !rosterGroupBusyIndicator.running
+				width: parent.width - parent.spacing - rosterGroupAdditionButton.width
+				softwareInputPanelEnabled: false
 
-        SectionHeader {
-            text: qsTr("Labels")
-        }
-        TextField {
-            id: rosterGroupField
-            placeholderText: qsTr("New label")
-            enabled: !rosterGroupBusyIndicator.running
-            width: parent.width
-            softwareInputPanelEnabled: false
+				onClicked: {
+					Qt.inputMethod.show()
+					forceActiveFocus()
+				}
+			}
 
-            onClicked: {
-                Qt.inputMethod.show()
-                forceActiveFocus()
-            }
+			IconButton {
+				id: rosterGroupAdditionButton
+				icon.source: "image://theme/icon-splus-add"
+				enabled: rosterGroupField.text.length
+				visible: !rosterGroupBusyIndicator.running
+				onClicked: {
+					var groups = chatItemWatcher.item.groups
 
-            rightItem: IconButton {
-                id: rosterGroupAdditionButton
-                icon.source: "image://theme/icon-splus-add"
-                enabled: rosterGroupField.text.length
-                visible: !rosterGroupBusyIndicator.running
-                onClicked: {
-                    var groups = chatItemWatcher.item.groups
+					if (groups.indexOf(rosterGroupField.text) !== -1) {
+						rosterGroupField.text = ""
+					} else if (enabled) {
+						rosterGroupBusyIndicator.running = true
 
-                    if (groups.indexOf(rosterGroupField.text) !== -1) {
-                        rosterGroupField.text = ""
-                    } else if (enabled) {
-                        rosterGroupBusyIndicator.running = true
+						groups.push(rosterGroupField.text)
+						Kaidan.client.rosterManager.updateGroupsRequested(root.jid, chatItemWatcher.item.name, groups)
 
-                        groups.push(rosterGroupField.text)
-                        Kaidan.client.rosterManager.updateGroupsRequested(root.jid, chatItemWatcher.item.name, groups)
+						rosterGroupField.text = ""
+					} else {
+						rosterGroupField.forceActiveFocus()
+					}
+				}
 
-                        rosterGroupField.text = ""
-                    } else {
-                        rosterGroupField.forceActiveFocus()
-                    }
-                }
-            }
-            BusyLabel {
-                text: qsTr("updating labels...")
-                anchors.fill: parent
-                id: rosterGroupBusyIndicator
-            }
-        }
+				BusyLabel {
+					text: qsTr("updating labels...")
+					anchors.fill: parent
+					id: rosterGroupBusyIndicator
+				}
+			}
 
-        Connections {
-            target: rosterGroupListView
+			Connections {
+				target: RosterModel
 
-            onVisibleChanged: {
-                if (rosterGroupListView.visible) {
-                    rosterGroupField.text = ""
-                    rosterGroupField.forceActiveFocus()
-                }
-            }
-        }
+				onGroupsChanged: {
+					rosterGroupBusyIndicator.running = false
+					rosterGroupField.forceActiveFocus()
+				}
+			}
+		}
 
-        Connections {
-            target: RosterModel
+		delegate: TextSwitch {
+			id: rosterGroupDelegate
+			text: modelData
+			checked: contactWatcher.item.groups.indexOf(modelData) !== -1
+			width: parent.width
+			height: Theme.itemSizeSmall
+			onCheckedChanged: {
+				var groups = contactWatcher.item.groups
 
-            onGroupsChanged: {
-                rosterGroupBusyIndicator.running = false
-                rosterGroupField.forceActiveFocus()
-            }
-        }
+				if (checked && contactWatcher.item.groups.indexOf(modelData) === -1) {
+					groups.push(modelData)
+					Kaidan.client.rosterManager.updateGroupsRequested(root.jid, contactWatcher.item.name, groups)
+				} else if (!checked && contactWatcher.item.groups.indexOf(modelData) !== -1){
+					groups.splice(groups.indexOf(modelData), 1)
+					Kaidan.client.rosterManager.updateGroupsRequested(root.jid, contactWatcher.item.name, groups)
+				}
+			}
+			// TODO: Remove this and see TODO in RosterModel once fixed in Kirigami Addons.
+			Connections {
+				target: RosterModel
 
-        ColumnView {
-            id: rosterGroupListView
-            model: RosterModel.groups
-            visible: true // rosterGroupExpansionButton.checked
-            itemHeight: Theme.itemSizeSmall
-            delegate: TextSwitch {
-                id: rosterGroupDelegate
-                text: modelData
-                checked: contactWatcher.item.groups.indexOf(modelData) !== -1
-                width: parent.width
-                height: Theme.itemSizeSmall
-                onCheckedChanged: {
-                    var groups = contactWatcher.item.groups
-
-                    if (checked && contactWatcher.item.groups.indexOf(modelData) === -1) {
-                        groups.push(modelData)
-                        Kaidan.client.rosterManager.updateGroupsRequested(root.jid, contactWatcher.item.name, groups)
-                    } else if (!checked && contactWatcher.item.groups.indexOf(modelData) !== -1){
-                        groups.splice(groups.indexOf(modelData), 1)
-                        Kaidan.client.rosterManager.updateGroupsRequested(root.jid, contactWatcher.item.name, groups)
-                    }
-                }
-            }
-        }
+				function onGroupsChanged() {
+					// Update the "checked" value of "rosterGroupDelegate" as a work
+					// around because "MobileForm.FormSwitchDelegate" does not listen to
+					// changes of "contactWatcher.item.groups".
+					rosterGroupDelegate.checked = contactWatcher.item.groups.includes(modelData)
+				}
+			}
+		}
     }
 
 

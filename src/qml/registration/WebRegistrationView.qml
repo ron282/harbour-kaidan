@@ -37,8 +37,8 @@ View {
 			text: qsTr("Log in with your new account")
             anchors.topMargin: height
 			onClicked: {
-                page = pageStack.push(loginPage)
-				page.prefillJidDomain(serverView.text)
+				AccountManager.jid = providerView.text
+				popLayersAboveLowest()
 			}
 		}
 	}

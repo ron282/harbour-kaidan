@@ -159,7 +159,8 @@ Column {
 
             ColumnView {
                 id: deviceRepeater
-                itemHeight: Theme.itemSizeMedium
+				visible: deviceExpansionButton.checked
+				itemHeight: Theme.itemSizeMedium
                 model: UserDevicesModel {
                     jid: root.jid
                 }
@@ -204,8 +205,12 @@ Column {
                         }
                     }
                 }
-            }
-        }
+            }			
+			FormExpansionButton {
+				anchors.right: parent.right
+				id: deviceExpansionButton
+			}
+		}
         Column {
             id: extraContent
             width: parent.width

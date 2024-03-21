@@ -446,7 +446,10 @@ DetailsContent {
                  }
              }
          }
-     }
+		 FormExpansionButton {
+			 id: blockingExpansionButton
+		 }
+	 }
 
      Column {
          id: notesAdditionArea

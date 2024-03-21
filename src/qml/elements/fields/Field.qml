@@ -61,7 +61,7 @@ Column {
         spacing: 0
 
 		// input field
-        TextField {
+		TextField {
 			id: inputField
             width: parent.width - invalidIcon.width
 
@@ -87,9 +87,10 @@ Column {
 	// hint for entering a valid input
     Label {
 		id: invalidHint
+		width: parent.width
 		visible: false
 		wrapMode: Text.Wrap
-//		color: Kirigami.Theme.neutralTextColor
+		color: Theme.secondaryColor
 	}
 
 	/**

@@ -13,7 +13,7 @@ import im.kaidan.kaidan 1.0
  */
 TextField {
     id: fieldValue
-    property bool valid: false
+	property bool valid: true
     property alias labelText: fieldValue.label
     property alias credentialsValidator: credentialsValidator
     CredentialsValidator {

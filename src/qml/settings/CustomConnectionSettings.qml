@@ -18,12 +18,12 @@ Column {
     width: parent.width
 
 	// The type Item is used because the type Button does not work for buttons of type RoundButton.
-    property IconButton confirmationButton
+	property Item confirmationButton
 
     TextField {
 		id: hostField
         width: parent.width
-        label: qsTr("Hostname:")
+		label: qsTr("Hostname")
         labelVisible: true
 		placeholderText: "xmpp.example.org"
 		text: AccountManager.host
@@ -32,8 +32,8 @@ Column {
 //		invalidHintMayBeShown: true
 
 		onTextChanged: {
-//			valid = !text.match(/\s/);
-//			toggleHintForInvalidText()
+			valid = !text.match(/\s/);
+			toggleHintForInvalidText()
 		}
 
 		// Focus the portField on confirmation.

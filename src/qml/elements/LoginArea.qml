@@ -23,8 +23,8 @@ Column {
 		id: jidField
 //		inputField.onAccepted: loginButton.clicked()
 		rightItem: IconButton {
-				icon.source: "image:://theme/icon-s-settings"
-//				text: qsTr("Connection settings")
+				icon.source: "image://theme/icon-m-setting"
+				icon.sourceSize: Qt.size(Theme.iconSizeSmallPlus, Theme.iconSizeSmallPlus)
 				onClicked: {
 					customConnectionSettings.visible = !customConnectionSettings.visible
 
@@ -52,6 +52,7 @@ Column {
 	Button {
 		id: loginButton
 		text: qsTr("Log in")
+		anchors.horizontalCenter: parent.horizontalCenter
 		state: Kaidan.connectionState !== Enums.StateDisconnected ? "connecting" : ""
 		states: [
 			State {
@@ -66,11 +67,11 @@ Column {
 		// Connect to the server and authenticate by the entered credentials if the JID is valid and a password entered.
 		onClicked: {
 			// If the JID is invalid, focus its field.
-			if (!jidField.valid) {
+			if (!jidField.text.length > 0) {
 				jidField.forceActiveFocus()
 				// If the password is invalid, focus its field.
 				// This also implies that if the JID field is focused and the password invalid, the password field will be focused instead of immediately trying to connect.
-			} else if (!passwordField.valid) {
+			} else if (!passwordField.text.length > 0) {
 				passwordField.forceActiveFocus()
 			} else {
 				AccountManager.jid = jidField.text
@@ -97,7 +98,7 @@ Column {
 			jidField.inputField.cursorPosition = 0
 		} else {
 			jidField.forceActiveFocus()
-			jidField.invalidHintMayBeShown = false
+//			jidField.invalidHintMayBeShown = false
 			jidField.toggleHintForInvalidText()
 		}
 	}

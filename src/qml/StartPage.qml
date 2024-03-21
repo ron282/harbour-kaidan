@@ -15,97 +15,100 @@ import "elements"
  * It is displayed if no account is available.
  */
 Page {
-    PageHeader {
-        title: "Kaidan"
-    }
-    Column {
-        anchors.verticalCenter: parent.verticalCenter
-        width: parent.width
-        spacing: Theme.paddingLarge
+	SilicaFlickable {
+		anchors.fill: parent
+		contentHeight: col.height
 
+		Column {
+			id: col
+			width: parent.width
+			spacing: Theme.paddingLarge
 
-        HighlightImage {
-            source: Utils.getResourcePath("images/kaidan.svg")
-            fillMode: Image.PreserveAspectFit
-            sourceSize.width: width
-            sourceSize.height: width
-            anchors.horizontalCenter: parent.horizontalCenter
-        }
-
-        CenteredAdaptiveText {
-            text: "Kaidan"
-			scaleFactor: 4
-        }
-
-        CenteredAdaptiveText {
-            text: qsTr("Enjoy free communication on every device!")
-			scaleFactor: 1.5
-        }
-
-		SectionHeader {
-			text: qsTr("Login")
-		}
-
-		IconButton {
-
-			onClicked: loginArea.visible = !loginArea.visible
-		}
-
-        CenteredAdaptiveHighlightedButton {
-            id: startButton
-            text: qsTr("Let's start")
-            onClicked: pageStack.push(qrCodeOnboardingPage)
-            anchors.horizontalCenter: parent.horizontalCenter
-        }
-
-		LoginArea {
-			id: loginArea
-			visible: false
-			onVisibleChanged: {
-				if (visible) {
-					initialize()
-				} else {
-					reset()
-				}
+			Rectangle {
+				color: "transparent"
+				width: parent.width
+				height: Theme.paddingLarge
 			}
 
-			Connections {
-				target: pageStack.layers
+			HighlightImage {
+				source: Utils.getResourcePath("images/kaidan.svg")
+				fillMode: Image.PreserveAspectFit
+				sourceSize.width: width
+				sourceSize.height: width
+				anchors.horizontalCenter: parent.horizontalCenter
+			}
 
-				function onCurrentItemChanged() {
-					if (AccountManager.jid) {
-						loginArea.visible = true
+			CenteredAdaptiveText {
+				text: "Kaidan"
+				scaleFactor: 4
+			}
+
+			CenteredAdaptiveText {
+				text: qsTr("Enjoy free communication on every device!")
+				scaleFactor: 1.5
+			}
+
+			SectionHeader {
+				text: qsTr("Login")
+			}
+
+			TextSwitch {
+				text: qsTr("Enter your credentials")
+				onClicked: loginArea.visible = !loginArea.visible
+			}
+
+			LoginArea {
+				id: loginArea
+				visible: false
+				onVisibleChanged: {
+					if (visible) {
+						initialize()
+					} else {
+						reset()
+					}
+				}
+
+				Connections {
+					target: pageStack.layers
+
+					function onCurrentItemChanged() {
+						if (AccountManager.jid) {
+							loginArea.visible = true
+						}
 					}
 				}
 			}
-		}
 
-		Button {
-			text: qsTr("Scan login QR code of old device")
-			onClicked: openPage(qrCodeOnboardingPage)
-		}
-	}
+			Button {
+				text: qsTr("Scan login QR code of old device")
+				anchors.horizontalCenter: parent.horizontalCenter
+				onClicked: openPage(qrCodeOnboardingPage)
+			}
 
-	SectionHeader {
-		text: qsTr("or Register")
-	}
+			SectionHeader {
+				text: qsTr("or Register")
+			}
 
-	Button {
-		text: qsTr("Generate account automatically")
-		onClicked: openPage(automaticRegistrationPage)
-	}
+			Button {
+				text: qsTr("Generate account automatically")
+				anchors.horizontalCenter: parent.horizontalCenter
+				onClicked: openPage(automaticRegistrationPage)
+			}
 
-	Button {
-		text: qsTr("Create account manually")
-		onClicked: openPage(manualRegistrationPage)
-	}
+			Button {
+				text: qsTr("Create account manually")
+				anchors.horizontalCenter: parent.horizontalCenter
+				onClicked: openPage(manualRegistrationPage)
+			}
 
-	Connections {
-		target: Kaidan
+			Connections {
+				target: Kaidan
 
-		function onConnectionErrorChanged() {
-			if (Kaidan.connectionError !== ClientWorker.NoError)
-				passiveNotification(Utils.connectionErrorMessage(Kaidan.connectionError))
+				function onConnectionErrorChanged() {
+					if (Kaidan.connectionError !== ClientWorker.NoError)
+						passiveNotification(Utils.connectionErrorMessage(Kaidan.connectionError))
+				}
+			}
 		}
 	}
 }

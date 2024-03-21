@@ -5,7 +5,6 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-import QtQml 2.14
 
 // Autocomplete widget with completion highlighting similar to a web search.
 //
@@ -35,8 +34,11 @@ import QtQml 2.14
 //
 //   TODO: Use states to better describe the open and closed state of the completions box.
 //   See: https://code.qt.io/cgit/qt/qtdeclarative.git/tree/examples/quick/keyinteraction/focus/focus.qml?h=5.15#n166
-ButtonTextField {
+
+TextField {
 	id: root
+
+	signal accepted
 
 	// Always give a QML component a defined height.
 	//   The height is 0 by default, *not* the height of childrens. When not defining one here,
@@ -160,7 +162,7 @@ ButtonTextField {
 	// This event handler is undocumented for TextField and incompletely documented for TextInput,
 	// which TextField wraps: https://doc.qt.io/qt-5/qml-qtquick-textinput.html#textEdited-signal .
 	// However, it works, and is also proposed by code insight in Qt Creator.
-	onTextEdited: {
+	onEditorChanged: {
 		// Update the current input because the user changed the text.
 		//   User changes include cutting and pasting. The "textChanged()" event however
 		//   is emitted also when software changes the text field content (such as when
@@ -325,63 +327,63 @@ ButtonTextField {
 	//   TODO: Make this a sub-component, means provide a public interface of (alias) properties
 	//   and signals that is then accessed by the rest of the AutoComplete code. That avoids
 	//   the confusing parallel use of "completionsBox" and "completions".
-	Popup {
-		id: completionsBox
+//	Popup {
+//		id: completionsBox
 
-		z: 101 // Kirigami OverlaySheet use z-index of 101, so we need to catch up to see our popup in sheets...
-		visible: false // Will be made visible once starting to type a category name.
-		closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
-		margins: 0
-		padding: 0
-		parent: root
-		y: root.height
-		Rectangle {
-			anchors.fill: parent
+//		z: 101 // Kirigami OverlaySheet use z-index of 101, so we need to catch up to see our popup in sheets...
+//		visible: false // Will be made visible once starting to type a category name.
+//		closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+//		margins: 0
+//		padding: 0
+//		parent: root
+//		y: root.height
+//		Rectangle {
+//			anchors.fill: parent
 
-			color: Kirigami.Theme.backgroundColor
-			border.width: 1
-			border.color: Kirigami.Theme.textColor
-		}
+//			color: Kirigami.Theme.backgroundColor
+//			border.width: 1
+//			border.color: Kirigami.Theme.textColor
+//		}
 
-		ListView {
-			id: completions
+//		ListView {
+//			id: completions
 
-			anchors.fill: parent
+//			anchors.fill: parent
 
-			implicitHeight: count > 0 ? contentHeight / count * Math.min(count, root.maximumVisibleResultCount) : 0
-			implicitWidth: root.width
-			currentIndex: -1 // No element highlighted initially.
-			clip: true
+//			implicitHeight: count > 0 ? contentHeight / count * Math.min(count, root.maximumVisibleResultCount) : 0
+//			implicitWidth: root.width
+//			currentIndex: -1 // No element highlighted initially.
+//			clip: true
 
-			ScrollBar.vertical: ScrollBar {
-			}
+//			ScrollBar.vertical: ScrollBar {
+//			}
 
-			// A delegate renders one list item.
-			//   TODO: Use a basic QML component to not be tied to Kirigami. Or document what
-			//   can be used here when wanting to use it independent of Kirigami.
-			delegate: Kirigami.BasicListItem {
-				readonly property string value: model[root.role]
+//			// A delegate renders one list item.
+//			//   TODO: Use a basic QML component to not be tied to Kirigami. Or document what
+//			//   can be used here when wanting to use it independent of Kirigami.
+//			delegate: Kirigami.BasicListItem {
+//				readonly property string value: model[root.role]
 
-				width: ListView.view.width - ListView.view.ScrollBar.vertical.width
-				label: highlightCompletion(value, root.input)
+//				width: ListView.view.width - ListView.view.ScrollBar.vertical.width
+//				label: highlightCompletion(value, root.input)
 
-				// Background coloring should be used only for the selected item.
-				//   (Also, a lighter colored background automatically appears on mouse-over.)
-				highlighted: model.index !== -1 && model.index === completions.currentIndex
+//				// Background coloring should be used only for the selected item.
+//				//   (Also, a lighter colored background automatically appears on mouse-over.)
+//				highlighted: model.index !== -1 && model.index === completions.currentIndex
 
-				onHighlightedChanged: {
-					if (highlighted) {
-						//console.log( "completions.model[" + model.index + "]: " + JSON.stringify(value))
-						root.text = value
-					}
-				}
+//				onHighlightedChanged: {
+//					if (highlighted) {
+//						//console.log( "completions.model[" + model.index + "]: " + JSON.stringify(value))
+//						root.text = value
+//					}
+//				}
 
-				onClicked: {
-					//console.log("modelData = " + JSON.stringify(value))
-					completions.currentIndex = model.index
-					root.accepted()
-				}
-			}
-		}
-	}
+//				onClicked: {
+//					//console.log("modelData = " + JSON.stringify(value))
+//					completions.currentIndex = model.index
+//					root.accepted()
+//				}
+//			}
+//		}
+//	}
 }

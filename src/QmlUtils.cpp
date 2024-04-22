@@ -164,7 +164,7 @@ QString QmlUtils::trustMessageUriString(const QString &jid)
 	if (!authenticatedKeys.isEmpty() || !distrustedKeys.isEmpty()) {
 		uri.setAction(QXmppUri::TrustMessage);
 		// TODO: Find solution to pass enum to "uri.setEncryption()" instead of string (see QXmppGlobal::encryptionToString())
-#if defined(SFOS)
+#if defined(WITH_OMEMO_V03)
         uri.setEncryption(QStringLiteral("eu.siacs.conversations.axolotl"));
 #else
         uri.setEncryption(QStringLiteral("urn:xmpp:omemo:2"));

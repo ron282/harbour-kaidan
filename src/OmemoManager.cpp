@@ -355,10 +355,6 @@ void OmemoManager::retrieveDevices(const QList<QString> &jids)
 			const auto keyId = device.keyId();
 			const auto trustLevel = device.trustLevel();
 
-#if defined(WITH_OMEMO_V03)
-            qDebug() << "device: " << jid << ":" << device.keyId().toHex() << " trustLevel: " << (int)trustLevel;
-#endif
-
 			if ((QXmpp::TrustLevel::AutomaticallyDistrusted | QXmpp::TrustLevel::ManuallyDistrusted).testFlag(trustLevel)) {
 				distrustedDevices.insert(jid, { label, keyId.toHex() });
 			} else {

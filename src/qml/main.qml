@@ -263,19 +263,6 @@ ApplicationWindow {
         }
     }
 
-
-    Connections {
-		target: RosterModel
-
-        onSubscriptionRequestReceived: {
-			Kaidan.client.vCardManager.vCardRequested(from)
-
-			subReqAcceptSheet.from = from
-
-			subReqAcceptSheet.open()
-		}
-    }
-
 	Component.onCompleted: {
         HostCompletionModel.rosterModel = RosterModel;
         //HostCompletionModel.aggregateKnownProviders();

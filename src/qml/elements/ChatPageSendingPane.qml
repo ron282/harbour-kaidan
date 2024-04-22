@@ -360,6 +360,7 @@ BackgroundItem {
 
             // Disable the button to prevent sending the same message several times.
             sendButton.enabled = false
+			composition.body = messageArea.text
 
             // Send the message.
             if (messageArea.state === "compose") {

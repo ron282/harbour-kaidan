@@ -448,6 +448,7 @@ DetailsContent {
          }
 		 FormExpansionButton {
 			 id: blockingExpansionButton
+			 anchors.right: parent.right
 		 }
 	 }
 

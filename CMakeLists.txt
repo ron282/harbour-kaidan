@@ -13,6 +13,10 @@ endif()
 
 project(kaidan)
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	add_compile_options("-stdlib=libc++")
+endif()
+
 # application information
 set(APPLICATION_ID "im.kaidan.kaidan")
 set(APPLICATION_NAME "kaidan")
@@ -72,6 +76,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ECM_MODULE_PATH})
 include(KDEInstallDirs)
 include(KDECompilerSettings NO_POLICY_SCOPE)
 include(KDECMakeSettings)
+include(ECMFindQmlModule)
 include(ECMInstallIcons)
 include(FeatureSummary)
 kde_enable_exceptions()
@@ -79,10 +84,17 @@ kde_enable_exceptions()
 # Find packages
 find_package(Qt5 ${QT_MIN_VERSION} REQUIRED NO_MODULE COMPONENTS Core Concurrent Qml Quick Svg Sql QuickControls2 Xml Multimedia Positioning Location)
 find_package(KF5 ${KF5_MIN_VERSION} REQUIRED COMPONENTS KIO CoreAddons Kirigami2)
-find_package(KQuickImageEditor REQUIRED)
 find_package(KF5KirigamiAddons 0.7.0 REQUIRED)
 find_package(ZXing REQUIRED)
-find_package(QXmpp 1.5.0 REQUIRED COMPONENTS Omemo)
+find_package(QXmpp 1.6.0 REQUIRED COMPONENTS Omemo)
+
+# Format
+include(KDEClangFormat)
+file(GLOB_RECURSE ALL_CLANG_FORMAT_SOURCE_FILES *.cpp *.h *.hpp *.c)
+kde_clang_format(${ALL_CLANG_FORMAT_SOURCE_FILES})
+
+# QML modules
+ecm_find_qmlmodule(org.kde.kquickimageeditor 1.0)
 
 # Optional QtQuickCompiler
 if(QUICK_COMPILER)

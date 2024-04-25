@@ -84,7 +84,7 @@ void ChatHintModel::handleButtonClicked(int i, ChatHintButton::Type type)
 	switch(type) {
 	case ChatHintButton::Dismiss:
 		if (i == chatHintIndex(ChatHintButton::AllowPresenceSubscription)) {
-			Kaidan::instance()->client()->rosterManager()->refuseSubscriptionToPresenceRequested(m_messageModel->currentChatJid());
+			Q_EMIT Kaidan::instance()->client()->rosterManager()->refuseSubscriptionToPresenceRequested(m_messageModel->currentChatJid());
 		}
 
 		removeChatHint(i);
@@ -99,7 +99,7 @@ void ChatHintModel::handleButtonClicked(int i, ChatHintButton::Type type)
 		updateChatHint(i, [](ChatHint &chatHint) {
 			chatHint.loading = true;
 		});
-		Kaidan::instance()->client()->rosterManager()->acceptSubscriptionToPresenceRequested(m_messageModel->currentChatJid());
+		Q_EMIT Kaidan::instance()->client()->rosterManager()->acceptSubscriptionToPresenceRequested(m_messageModel->currentChatJid());
 		return;
 	default:
 		return;
@@ -215,7 +215,7 @@ int ChatHintModel::addConnectToServerChatHint(bool loading)
 int ChatHintModel::addAllowPresenceSubscriptionChatHint(const QString &requestText)
 {
 	const auto displayName = m_messageModel->rosterItemWatcher().item().displayName();
-	const auto appendedText = requestText.isEmpty() ? QString() : QString(": %1").arg(requestText);
+	const auto appendedText = requestText.isEmpty() ? QString() : QStringLiteral(": %1").arg(requestText);
 
 	return addChatHint(
 		ChatHint {

@@ -250,7 +250,7 @@ public:
 	bool mamLoading() const;
 	void setMamLoading(bool mamLoading);
 
-signals:
+Q_SIGNALS:
 	void currentAccountJidChanged(const QString &accountJid);
 	void currentChatJidChanged(const QString &currentChatJid);
 

@@ -124,9 +124,9 @@ void OmemoModel::setUp()
 void OmemoModel::setOwnDevice(OmemoManager::Device ownDevice)
 {
 #if defined (SFOS)
-    ownDevice.label = tr("This device") + " · " + ownDevice.label;
+	ownDevice.label = tr("This device") + QStringLiteral(" · ") + ownDevice.label;
 #else
-    ownDevice.label += " · " + tr("This device");
+	ownDevice.label += QStringLiteral(" · ") + tr("This device");
 #endif
     beginInsertRows(QModelIndex(), 0, 0);
 	m_ownDevice = ownDevice;

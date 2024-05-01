@@ -47,7 +47,7 @@ public:
 
 	void generateEntries();
 
-signals:
+Q_SIGNALS:
 	void jidChanged();
 	void unsetEntriesProcessedChanged();
 

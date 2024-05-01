@@ -241,13 +241,13 @@ QVariant MessageModel::data(const QModelIndex &index, int role) const
 			Q_UNREACHABLE();
 #else
 		case DeliveryState::Pending:
-			return QmlUtils::getResourcePath("images/dots.svg");
+			return QmlUtils::getResourcePath(QStringLiteral("images/dots.svg"));
 		case DeliveryState::Sent:
-			return QmlUtils::getResourcePath("images/check-mark-pale.svg");
+			return QmlUtils::getResourcePath(QStringLiteral("images/check-mark-pale.svg"));
 		case DeliveryState::Delivered:
-			return QmlUtils::getResourcePath("images/check-mark.svg");
+			return QmlUtils::getResourcePath(QStringLiteral("images/check-mark.svg"));
 		case DeliveryState::Error:
-			return QmlUtils::getResourcePath("images/cross.svg");
+			return QmlUtils::getResourcePath(QStringLiteral("images/cross.svg"));
 		case DeliveryState::Draft:
 			Q_UNREACHABLE();
 #endif

@@ -64,8 +64,8 @@ AvatarFileStorage::AddAvatarResult AvatarFileStorage::addAvatar(const QString &j
 	AddAvatarResult result;
 
 	// generate a hexadecimal hash of the raw avatar
-	result.hash = QString(QCryptographicHash::hash(avatar, QCryptographicHash::Sha1).toHex());
-	QString oldHash = m_jidAvatarMap[jid];
+	result.hash = QString::fromUtf8(QCryptographicHash::hash(avatar, QCryptographicHash::Sha1).toHex());
+	QString oldHash = QString::fromUtf8(m_jidAvatarMap[jid].toUtf8());
 
 	// set the new hash and the `hasChanged` tag
 	if (oldHash != result.hash) {

@@ -46,11 +46,12 @@ QVariant RecentPicturesModel::data(const QModelIndex &, int) const
 RecentPicturesModel::RecentPicturesModel(QObject *parent)
     : KDirSortFilterProxyModel{parent}
 {
-    auto *dirModel = new KDirModel(this);
-    setSourceModel(dirModel);
-    dirModel->dirLister()->setMimeFilter({QStringLiteral("image/png"), QStringLiteral("image/jpeg")});
-    dirModel->openUrl(QStringLiteral("recentlyused:/files/"));
-    dirModel->dirLister()->setAutoErrorHandlingEnabled(false);
+
+	auto *dirModel = new KDirModel(this);
+	setSourceModel(dirModel);
+	dirModel->dirLister()->setMimeFilter({QStringLiteral("image/png"), QStringLiteral("image/jpeg")});
+	dirModel->openUrl(QUrl(QStringLiteral("recentlyused:/files/")));
+	dirModel->dirLister()->setAutoErrorHandlingEnabled(false);
 }
 
 QHash<int, QByteArray> RecentPicturesModel::roleNames() const {

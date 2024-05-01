@@ -237,7 +237,7 @@ public:
 	 */
 	void removeAccount(const QString &accountJid);
 
-signals:
+Q_SIGNALS:
 	/**
 	 * Emitted when the JID changed.
 	 */

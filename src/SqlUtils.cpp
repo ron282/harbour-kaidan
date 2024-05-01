@@ -61,7 +61,7 @@ QString simpleWhereStatement(const QSqlDriver *driver,
 	QSqlRecord rec;
 	rec.append(createSqlField(key, val));
 
-	return " " + driver->sqlStatement(
+	return QStringLiteral(" ") + driver->sqlStatement(
 	        QSqlDriver::WhereStatement,
 	        QString(),
 	        rec,
@@ -77,7 +77,7 @@ QString simpleWhereStatement(const QSqlDriver *driver, const QMap<QString, QVari
 	for (const QString &key : keys)
 		rec.append(createSqlField(key, keyValuePairs.value(key)));
 
-	return " " + driver->sqlStatement(
+	return QStringLiteral(" ") + driver->sqlStatement(
 		QSqlDriver::WhereStatement,
 		{},
 		rec,

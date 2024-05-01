@@ -335,7 +335,7 @@ public:
 	Q_INVOKABLE void receiveMessage(quint32, const QByteArray &msg)
 	{
 		// currently we only send XMPP URIs
-		addOpenUri(msg);
+		addOpenUri(QString::fromUtf8(msg));
 	}
 
 private:

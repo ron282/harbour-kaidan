@@ -46,6 +46,8 @@ OmemoManager::OmemoManager(QXmppClient *client, Database *database, QObject *par
 	  m_omemoStorage(new OmemoDb(database, this, {}, this)),
 	  m_manager(client->addNewExtension<QXmppOmemoManager>(m_omemoStorage.get()))
 {
+	client->setEncryptionExtension(m_manager);
+
 	connect(this, &OmemoManager::retrieveOwnKeyRequested, this, [this, client]() {
 		m_lastRequestedKeyOwnerJids = { client->configuration().jidBare() };
 		retrieveOwnKey();
@@ -97,7 +99,7 @@ QFuture<void> OmemoManager::load()
         auto future = m_manager->setSecurityPolicy(QXmpp::TrustSecurityPolicy::Toakafa);
 		future.then(this, [this, interface]() mutable {
 			const auto productName = QSysInfo::prettyProductName();
-			const QString productNameWithoutVersion = productName.contains(" ") ? productName.section(" ", 0, -2) : productName;
+			const QString productNameWithoutVersion = productName.contains(QStringLiteral(" ")) ? productName.section(QStringLiteral(" "), 0, -2) : productName;
 			auto future = m_manager->changeDeviceLabel(APPLICATION_DISPLAY_NAME % QStringLiteral(" - ") % productNameWithoutVersion);
         future.then(this, [this, interface](bool) mutable {
 				auto future = m_manager->load();
@@ -310,9 +312,9 @@ QFuture<void> OmemoManager::retrieveOwnKey(QHash<QString, QHash<QByteArray, QXmp
 				const auto trustLevel = trustLevelItr.value();
 
 				if (trustLevel == QXmpp::TrustLevel::Authenticated) {
-					authenticatedKeys.append(keyId.toHex());
+					authenticatedKeys.append(QString::fromUtf8(keyId.toHex()));
 				} else if (trustLevel != QXmpp::TrustLevel::Undecided) {
-					authenticatableKeys.append(keyId.toHex());
+					authenticatableKeys.append(QString::fromUtf8(keyId.toHex()));
 				}
 			}
 
@@ -356,15 +358,15 @@ void OmemoManager::retrieveDevices(const QList<QString> &jids)
 			const auto trustLevel = device.trustLevel();
 
 			if ((QXmpp::TrustLevel::AutomaticallyDistrusted | QXmpp::TrustLevel::ManuallyDistrusted).testFlag(trustLevel)) {
-				distrustedDevices.insert(jid, { label, keyId.toHex() });
+				distrustedDevices.insert(jid, { label, QString::fromUtf8(keyId.toHex()) });
 			} else {
-				usableDevices.insert(jid, { label, keyId.toHex() });
+				usableDevices.insert(jid, { label, QString::fromUtf8(keyId.toHex()) });
 			}
 
 			if (trustLevel == QXmpp::TrustLevel::Authenticated) {
-				authenticatedDevices.insert(jid, { label, keyId.toHex() });
+				authenticatedDevices.insert(jid, { label, QString::fromUtf8(keyId.toHex()) });
 			} else if (trustLevel != QXmpp::TrustLevel::Undecided) {
-				authenticatableDevices.insert(jid, { label, keyId.toHex() });
+				authenticatableDevices.insert(jid, { label, QString::fromUtf8(keyId.toHex()) });
 			}
 		}
 
@@ -373,7 +375,7 @@ void OmemoManager::retrieveDevices(const QList<QString> &jids)
 		}
 
 		const auto ownDevice = m_manager->ownDevice();
-		OmemoCache::instance()->setOwnDevice({ ownDevice.label(), ownDevice.keyId().toHex() });
+		OmemoCache::instance()->setOwnDevice({ ownDevice.label(), QString::fromUtf8(ownDevice.keyId().toHex()) });
 	});
 }
 

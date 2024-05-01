@@ -267,7 +267,6 @@ auto TrustDb::keys(const QString &encryption, const QList<QString> &keyOwnerJids
 		if (trustLevels != 0) {
 			// causes possible sql injection, but the output from trustFlagsListString() is safe
 			// binding the value is not possible as it would be inserted as a string (we need a condition)
-			const auto trustFlagsCondition = trustFlagsToString(trustLevels);
 			prepareQuery(
 				query,
 				QStringLiteral(R"(
@@ -465,9 +464,9 @@ auto TrustDb::setTrustLevel(const QString &encryption,
 		auto query = createQuery();
 		enum { RowId, TrustLevel_ };
 		prepareQuery(query,
-			"SELECT rowid, trustLevel FROM trustKeys "
+			QStringLiteral("SELECT rowid, trustLevel FROM trustKeys "
 			"WHERE account = :account AND encryption = :encryption AND "
-			"ownerJid = :jid AND keyId = :keyId");
+			"ownerJid = :jid AND keyId = :keyId"));
 
 		TrustChanges result;
 		auto &changes = result[encryption];
@@ -514,10 +513,10 @@ auto TrustDb::setTrustLevel(const QString &encryption,
 		enum { RowId, KeyId };
 		auto query = createQuery();
 		prepareQuery(query,
-			"SELECT rowid, keyId FROM trustKeys "
+			QStringLiteral("SELECT rowid, keyId FROM trustKeys "
 			"WHERE account = :account AND encryption = :encryption AND ownerJid = "
 			":jid "
-			"AND trustLevel = :old_trust");
+			"AND trustLevel = :old_trust"));
 
 		for (const auto &jid : keyOwnerJids) {
 			bindValues(query,
@@ -808,7 +807,7 @@ auto TrustDb::resetAll() -> QXmppTask<void>
 				QStringLiteral(R"(
 					DELETE FROM %1
 					WHERE account = :accountJid
-				)").arg(table),
+				)").arg(QString::fromUtf8(table)),
 				{
 					{ u":accountJid", m_accountJid },
 				}

@@ -32,10 +32,10 @@
 #include <QTranslator>
 #include <qqml.h>
 
-#if defined(SFOS)
-//#include <QMimeType>
-//Q_DECLARE_METATYPE(QMimeType)
-//Q_DECLARE_METATYPE(QMetaTypeId<QMimeType>)
+#if !defined(SFOS)
+#include <QMimeType>
+Q_DECLARE_METATYPE(QMimeType)
+Q_DECLARE_METATYPE(QMetaTypeId<QMimeType>)
 #endif
 
 // QXmpp
@@ -162,17 +162,17 @@ enum CommandLineParseResult {
 CommandLineParseResult parseCommandLine(QCommandLineParser &parser, QString *errorMessage)
 {
 	// application description
-	parser.setApplicationDescription("APPLICATION_DISPLAY_NAME - APPLICATION_DESCRIPTION");
+	parser.setApplicationDescription(QStringLiteral(APPLICATION_DISPLAY_NAME) + QStringLiteral(" - ") + QStringLiteral(APPLICATION_DESCRIPTION));
 
 	// add all possible arguments
 	QCommandLineOption helpOption = parser.addHelpOption();
 	QCommandLineOption versionOption = parser.addVersionOption();
-	parser.addOption({"disable-xml-log", "Disable output of full XMPP XML stream."});
+	parser.addOption({QStringLiteral("disable-xml-log"), QStringLiteral("Disable output of full XMPP XML stream.")});
 #ifndef NDEBUG
-	parser.addOption({{"m", "multiple"}, "Allow multiple instances to be started."});
+	parser.addOption({{QStringLiteral("m"), QStringLiteral("multiple")}, QStringLiteral("Allow multiple instances to be started.")});
 #endif
-	parser.addPositionalArgument("xmpp-uri", "An XMPP-URI to open (i.e. join a chat).",
-	                             "[xmpp-uri]");
+	parser.addPositionalArgument(QStringLiteral("xmpp-uri"), QStringLiteral("An XMPP-URI to open (i.e. join a chat)."),
+	                             QStringLiteral("[xmpp-uri]"));
 
 	// parse arguments
 	if (!parser.parse(QGuiApplication::arguments())) {
@@ -213,11 +213,11 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #endif
 
 	// name, display name, description
-	QGuiApplication::setApplicationName(APPLICATION_NAME);
-	QGuiApplication::setApplicationDisplayName(APPLICATION_DISPLAY_NAME);
-	QGuiApplication::setApplicationVersion(VERSION_STRING);
+	QGuiApplication::setApplicationName(QStringLiteral(APPLICATION_NAME));
+	QGuiApplication::setApplicationDisplayName(QStringLiteral(APPLICATION_DISPLAY_NAME));
+	QGuiApplication::setApplicationVersion(QStringLiteral(VERSION_STRING));
 #ifndef SFOS
-    QGuiApplication::setDesktopFileName("im.kaidan.kaidan");
+	QGuiApplication::setDesktopFileName(QStringLiteral(APPLICATION_ID));
 	// attributes
 	QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 	QGuiApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
@@ -298,7 +298,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qRegisterMetaType<std::function<void(RosterItem&)>>();
 	qRegisterMetaType<std::function<void(Message&)>>();
 	qRegisterMetaType<QXmppVCardIq>();
-//	qRegisterMetaType<QMimeType>();
+#if !defined (SFOS)
+	qRegisterMetaType<QMimeType>();
+#endif
 	qRegisterMetaType<CameraInfo>();
 	qRegisterMetaType<AudioDeviceInfo>();
 	qRegisterMetaType<MediaSettings>();
@@ -388,9 +390,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 		qDebug() << "Another instance of" << APPLICATION_DISPLAY_NAME << "is already running!";
 #else
 	// check if another instance already runs
-	if (app.isSecondary() && !parser.isSet("multiple")) {
-		qDebug().noquote() << QString("Another instance of %1 is already running.")
-		                      .arg(APPLICATION_DISPLAY_NAME)
+	if (app.isSecondary() && !parser.isSet(QStringLiteral("multiple"))) {
+		qDebug().noquote() << QStringLiteral("Another instance of %1 is already running.")
+		                      .arg(QStringLiteral(APPLICATION_DISPLAY_NAME))
 		                   << "You can enable multiple instances by specifying '--multiple'.";
 #endif
 
@@ -404,7 +406,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	//
 	// Kaidan back-end
 	//
-    Kaidan kaidan(!parser.isSet("disable-xml-log"));
+	Kaidan kaidan(!parser.isSet(QStringLiteral("disable-xml-log")));
 
 #if !defined(Q_OS_IOS) && !defined(Q_OS_ANDROID) && !defined(SFOS) 
 	// receive messages from other instances of Kaidan
@@ -421,7 +423,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	// QML-GUI
 	//
 	if (QIcon::themeName().isEmpty()) {
-		QIcon::setThemeName("breeze");
+		QIcon::setThemeName(QStringLiteral("breeze"));
 	}
     QQmlApplicationEngine engine;
 	engine.addImageProvider(QLatin1String(BITS_OF_BINARY_IMAGE_PROVIDER_NAME), BitsOfBinaryImageProvider::instance());
@@ -496,38 +498,40 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	qmlRegisterType<FileModel>(APPLICATION_ID, 1, 0, "FileModel");
 	qmlRegisterType<FileProxyModel>(APPLICATION_ID, 1, 0, "FileProxyModel");
 
-	qmlRegisterUncreatableType<QAbstractItemModel>("EmojiModel", 0, 1, "QAbstractItemModel", "Used by proxy models");
-	qmlRegisterUncreatableType<Emoji>("EmojiModel", 0, 1, "Emoji", "Used by emoji models");
-//	qmlRegisterUncreatableType<QMimeType>("im.kaidan.kaidan", 1, 0, "QMimeType", "QMimeType type usable");
-    qmlRegisterUncreatableType<CameraInfo>("im.kaidan.kaidan", 1, 0, "CameraInfo", "CameraInfo type usable");
-    qmlRegisterUncreatableType<AudioDeviceInfo>("im.kaidan.kaidan", 1, 0, "AudioDeviceInfo", "AudioDeviceInfo type usable");
-    qmlRegisterUncreatableType<MediaSettings>("im.kaidan.kaidan", 1, 0, "MediaSettings", "MediaSettings type usable");
-    qmlRegisterUncreatableType<CommonEncoderSettings>("im.kaidan.kaidan", 1, 0, "CommonEncoderSettings", "CommonEncoderSettings type usable");
-    qmlRegisterUncreatableType<ImageEncoderSettings>("im.kaidan.kaidan", 1, 0, "ImageEncoderSettings", "ImageEncoderSettings type usable");
-    qmlRegisterUncreatableType<AudioEncoderSettings>("im.kaidan.kaidan", 1, 0, "AudioEncoderSettings", "AudioEncoderSettings type usable");
-    qmlRegisterUncreatableType<VideoEncoderSettings>("im.kaidan.kaidan", 1, 0, "VideoEncoderSettings", "VideoEncoderSettings type usable");
-    qmlRegisterUncreatableType<ClientWorker>("im.kaidan.kaidan", 1, 0, "ClientWorker", "Cannot create object; only enums defined!");
-    qmlRegisterUncreatableType<DataFormModel>("im.kaidan.kaidan", 1, 0, "DataFormModel", "Cannot create object; only enums defined!");
-    qmlRegisterUncreatableType<Presence>("im.kaidan.kaidan", 1, 0, "Presence", "Cannot create object; only enums defined!");
-    qmlRegisterUncreatableType<RegistrationManager>("im.kaidan.kaidan", 1, 0, "RegistrationManager", "Cannot create object; only enums defined!");
-    qmlRegisterUncreatableType<ChatState>("im.kaidan.kaidan", 1, 0, "ChatState", "Cannot create object; only enums defined");
+	qmlRegisterUncreatableType<QAbstractItemModel>("EmojiModel", 0, 1, "QAbstractItemModel", QStringLiteral("Used by proxy models"));
+	qmlRegisterUncreatableType<Emoji>("EmojiModel", 0, 1, "Emoji", QStringLiteral("Used by emoji models"));
 #if !defined(SFOS)
-    qmlRegisterUncreatableType<RosterModel>("im.kaidan.kaidan", 1, 0, "RosterModel", "Cannot create object; only enums defined!");
+	qmlRegisterUncreatableType<QMimeType>(APPLICATION_ID, 1, 0, "QMimeType", QStringLiteral("QMimeType type usable"));
 #endif
-    qmlRegisterUncreatableType<ServerFeaturesCache>("im.kaidan.kaidan", 1, 0, "ServerFeaturesCache", "ServerFeaturesCache type usable");
-    qmlRegisterUncreatableType<Encryption>("im.kaidan.kaidan", 1, 0, "Encryption", "Cannot create object; only enums defined!");
-    qmlRegisterUncreatableType<File>("im.kaidan.kaidan", 1, 0, "File", "Not creatable from QML");
-	qmlRegisterUncreatableType<PublicGroupChat>("PublicGroupChats", 1, 0, "PublicGroupChat", "Used by PublicGroupChatModel");
-	qmlRegisterUncreatableType<HostCompletionModel>(APPLICATION_ID, 1, 0, "HostCompletionModel", "Cannot create object; only enums defined!");
-	qmlRegisterUncreatableType<MessageReactionDeliveryState>(APPLICATION_ID, 1, 0, "MessageReactionDeliveryState", "Cannot create object; only enums defined!");
-	qmlRegisterUncreatableType<RosterItem>(APPLICATION_ID, 1, 0, "RosterItem", "Cannot create object; only enums defined!");
+	qmlRegisterUncreatableType<CameraInfo>(APPLICATION_ID, 1, 0, "CameraInfo", QStringLiteral("CameraInfo type usable"));
+	qmlRegisterUncreatableType<AudioDeviceInfo>(APPLICATION_ID, 1, 0, "AudioDeviceInfo", QStringLiteral("AudioDeviceInfo type usable"));
+	qmlRegisterUncreatableType<MediaSettings>(APPLICATION_ID, 1, 0, "MediaSettings", QStringLiteral("MediaSettings type usable"));
+	qmlRegisterUncreatableType<CommonEncoderSettings>(APPLICATION_ID, 1, 0, "CommonEncoderSettings", QStringLiteral("CommonEncoderSettings type usable"));
+	qmlRegisterUncreatableType<ImageEncoderSettings>(APPLICATION_ID, 1, 0, "ImageEncoderSettings", QStringLiteral("ImageEncoderSettings type usable"));
+	qmlRegisterUncreatableType<AudioEncoderSettings>(APPLICATION_ID, 1, 0, "AudioEncoderSettings", QStringLiteral("AudioEncoderSettings type usable"));
+	qmlRegisterUncreatableType<VideoEncoderSettings>(APPLICATION_ID, 1, 0, "VideoEncoderSettings", QStringLiteral("VideoEncoderSettings type usable"));
+	qmlRegisterUncreatableType<ClientWorker>(APPLICATION_ID, 1, 0, "ClientWorker", QStringLiteral("Cannot create object; only enums defined!"));
+	qmlRegisterUncreatableType<DataFormModel>(APPLICATION_ID, 1, 0, "DataFormModel", QStringLiteral("Cannot create object; only enums defined!"));
+	qmlRegisterUncreatableType<Presence>(APPLICATION_ID, 1, 0, "Presence", QStringLiteral("Cannot create object; only enums defined!"));
+	qmlRegisterUncreatableType<RegistrationManager>(APPLICATION_ID, 1, 0, "RegistrationManager", QStringLiteral("Cannot create object; only enums defined!"));
+	qmlRegisterUncreatableType<ChatState>(APPLICATION_ID, 1, 0, "ChatState", QStringLiteral("Cannot create object; only enums defined"));
+#if !defined(SFOS)
+	qmlRegisterUncreatableType<RosterModel>(APPLICATION_ID, 1, 0, "RosterModel", QStringLiteral("Cannot create object; only enums defined!"));
+#endif
+	qmlRegisterUncreatableType<ServerFeaturesCache>(APPLICATION_ID, 1, 0, "ServerFeaturesCache", QStringLiteral("ServerFeaturesCache type usable"));
+	qmlRegisterUncreatableType<Encryption>(APPLICATION_ID, 1, 0, "Encryption", QStringLiteral("Cannot create object; only enums defined!"));
+	qmlRegisterUncreatableType<File>(APPLICATION_ID, 1, 0, "File", QStringLiteral("Not creatable from QML"));
+	qmlRegisterUncreatableType<PublicGroupChat>("PublicGroupChats", 1, 0, "PublicGroupChat", QStringLiteral("Used by PublicGroupChatModel"));
+	qmlRegisterUncreatableType<HostCompletionModel>(APPLICATION_ID, 1, 0, "HostCompletionModel", QStringLiteral("Cannot create object; only enums defined!"));
+	qmlRegisterUncreatableType<MessageReactionDeliveryState>(APPLICATION_ID, 1, 0, "MessageReactionDeliveryState", QStringLiteral("Cannot create object; only enums defined!"));
+	qmlRegisterUncreatableType<RosterItem>(APPLICATION_ID, 1, 0, "RosterItem", QStringLiteral("Cannot create object; only enums defined!"));
 
 #if defined(SFOS)
-    qmlRegisterUncreatableType<ChatState>(APPLICATION_ID, 1, 0, "ChatState", "Can't create object; only enums defined!");
-    qmlRegisterUncreatableType<Enums>(APPLICATION_ID, 1, 0, "Enums", "Can't create object; only enums defined!");
+	qmlRegisterUncreatableType<ChatState>(APPLICATION_ID, 1, 0, "ChatState", QStringLiteral("Can't create object; only enums defined!"));
+	qmlRegisterUncreatableType<Enums>(APPLICATION_ID, 1, 0, "Enums", QStringLiteral("Can't create object; only enums defined!"));
 #else
-    qmlRegisterUncreatableMetaObject(ChatState::staticMetaObject, APPLICATION_ID, 1, 0, "ChatState", "Can't create object; only enums defined!");
-    qmlRegisterUncreatableMetaObject(Enums::staticMetaObject, APPLICATION_ID, 1, 0, "Enums", "Can't create object; only enums defined!");
+	qmlRegisterUncreatableMetaObject(ChatState::staticMetaObject, APPLICATION_ID, 1, 0, "ChatState", QStringLiteral("Can't create object; only enums defined!"));
+	qmlRegisterUncreatableMetaObject(Enums::staticMetaObject, APPLICATION_ID, 1, 0, "Enums", QStringLiteral("Can't create object; only enums defined!"));
 #endif
 
 	qmlRegisterSingletonType<MediaUtils>("MediaUtils", 0, 1, "MediaUtilsInstance", [](QQmlEngine *, QJSEngine *) {
@@ -562,10 +566,10 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	});
 
 #if defined(SFOS)
-    view->setSource(SailfishApp::pathTo("qml/main.qml"));
+	view->setSource(SailfishApp::pathTo(QStringLiteral("qml/main.qml")));
     view->showFullScreen();
 #else
-    engine.load(QUrl("qrc:/qml/main.qml"));
+	engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
 	if (engine.rootObjects().isEmpty())
 		return -1;
 #endif

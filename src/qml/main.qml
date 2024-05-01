@@ -283,7 +283,11 @@ ApplicationWindow {
         Image {
             id: bgimg
             source: Utils.getResourcePath("images/sailkaidan-cover.png")
-            anchors.fill: parent
+            anchors.top: parent.top
+            height: parent.height
+            width: parent.width
+            fillMode: Image.PreserveAspectCrop
+
         }
         Column {
             anchors.top: parent.top

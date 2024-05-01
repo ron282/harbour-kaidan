@@ -49,7 +49,13 @@ Page {
         SearchPublicGroupChatSheet {}
     }
 
-    Component {
+	Component {
+		id: deviceSwitchingPage
+
+		DeviceSwitchingPage {}
+	}
+
+	Component {
         id: settingsSheet
         SettingsSheet {}
     }
@@ -176,7 +182,7 @@ Page {
                 text: qsTr("Switch device")
                 icon.source: "image://theme/icon-m-device"
                 onClicked: {
-                    pageStack.push("AccountTransferPage.qml")
+                    pageStack.push(deviceSwitchingPage)
                 }
             }
 

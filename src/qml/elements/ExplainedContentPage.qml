@@ -122,7 +122,7 @@ Page {
         z: 1
         anchors.fill: overlay
         anchors.margins: -8
-        color: "transparent"
+        color: Theme.overlayBackgroundColor
         opacity: 0.9
         visible: explanationArea.visible
     }

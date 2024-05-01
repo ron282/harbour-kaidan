@@ -6,10 +6,12 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import QtQuick 2.14
-import QtQuick.Controls 2.14 as Controls
-import QtQuick.Layouts 1.14
-import org.kde.kirigami 2.19 as Kirigami
+//import QtQuick 2.14
+import QtQuick 2.2
+//import QtQuick.Controls 2.14 as Controls
+//import QtQuick.Layouts 1.14
+//import org.kde.kirigami 2.19 as Kirigami
+import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
 
@@ -27,54 +29,85 @@ ExplanationOptionsTogglePage {
 	explanation: CenteredAdaptiveText {
 		text: qsTr("Scan the QR code or enter the credentials as text on another device to log in on it.\n\nAttention:\nNever show this QR code to anyone else. It would allow unlimited access to your account!")
 		verticalAlignment: Text.AlignVCenter
-		Layout.fillHeight: true
+//		Layout.fillHeight: true
 		scaleFactor: 1.5
 	}
 	explanationAreaBackground.opacity: 1
 	primaryArea: QrCode {
-		width: Math.min(largeButtonWidth, parent.width, parent.height)
+		width: Math.min(Theme.buttonWidthLarge, parent.width, parent.height)
+//		width: Math.min(largeButtonWidth, parent.width, parent.height)
 		height: width
 		anchors.centerIn: parent
 		isForLogin: true
 	}
-	secondaryArea: Kirigami.FormLayout {
+	//	secondaryArea: Kirigami.FormLayout {
+	secondaryArea: Column {
+		width: parent.width
 		anchors.centerIn: parent
 
-		RowLayout {
-			Kirigami.FormData.label: qsTr("Chat address:")
-			Layout.fillWidth: true
+//		RowLayout {
+		Row {
+//			Kirigami.FormData.label: qsTr("Chat address:")
+//			Layout.fillWidth: true
+			width: parent.width
 
-			Controls.Label {
+//			Controls.Label {
+//				text: AccountManager.jid
+//				Layout.fillWidth: true
+//			}
+
+			TextField {
+				label: qsTr("Chat address")
 				text: AccountManager.jid
-				Layout.fillWidth: true
+				readOnly: true
+				width: parent.width - parent.spacing - addressCopy.width
 			}
 
-			Controls.ToolButton {
-				text: qsTr("Copy chat address")
-				icon.name: "edit-copy-symbolic"
-				display: Controls.AbstractButton.IconOnly
-				flat: true
-				Layout.alignment: Qt.AlignRight
+//			Controls.ToolButton {
+//				text: qsTr("Copy chat address")
+//				icon.name: "edit-copy-symbolic"
+//				display: Controls.AbstractButton.IconOnly
+//				flat: true
+//				Layout.alignment: Qt.AlignRight
+//				onClicked: Utils.copyToClipboard(AccountManager.jid)
+//			}
+
+			IconButton {
+				id: addressCopy
+				icon.source: "image://theme/icon-m-clipboard"
 				onClicked: Utils.copyToClipboard(AccountManager.jid)
 			}
 		}
 
-		RowLayout {
-			Kirigami.FormData.label: qsTr("Password:")
+//		RowLayout {
+			Row {
+//			Kirigami.FormData.label: qsTr("Password:")
 			visible: Kaidan.settings.passwordVisibility === Kaidan.PasswordVisible
-			Layout.fillWidth: true
+//			Layout.fillWidth: true
+			width: parent.width
 
-			Controls.Label {
+//			Controls.Label {
+//				text: AccountManager.password
+//				Layout.fillWidth: true
+//			}
+
+			TextField {
+				label: qsTr("Password")
+				width: parent.width - parent.spacing - passwordCopy.width
+				readOnly: true
 				text: AccountManager.password
-				Layout.fillWidth: true
 			}
 
-			Controls.ToolButton {
-				text: qsTr("Copy password")
-				icon.name: "edit-copy-symbolic"
-				display: Controls.AbstractButton.IconOnly
-				flat: true
-				Layout.alignment: Qt.AlignRight
+//			Controls.ToolButton {
+//				text: qsTr("Copy password")
+//				icon.name: "edit-copy-symbolic"
+//				display: Controls.AbstractButton.IconOnly
+//				flat: true
+//				Layout.alignment: Qt.AlignRight
+//				onClicked: Utils.copyToClipboard(AccountManager.password)
+			IconButton {
+				id: passwordCopy
+				icon.source: "image://theme/icon-m-clipboard"
 				onClicked: Utils.copyToClipboard(AccountManager.password)
 			}
 		}

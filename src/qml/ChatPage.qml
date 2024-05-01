@@ -28,11 +28,17 @@
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//import QtQuick 2.14
 import QtQuick 2.2
+//import QtQuick.Layouts 1.14
+//import QtQuick.Controls 2.14 as Controls
 import Sailfish.Silica 1.0
+//import QtMultimedia 5.14 as Multimedia
+import QtMultimedia 5.6
+//import org.kde.kirigami 2.19 as Kirigami
+
 import MediaUtils 0.1
 import im.kaidan.kaidan 1.0
-import QtMultimedia 5.6
 
 import "elements"
 import "details"
@@ -40,7 +46,30 @@ import "details"
 ChatPageBase {
 	id: root
 
-//    property alias searchBar: searchBar
+//	DropArea {
+//		anchors.fill: parent
+//		onDropped: (drop) => {
+//			for (const url of drop.urls) {
+//				sendMediaSheet.addFile(url)
+//			}
+//			sendMediaSheet.ensureOpen()
+//		}
+//	}
+
+//	Shortcut {
+//		sequence: "Ctrl+Shift+V"
+//		context: Qt.WindowShortcut
+//		onActivated: {
+//			let imageUrl = Utils.pasteImage();
+//			// check if there was an image to be pasted from the clipboard
+//			if (imageUrl.toString().length > 0) {
+//				sendMediaSheet.addFile(imageUrl)
+//				sendMediaSheet.ensureOpen()
+//			}
+//		}
+//	}
+
+//	property alias searchBar: searchBar
     property alias sendMediaSheet: sendMediaSheet
     property alias newMediaSheet: newMediaSheet
     property alias messageReactionEmojiPicker: messageReactionEmojiPicker
@@ -50,6 +79,7 @@ ChatPageBase {
 	property ChatInfo globalChatDate
 	readonly property bool cameraAvailable: Multimedia.QtMultimedia.availableCameras.length > 0
     property bool viewPositioned: false
+
     onStatusChanged: {
         if (status === PageStatus.Active && forwardNavigation === false) {
             pageStack.pushAttached(contactDetailsPage)
@@ -111,102 +141,16 @@ ChatPageBase {
 	]
 */
 
+	// Message search bar
+//	header: ChatPageSearchView {
+//		id: searchBar
+//	}
 
-    RosterItemWatcher {
-		id: chatItemWatcher
-		jid: MessageModel.currentChatJid
-	}
+    SilicaFlickable {
+        anchors.fill: parent
+        contentHeight: parent.height
 
-    Component {
-        id: contactDetailsSheet
-
-        ContactDetailsSheet {
-            accountJid: MessageModel.currentAccountJid
-            jid: MessageModel.currentChatJid
-        }
-    }
-
-    Component {
-		id: contactDetailsPage
-
-		ContactDetailsPage {
-            accountJid: MessageModel.currentAccountJid
-            jid: MessageModel.currentChatJid
-		}
-	}
-
-    Component {
-        id: contactDetailsKeyAuthenticationPage
-
-        KeyAuthenticationPage {
-//          Component.onDestruction: openView(contactDetailsSheet, contactDetailsPage)
-        }
-    }
-
-    SendMediaSheet {
-        id: sendMediaSheet
-        composition: sendingPane.composition
-        chatPage: parent
-    }
-
-    NewMediaSheet {
-        id: newMediaSheet
-        composition: sendingPane.composition
-    }
-
-    MessageReactionEmojiPicker {
-        id: messageReactionEmojiPicker
-    }
-
-    MessageReactionDetailsSheet {
-        id: messageReactionDetailsSheet
-    }
-
-    PageHeader {
-        id: header
-        title: chatItemWatcher.item.displayName
-
-        Rectangle {
-            id: extraContent
-            height: Theme.itemSizeMedium
-            width: parent.width
-            color: "transparent"
-            anchors.fill: parent;
-
-            SilicaItem {
-                height: Theme.iconSizeMedium
-                width:Theme.iconSizeMedium
-                anchors {
-                    left: parent.left
-                    leftMargin: Theme.pageStackIndicatorWidth
-                    verticalCenter: parent.verticalCenter
-                }
-                Avatar {
-                    id: avatar
-                    jid: chatItemWatcher.item.jid
-                    name: chatItemWatcher.item.displayName
-                    smooth: true;
-                    onClicked: contactDetailsSheet.show()
-                }
-            }
-
-            ChatPageSearchView {
-                id: searchBar
-            }
-         }
-    }
-
-    // View containing the messages
-    SilicaListView {
-		id: messageListView
-        anchors {
-            top: header.bottom
-            left: parent.left
-            right: parent.right
-            bottom: sendingPane.top
-        }
-
-  /*      PullDownMenu {
+        PushUpMenu {
             MenuItem {
                 visible: false
                 text: qsTr("Details…")
@@ -214,64 +158,188 @@ ChatPageBase {
             }
             // Action to toggle the message search bar
             MenuItem {
-                visible: false // FIXME
-                id: searchAction
-                text: qsTr("Search")
+              id: searchAction
+              text: qsTr("Search")
 
-                onClicked: {
-                    if (searchBar.active)
-                        searchBar.close()
-                    else
-                        searchBar.open()
-                }
+              onClicked: {
+                  if (searchBar.active)
+                      searchBar.close()
+                  else
+                      searchBar.open()
+              }
             }
             MenuItem {
-                text: qsTr("Send a spoiler message")
-                onClicked: sendingPane.composition.isSpoiler = true
+              visible: false
+              text: qsTr("Send a spoiler message")
+              onClicked: sendingPane.composition.isSpoiler = true
             }
         }
-*/
 
-        VerticalScrollDecorator { flickable: messageListView }
+        PageHeader {
+            id: header
+            title: chatItemWatcher.item.displayName
+
+            Rectangle {
+                id: extraContent
+                height: Theme.itemSizeMedium
+                width: parent.width
+                color: "transparent"
+                anchors.fill: parent;
+
+                SilicaItem {
+                    height: Theme.iconSizeMedium
+                    width:Theme.iconSizeMedium
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.pageStackIndicatorWidth
+                        verticalCenter: parent.verticalCenter
+                    }
+                    Avatar {
+                        id: avatar
+                        jid: chatItemWatcher.item.jid
+                        name: chatItemWatcher.item.displayName
+                        smooth: true;
+                        onClicked: contactDetailsSheet.show()
+                    }
+                }
+             }
+        }
+
+        ChatPageSearchView {
+            anchors.top: header.bottom
+            width: parent.width
+            id: searchBar
+        }
+
+        RosterItemWatcher {
+            id: chatItemWatcher
+            jid: MessageModel.currentChatJid
+        }
+
+        Component {
+            id: contactDetailsSheet
+
+            ContactDetailsSheet {
+                accountJid: MessageModel.currentAccountJid
+                jid: MessageModel.currentChatJid
+            }
+        }
+
+        Component {
+            id: contactDetailsPage
+
+            ContactDetailsPage {
+                accountJid: MessageModel.currentAccountJid
+                jid: MessageModel.currentChatJid
+            }
+        }
+
+        Component {
+            id: contactDetailsKeyAuthenticationPage
+
+            KeyAuthenticationPage {
+    //          Component.onDestruction: openView(contactDetailsSheet, contactDetailsPage)
+            }
+        }
+
+        SendMediaSheet {
+            id: sendMediaSheet
+            composition: sendingPane.composition
+            chatPage: parent
+        }
+
+        NewMediaSheet {
+            id: newMediaSheet
+            composition: sendingPane.composition
+        }
+
+        MessageReactionEmojiPicker {
+            id: messageReactionEmojiPicker
+        }
+
+        MessageReactionDetailsSheet {
+            id: messageReactionDetailsSheet
+        }
+
+    // View containing the messages
+//	ListView {
+	SilicaListView {
+		id: messageListView
+        anchors {
+            top: searchBar.bottom
+            left: parent.left
+            right: parent.right
+            bottom: sendingPane.top
+        }
+
         verticalLayoutDirection: ListView.BottomToTop
+        spacing: 0
+        VerticalScrollDecorator { flickable: messageListView }
         cacheBuffer: Screen.width // do avoid flickering when image width is changed
         clip: true;
         //clip: sendMediaSheet.expanded
         focus: true;
-        spacing: 0
+
+		footerPositioning: ListView.OverlayFooter
+//		section.property: "nextDate"
+//		section.delegate: ColumnLayout {
+//			anchors.horizontalCenter: parent.horizontalCenter
+//			spacing: 0
+
+//			Item {
+//				height: Kirigami.Units.smallSpacing * 3
+//			}
+
+//			// placeholder for the hidden chatDate
+//			Item {
+//				height: chatDate.height
+//				visible: !chatDate.visible
+//			}
+
+//			ChatInfo {
+//				id: chatDate
+//				text: section
+//				// Hide the date if the section label would display the same date as globalChatDate.
+//				visible: root.globalChatDate && text !== root.globalChatDate.text
+//			}
+
+//			Item {
+//				height: Kirigami.Units.smallSpacing
+//			}
+//		}
 
 
         // Highlighting of the message containing a searched string.
-/*
-        highlight: Component {
-			id: highlightBar
-			Rectangle {
-				height: messageListView.currentIndex === -1 ? 0 : messageListView.currentItem.implicitHeight
-				width: messageListView.currentIndex === -1 ? 0 : messageListView.currentItem.width + Kirigami.Units.smallSpacing * 2
-				color: Kirigami.Theme.hoverColor
 
-				// This is used to make the highlight bar a little bit bigger than the highlighted message.
-				// It works only together with "messageListView.highlightFollowsCurrentItem: false".
-				y: messageListView.currentIndex === -1 ? 0 : messageListView.currentItem.y
-				x: messageListView.currentIndex === -1 ? 0 : messageListView.currentItem.x
-				Behavior on y {
-					SmoothedAnimation {
-						velocity: 1000
-						duration: 500
-					}
-				}
+//        highlight: Component {
+//			id: highlightBar
+//			Rectangle {
+//				height: messageListView.currentIndex === -1 ? 0 : messageListView.currentItem.implicitHeight
+//				width: messageListView.currentIndex === -1 ? 0 : messageListView.currentItem.width + Kirigami.Units.smallSpacing * 2
+//				color: Kirigami.Theme.hoverColor
 
-				Behavior on height {
-					SmoothedAnimation {
-						velocity: 1000
-						duration: 500
-					}
-				}
-			}
-		}
-        // This is used to make the highlight bar a little bit bigger than the highlighted message.
-		highlightFollowsCurrentItem: false
-*/
+//				// This is used to make the highlight bar a little bit bigger than the highlighted message.
+//				// It works only together with "messageListView.highlightFollowsCurrentItem: false".
+//				y: messageListView.currentIndex === -1 ? 0 : messageListView.currentItem.y
+//				x: messageListView.currentIndex === -1 ? 0 : messageListView.currentItem.x
+//				Behavior on y {
+//					SmoothedAnimation {
+//						velocity: 1000
+//						duration: 500
+//					}
+//				}
+
+//				Behavior on height {
+//					SmoothedAnimation {
+//						velocity: 1000
+//						duration: 500
+//					}
+//				}
+//			}
+//		}
+//        // This is used to make the highlight bar a little bit bigger than the highlighted message.
+//		highlightFollowsCurrentItem: false
+
 		// Initially highlighted value
 		currentIndex: -1
 
@@ -451,6 +519,6 @@ ChatPageBase {
     function saveDraft() {
         sendingPane.composition.saveDraft();
     }
-/*  }*/
+  }
 
 } // ChatPageBase

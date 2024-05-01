@@ -5,19 +5,37 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+//import QtQuick 2.14
 import QtQuick 2.2
+//import QtQuick.Controls 2.14 as Controls
 import Sailfish.Silica 1.0
+//import QtGraphicalEffects 1.14
+//import org.kde.kirigami 2.19 as Kirigami
 
 import im.kaidan.kaidan 1.0
 
 /**
  * This is the base for a chat page.
  */
+//Kirigami.ScrollablePage {
 Page {
-        // color of the message bubbles on the right side
-        readonly property color rightMessageBubbleColor: {
+    // color of the message bubbles on the right side
+    readonly property color rightMessageBubbleColor: {
+//          Kirigami.Theme.colorSet = Kirigami.Theme.View
+//          const accentColor = Kirigami.Theme.highlightColor
             const accentColor = Theme.highlightColor
+            //return Qt.tint(Theme.backgroundColor, Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.1))
             return Theme.highlightColor
-//            return Qt.tint(Theme.backgroundColor, Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.1))
         }
+    // background of the chat page
+//      background: Rectangle {
+//      color: secondaryBackgroundColor
+//        Image {
+//            source: Utils.getResourcePath("images/chat-page-background.svg")
+//            anchors.fill: parent
+//            fillMode: Image.Tile
+//            horizontalAlignment: Image.AlignLeft
+//            verticalAlignment: Image.AlignTop
+//        }
+//    }
 }

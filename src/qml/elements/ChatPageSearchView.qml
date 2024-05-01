@@ -5,12 +5,12 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+//import QtQuick 2.14
 import QtQuick 2.2
+//import QtQuick.Layouts 1.14
+//import QtQuick.Controls 2.14 as Controls
 import Sailfish.Silica 1.0
-//import QtQuick 2.2
-//import Sailfish.Silica 1.0
-//// import QtQuick.Controls 2.14 as Controls
-//// import org.kde.kirigami 2.19 as Kirigami
+//import org.kde.kirigami 2.19 as Kirigami
 
 import im.kaidan.kaidan 1.0
 
@@ -18,7 +18,9 @@ import im.kaidan.kaidan 1.0
  * This is a view for searching chat messages.
  */
 Item {
-	height: active ? searchField.height + 2 * Kirigami.Units.largeSpacing : 0
+//	height: active ? searchField.height + 2 * Kirigami.Units.largeSpacing : 0
+	height: active ? searchField.height + Theme.paddingSmall: 0
+	width: parent.width
 	clip: true
 	visible: height != 0
 	property bool active: false
@@ -26,40 +28,52 @@ Item {
 
 	Behavior on height {
 		SmoothedAnimation {
-			velocity: 200
+//			velocity: 200
+			velocity: 600
 		}
 	}
 
 	// Background of the message search bar
+	Rectangle {
+		anchors.fill: parent
+//		color: Kirigami.Theme.backgroundColor
+		color: "transparent"
+	}
 
 	// Search field and its corresponding buttons
+//	RowLayout {
 	Row {
 		// Anchoring like this binds it to the top of the chat page.
 		// It makes it look like the search bar slides down from behind of the upper element.
 		anchors.left: parent.left
 		anchors.right: parent.right
 		anchors.bottom: parent.bottom
-        anchors.margins: Theme.paddingLarge
+//		anchors.margins: Kirigami.Units.largeSpacing
+        anchors.margins: Theme.paddingMedium
+        spacing: 0
 
-        Button {
-			text: qsTr("Close message search bar")
-            icon.source: "image://theme/icon-m-close"
-			onClicked: searchBar.close()
-			//FIXME display: Controls.Button.IconOnly
-			//FIXME flat: true
-		}
+//      Button {
+//			text: qsTr("Close message search bar")
+//          icon.source: "image://theme/icon-m-close"
+//			onClicked: searchBar.close()
+//			display: Controls.Button.IconOnly
+//			flat: true
+//		}
 
         SearchField {
 			id: searchField
-			width: parent.width
-            //focusSequence: ""
+			width: parent.width - buttonUp.width - buttonDown.width
+//			focusSequence: ""
 			onVisibleChanged: text = ""
 			onTextChanged: searchUpwardsFromBottom()
-            //FIXME onAccepted: searchFromCurrentIndex(true)
-			Keys.onUpPressed: searchFromCurrentIndex(true)
-			Keys.onDownPressed: searchFromCurrentIndex(false)
-			Keys.onEscapePressed: close()
-            //FIXME autoAccept: false
+//			onAccepted: searchFromCurrentIndex(true)
+			Keys.onReturnPressed: searchFromCurrentIndex(true)
+//			Keys.onUpPressed: searchFromCurrentIndex(true)
+//			Keys.onDownPressed: searchFromCurrentIndex(false)
+//			Keys.onEscapePressed: close()
+//			autoAccept: false
+			canHide: true
+			onHideClicked: close()
 
 			BusyIndicator {
                 id: busyIndicator
@@ -75,22 +89,28 @@ Item {
 			}
 		}
 
-        Button {
-			text: qsTr("Search up")
-            icon.source: "image://theme/icon-m-page-up"
-			//FIXME display: Controls.Button.IconOnly
-			//FIXME flat: true
+//      Button {
+        IconButton {
+            id: buttonUp
+//			text: qsTr("Search up")
+            icon.source: "image://theme/icon-m-up"
+//          display: Controls.Button.IconOnly
+//          flat: true
+			anchors.verticalCenter: searchField.verticalCenter
 			onClicked: {
 				searchFromCurrentIndex(true)
 				searchField.forceActiveFocus()
 			}
 		}
 
-        Button {
-			text: qsTr("Search down")
-            icon.source: "image://theme/icon-m-page-down"
-			//FIXME display: Controls.Button.IconOnly
-			//FIXME flat: true
+//      Button {
+        IconButton {
+            id: buttonDown
+//			text: qsTr("Search down")
+            icon.source: "image://theme/icon-m-down"
+//          display: Controls.Button.IconOnly
+//			flat: true
+			anchors.verticalCenter: searchField.verticalCenter
 			onClicked: {
 				searchFromCurrentIndex(false)
 				searchField.forceActiveFocus()
@@ -129,8 +149,8 @@ Item {
 	 * @param searchUpwards true for searching upwards or false for searching downwards
 	 */
 	function searchFromCurrentIndex(searchUpwards) {
-		if (!Kirigami.Settings.isMobile && !searchField.activeFocus)
-			searchField.forceActiveFocus()
+//		if (!Kirigami.Settings.isMobile && !searchField.activeFocus)
+//			searchField.forceActiveFocus()
 
 		search(searchUpwards, messageListView.currentIndex + (searchUpwards ? 1 : -1))
 	}
@@ -144,7 +164,8 @@ Item {
 	 * @param startIndex index of the first message to search for the entered text
 	 */
 	function search(searchUpwards, startIndex) {
-        newIndex = -1
+//		newIndex = -1
+        var newIndex = -1
 		const searchedString = searchField.text
 
 		if (searchedString.length > 0) {

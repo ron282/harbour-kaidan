@@ -150,7 +150,7 @@ ChatPageBase {
         anchors.fill: parent
         contentHeight: parent.height
 
-        PushUpMenu {
+        PullDownMenu {
             MenuItem {
                 visible: false
                 text: qsTr("Details…")

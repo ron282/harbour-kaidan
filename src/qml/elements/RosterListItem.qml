@@ -16,7 +16,7 @@ UserListItem {
 	id: root
 
     property SilicaListView listView
-    property alias contextMenu: root.menu
+    property ContextMenu contextMenu
     property bool lastMessageIsDraft
     property alias lastMessageDateTime: lastMessageDateTimeText.text
     property string lastMessage
@@ -36,7 +36,7 @@ UserListItem {
         spacing: Theme.paddingSmall
         anchors {
             left: avatar.right;
-            right: parent.right
+            right: colIcons.left
             top: parent.top
             leftMargin: Theme.paddingMedium;
         }
@@ -80,9 +80,9 @@ UserListItem {
                             return ""
                         }
 
-//                        if (lastMessageSenderId === root.accountJid) {
+                        if (lastMessageSenderId === root.accountJid) {
                             return qsTr("Me:")
-//                        }
+                        }
 
 //                        return qsTr("%1:").arg(root.name)
                     }
@@ -107,18 +107,18 @@ UserListItem {
         }
     }
 
-    Column {
+    Row {
         id: colIcons
         anchors.right: parent.right
         anchors.top: parent.top
-        width: Theme.iconSizeMedium
+
         // right: icon for muted contact
         // Its size depends on the font's pixel size to be as large as the message counter.
         Icon {
             id: mutedIcon
-            source: "image://theme/icon-m-speaker-mute"
-            width: Theme.iconSizeSmall
-            height: width
+            source: "image://theme/icon-m-silent"
+            sourceSize.width: Theme.iconSizeSmallPlus
+            sourceSize.height:  Theme.iconSizeSmallPlus
             visible: notificationsMuted
         }
 
@@ -126,9 +126,9 @@ UserListItem {
         // Its size depends on the font's pixel size to be as large as the message counter.
         Icon {
             id: pinnedIcon
-            source: "image://theme/icon-m-asterisk"
-            width: Theme.iconSizeSmall
-            height: width
+            source: "image://theme/icon-splus-asterisk"
+            sourceSize.width:  Theme.iconSizeSmallPlus
+            sourceSize.height:  Theme.iconSizeSmallPlus
             visible: pinned
         }
 
@@ -140,28 +140,29 @@ UserListItem {
         }
     }
 
-/*    MouseArea {
-        parent: root
-        anchors.fill: parent
-        acceptedButtons: Qt.RightButton
+//    MouseArea {
+//        parent: root
+//        anchors.fill: parent
+//        acceptedButtons: Qt.RightButton
 
-        onClicked: {
-            if (mouse.button === Qt.RightButton) {
-                showContextMenu()
-            }
-        }
+//        onClicked: {
+//            if (mouse.button === Qt.RightButton) {
+//                showContextMenu()
+//            }
+//        }
 
-        onPressAndHold: showContextMenu()
-    }
+//        onPressAndHold: showContextMenu()
+//    }
+
+    onPressAndHold: showContextMenu()
 
     function showContextMenu() {
-        console.log("[RosterListItem.qml] showContextMenu")
         if (contextMenu) {
             root.menu = contextMenu
             contextMenu.item = root
-            contextMenu.open(root)
+//            contextMenu.open(root)
+            openMenu()
         }
     }
-*/
 }
 

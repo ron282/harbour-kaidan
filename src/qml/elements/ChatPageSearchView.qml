@@ -47,9 +47,8 @@ Item {
 		// It makes it look like the search bar slides down from behind of the upper element.
 		anchors.left: parent.left
 		anchors.right: parent.right
-		anchors.bottom: parent.bottom
+        anchors.bottom: parent.bottom
 //		anchors.margins: Kirigami.Units.largeSpacing
-        anchors.margins: Theme.paddingMedium
         spacing: 0
 
 //      Button {

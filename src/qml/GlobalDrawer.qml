@@ -5,7 +5,12 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+//import QtQuick 2.14
 import QtQuick 2.2
+//import QtQuick.Layouts 1.14
+//import QtQuick.Controls 2.14 as Controls
+//import org.kde.kirigami 2.19 as Kirigami
+//import org.kde.kirigamiaddons.labs.mobileform 0.1 as MobileFormimport QtQuick 2.2
 import Sailfish.Silica 1.0
 
 import im.kaidan.kaidan 1.0
@@ -14,10 +19,9 @@ import "elements"
 import "details"
 import "settings"
 
+//Kirigami.GlobalDrawer {
 Page {
     id: root
-    z: 1
-    width: parent.width
 
     Component {
         id: qrCodePage
@@ -60,7 +64,14 @@ Page {
         SettingsSheet {}
     }
 
-    Column {
+//	topContent: [
+//		ColumnLayout {
+//			spacing: Kirigami.Units.largeSpacing
+//			Layout.margins: -3
+
+//	MobileForm.FormCard {
+//		Layout.fillWidth: true
+	Column {
         id: mainCol
         width: parent.width
         spacing: Theme.paddingMedium
@@ -69,23 +80,29 @@ Page {
             title: qsTr("Kaidan")
         }
 
+//		contentItem: ColumnLayout {
+//			spacing: 0
+
+//            MobileForm.FormCardHeader {
         SectionHeader {
             text: qsTr("Accounts")
         }
 
+//        Repeater {
         ColumnView {
             model: [ AccountManager.jid ]
             itemHeight: Theme.iconSizeMedium + Theme.itemSizeSmall
             width: parent.width
 
-            delegate:
-                Column {
+//						delegate: ColumnLayout {
+            delegate: Column {
                     spacing: 0
 
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.margins: Theme.horizontalPageMargin
 
+//							MobileForm.FormTextDelegate {
                     Row {
                         id: accountArea
                         width: parent.width

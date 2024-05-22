@@ -12,6 +12,9 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+
+//import QtQuick 2.14
+//import org.kde.kirigami 2.19 as Kirigami
 import QtQuick 2.2
 import Sailfish.Silica 1.0
 
@@ -21,17 +24,24 @@ import "elements"
 
 SearchBarPage {
     id: root
-
     listView: rosterListView
+//    rightAction: Kirigami.Action {
+//		text: qsTr("Filter")
+//		icon.name: "filter-symbolic"
+//		displayHint: Kirigami.DisplayHint.IconOnly
+//		onTriggered: openView(rosterFilteringDialog, rosterFilteringPage)
+//	}
 
     Component {
         id: rosterFilteringDialog
 
+//      Kirigami.Dialog {
         Dialog {
             Column {
                 width: parent.width
                 DialogHeader {
-                    title: qsTr("Filter")
+					title: qsTr("Filter")
+//					standardButtons: Kirigami.Dialog.NoButton
                 }
 
                 RosterFilteringArea {
@@ -44,7 +54,8 @@ SearchBarPage {
     Component {
         id: rosterFilteringPage
 
-        Page {
+//		Kirigami.ScrollablePage {
+		Page {
             SilicaFlickable {
                 anchors.fill: parent
                 contentHeight: column.height
@@ -57,7 +68,11 @@ SearchBarPage {
                         title: qsTr("Filter")
                     }
 
-                    RosterFilteringArea {
+//					background: Rectangle {
+//							color: Kirigami.Theme.alternateBackgroundColor
+//						}
+
+					RosterFilteringArea {
                         rosterFilterProxyModel: filterModel
                     }
                 }
@@ -123,7 +138,7 @@ SearchBarPage {
 
         delegate: RosterListItem {
             listView: rosterListView
-            menu: itemContextMenu
+            contextMenu: itemContextMenu
             accountJid: AccountManager.jid
             jid: model ? model.jid : ""
             name: model ? (model.name ? model.name : model.jid) : ""
@@ -154,7 +169,7 @@ SearchBarPage {
              */
              onOpenChatPageRequested: {
 //				if (Kirigami.Settings.isMobile) {
-//                    toggleSearchBar()
+                    toggleSearchBar()
 //				} else {
 //					searchField.text = ""
 //				}

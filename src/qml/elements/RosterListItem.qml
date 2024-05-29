@@ -111,7 +111,6 @@ UserListItem {
         id: colIcons
         anchors.right: parent.right
         anchors.top: parent.top
-
         // right: icon for muted contact
         // Its size depends on the font's pixel size to be as large as the message counter.
         Icon {
@@ -119,6 +118,7 @@ UserListItem {
             source: "image://theme/icon-m-silent"
             sourceSize.width: Theme.iconSizeSmallPlus
             sourceSize.height:  Theme.iconSizeSmallPlus
+
             visible: notificationsMuted
         }
 

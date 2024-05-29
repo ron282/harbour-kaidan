@@ -4,8 +4,11 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+//import QtQuick 2.14
+//import org.kde.kirigamiaddons.labs.components 1.0 as Components
 import QtQuick 2.2
 import Sailfish.Silica 1.0
+
 import im.kaidan.kaidan 1.0
 
 
@@ -18,8 +21,8 @@ Image {
     height: width
 
     source: Kaidan.avatarStorage.getAvatarUrl(jid)
-    fillMode: Image.PreserveAspectCrop;
-    antialiasing: true;
+    fillMode: Image.PreserveAspectCrop
+    antialiasing: true
 
     Icon {
         source: "image://theme/icon-m-contact"
@@ -31,16 +34,4 @@ Image {
         anchors.fill: parent
         onClicked: root.clicked()
     }
-//=======
-//import QtQuick 2.14
-//import org.kde.kirigamiaddons.labs.components 1.0 as Components
-
-//import im.kaidan.kaidan 1.0
-
-//Components.Avatar {
-//	property string jid
-
-//	source: jid ? Kaidan.avatarStorage.getAvatarUrl(jid) : ""
-//	color: Qt.lighter(Utils.getUserColor(jid ? jid : name))
-//>>>>>>> master
 }

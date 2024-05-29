@@ -14,7 +14,7 @@ import "../elements"
 Column {
     id: root
     width: parent.width
-    height: Theme.itemSizeMedium + Theme.iconSizeExtraLarge + Theme.itemSizeMedium + Theme.itemSizeSmall
+    height: Theme.itemSizeMedium + Theme.iconSizeExtraLarge*2 + Theme.itemSizeMedium + Theme.itemSizeSmall
     spacing: 0
 
     property string jid
@@ -29,28 +29,37 @@ Column {
     }
 
     BackgroundItem {
-        height: Theme.iconSizeExtraLarge
-        width: Theme.iconSizeExtraLarge
+        height: Theme.iconSizeExtraLarge*2
+        width: Theme.iconSizeExtraLarge*2
         anchors {
             horizontalCenter: parent.horizontalCenter
-            horizontalCenterOffset: -Theme.iconSizeMedium + Theme.horizontalPageMargin
+            horizontalCenterOffset: -Theme.Theme.iconSizeExtraLarge + Theme.horizontalPageMargin
         }
         Avatar {
             jid: root.jid
             name: root.displayName
             smooth: true;
-            onClicked: root.avatarAction.clicked()
 
             MouseArea {
                 anchors.fill: parent
+                visible:  root.avatarAction.enabled
+//                hoverEnabled: true
+//                onHoveredChanged: {
+//                    if (containsMouse) {
+//                        avatarHoverFadeInAnimation.start()
+//                    } else {
+//                        avatarHoverFadeOutAnimation.start()
+//                    }
+//                }
+//                onExited: avatarHoverFadeOutAnimation.start()
+                onClicked: root.avatarAction.clicked(mouse)
+
                 HighlightImage {
                     id: avatarActionHoverImage
+                    width: parent.width / 2
+                    height: width
                     source: root.avatarAction.icon.source
-                    sourceSize.height: Theme.iconSizeSmallPlus
-                    sourceSize.width: Theme.iconSizeSmallPlus
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: parent.bottom
-                    visible:  root.avatarAction.enabled
+                    anchors.centerIn: parent
                 }
             }
         }

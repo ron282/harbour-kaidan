@@ -85,6 +85,9 @@ Q_SIGNALS:
 	void clientVCardRequested();
 	void changeNicknameRequested(const QString &nickname);
 	void changeAvatarRequested(const QImage &avatar = {});
+#if defined(SFOS)
+	void changeAvatarUrlRequested(const QString &avatarUrl);
+#endif
 
 private:
 	/**
@@ -94,6 +97,9 @@ private:
 	 */
 	void changeNickname(const QString &nickname);
 	void changeAvatar(const QImage &avatar = {});
+#if defined(SFOS)
+	void changeAvatarUrl(const QString &avatarUrl);
+#endif
 
 	/**
 	 * Changes the nickname which was cached to be set after receiving the current vCard.

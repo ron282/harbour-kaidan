@@ -14,6 +14,7 @@
 #include <QXmppUtils.h>
 #include <QXmppVCardManager.h>
 #include <QXmppVCardIq.h>
+#include <QUrl>
 // Kaidan
 #include "AvatarFileStorage.h"
 #include "Kaidan.h"
@@ -29,7 +30,9 @@ VCardManager::VCardManager(ClientWorker *clientWorker, QXmppClient *client, Avat
 	connect(this, &VCardManager::clientVCardRequested, this, &VCardManager::requestClientVCard);
 	connect(this, &VCardManager::changeNicknameRequested, this, &VCardManager::changeNickname);
 	connect(this, &VCardManager::changeAvatarRequested, this, &VCardManager::changeAvatar);
-
+#if defined(SFOS)
+	connect(this, &VCardManager::changeAvatarUrlRequested, this, &VCardManager::changeAvatarUrl);
+#endif
 	// Currently we're not requesting the own VCard on every connection because it is probably
 	// way too resource intensive on mobile connections with many reconnects.
 	// Actually we would need to request our own avatar, calculate the hash of it and publish
@@ -123,6 +126,13 @@ void VCardManager::changeAvatar(const QImage &avatar)
 		}
 	);
 }
+
+#if defined(SFOS)
+void VCardManager::changeAvatarUrl(const QString &avatarUrl)
+{
+	changeAvatar(QImage(QUrl(avatarUrl).toLocalFile()));
+}
+#endif
 
 void VCardManager::changeNicknameAfterReceivingCurrentVCard()
 {

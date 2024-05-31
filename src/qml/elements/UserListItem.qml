@@ -19,7 +19,6 @@ ListItem {
 	property string jid
 	property string name
 	property bool isSelected: false
-    height: Theme.iconSizeExtraLarge
     anchors {
         left: parent.left
         right: parent.right

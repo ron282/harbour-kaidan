@@ -25,6 +25,8 @@ UserListItem {
 	property bool pinned
     property bool notificationsMuted
 
+    menu: contextMenu
+
 	isSelected: {
         return false &&
                MessageModel.currentAccountJid === accountJid &&
@@ -84,7 +86,7 @@ UserListItem {
                             return qsTr("Me:")
                         }
 
-//                        return qsTr("%1:").arg(root.name)
+                        return qsTr("%1:").arg(root.name)
                     }
                 }
                 font {

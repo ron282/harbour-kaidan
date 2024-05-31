@@ -81,9 +81,9 @@ SearchBarPage {
     }
 
     SilicaListView {
-        id: rosterListView
+            id: rosterListView
 
-        PullDownMenu {
+            PullDownMenu {
                 MenuItem {
                     text: qsTr("Filter")
                     onClicked: openView(rosterFilteringDialog, rosterFilteringPage)
@@ -96,34 +96,36 @@ SearchBarPage {
                 }
             }
 
-        header: Column {
-            anchors {
-                right: parent.right
-                left: parent.left
-            }
-            PageHeader {
-                title: {
-                    Kaidan.connectionState === Enums.StateConnecting ? qsTr("Connecting…") :
-                    Kaidan.connectionState === Enums.StateDisconnected ? qsTr("Offline") :
-                    qsTr("Contacts")
-                }
-            }
-            SearchBarPageSearchField {
-                listView: rosterListView
-                visible: false
+            header: Column {
                 anchors {
                     right: parent.right
                     left: parent.left
                 }
-                Component.onCompleted: {
-                    root.searchField = this
+                PageHeader {
+                    title: {
+                        Kaidan.connectionState === Enums.StateConnecting ? qsTr("Connecting…") :
+                        Kaidan.connectionState === Enums.StateDisconnected ? qsTr("Offline") :
+                        qsTr("Contacts")
+                    }
+                }
+                SearchBarPageSearchField {
+                    listView: rosterListView
+                    visible: false
+                    anchors {
+                        right: parent.right
+                        left: parent.left
+                    }
+                    Component.onCompleted: {
+                        root.searchField = this
+                    }
                 }
             }
+
+            anchors {
+                fill: parent
         }
 
-        anchors {
-            fill: parent
-        }
+        spacing: Theme.paddingMedium
 
         VerticalScrollDecorator { flickable: rosterListView }
 
@@ -149,7 +151,8 @@ SearchBarPage {
             pinned: model ? model.pinned : false
             notificationsMuted: model ? model.notificationsMuted : false
 
-            contentHeight: Theme.itemSizeLarge;
+            contentHeight: Theme.itemSizeLarge
+
             onClicked: {
                 // Open the chatPage only if it is not yet open.
                 if (!isSelected) {
@@ -199,4 +202,5 @@ SearchBarPage {
             }
         }
     }
+
 }

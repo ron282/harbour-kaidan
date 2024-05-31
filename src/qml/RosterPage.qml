@@ -87,7 +87,7 @@ SearchBarPage {
 				onClicked: {
 					// Open the chatPage only if it is not yet open.
 					// Emitting the signal is needed because there are slots in other places.
-					if (!isSelected || !wideScreen) {
+					if (!selected || !wideScreen) {
 						Kaidan.openChatPageRequested(accountJid, jid)
 					}
 				}
@@ -123,7 +123,7 @@ SearchBarPage {
 				if (Kirigami.Settings.isMobile) {
 					toggleSearchBar()
 				} else {
-					searchField.text = ""
+					searchField.clear()
 				}
 
 				MessageModel.setCurrentChat(accountJid, chatJid)

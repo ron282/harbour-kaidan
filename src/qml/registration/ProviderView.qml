@@ -27,7 +27,7 @@ FieldView {
 	property bool inBandRegistrationSupported: providerListModel.data(comboBox.currentIndex, ProviderListModel.SupportsInBandRegistrationRole)
 	property url registrationWebPage: providerListModel.data(comboBox.currentIndex, ProviderListModel.RegistrationWebPageRole)
 	property bool shouldWebRegistrationViewBeShown: !customProviderSelected && !inBandRegistrationSupported
-	property string outOfBandUrl
+	property url outOfBandUrl
 
 	property alias customConnectionSettings: customConnectionSettings
 
@@ -47,8 +47,7 @@ FieldView {
 			}
 			textRole: "display"
 			currentIndex: indexOfRandomlySelectedProvider()
-			onCurrentIndexChanged: field.text = ""
-
+			onCurrentIndexChanged: field.inputField.clear()
 			onActivated: {
 				if (index === 0) {
 					editText = ""

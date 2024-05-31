@@ -226,10 +226,10 @@ QString QmlUtils::formatMessage(const QString &message)
 	return processMsgFormatting(message.toHtmlEscaped().split(QStringLiteral(" ")));
 }
 
-QColor QmlUtils::getUserColor(const QString &nickName)
+QColor QmlUtils::userColor(const QString &id, const QString &name)
 {
-	QXmppColorGenerator::RGBColor color = QXmppColorGenerator::generateColor(nickName);
-	return {color.red, color.green, color.blue};
+	QXmppColorGenerator::RGBColor rgbColor = QXmppColorGenerator::generateColor(id.isEmpty() ? name : id);
+	return { rgbColor.red, rgbColor.green, rgbColor.blue };
 }
 
 QUrl QmlUtils::pasteImage()

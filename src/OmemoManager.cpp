@@ -19,6 +19,7 @@
 #include "OmemoDb.h"
 #include "PresenceCache.h"
 #include "RosterModel.h"
+#include "SystemUtils.h"
 
 using namespace std::chrono_literals;
 
@@ -82,9 +83,7 @@ QFuture<void> OmemoManager::load()
 	} else {
 		auto future = m_manager->setSecurityPolicy(QXmpp::TrustSecurityPolicy::Toakafa);
 		future.then(this, [this, interface]() mutable {
-			const auto productName = QSysInfo::prettyProductName();
-			const QString productNameWithoutVersion = productName.contains(QStringLiteral(" ")) ? productName.section(QStringLiteral(" "), 0, -2) : productName;
-			auto future = m_manager->changeDeviceLabel(QStringLiteral(APPLICATION_DISPLAY_NAME) % QStringLiteral(" - ") % productNameWithoutVersion);
+			auto future = m_manager->changeDeviceLabel(QStringLiteral(APPLICATION_DISPLAY_NAME) % QStringLiteral(" - ") % SystemUtils::productName());
 			future.then(this, [this, interface](bool) mutable {
 				auto future = m_manager->load();
 				future.then(this, [this, interface](bool isLoaded) mutable {
@@ -277,9 +276,6 @@ QFuture<void> OmemoManager::retrieveOwnKey(QHash<QString, QHash<QByteArray, QXmp
 
 	auto future = m_manager->ownKey();
 	future.then(this, [this, interface, keys = std::move(keys)](QByteArray key) mutable {
-		keys.insert(AccountManager::instance()->jid(), { { key, QXmpp::TrustLevel::Authenticated } });
-		Q_EMIT MessageModel::instance()->keysRetrieved(keys);
-
 		for (auto itr = keys.cbegin(); itr != keys.cend(); ++itr) {
 			using KeyIds = QList<QString>;
 			KeyIds authenticatableKeys;
@@ -302,6 +298,13 @@ QFuture<void> OmemoManager::retrieveOwnKey(QHash<QString, QHash<QByteArray, QXmp
 			updateCachedKeys(jid, authenticatableKeys, authenticatedKeys);
 		}
 
+		const auto ownJid = AccountManager::instance()->jid();
+
+		OmemoCache::instance()->setAuthenticatedKeys(ownJid, { key.toHex() });
+
+		keys.insert(ownJid, { { key, QXmpp::TrustLevel::Authenticated } });
+		Q_EMIT MessageModel::instance()->keysRetrieved(keys);
+
 		interface.reportFinished();
 	});
 
@@ -310,7 +313,7 @@ QFuture<void> OmemoManager::retrieveOwnKey(QHash<QString, QHash<QByteArray, QXmp
 
 void OmemoManager::retrieveKeysForRequestedJids(const QList<QString> &jids)
 {
-	if (std::search(jids.cbegin(), jids.cend(), m_lastRequestedKeyOwnerJids.cbegin(), m_lastRequestedKeyOwnerJids.cend()) != jids.cend()) {
+	if (std::search(m_lastRequestedKeyOwnerJids.cbegin(), m_lastRequestedKeyOwnerJids.cend(), jids.cbegin(), jids.cend()) != m_lastRequestedKeyOwnerJids.cend()) {
 		retrieveKeys(m_lastRequestedKeyOwnerJids);
 	}
 }

@@ -225,7 +225,6 @@ HEADERS += \
     src/qxmpp-exts/QXmppColorGenerator.h \
     src/qxmpp-exts/QXmppUri.h \
     src/hsluv-c/hsluv.h \
-    3rdparty/QEmuStringView/qemustringview.h \
     3rdparty/QtCore/QRandomGenerator.h \
     3rdparty/QtMultimedia/QVideoFrameToQImage.h 
 

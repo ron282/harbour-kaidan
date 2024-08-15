@@ -6,11 +6,15 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include <QtGlobal>
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+#include "QEmuStringView.h"
+#endif
+
 #if defined(SFOS)
 #include <QVector>
 #include <QString>
 #include <chrono>
-#include "../3rdparty/QEmuStringView/qemustringview.h"
 #include "Notifications.h"
 #endif
 

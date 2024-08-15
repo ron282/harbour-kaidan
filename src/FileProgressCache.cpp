@@ -7,8 +7,9 @@
 
 #include <QCoreApplication>
 
-#if defined(SFOS)
-#include "../3rdparty/QEmuStringView/qemustringview.h"
+#include <QtGlobal>
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+#include "QEmuStringView.h"
 #endif
 
 #if defined(SFOS)

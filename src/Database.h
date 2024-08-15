@@ -18,8 +18,9 @@ class QSqlDatabase;
 class QThreadPool;
 struct DatabasePrivate;
 
-#if defined(SFOS)
-#include "../3rdparty/QEmuStringView/qemustringview.h"
+#include <QtGlobal>
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+#include "QEmuStringView.h"
 #endif
 /**
  * The Database class manages the SQL database. It opens the database and converts old

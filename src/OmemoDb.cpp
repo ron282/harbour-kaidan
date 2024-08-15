@@ -5,10 +5,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "OmemoDb.h"
+
+#include <QtGlobal>
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+#include "QEmuStringView.h"
+#endif
+
 #if defined(SFOS)
 #include <QDebug>
-#define QSTRINGVIEW_EMULATE
-#include "../3rdparty/QEmuStringView/qemustringview.h"
 #endif
 
 #include "Globals.h"
@@ -62,7 +66,7 @@ auto OmemoDb::resetAll() -> QXmppTask<void>
 				query,
 				QStringLiteral(R"(
 					DELETE FROM %1 WHERE account = :accountJid
-				)").arg(table),
+				)").arg(table.toString()),
 				{
 					{ u":accountJid", accountJid() },
 				}

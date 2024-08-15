@@ -7,6 +7,11 @@
 #include <QJsonArray>
 #include <QJsonObject>
 
+#include <QtGlobal>
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+#include "QEmuStringView.h"
+#endif
+
 namespace Json
 {
 	// value
@@ -14,7 +19,6 @@ namespace Json
 	template<typename T>
 	T value(const QJsonObject &object, QStringView key);
 
-#if !defined(SFOS)
 	template<typename T>
 	T value(const QJsonObject &object, QString key);	
 
@@ -22,29 +26,28 @@ namespace Json
 	QString value(const QJsonObject &object, QString key)
 	{
 		Q_ASSERT(!key.isEmpty());
-		return object.value(key);
+		return object.value(key).toString();
 	}
-#endif
 
 	template<>
 	QString value(const QJsonObject &object, QStringView key)
 	{
 		Q_ASSERT(!key.isEmpty());
-		return object.value(key).toString();
+		return object.value(key.toString()).toString();
 	}
 
 	template<>
 	int value(const QJsonObject &object, QStringView key)
 	{
 		Q_ASSERT(!key.isEmpty());
-		return static_cast<int>(object.value(key).toDouble());
+		return static_cast<int>(object.value(key.toString()).toDouble());
 	}
 
 	template<>
 	bool value(const QJsonObject &object, QStringView key)
 	{
 		Q_ASSERT(!key.isEmpty());
-		return object.value(key).toBool();
+		return object.value(key.toString()).toBool();
 	}
 
 	// addValue
@@ -58,7 +61,7 @@ namespace Json
 		Q_ASSERT(!key.isEmpty());
 
 		if (!value.isEmpty()) {
-			object.insert(key, value);
+			object.insert(key.toString(), value);
 		}
 	}
 
@@ -66,14 +69,14 @@ namespace Json
 	void addValue(QJsonObject &object, QStringView key, const int &value)
 	{
 		Q_ASSERT(!key.isEmpty());
-		object.insert(key, value);
+		object.insert(key.toString(), value);
 	}
 
 	template<>
 	void addValue(QJsonObject &object, QStringView key, const bool &value)
 	{
 		Q_ASSERT(!key.isEmpty());
-		object.insert(key, value);
+		object.insert(key.toString(), value);
 	}
 
 	template<>
@@ -82,7 +85,7 @@ namespace Json
 		Q_ASSERT(!key.isEmpty());
 
 		if (!value.isEmpty()) {
-			object.insert(key, value.join(QLatin1Char(',')));
+			object.insert(key.toString(), value.join(QLatin1Char(',')));
 		}
 	}
 } // namespace Json

@@ -3,8 +3,9 @@
 // SPDX-FileCopyrightText: 2020 Melvin Keskin <melvo@olomono.de>
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
-#if defined(SFOS)
-#include "../3rdparty/QEmuStringView/qemustringview.h"
+#include <QtGlobal>
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+#include "QEmuStringView.h"
 #endif
 
 #include "QmlUtils.h"

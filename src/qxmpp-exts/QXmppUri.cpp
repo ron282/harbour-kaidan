@@ -3,10 +3,10 @@
 // SPDX-FileCopyrightText: 2020 Jonah Brüchert <jbb@kaidan.im>
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
-#if defined(SFOS)
-#include <QDebug>
-#define QSTRINGVIEW_EMULATE
-#include "../../3rdparty/QEmuStringView/qemustringview.h"
+
+#include <QtGlobal>
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+#include "QEmuStringView.h"
 #endif
 
 #include "QXmppUri.h"
@@ -15,25 +15,14 @@
 
 #include <array>
 
-#if defined(SFOS)
- QStringView SCHEME = u"xmpp";
- QStringView PREFIX = u"xmpp:";
-constexpr QChar QUERY_ITEM_DELIMITER = ';';
-constexpr QChar QUERY_ITEM_KEY_DELIMITER = '=';
-#else
 constexpr QStringView SCHEME = u"xmpp";
 constexpr QStringView PREFIX = u"xmpp:";
 constexpr QChar QUERY_ITEM_DELIMITER = u';';
 constexpr QChar QUERY_ITEM_KEY_DELIMITER = u'=';
-#endif
 
 // Query types representing actions, e.g. "join" in
 // "xmpp:group@example.org?join" for joining a group chat
-#if defined(SFOS)
-std::array<QStringView, 18> QUERY_TYPES = {
-#else
 constexpr std::array<QStringView, 18> QUERY_TYPES = {
-#endif
 	QStringView(),
 	u"command",
 	u"disco",
@@ -55,11 +44,7 @@ constexpr std::array<QStringView, 18> QUERY_TYPES = {
 };
 
 // QXmppMessage types as strings
-#if defined(SFOS)
-std::array<QStringView, 5> MESSAGE_TYPES = {
-#else
 constexpr std::array<QStringView, 5> MESSAGE_TYPES = {
-#endif
 	u"error",
 	u"normal",
 	u"chat",
@@ -286,7 +271,7 @@ void QXmppUri::setDistrustedKeysIds(const QList<QString> &keyIds)
 ///
 bool QXmppUri::isXmppUri(const QString &uri)
 {
-	return uri.startsWith(PREFIX);
+	return uri.startsWith(PREFIX.toString());
 }
 
 ///

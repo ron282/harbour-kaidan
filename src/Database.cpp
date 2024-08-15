@@ -718,11 +718,7 @@ void Database::convertDatabaseToV6()
 		u"mediaLocation " SQL_TEXT
 	};
 	for (auto column : newColumns) {
-#ifdef SFOS
-		execQuery(query, QStringView("ALTER TABLE Messages ADD ") + column);
-#else
-		execQuery(query, u"ALTER TABLE Messages ADD " % column);
-#endif
+		execQuery(query, u"ALTER TABLE Messages ADD " + column);
 	}
 	d->version = 6;
 }

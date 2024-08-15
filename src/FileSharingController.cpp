@@ -5,8 +5,9 @@
 
 #include "FileSharingController.h"
 
-#if defined(SFOS)
-#include "../3rdparty/QEmuStringView/qemustringview.h"
+#include <QtGlobal>
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+#include "QEmuStringView.h"
 #endif
 
 // std
@@ -147,11 +148,7 @@ static std::optional<std::pair<QString, QString>> sanitizeFilename(QStringView f
 #endif
 	};
 
-#if defined(SFOS)
-	constexpr std::initializer_list<char *> bad_names = {
-#else
 	constexpr std::initializer_list<QStringView> bad_names = {
-#endif
 #ifndef Q_OS_UNIX
 		u"CON", u"PRN", u"AUX", u"NUL", u"COM1", u"COM2", u"COM3", u"COM4",
 		u"COM5", u"COM6", u"COM7", u"COM8", u"COM9", u"LPT1", u"LPT2",

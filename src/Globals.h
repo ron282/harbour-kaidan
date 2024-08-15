@@ -10,10 +10,6 @@
 #define GLOBALS_H
 #include <QLatin1String>
 
-#if defined (SFOS)
-#include "../3rdparty/QEmuStringView/qemustringview.h"
-#endif
-
 // Kaidan settings
 #define KAIDAN_SETTINGS_AUTH_ONLINE "auth/online"
 #define KAIDAN_SETTINGS_AUTH_JID "auth/jid"
@@ -104,6 +100,7 @@ constexpr auto GENERATED_PASSWORD_LENGTH_UPPER_BOUND = 30;
 #define PROVIDER_COMPLETION_LIST_FILE_PATH QStringLiteral(":/data/providers-completion.json")
 
 #if defined (SFOS)
+#include "QEmuStringView.h"
 const QStringView DEFAULT_LANGUAGE_CODE = u"EN";
 const QStringView DEFAULT_COUNTRY_CODE = u"US";
 #else

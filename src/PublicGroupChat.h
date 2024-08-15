@@ -8,9 +8,9 @@
 #include <QJsonObject>
 #include <QObject>
 
-#if defined(SFOS)
-#include "../3rdparty/QEmuStringView/qemustringview.h"
-#include <QVector>
+#include <QtGlobal>
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+#include "QEmuStringView.h"
 #endif
 using PublicGroupChats = QVector<class PublicGroupChat>;
 
@@ -27,21 +27,12 @@ class PublicGroupChat
 	Q_PROPERTY(QJsonObject json READ toJson)
 
 public:
-#if defined(SFOS)
-	static constexpr const char *Address = "address";
-	static constexpr const char *Users = "nusers";
-	static constexpr const char *IsOpen = "is_open";
-	static constexpr const char *Name = "name";
-	static constexpr const char *Description = "description";
-	static constexpr const char *Language = "language";
-#else
 	static constexpr const QStringView Address = u"address";
 	static constexpr const QStringView Users = u"nusers";
 	static constexpr const QStringView IsOpen = u"is_open";
 	static constexpr const QStringView Name = u"name";
 	static constexpr const QStringView Description = u"description";
 	static constexpr const QStringView Language = u"language";
-#endif
 
 	explicit PublicGroupChat(const QJsonObject &object);
 	PublicGroupChat(const PublicGroupChat &other);

@@ -27,8 +27,9 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Kaidan.  If not, see <http://www.gnu.org/licenses/>.
  */
-#if defined (SFOS)
-#include "../3rdparty/QEmuStringView/qemustringview.h"
+#include <QtGlobal>
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+#include "QEmuStringView.h"
 #endif
 
 #include "AtmManager.h"

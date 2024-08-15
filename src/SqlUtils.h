@@ -5,8 +5,9 @@
 
 #pragma once
 
-#ifdef SFOS
-#include "../3rdparty/QEmuStringView/qemustringview.h"
+#include <QtGlobal>
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+#include "QEmuStringView.h"
 #else
 #include <QStringView>
 #endif

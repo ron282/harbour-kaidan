@@ -231,10 +231,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #if defined(Q_OS_IOS) || defined(Q_OS_ANDROID)
 	QGuiApplication app(argc, argv);
 #elif defined(SFOS)
-    QGuiApplication *pApp = NULL;
     QGuiApplication *app = SailfishApp::application(argc, argv);
     QQuickView *view = SailfishApp::createView();
-    pApp = app;
 #else
 	SingleApplication app(argc, argv, true);
 #endif
@@ -359,7 +357,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	QTranslator qtTranslator;
 #if defined(SFOS)
     qtTranslator.load(SailfishApp::pathTo("translations").toLocalFile() + "/" + "qt_" + QLocale::system().name() + ".qm");
-    pApp->installTranslator(&qtTranslator);
+    app->installTranslator(&qtTranslator);
 #else
 	qtTranslator.load("qt_" + QLocale::system().name(),
 	                  QLibraryInfo::location(QLibraryInfo::TranslationsPath));
@@ -585,6 +583,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 	// enter qt main loop
 	return app.exec();
 #else
-	return pApp->exec();
+	return app->exec();
 #endif
 }

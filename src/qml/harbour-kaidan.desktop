@@ -2,11 +2,12 @@
 Encoding=UTF-8
 Version=1.0
 Type=Application
-X-Nemo-Application-Type=generic
+X-Nemo-Application-Type=silica-qt5
 Name=SailKaidan
 Icon=harbour-kaidan
 Exec=harbour-kaidan
 
 [X-Sailjail]
 Permissions=Internet;UserDirs;RemovableMedia;MediaIndexing;Camera
+OrganizationName=harbour-kaidan
 ApplicationName=SailKaidan

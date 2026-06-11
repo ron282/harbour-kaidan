@@ -1,6 +1,6 @@
 Name:	    harbour-kaidan
 Summary:    QXmpp Client Application
-Version:    0.11.0
+Version:    0.11.1
 Release:    1
 Group:      Qt/Qt
 Source:     master.zip
@@ -19,7 +19,7 @@ BuildRequires:  libgpg-error-devel
 BuildRequires:  libgcrypt-devel
 BuildRequires:  sqlite-devel
 BuildRequires:  QXmpp-devel >= 1.7.0
-BuildRequires:  ZXing-devel
+BuildRequires:  pkgconfig(zxing)
 Requires:       QXmpp >= 1.7.0
 Requires:       qt5-qtdeclarative-import-positioning
 Requires:       qt5-qtdeclarative-import-location

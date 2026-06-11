@@ -61,6 +61,9 @@ public:
 	Q_SIGNAL void retrieveBacklogMessagesRequested(const QString &jid, const QDateTime &stamp);
 
 private:
+    bool m_isCatchUpRunning=false;
+
+private:
 	void handleConnected();
 	void handleRosterReceived();
 	void retrieveInitialMessages();

@@ -81,6 +81,7 @@ private:
 
 	bool m_isLoaded = false;
 	QList<QString> m_lastRequestedKeyOwnerJids;
+    QXmppClient *m_client;
 };
 
 Q_DECLARE_METATYPE(OmemoManager::Device)

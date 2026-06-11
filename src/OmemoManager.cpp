@@ -43,7 +43,8 @@ bool OmemoManager::Device::operator !=(const OmemoManager::Device &d) const {
 
 OmemoManager::OmemoManager(QXmppClient *client, Database *database, QObject *parent)
 	: QObject(parent),
-	  m_omemoStorage(new OmemoDb(database, this, {}, this)),
+      m_client(client),  // AJOUT
+      m_omemoStorage(new OmemoDb(database, this, {}, this)),
 	  m_manager(client->addNewExtension<QXmppOmemoManager>(m_omemoStorage.get()))
 {
 	client->setEncryptionExtension(m_manager);
@@ -57,9 +58,14 @@ OmemoManager::OmemoManager(QXmppClient *client, Database *database, QObject *par
 		initializeChat(accountJid, accountJid);
 	});
 
-	connect(m_manager, &QXmppOmemoManager::trustLevelsChanged, this, [this](const QMultiHash<QString, QByteArray> &modifiedKeys) {
-		retrieveKeysForRequestedJids(modifiedKeys.keys());
-	});
+    connect(m_manager, &QXmppOmemoManager::trustLevelsChanged, this, [this](const QMultiHash<QString, QByteArray> &modifiedKeys) {
+        const auto changedJids = modifiedKeys.keys();
+        retrieveKeysForRequestedJids(changedJids);
+
+        for (const auto &changedJid : changedJids) {
+            retrieveDevicesForRequestedJids(changedJid);
+        }
+    });
 
 	connect(m_manager, &QXmppOmemoManager::deviceAdded, this, [this](const QString &jid, uint32_t) {
 		retrieveDevicesForRequestedJids(jid);
@@ -156,17 +162,21 @@ QFuture<void> OmemoManager::setUp()
 
 QFuture<void> OmemoManager::retrieveKeys(const QList<QString> &jids)
 {
-	QFutureInterface<void> interface(QFutureInterfaceBase::Started);
+    QFutureInterface<void> interface(QFutureInterfaceBase::Started);
 
-	auto future = m_manager->keys(jids, ~ QXmpp::TrustLevels { QXmpp::TrustLevel::Undecided });
-	future.then(this, [this, interface](QHash<QString, QHash<QByteArray, QXmpp::TrustLevel>> &&keys) mutable {
-		auto future = retrieveOwnKey(std::move(keys));
-		await(future, this, [interface]() mutable {
-			interface.reportFinished();
-		});
-	});
+    auto future = m_manager->keys(jids, QXmpp::TrustLevels(
+        QXmpp::TrustLevel::AutomaticallyTrusted |
+        QXmpp::TrustLevel::ManuallyTrusted |
+        QXmpp::TrustLevel::Authenticated |
+        QXmpp::TrustLevel::Undecided));
+    future.then(this, [this, interface](QHash<QString, QHash<QByteArray, QXmpp::TrustLevel>> &&keys) mutable {
+        auto future = retrieveOwnKey(std::move(keys));
+        await(future, this, [interface]() mutable {
+            interface.reportFinished();
+        });
+    });
 
-	return interface.future();
+    return interface.future();
 }
 
 QFuture<bool> OmemoManager::hasUsableDevices(const QList<QString> &jids)
@@ -177,8 +187,10 @@ QFuture<bool> OmemoManager::hasUsableDevices(const QList<QString> &jids)
 	future.then(this, [=](QVector<QXmppOmemoDevice> devices) mutable {
 		for (const auto &device : std::as_const(devices)) {
 			const auto trustLevel = device.trustLevel();
-
-			if (!(QXmpp::TrustLevel::AutomaticallyDistrusted | QXmpp::TrustLevel::ManuallyDistrusted).testFlag(trustLevel)) {
+			// TrustLevel(0) is invalid: QHash::value() default when key absent from trust DB
+			// (e.g. after resetAll()). Treat as Undecided = usable.
+			if (static_cast<int>(trustLevel) == 0 ||
+				!(QXmpp::TrustLevel::AutomaticallyDistrusted | QXmpp::TrustLevel::ManuallyDistrusted).testFlag(trustLevel)) {
 				reportFinishedResult(interface, true);
 				return;
 			}
@@ -324,7 +336,7 @@ QFuture<void> OmemoManager::retrieveOwnKey(QHash<QString, QHash<QByteArray, QXmp
 		interface.reportFinished();
 	});
 
-	return interface.future();
+    return interface.future();// APRÈS — inclure toutes les clés y compris Undecided
 }
 
 void OmemoManager::retrieveKeysForRequestedJids(const QList<QString> &jids)
@@ -343,8 +355,8 @@ void OmemoManager::retrieveDevicesForRequestedJids(const QString &jid)
 
 void OmemoManager::retrieveDevices(const QList<QString> &jids)
 {
-	auto future = m_manager->devices(jids);
-	future.then(this, [this, jids](QVector<QXmppOmemoDevice> devices) {
+    auto future = m_manager->devices(jids);
+    future.then(this, [this, jids](QVector<QXmppOmemoDevice> devices) {
 		using JidDeviceMap = QMultiHash<QString, Device>;
 		JidDeviceMap distrustedDevices;
 		JidDeviceMap usableDevices;
@@ -355,7 +367,12 @@ void OmemoManager::retrieveDevices(const QList<QString> &jids)
 			const auto jid = device.jid();
 			const auto label = device.label();
 			const auto keyId = device.keyId();
-			const auto trustLevel = device.trustLevel();
+			// TrustLevel(0) is invalid: QHash::value() default when key absent from trust DB.
+			// Normalize to Undecided so the device appears in usable (not distrusted) buckets.
+			const auto rawTrustLevel = device.trustLevel();
+			const auto trustLevel = static_cast<int>(rawTrustLevel) == 0
+				? QXmpp::TrustLevel::Undecided
+				: rawTrustLevel;
 
 			if ((QXmpp::TrustLevel::AutomaticallyDistrusted | QXmpp::TrustLevel::ManuallyDistrusted).testFlag(trustLevel)) {
 				distrustedDevices.insert(jid, { label, QString::fromUtf8(keyId.toHex()) });

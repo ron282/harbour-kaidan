@@ -39,6 +39,7 @@
 
 #include "qxmpp-exts/QXmppUri.h"
 
+#include "Kaidan.h"
 #include "TrustDb.h"
 
 AtmManager::AtmManager(QXmppClient *client, Database *database, QObject *parent)
@@ -65,12 +66,46 @@ void AtmManager::makeTrustDecisionsByUri(const QXmppUri &uri)
 
 void AtmManager::makeTrustDecisions(const QString &jid, const QList<QByteArray> &keyIdsForAuthentication, const QList<QByteArray> &keyIdsForDistrusting)
 {
-    qDebug() << "makeTrustDecisions jid:" << jid;
 #if defined(WITH_OMEMO_V03)
     m_manager->makeTrustDecisions(QStringLiteral("eu.siacs.conversations.axolotl"), jid, keyIdsForAuthentication, keyIdsForDistrusting);
 #else
     m_manager->makeTrustDecisions(QStringLiteral("urn:xmpp:omemo:2"), jid, keyIdsForAuthentication, keyIdsForDistrusting);
 #endif
+}
+
+void AtmManager::makeTrustDecisionsForConversationsFingerprints(const QString &jid, const QList<QByteArray> &fingerprints)
+{
+
+#if defined(WITH_OMEMO_V03)
+    const QString encryption = QStringLiteral("eu.siacs.conversations.axolotl");
+#else
+    const QString encryption = QStringLiteral("urn:xmpp:omemo:2");
+#endif
+
+    auto task = m_trustStorage->keys(encryption, {jid});
+    task.then(this, [this, jid, fingerprints](TrustDb::KeysByOwner &&knownKeys) {
+        const auto &jidKeys = knownKeys.value(jid);
+
+        for (const auto &fp : fingerprints) {
+        }
+        for (auto it = jidKeys.cbegin(); it != jidKeys.cend(); ++it) {
+        }
+
+        QList<QByteArray> toAuthenticate;
+        for (const auto &fp : fingerprints) {
+            if (jidKeys.contains(fp)) {
+                toAuthenticate.append(fp);
+            }
+        }
+
+        if (toAuthenticate.isEmpty()) {
+            Q_EMIT Kaidan::instance()->passiveNotificationRequested(
+                tr("No OMEMO keys found for %1. Exchange a message with this contact first, then scan again.").arg(jid));
+            return;
+        }
+
+        makeTrustDecisions(jid, toAuthenticate, {});
+    });
 }
 
 QList<QByteArray> AtmManager::keyIdsFromHex(const QList<QString> &keyIds)

@@ -7,7 +7,6 @@
 #include "RecentPicturesModel.h"
 
 #if defined(SFOS)
-#include <QFileSystemModel>
 RecentPicturesModel::RecentPicturesModel(QObject *parent)
     : QAbstractListModel(parent)
 {

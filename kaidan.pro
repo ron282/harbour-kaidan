@@ -1,8 +1,8 @@
 TARGET = harbour-kaidan
 
 TEMPLATE = app
-QT += qml quick core sql xml concurrent multimedia positioning widgets multimedia-private location
-
+CONFIG += c++17
+QT += qml quick core sql xml concurrent multimedia positioning multimedia-private location
 
 LBUILD = build
 
@@ -13,10 +13,16 @@ contains(DEFINES, DBUS) {
     QT += dbus
 }
 
-INCLUDEPATH += /usr/include/QXmppQt5
-INCLUDEPATH += /usr/include/QXmppQt5/Omemo
-INCLUDEPATH += /usr/include/QXmppQt5/base
-INCLUDEPATH += /usr/include/QXmppQt5/client
+contains(DEFINES, SFOS) {
+    CONFIG += link_pkgconfig
+    PKGCONFIG += QXmppQt5
+    INCLUDEPATH += /usr/include/QXmppQt5/Omemo
+} else {
+    INCLUDEPATH += QXmppQt5
+    INCLUDEPATH += QXmppQt5/Omemo
+    INCLUDEPATH += QXmppQt5/base
+    INCLUDEPATH += QXmppQt5/client
+}
 
 INCLUDEPATH += source
 
@@ -30,11 +36,11 @@ contains(DEFINES, QMLLIVE_SOURCE) {
 }
 
 contains(DEFINES, SFOS) {
-    QMAKE_CXXFLAGS += -Wno-deprecated-declarations -Wno-placement-new -Wno-parentheses -Wno-unused-but-set-parameter
-    LIBS += -liphb
+    QMAKE_CXXFLAGS += -std=c++17 -Wno-deprecated-declarations -Wno-placement-new -Wno-parentheses -Wno-unused-but-set-parameter
+    LIBS += -liphb -lsailfishapp
+    DEFINES += QAPPLICATION_CLASS=QGuiApplication
 }
 
-QMAKE_CXXFLAGS += -std=c++17
 LIBS += -lgcrypt -lZXing -lQXmppQt5 -lQXmppOmemoQt5
 
 CONFIG += QXmpp-devel ZXing

@@ -16,7 +16,10 @@
 #include "MessageDb.h"
 
 // Qt
+#ifndef SFOS
 #include <QFileDialog>
+#endif
+#include <QFileInfo>
 #include <QFutureWatcher>
 #include <QGuiApplication>
 #include <QMimeDatabase>
@@ -338,6 +341,7 @@ QVariant FileSelectionModel::data(const QModelIndex &index, int role) const
 	return {};
 }
 
+#ifndef SFOS
 void FileSelectionModel::selectFile()
 {
 	auto *dialog = new QFileDialog();
@@ -357,6 +361,7 @@ void FileSelectionModel::selectFile()
 
 	dialog->open();
 }
+#endif
 
 void FileSelectionModel::addFile(const QUrl &localFilePath)
 {

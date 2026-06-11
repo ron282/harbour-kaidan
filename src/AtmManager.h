@@ -41,6 +41,15 @@ public:
 	 */
 	void makeTrustDecisionsByUri(const QXmppUri &uri);
 	void makeTrustDecisions(const QString &jid, const QList<QByteArray> &keyIdsForAuthentication, const QList<QByteArray> &keyIdsForDistrusting);
+
+	/**
+	 * Authenticates OMEMO keys from a Conversations-format QR code URI
+	 * (xmpp:jid?roster;omemo-sid-XXX=fingerprint).
+	 *
+	 * Only fingerprints already known in the trust DB are processed to avoid
+	 * triggering TOAKAFA distrust on unknown keys.
+	 */
+	void makeTrustDecisionsForConversationsFingerprints(const QString &jid, const QList<QByteArray> &fingerprints);
 	Q_SIGNAL void makeTrustDecisionsRequested(const QString &jid, const QList<QString> &keyIdsForAuthentication, const QList<QString> &keyIdsForDistrusting);
 
 private:

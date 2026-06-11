@@ -22,6 +22,8 @@
 #include <QThread>
 #include <QTimer>
 #include <QFile>
+#include <QUrl>
+#include <QUrlQuery>
 // QXmpp
 #include "qxmpp-exts/QXmppUri.h"
 // Kaidan
@@ -35,6 +37,7 @@
 #include "FileSharingController.h"
 #include "Globals.h"
 #include "MessageDb.h"
+#include "OmemoManager.h"
 #include "Notifications.h"
 #include "RosterDb.h"
 #include "RosterModel.h"
@@ -238,24 +241,57 @@ quint8 Kaidan::logInByUri(const QString &uri)
 
 Kaidan::TrustDecisionByUriResult Kaidan::makeTrustDecisionsByUri(const QString &uri, const QString &expectedJid)
 {
-	if (QXmppUri::isXmppUri(uri)) {
-		auto parsedUri = QXmppUri(uri);
+    if (QXmppUri::isXmppUri(uri)) {
+        auto parsedUri = QXmppUri(uri);
 
-		if (expectedJid.isEmpty() || parsedUri.jid() == expectedJid) {
-			if (parsedUri.action() != QXmppUri::TrustMessage || parsedUri.encryption().isEmpty() || (parsedUri.trustedKeysIds().isEmpty() && parsedUri.distrustedKeysIds().isEmpty())) {
-				return InvalidUri;
-			}
+        if (expectedJid.isEmpty() || parsedUri.jid() == expectedJid) {
 
-			runOnThread(m_client->atmManager(), [uri = std::move(parsedUri)]() {
-				Kaidan::instance()->client()->atmManager()->makeTrustDecisionsByUri(uri);
-			});
-			return MakingTrustDecisions;
-		} else {
-			return JidUnexpected;
-		}
-	}
+            // Format standard Kaidan : trust-message
+            if (parsedUri.action() == QXmppUri::TrustMessage &&
+                !parsedUri.encryption().isEmpty() &&
+                (!parsedUri.trustedKeysIds().isEmpty() || !parsedUri.distrustedKeysIds().isEmpty())) {
 
-	return InvalidUri;
+                runOnThread(m_client->atmManager(), [uri = std::move(parsedUri)]() {
+                    Kaidan::instance()->client()->atmManager()->makeTrustDecisionsByUri(uri);
+                });
+                return MakingTrustDecisions;
+            }
+
+            // Format Conversations : roster;omemo-sid-XXX=fingerprint
+            if (parsedUri.action() == QXmppUri::Roster) {
+                QUrl url(uri);
+                QUrlQuery query;
+                query.setQueryDelimiters(QChar('='), QChar(';'));
+                query.setQuery(url.query(QUrl::FullyEncoded));
+
+                QList<QByteArray> fingerprints;
+                for (const auto &item : query.queryItems(QUrl::FullyDecoded)) {
+                    if (item.first.startsWith(QStringLiteral("omemo-sid-")) && !item.second.isEmpty()) {
+                        auto fp = QByteArray::fromHex(item.second.toUtf8());
+                        if (!fp.isEmpty()) {
+                            fp.prepend(static_cast<char>(0x05));  // AJOUT : préfixe type de clé Signal
+                            fingerprints.append(fp);
+                        }
+                    }
+                }
+
+                if (!fingerprints.isEmpty()) {
+                    for (const auto &fp : fingerprints) {
+                    }
+                    const QString jid = parsedUri.jid();
+                    runOnThread(m_client->atmManager(), [jid, fingerprints]() {
+                        Kaidan::instance()->client()->atmManager()->makeTrustDecisionsForConversationsFingerprints(jid, fingerprints);
+                    });
+                    return MakingTrustDecisions;
+                }
+            }
+
+            return InvalidUri;
+        } else {
+            return JidUnexpected;
+        }
+    }
+    return InvalidUri;
 }
 
 #ifdef NDEBUG

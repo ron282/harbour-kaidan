@@ -9,7 +9,9 @@
 #include "Message.h"
 
 class FileSelectionModel;
+#ifndef SFOS
 class QFileDialog;
+#endif
 template <typename T>
 class QFutureWatcher;
 
@@ -90,7 +92,9 @@ public:
 	[[nodiscard]] int rowCount(const QModelIndex &parent) const override;
 	[[nodiscard]] QVariant data(const QModelIndex &index, int role) const override;
 
+#ifndef SFOS
 	Q_INVOKABLE void selectFile();
+#endif
 	Q_INVOKABLE void addFile(const QUrl &localFilePath);
 	Q_INVOKABLE void removeFile(int index);
 	Q_INVOKABLE void clear();

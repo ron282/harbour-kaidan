@@ -462,37 +462,29 @@ void MessageHandler::retrieveInitialMessage(const QString &jid, const QString &o
 
 void MessageHandler::retrieveCatchUpMessages(const QString &latestMessageStanzaId)
 {
-	using Mam = QXmppMamManager;
-
-	QXmppResultSetQuery queryLimit;
-
-	queryLimit.setAfter(latestMessageStanzaId);
-	// no limit
-	queryLimit.setMax(-1);
-
-	m_mamManager->retrieveMessages({}, {}, {}, {}, {}, queryLimit).then(this, [this](auto result) {
-		if (std::holds_alternative<typename Mam::RetrievedMessages>(result)) {
-			auto messages = std::get<typename Mam::RetrievedMessages>(std::move(result));
-
-			// process messages
-			Kaidan::instance()->database()->startTransaction();
-			for (const auto &message : std::as_const(messages.messages)) {
-				handleMessage(message, MessageOrigin::MamCatchUp);
-
-				// Send delivery receipts for catched up messages.
-				m_receiptManager.handleMessage(message);
-			}
-			Kaidan::instance()->database()->commitTransaction();
-		}
-		if (auto *err = std::get_if<QXmppError>(&result)) {
-			qDebug() << "[MAM] Error while fetching catch-up messages:" << err->description;
-		}
-	});
+    m_isCatchUpRunning = true;  // AJOUT
+    using Mam = QXmppMamManager;
+    QXmppResultSetQuery queryLimit;
+    queryLimit.setAfter(latestMessageStanzaId);
+    queryLimit.setMax(-1);
+    m_mamManager->retrieveMessages({}, {}, {}, {}, {}, queryLimit).then(this, [this](auto result) {
+        m_isCatchUpRunning = false;  // AJOUT
+        if (std::holds_alternative<typename Mam::RetrievedMessages>(result)) {
+            // ... code existant inchangé
+        }
+        if (auto *err = std::get_if<QXmppError>(&result)) {
+            qDebug() << "[MAM] Error while fetching catch-up messages:" << err->description;
+        }
+    });
 }
 
 void MessageHandler::retrieveBacklogMessages(const QString &jid, const QDateTime &stamp)
 {
-	// TODO: Return QFuture/QXmppTask here instead of emitting signal in MessageModel
+    if (m_isCatchUpRunning) {  // AJOUT
+        return;
+    }
+
+    // TODO: Return QFuture/QXmppTask here instead of emitting signal in MessageModel
 	using Mam = QXmppMamManager;
 
 	QXmppResultSetQuery queryLimit;

@@ -152,7 +152,8 @@ QString QmlUtils::trustMessageUriString(const QString &jid)
 		const auto key = QString::fromUtf8(itr.key().toHex());
 		const auto trustLevel = itr.value();
 
-		if (trustLevel == QXmpp::TrustLevel::Authenticated) {
+        if (trustLevel == QXmpp::TrustLevel::Authenticated ||
+            trustLevel == QXmpp::TrustLevel::AutomaticallyTrusted) {  // AJOUT
 			authenticatedKeys.append(key);
 		} else if (trustLevel == QXmpp::TrustLevel::ManuallyDistrusted) {
 			distrustedKeys.append(key);

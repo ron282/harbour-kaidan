@@ -18,6 +18,7 @@
 #include <QXmppHttpFileSharingProvider.h>
 #include <QXmppHttpUploadManager.h>
 #include <QXmppMamManager.h>
+#include <QXmppMixManager.h>
 #include <QXmppPubSubBaseItem.h>
 #include <QXmppPubSubManager.h>
 #include <QXmppUploadRequestManager.h>
@@ -32,6 +33,7 @@
 #include "FutureUtils.h"
 #include "Kaidan.h"
 #include "LogHandler.h"
+#include "GroupChatController.h"
 #include "MessageHandler.h"
 #include "MessageModel.h"
 #include "OmemoCache.h"
@@ -84,6 +86,10 @@ ClientWorker::ClientWorker(Caches *caches, Database *database, bool enableLoggin
 	m_omemoManager = new OmemoManager(m_client, database, this);
 	m_discoveryManager = new DiscoveryManager(m_client, this);
 	m_versionManager = new VersionManager(m_client, this);
+
+	// MIX group chat manager
+	m_mixManager = m_client->addNewExtension<QXmppMixManager>();
+	m_groupChatController = new GroupChatController(m_mixManager, this);
 
 	// file sharing manager
 	m_fileSharingManager = m_client->addNewExtension<QXmppFileSharingManager>();

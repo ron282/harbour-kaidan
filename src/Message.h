@@ -257,6 +257,8 @@ public:
 	QString errorText;
 	// True if the message's content and related data such as files have been removed locally.
 	bool removed = false;
+	// MIX participant ID of the sender (non-empty for MIX group chat messages).
+	QString groupChatSenderId;
 
 	[[nodiscard]] QXmppMessage toQXmpp() const;
 

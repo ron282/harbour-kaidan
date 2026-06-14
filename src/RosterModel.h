@@ -83,7 +83,7 @@ public:
 	 *
 	 * @return true if a roster item with the passed properties exists, otherwise false
 	 */
-	Q_INVOKABLE bool hasItem(const QString &jid) const;
+    Q_INVOKABLE bool hasItem(const QString &accountJid, const QString &jid) const;
 
 	/**
 	 * Returns the account JIDs of all roster items.
@@ -148,11 +148,9 @@ public:
 	/**
 	 * Searches for the roster item with a given JID.
 	 */
-	std::optional<RosterItem> findItem(const QString &jid) const;
+    std::optional<RosterItem> item(const QString &accountJid, const QString &jid) const;
 
-	const QVector<RosterItem> &items() const;
-
-	void updateItem(const QString &jid, const std::function<void (RosterItem &)> &updateItem);
+    const QVector<RosterItem> &items() const;
 
 	Q_INVOKABLE void pinItem(const QString &accountJid, const QString &jid);
 	Q_INVOKABLE void unpinItem(const QString &accountJid, const QString &jid);
@@ -164,9 +162,9 @@ public:
 	Q_INVOKABLE void setAutomaticMediaDownloadsRule(const QString &accountJid, const QString &jid, RosterItem::AutomaticMediaDownloadsRule rule);
 
 Q_SIGNALS:
-	void addItemRequested(const RosterItem &item);
-	void updateItemRequested(const QString &jid,
-	                         const std::function<void (RosterItem &)> &updateItem);
+    void itemsFetched(const QVector<RosterItem> &items);
+    void addItemRequested(const RosterItem &item);
+    void updateItemRequested(const QString &accountJid, const QString &jid, const std::function<void (RosterItem &)> &updateItem);
 	void replaceItemsRequested(const QHash<QString, RosterItem> &items);
 
 	/**
@@ -178,22 +176,19 @@ Q_SIGNALS:
 	void removeItemsRequested(const QString &accountJid, const QString &jid = {});
 
 private:
-	void handleItemsFetched(const QVector<RosterItem> &items);
+    void handleItemsFetched(const QVector<RosterItem> &items);
 
 	void addItem(const RosterItem &item);
-	void replaceItems(const QHash<QString, RosterItem> &items);
+    void updateItem(const RosterItem &item);
+    void updateItem(const QString &accountJid, const QString &jid, const std::function<void (RosterItem &)> &updateItem);
+    void replaceItems(const QHash<QString, RosterItem> &items);
 
 	void updateLastMessage(QVector<RosterItem>::Iterator &itr,
 						   const Message &message,
 						   QVector<int> &changedRoles,
 						   bool onlyUpdateIfNewerOrAtSameAge = true);
 
-	/**
-	 * Removes all roster items of an account or a specific roster item.
-	 *
-	 * @param accountJid JID of the account whose roster items are being removed
-	 * @param jid JID of the roster item being removed (optional)
-	 */
+    void removeItem(const RosterItem &item);
 	void removeItems(const QString &accountJid, const QString &jid = {});
 
 	void handleMessageAdded(const Message &message, MessageOrigin origin);

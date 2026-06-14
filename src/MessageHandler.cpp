@@ -541,6 +541,16 @@ void MessageHandler::handleMessage(const QXmppMessage &msg, MessageOrigin origin
 	message.senderId = senderJid;
 	message.chatJid = message.isOwn() ? recipientJid : senderJid;
 
+	if (msg.type() == QXmppMessage::GroupChat) {
+		// For MIX, senderJid is the channel JID (bare JID of channelJid/participantId).
+		// chatJid is already set correctly to the channel JID above.
+		// Override senderId with the actual sender's JID from the MIX metadata.
+		const auto mixUserJid = msg.mixUserJid();
+		if (!mixUserJid.isEmpty())
+			message.senderId = mixUserJid;
+		message.groupChatSenderId = msg.mixParticipantId();
+	}
+
 	if (msg.state() != QXmppMessage::State::None) {
 		Q_EMIT MessageModel::instance()->handleChatStateRequested(senderJid, msg.state());
 	}
@@ -641,7 +651,7 @@ bool MessageHandler::handleReadMarker(const QXmppMessage &message, const QString
 			// count of read messages.
 			auto future = MessageDb::instance()->messageCount(recipientJid, senderJid, lastReadContactMessageId, markedId);
 			await(future, this, [recipientJid, markedId](int count) {
-				Q_EMIT RosterModel::instance()->updateItemRequested(recipientJid, [=](RosterItem &item) {
+                Q_EMIT RosterModel::instance()->updateItemRequested(senderJid, recipientJid, [=](RosterItem &item) {
 					item.unreadMessages = count == 0 ? item.unreadMessages - 1 : item.unreadMessages - count + 1;
 					item.lastReadContactMessageId = markedId;
 					item.readMarkerPending = false;
@@ -650,7 +660,7 @@ bool MessageHandler::handleReadMarker(const QXmppMessage &message, const QString
 
 			Q_EMIT Notifications::instance()->closeMessageNotificationRequested(senderJid, recipientJid);
 		} else {
-			Q_EMIT RosterModel::instance()->updateItemRequested(senderJid, [markedId](RosterItem &item) {
+            Q_EMIT RosterModel::instance()->updateItemRequested(recipientJid, senderJid, [markedId](RosterItem &item) {
 				item.lastReadOwnMessageId = markedId;
 			});
 

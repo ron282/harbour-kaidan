@@ -63,8 +63,10 @@ DEFINES += Q_COMPILER_UNICODE_STRINGS
 SOURCES += \
     3rdparty/QImagePainter/qimagepainter.cpp \
     src/Account.cpp \
+    src/AccountController.cpp \
     src/AccountDb.cpp \
     src/AccountManager.cpp \
+    src/AccountMigrationController.cpp \
     src/AtmManager.cpp \
     src/AudioDeviceModel.cpp \
     src/AvatarFileStorage.cpp \
@@ -85,6 +87,9 @@ SOURCES += \
     src/FileProgressCache.cpp \
     src/FileProxyModel.cpp \
     src/FileSharingController.cpp \
+    src/GroupChatController.cpp \
+    src/GroupChatUser.cpp \
+    src/GroupChatUserDb.cpp \
     src/HostCompletionProxyModel.cpp \
     src/HostCompletionModel.cpp \
     src/Kaidan.cpp \
@@ -98,6 +103,7 @@ SOURCES += \
     src/MessageDb.cpp \
     src/MessageHandler.cpp \
     src/MessageModel.cpp \
+    src/MixController.cpp \
     src/Notifications.cpp \
     src/OmemoCache.cpp \
     src/OmemoDb.cpp \
@@ -144,9 +150,11 @@ SOURCES += \
 HEADERS += \
     3rdparty/QImagePainter/qimagepainter.h \
     src/Account.h \
+    src/AccountController.h \
     src/AccountDb.h \
     src/AbstractNotifier.h \
     src/AccountManager.h \
+    src/AccountMigrationController.h \
     src/Algorithms.h \
     src/AtmManager.h \
     src/AudioDeviceModel.h \
@@ -172,6 +180,9 @@ HEADERS += \
     src/FileSharingController.h \
     src/FutureUtils.h \
     src/Globals.h \
+    src/GroupChatController.h \
+    src/GroupChatUser.h \
+    src/GroupChatUserDb.h \
     src/GuiStyle.h \
     src/HostCompletionModel.h \
     src/HostCompletionProxyModel.h \
@@ -187,6 +198,7 @@ HEADERS += \
     src/Message.h \
     src/MessageHandler.h \
     src/MessageModel.h \
+    src/MixController.h \
     src/Notifications.h \
     src/OmemoCache.h \
     src/OmemoDb.h \

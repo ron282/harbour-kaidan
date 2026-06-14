@@ -38,6 +38,7 @@ struct RosterItem
 	Q_PROPERTY(bool readMarkerSendingEnabled MEMBER readMarkerSendingEnabled)
 	Q_PROPERTY(bool notificationsMuted MEMBER notificationsMuted)
     Q_PROPERTY(RosterItem::AutomaticMediaDownloadsRule automaticMediaDownloadsRule MEMBER automaticMediaDownloadsRule)
+    Q_PROPERTY(bool isGroupChat READ isGroupChat CONSTANT)
 
 public:
     /**
@@ -62,6 +63,8 @@ public:
 
 	bool isSendingPresence() const;
 	bool isReceivingPresence() const;
+
+    bool isGroupChat() const;
 
 #if defined(SFOS)
     bool operator==(const RosterItem &other) const;
@@ -94,6 +97,18 @@ public:
 #else
     QVector<QString> groups;
 #endif
+
+    // MIX participant ID (non-empty for MIX group chat channels).
+    QString groupChatParticipantId;
+
+    // MIX channel display name.
+    QString groupChatName;
+
+    // MIX channel description.
+    QString groupChatDescription;
+
+    // MIX channel flags (bitmask: 1 = Public, 2 = Deleted).
+    int groupChatFlags = 0;
 
 	// End-to-end encryption used for this roster item.
 #if defined(WITH_OMEMO_V03)
@@ -134,7 +149,10 @@ public:
 	// -1 is used for unpinned items.
 	int pinningPosition = -1;
 
-	// Whether chat states are sent to this roster item.
+    // Whether the item is selected.
+    bool selected = false;
+
+    // Whether chat states are sent to this roster item.
 	bool chatStateSendingEnabled = true;
 
 	// Whether read markers are sent to this roster item.

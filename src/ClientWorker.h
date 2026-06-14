@@ -33,9 +33,11 @@ class VCardManager;
 class VersionManager;
 class Settings;
 class QNetworkAccessManager;
+class GroupChatController;
 class QXmppFileSharingManager;
 class QXmppHttpFileSharingProvider;
 class QXmppEncryptedFileSharingProvider;
+class QXmppMixManager;
 class PresenceCache;
 
 /**
@@ -311,6 +313,8 @@ private:
 	QXmppFileSharingManager *m_fileSharingManager;
 	std::shared_ptr<QXmppHttpFileSharingProvider> m_httpProvider;
 	std::shared_ptr<QXmppEncryptedFileSharingProvider> m_encryptedProvider;
+	QXmppMixManager *m_mixManager;
+	GroupChatController *m_groupChatController;
 	QList<std::function<void ()>> m_pendingTasks;
 	uint m_activeTasks = 0;
 

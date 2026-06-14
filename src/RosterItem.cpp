@@ -16,6 +16,10 @@ bool RosterItem::operator==(const RosterItem &o) const
         name == o.name &&
         subscription == o.subscription &&
         groups == o.groups &&
+        groupChatParticipantId == o.groupChatParticipantId &&
+        groupChatName == o.groupChatName &&
+        groupChatDescription == o.groupChatDescription &&
+        groupChatFlags == o.groupChatFlags &&
         encryption == o.encryption &&
         unreadMessages == o.unreadMessages &&
         lastMessageDateTime == o.lastMessageDateTime &&
@@ -49,6 +53,12 @@ RosterItem::RosterItem(const QString &accountJid, const QXmppRosterIq::Item &ite
 #else
     groups = QVector(rosterGroups.cbegin(), rosterGroups.cend());
 #endif
+    // MIX channels are identified by their participant ID from the roster IQ.
+    groupChatParticipantId = item.mixParticipantId();
+    if (item.isMixChannel()) {
+        // MIX channel names are managed separately; don't use the roster item name.
+        name.clear();
+    }
 }
 
 QString RosterItem::displayName() const
@@ -79,6 +89,11 @@ bool RosterItem::isSendingPresence() const
 bool RosterItem::isReceivingPresence() const
 {
     return subscription == QXmppRosterIq::Item::From || subscription == QXmppRosterIq::Item::Both;
+}
+
+bool RosterItem::isGroupChat() const
+{
+    return !groupChatParticipantId.isEmpty();
 }
 
 bool RosterItem::operator<(const RosterItem &other) const

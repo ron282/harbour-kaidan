@@ -27,13 +27,12 @@ public:
 	 * @param oldMsg Full item as it is currently saved
 	 * @param newMsg Full item as it should be after the update query ran.
 	 */
-	static QSqlRecord createUpdateRecord(const RosterItem &oldItem,
-	                                     const RosterItem &newItem);
+    static QSqlRecord createUpdateRecord(const RosterItem &oldItem, const RosterItem &newItem);
 
 	QFuture<void> addItem(const RosterItem &item);
 	QFuture<void> addItems(const QVector<RosterItem> &items);
-	QFuture<void> updateItem(const QString &jid,
-	                const std::function<void (RosterItem &)> &updateItem);
+    QFuture<void> updateItem(const QString &jid, const std::function<void(RosterItem &)> &updateItem);
+    QFuture<void> updateItem(const QString &accountJid, const QString &jid, const std::function<void(RosterItem &)> &updateItem);
 	QFuture<void> replaceItems(const QHash<QString, RosterItem> &items);
 
 	/**
@@ -49,6 +48,7 @@ public:
 
 private:
     void updateItemByRecord(const QString &jid, const QSqlRecord &record);
+    void updateItemByRecord(const QString &accountJid, const QString &jid, const QSqlRecord &record);
 
 	void fetchGroups(QVector<RosterItem> &items);
     void addGroups(const QString &accountJid, const QString &jid, const QVector<QString> &groups);

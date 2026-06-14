@@ -52,6 +52,8 @@ constexpr auto MESSAGE_MAX_CHARS = 1e4;
 #define DB_TABLE_FILE_HTTP_SOURCES "fileHttpSources"
 #define DB_TABLE_FILE_ENCRYPTED_SOURCES "fileEncryptedSources"
 #define DB_TABLE_MESSAGE_REACTIONS "messageReactions"
+#define DB_TABLE_GROUP_CHAT_USERS "groupChatUsers"
+#define DB_QUERY_LIMIT_GROUP_CHAT_USERS 200
 #define DB_TABLE_BLOCKED "blocked"
 #define DB_TABLE_TRUST_SECURITY_POLICIES "trustSecurityPolicies"
 #define DB_TABLE_TRUST_OWN_KEYS "trustOwnKeys"

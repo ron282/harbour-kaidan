@@ -61,6 +61,12 @@ target_sources(${PROJECT_NAME} PRIVATE
 	FileSharingController.h
 	FutureUtils.h
 	Globals.h
+	GroupChatController.cpp
+	GroupChatController.h
+	GroupChatUser.cpp
+	GroupChatUser.h
+	GroupChatUserDb.cpp
+	GroupChatUserDb.h
 	GuiStyle.h
 	HostCompletionModel.cpp
 	HostCompletionModel.h
@@ -92,6 +98,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 	MessageHandler.h
 	MessageModel.cpp
 	MessageModel.h
+	MixController.cpp
+	MixController.h
 	Notifications.cpp
 	Notifications.h
 	OmemoCache.cpp

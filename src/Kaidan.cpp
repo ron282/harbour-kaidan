@@ -36,6 +36,7 @@
 #include "Database.h"
 #include "FileSharingController.h"
 #include "Globals.h"
+#include "GroupChatUserDb.h"
 #include "MessageDb.h"
 #include "OmemoManager.h"
 #include "Notifications.h"
@@ -58,6 +59,7 @@ Kaidan::Kaidan(bool enableLogging, QObject *parent)
 	m_accountDb = new AccountDb(m_database, this);
 	m_msgDb = new MessageDb(m_database, this);
 	m_rosterDb = new RosterDb(m_database, this);
+	new GroupChatUserDb(m_database, this);
 
 	// caches
 	m_caches = new ClientWorker::Caches(this);
@@ -91,7 +93,7 @@ Kaidan::Kaidan(bool enableLogging, QObject *parent)
 
 	connect(m_msgDb, &MessageDb::messageAdded, this, [this](const Message &message, MessageOrigin origin) {
 		if (origin != MessageOrigin::UserInput) {
-			if (const auto item = RosterModel::instance()->findItem(message.chatJid)) {
+            if (const auto item = RosterModel::instance()->item(message.accountJid, message.chatJid)) {
 				const auto contactRule = item->automaticMediaDownloadsRule;
 
 				const auto effectiveRule = [this, contactRule]() -> AccountManager::AutomaticMediaDownloadsRule {

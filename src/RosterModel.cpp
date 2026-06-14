@@ -44,16 +44,13 @@ RosterModel::RosterModel(QObject *parent)
     connect(this, &RosterModel::addItemRequested, this, &RosterModel::addItem);
     connect(this, &RosterModel::addItemRequested, RosterDb::instance(), &RosterDb::addItem);
 
-    connect(this, &RosterModel::updateItemRequested,
-            this, &RosterModel::updateItem);
+    connect(this, &RosterModel::updateItemRequested, this, &RosterModel::updateItem);
     connect(this, &RosterModel::updateItemRequested, RosterDb::instance(), &RosterDb::updateItem);
 
-    connect(this, &RosterModel::replaceItemsRequested,
-            this, &RosterModel::replaceItems);
+    connect(this, &RosterModel::replaceItemsRequested, this, &RosterModel::replaceItems);
     connect(this, &RosterModel::replaceItemsRequested, RosterDb::instance(), &RosterDb::replaceItems);
 
-	connect(MessageDb::instance(), &MessageDb::messageAdded,
-	        this, &RosterModel::handleMessageAdded);
+    connect(MessageDb::instance(), &MessageDb::messageAdded, this, &RosterModel::handleMessageAdded);
 	connect(MessageDb::instance(), &MessageDb::messageUpdated, this, &RosterModel::handleMessageUpdated);
 	connect(MessageDb::instance(), &MessageDb::draftMessageAdded, this, &RosterModel::handleDraftMessageAdded);
 	connect(MessageDb::instance(), &MessageDb::draftMessageUpdated, this, &RosterModel::handleDraftMessageUpdated);
@@ -158,9 +155,9 @@ QVariant RosterModel::data(const QModelIndex &index, int role) const
 	return {};
 }
 
-bool RosterModel::hasItem(const QString &jid) const
+bool RosterModel::hasItem(const QString &accountJid, const QString &jid) const
 {
-    return findItem(jid).has_value();
+    return item(accountJid, jid).has_value();
 }
 
 QStringList RosterModel::accountJids() const
@@ -218,49 +215,38 @@ void RosterModel::removeGroup(const QString &group)
     }
 }
 
-std::optional<RosterItem> RosterModel::findItem(const QString &jid) const
-{
-    for (const auto &item : std::as_const(m_items)) {
-        if (item.jid == jid) {
-            return item;
-        }
-    }
-
-    return std::nullopt;
-}
-
 const QVector<RosterItem> &RosterModel::items() const
 {
     return m_items;
 }
 
-bool RosterModel::isPresenceSubscribedByItem(const QString &, const QString &jid) const
+bool RosterModel::isPresenceSubscribedByItem(const QString &accountJid, const QString &jid) const
 {
-    if (auto item = findItem(jid)) {
+    if (auto item = item(accountJid, jid)) {
         return item->subscription == QXmppRosterIq::Item::From || item->subscription == QXmppRosterIq::Item::Both ;
     }
     return false;
 }
 
-std::optional<Encryption::Enum> RosterModel::itemEncryption(const QString &, const QString &jid) const
+std::optional<Encryption::Enum> RosterModel::itemEncryption(const QString &accountJid, const QString &jid) const
 {
-    if (auto item = findItem(jid)) {
-        return item->encryption;
+    if (auto foundItem = item(accountJid, jid)) {
+        return foundItem->encryption;
     }
     return {};
 }
 
-void RosterModel::setItemEncryption(const QString &, const QString &jid, Encryption::Enum encryption)
+void RosterModel::setItemEncryption(const QString &accountJid, const QString &jid, Encryption::Enum encryption)
 {
-	Q_EMIT updateItemRequested(jid, [encryption](RosterItem &item) {
+    Q_EMIT updateItemRequested(accountJid, jid, [encryption](RosterItem &item) {
 		item.encryption = encryption;
 	});
 }
 
-void RosterModel::setItemEncryption(const QString &, Encryption::Enum encryption)
+void RosterModel::setItemEncryption(const QString &accountJid, Encryption::Enum encryption)
 {
 	for (const auto &item : std::as_const(m_items)) {
-		Q_EMIT updateItemRequested(item.jid, [encryption](RosterItem &item) {
+        Q_EMIT updateItemRequested(accountJid, item.jid, [encryption](RosterItem &item) {
 			item.encryption = encryption;
 		});
 	}
@@ -276,7 +262,7 @@ RosterModel::AddContactByUriResult RosterModel::addContactByUri(const QString &a
             return AddContactByUriResult::InvalidUri;
         }
 
-		if (RosterModel::instance()->hasItem(jid)) {
+        if (RosterModel::instance()->hasItem(accountJid, jid)) {
 			Q_EMIT Kaidan::instance()->openChatPageRequested(accountJid, jid);
 			return AddContactByUriResult::ContactExists;
 		}
@@ -289,17 +275,17 @@ RosterModel::AddContactByUriResult RosterModel::addContactByUri(const QString &a
     return AddContactByUriResult::InvalidUri;
 }
 
-QString RosterModel::lastReadOwnMessageId(const QString &, const QString &jid) const
+QString RosterModel::lastReadOwnMessageId(const QString &accountJid, const QString &jid) const
 {
-    if (auto item = findItem(jid))
-        return item->lastReadOwnMessageId;
+    if (auto foundItem = item(accountJid, jid))
+        return foundItem->lastReadOwnMessageId;
     return {};
 }
 
-QString RosterModel::lastReadContactMessageId(const QString &, const QString &jid) const
+QString RosterModel::lastReadContactMessageId(const QString &accountJid, const QString &jid) const
 {
-    if (auto item = findItem(jid))
-        return item->lastReadContactMessageId;
+    if (auto foundItem = item(accountJid, jid))
+        return foundItem->lastReadContactMessageId;
     return {};
 }
 
@@ -307,6 +293,7 @@ void RosterModel::sendPendingReadMarkers(const QString &)
 {
     for (const auto &item : std::as_const(m_items)) {
         if (const auto messageId = item.lastReadContactMessageId; item.readMarkerPending && !messageId.isEmpty()) {
+            const auto accountJid= item.accountJid;
             const auto chatJid = item.jid;
 
             if (item.readMarkerSendingEnabled) {
@@ -315,7 +302,7 @@ void RosterModel::sendPendingReadMarkers(const QString &)
                 });
             }
 
-			Q_EMIT updateItemRequested(chatJid, [](RosterItem &item) {
+            Q_EMIT updateItemRequested(accountJid, chatJid, [](RosterItem &item) {
 				item.readMarkerPending = false;
 			});
 		}
@@ -324,16 +311,16 @@ void RosterModel::sendPendingReadMarkers(const QString &)
 
 void RosterModel::handleItemsFetched(const QVector<RosterItem> &items)
 {
-	beginResetModel();
-	m_items = items;
-	std::sort(m_items.begin(), m_items.end());
-	endResetModel();
+    beginResetModel();
+    m_items = items;
+    std::sort(m_items.begin(), m_items.end());
+    endResetModel();
 
-	for (const auto &item : std::as_const(m_items)) {
-		RosterItemNotifier::instance().notifyWatchers(item.jid, item);
-	}
+    for (const auto &item : std::as_const(m_items)) {
+        RosterItemNotifier::instance().notifyWatchers(item.accountJid, item.jid, item);
+    }
 
-	Q_EMIT accountJidsChanged();
+    Q_EMIT itemsFetched(items);
     Q_EMIT groupsChanged();
 }
 
@@ -342,11 +329,12 @@ void RosterModel::addItem(const RosterItem &item)
     insertItem(positionToAdd(item), item);
 }
 
-void RosterModel::updateItem(const QString &jid,
+void RosterModel::updateItem(const QString &accountJid,
+                             const QString &jid,
                              const std::function<void (RosterItem &)> &updateItem)
 {
     for (int i = 0; i < m_items.length(); i++) {
-        if (m_items.at(i).jid == jid) {
+        if (m_items.at(i).accountJid == accountJid && m_items.at(i).jid == jid) {
             // update item
             RosterItem item = m_items.at(i);
             updateItem(item);
@@ -362,7 +350,7 @@ void RosterModel::updateItem(const QString &jid,
 
 			// item was changed: refresh all roles
 			Q_EMIT dataChanged(index(i), index(i), {});
-			RosterItemNotifier::instance().notifyWatchers(jid, item);
+            RosterItemNotifier::instance().notifyWatchers(accountJid, jid, item);
 
 			// check, if the position of the new item may be different
 			updateItemPosition(i);
@@ -372,11 +360,44 @@ void RosterModel::updateItem(const QString &jid,
 				Q_EMIT groupsChanged();
 //			}
 
-            RosterItemNotifier::instance().notifyWatchers(item.jid, item);
+            RosterItemNotifier::instance().notifyWatchers(accountJid, item.jid, item);
 
 			return;
 		}
 	}
+}
+
+void RosterModel::updateItem(const RosterItem &item)
+{
+    for (int i = 0; i < m_items.size(); i++) {
+        const auto accountJid = item.accountJid;
+        const auto jid = item.jid;
+
+        if (const auto oldItem = m_items.at(i); oldItem.accountJid == accountJid && oldItem.jid == jid) {
+            const auto oldGroups = groups();
+
+            m_items.replace(i, item);
+
+            // Apply old settings that are not stored in the database.
+            auto &newItem = m_items[i];
+            newItem = item;
+            newItem.selected = oldItem.selected;
+
+            Q_EMIT dataChanged(index(i), index(i));
+            RosterItemNotifier::instance().notifyWatchers(accountJid, jid, item);
+            updateItemPosition(i);
+
+            if (oldGroups != groups()) {
+                Q_EMIT groupsChanged();
+            }
+
+            // TODO: Update "lastMessageGroupChatSenderName" if its corresponding roster item changes its name
+            // TODO: Current problem: last message sender JID is not cached and check with lastMessageGroupChatSenderName may result in a conflict if a group
+            // chat user has the same name as a roster item
+
+            return;
+        }
+    }
 }
 
 void RosterModel::replaceItems(const QHash<QString, RosterItem> &items)

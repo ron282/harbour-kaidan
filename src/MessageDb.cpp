@@ -94,6 +94,7 @@ QVector<Message> MessageDb::_fetchMessagesFromQuery(QSqlQuery &query)
 	int idxFileGroupId = rec.indexOf(QStringLiteral("fileGroupId"));
 	int idxErrorText = rec.indexOf(QStringLiteral("errorText"));
 	int idxRemoved = rec.indexOf(QStringLiteral("removed"));
+	int idxGroupChatSenderId = rec.indexOf(QStringLiteral("groupChatSenderId"));
 
 	reserve(messages, query);
 	while (query.next()) {
@@ -121,6 +122,8 @@ QVector<Message> MessageDb::_fetchMessagesFromQuery(QSqlQuery &query)
 		}
 		msg.errorText = query.value(idxErrorText).toString();
 		msg.removed = query.value(idxRemoved).toBool();
+		if (idxGroupChatSenderId >= 0)
+			msg.groupChatSenderId = query.value(idxGroupChatSenderId).toString();
 
 		messages << std::move(msg);
 	}
@@ -185,6 +188,9 @@ QSqlRecord MessageDb::createUpdateRecord(const Message &oldMsg, const Message &n
 	}
 	if (oldMsg.removed != newMsg.removed) {
 		rec.append(createSqlField(QStringLiteral("removed"), newMsg.removed));
+	}
+	if (oldMsg.groupChatSenderId != newMsg.groupChatSenderId) {
+		rec.append(createSqlField(QStringLiteral("groupChatSenderId"), newMsg.groupChatSenderId));
 	}
 
 	return rec;
@@ -980,7 +986,8 @@ void MessageDb::_addMessage(const Message &message)
 				spoilerHint,
 				fileGroupId,
 				errorText,
-				removed
+				removed,
+				groupChatSenderId
 			)
 			VALUES (
 				:accountJid,
@@ -999,7 +1006,8 @@ void MessageDb::_addMessage(const Message &message)
 				:spoilerHint,
 				:fileGroupId,
 				:errorText,
-				:removed
+				:removed,
+				:groupChatSenderId
 			)
 		)"),
 		{
@@ -1024,6 +1032,7 @@ void MessageDb::_addMessage(const Message &message)
 			{ u":fileGroupId", optionalToVariant(message.fileGroupId) },
 			{ u":errorText", message.errorText },
 			{ u":removed", message.removed },
+			{ u":groupChatSenderId", message.groupChatSenderId },
 		}
 	);
 }

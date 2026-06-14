@@ -289,14 +289,14 @@ QString Notifications::determineChatName(const QString &chatJid) const
 	return rosterItem ? rosterItem->displayName() : chatJid;
 }
 #else
-void Notifications::sendMessageNotification(const QString &accountJid, const QString &chatJid, const QString &messageId, const QString &messageBody)
+void Notifications::sendMessageNotification(const QString &accountJid, const QString &chatJid, const QString &/*messageId*/, const QString &messageBody)
 {
     //FIX ME
     //I don't know how to use notifications from C++
     //Can't find the notification.h file mentionned in the doc
     //Send the notification to QML to display it
 
-    auto rosterItem = RosterModel::instance()->findItem(chatJid);
+    auto rosterItem = RosterModel::instance()->item(accountJid, chatJid);
     auto chatName = rosterItem ? rosterItem->displayName() : chatJid;
 
     emit Kaidan::instance()->messageNotification(chatJid, chatName, messageBody);
@@ -306,11 +306,11 @@ void Notifications::closeMessageNotification(const QString &, const QString &)
 {
 }
 
-void Notifications::sendPresenceSubscriptionRequestNotification(const QString &accountJid, const QString &chatJid)
+void Notifications::sendPresenceSubscriptionRequestNotification(const QString &/*accountJid*/, const QString &/*chatJid*/)
 {
 }
 
-void Notifications::closePresenceSubscriptionRequestNotification(const QString &accountJid, const QString &chatJid)
+void Notifications::closePresenceSubscriptionRequestNotification(const QString &/*accountJid*/, const QString &/*chatJid*/)
 {
 }
 #endif // HAVE_KNOTIFICATIONS

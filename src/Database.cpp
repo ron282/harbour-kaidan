@@ -47,8 +47,8 @@ using namespace SqlUtils;
 	}
 
 // Both need to be updated on version bump:
-#define DATABASE_LATEST_VERSION 40
-#define DATABASE_CONVERT_TO_LATEST_VERSION() DATABASE_CONVERT_TO_VERSION(40)
+#define DATABASE_LATEST_VERSION 41
+#define DATABASE_CONVERT_TO_LATEST_VERSION() DATABASE_CONVERT_TO_VERSION(41)
 
 #define SQL_BOOL "BOOL"
 #define SQL_BOOL_NOT_NULL "BOOL NOT NULL"
@@ -426,6 +426,10 @@ void Database::createNewDatabase()
 			SQL_ATTRIBUTE(readMarkerSendingEnabled, SQL_BOOL)
 			SQL_ATTRIBUTE(notificationsMuted, SQL_BOOL)
 			SQL_ATTRIBUTE(automaticMediaDownloadsRule, SQL_INTEGER)
+			SQL_ATTRIBUTE(groupChatParticipantId, SQL_TEXT)
+			SQL_ATTRIBUTE(groupChatName, SQL_TEXT)
+			SQL_ATTRIBUTE(groupChatDescription, SQL_TEXT)
+			SQL_ATTRIBUTE(groupChatFlags, SQL_INTEGER)
 			"PRIMARY KEY(accountJid, jid)"
 		)
 	);
@@ -464,6 +468,7 @@ void Database::createNewDatabase()
 			SQL_ATTRIBUTE(fileGroupId, SQL_INTEGER)
 			SQL_ATTRIBUTE(errorText, SQL_TEXT)
 			SQL_ATTRIBUTE(removed, SQL_BOOL_NOT_NULL)
+			SQL_ATTRIBUTE(groupChatSenderId, SQL_TEXT)
 			"FOREIGN KEY(accountJid, chatJid) REFERENCES roster (accountJid, jid)"
 		)
 	);
@@ -642,6 +647,21 @@ void Database::createNewDatabase()
 			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
 			SQL_ATTRIBUTE(jid, SQL_TEXT_NOT_NULL)
 			"PRIMARY KEY(accountJid, jid)"
+		)
+	);
+
+	// group chat users (MIX)
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			DB_TABLE_GROUP_CHAT_USERS,
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(chatJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(id, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(jid, SQL_TEXT)
+			SQL_ATTRIBUTE(name, SQL_TEXT)
+			SQL_ATTRIBUTE(status, SQL_INTEGER)
+			"PRIMARY KEY(accountJid, chatJid, id)"
 		)
 	);
 
@@ -1942,4 +1962,36 @@ void Database::convertDatabaseToV40()
 	);
 
 	d->version = 40;
+}
+
+void Database::convertDatabaseToV41()
+{
+	DATABASE_CONVERT_TO_VERSION(40)
+	QSqlQuery query(currentDatabase());
+
+	// Add MIX group chat columns to roster table.
+	execQuery(query, QStringLiteral("ALTER TABLE " DB_TABLE_ROSTER " ADD COLUMN groupChatParticipantId " SQL_TEXT));
+	execQuery(query, QStringLiteral("ALTER TABLE " DB_TABLE_ROSTER " ADD COLUMN groupChatName " SQL_TEXT));
+	execQuery(query, QStringLiteral("ALTER TABLE " DB_TABLE_ROSTER " ADD COLUMN groupChatDescription " SQL_TEXT));
+	execQuery(query, QStringLiteral("ALTER TABLE " DB_TABLE_ROSTER " ADD COLUMN groupChatFlags " SQL_INTEGER));
+
+	// Add MIX sender ID column to messages table.
+	execQuery(query, QStringLiteral("ALTER TABLE " DB_TABLE_MESSAGES " ADD COLUMN groupChatSenderId " SQL_TEXT));
+
+	// Create group chat users table.
+	execQuery(
+		query,
+		SQL_CREATE_TABLE(
+			DB_TABLE_GROUP_CHAT_USERS,
+			SQL_ATTRIBUTE(accountJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(chatJid, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(id, SQL_TEXT_NOT_NULL)
+			SQL_ATTRIBUTE(jid, SQL_TEXT)
+			SQL_ATTRIBUTE(name, SQL_TEXT)
+			SQL_ATTRIBUTE(status, SQL_INTEGER)
+			"PRIMARY KEY(accountJid, chatJid, id)"
+		)
+	);
+
+	d->version = 41;
 }

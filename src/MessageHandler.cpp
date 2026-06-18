@@ -9,6 +9,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "MessageHandler.h"
+#include <QXmppUtils.h>
+
 // std
 // Qt
 #include <QUrl>
@@ -38,6 +40,8 @@ public:
 #else
 #include <QRandomGenerator>
 #endif
+// Qt
+#include <QDomElement>
 // QXmpp
 #include <QXmppBitsOfBinaryContentId.h>
 #include <QXmppBitsOfBinaryDataList.h>
@@ -59,6 +63,7 @@ public:
 #include "Algorithms.h"
 #include "ClientWorker.h"
 #include "Database.h"
+#include "MucController.h"
 #include "FutureUtils.h"
 #include "Kaidan.h"
 #include "Message.h"
@@ -109,13 +114,13 @@ QFuture<QXmpp::SendResult> MessageHandler::send(QXmppMessage &&message)
 
 	const auto recipientJid = message.to();
 
-	auto sendEncrypted = [=, this]() mutable {
+	auto sendEncrypted = [=]() mutable {
 		m_client->sendSensitive(std::move(message)).then(this, [=](QXmpp::SendResult result) mutable {
 			reportFinishedResult(interface, result);
 		});
 	};
 
-	auto sendUnencrypted = [=, this]() mutable {
+	auto sendUnencrypted = [=]() mutable {
 		// Ensure that a message containing files but without a body is stored/archived via MAM by
 		// the server.
 		// That is not needed if the message is encrypted because that is handled by the
@@ -134,7 +139,7 @@ QFuture<QXmpp::SendResult> MessageHandler::send(QXmppMessage &&message)
 	// Otherwise, that information is retrieved from the database.
 	runOnThread(MessageModel::instance(), [accountJid = AccountManager::instance()->jid(), recipientJid]() {
 		return MessageModel::instance()->isChatCurrentChat(accountJid, recipientJid);
-	}, this, [=, this](bool isChatCurrentChat) mutable {
+	}, this, [=](bool isChatCurrentChat) mutable {
 		if (isChatCurrentChat) {
 			runOnThread(MessageModel::instance(), []() {
 				return MessageModel::instance()->isOmemoEncryptionEnabled();
@@ -148,7 +153,7 @@ QFuture<QXmpp::SendResult> MessageHandler::send(QXmppMessage &&message)
 		} else {
 			runOnThread(RosterModel::instance(), [accountJid = AccountManager::instance()->jid(), recipientJid]() {
 				return RosterModel::instance()->itemEncryption(accountJid, recipientJid).value_or(Encryption::NoEncryption);
-			}, this, [=, this](Encryption::Enum activeEncryption) mutable {
+			}, this, [=](Encryption::Enum activeEncryption) mutable {
 #if defined(WITH_OMEMO_V03)
                 if (const auto omemoEncryptionActive = activeEncryption == Encryption::Omemo0) {
 #else
@@ -261,8 +266,16 @@ void MessageHandler::sendPendingMessage(Message message)
 
 		message.receiptRequested = true;
 
+		auto xmppMsg = message.toQXmpp();
+		// MUC and MIX messages require type="groupchat" to be broadcast to all members
+		auto *rosterManager = m_client->findExtension<QXmppRosterManager>();
+		if (m_clientWorker->mucController()->isJoined(message.chatJid) ||
+		    rosterManager->getRosterEntry(message.chatJid).isMixChannel()) {
+			xmppMsg.setType(QXmppMessage::GroupChat);
+		}
+
 		const auto messageId = message.id;
-		await(send(message.toQXmpp()), this, [messageId](QXmpp::SendResult result) {
+		await(send(std::move(xmppMsg)), this, [messageId](QXmpp::SendResult result) {
 			if (const auto error = std::get_if<QXmppError>(&result)) {
 				qWarning() << "[client] [MessageHandler] Could not send message:"
 				           << error->description;
@@ -542,13 +555,16 @@ void MessageHandler::handleMessage(const QXmppMessage &msg, MessageOrigin origin
 	message.chatJid = message.isOwn() ? recipientJid : senderJid;
 
 	if (msg.type() == QXmppMessage::GroupChat) {
-		// For MIX, senderJid is the channel JID (bare JID of channelJid/participantId).
-		// chatJid is already set correctly to the channel JID above.
-		// Override senderId with the actual sender's JID from the MIX metadata.
 		const auto mixUserJid = msg.mixUserJid();
-		if (!mixUserJid.isEmpty())
+		if (!mixUserJid.isEmpty()) {
+			// MIX: override senderId with the real JID from MIX metadata
 			message.senderId = mixUserJid;
-		message.groupChatSenderId = msg.mixParticipantId();
+			message.groupChatSenderId = msg.mixParticipantId();
+		} else {
+			// MUC: from="room@conf/nickname" — use occupant JID as sender
+			message.senderId = msg.from();
+			message.groupChatSenderId = QXmppUtils::jidToResource(msg.from());
+		}
 	}
 
 	if (msg.state() != QXmppMessage::State::None) {
@@ -561,7 +577,46 @@ void MessageHandler::handleMessage(const QXmppMessage &msg, MessageOrigin origin
 
 	if (handleReaction(msg, senderJid)) {
 		return;
-	}
+    }
+
+    // Détecter une invitation MUC (jabber:x:conference ou muc#user invite)
+    // et rejoindre automatiquement le salon
+    const auto mucInviteJid = [&]() -> const QString {
+        // XEP-0249 : <x xmlns="jabber:x:conference" jid="..."/>
+        for (const auto &ext : msg.extensions()) {
+            if (ext.tagName() == QStringLiteral("x")) {
+                if (ext.sourceDomElement().namespaceURI() == QStringLiteral("jabber:x:conference")) {
+                    return ext.attribute(QStringLiteral("jid"));
+                }
+                // XEP-0045 : <x xmlns="http://jabber.org/protocol/muc#user"><invite .../></x>
+                if (ext.sourceDomElement().namespaceURI() == QStringLiteral("http://jabber.org/protocol/muc#user")) {
+                    auto invite = ext.firstChildElement(QStringLiteral("invite"));
+                    if (!invite.isNull()) {
+                        return QXmppUtils::jidToBareJid(msg.from());
+                    }
+                }
+            }
+        }
+        return {};
+    }();
+
+    if (!mucInviteJid.isEmpty()) {
+        const auto nickname = QXmppUtils::jidToUser(accountJid);
+        // Ajouter le salon au roster s'il n'y est pas déjà
+        if (!RosterModel::instance()->hasItem(accountJid, mucInviteJid)) {
+            RosterItem mucItem;
+            mucItem.accountJid = accountJid;
+            mucItem.jid = mucInviteJid;
+            mucItem.groupChatParticipantId = QStringLiteral("muc");
+            mucItem.lastMessageDateTime = QDateTime::currentDateTimeUtc();
+            mucItem.automaticMediaDownloadsRule = RosterItem::AutomaticMediaDownloadsRule::Default;
+            Q_EMIT RosterModel::instance()->addItemRequested(mucItem);
+        }
+        // Rejoindre le salon
+        m_clientWorker->mucController()->joinRoom(mucInviteJid, nickname);
+        return; // ne pas stocker ce message système en base
+    }
+
 
 	if (msg.body().isEmpty() && msg.outOfBandUrl().isEmpty() && msg.sharedFiles().isEmpty()) {
 		return;
@@ -624,9 +679,21 @@ void MessageHandler::handleMessage(const QXmppMessage &msg, MessageOrigin origin
 		// Add the message's sender to the roster if not already done and only for direct messages.
 		// Otherwise, the chat could only be opened via the message's notification and could not be
 		// opened again later.
-		if (msg.type() != QXmppMessage::GroupChat && !RosterModel::instance()->hasItem(senderJid)) {
-			m_clientWorker->rosterManager()->addContact(senderJid);
-		}
+        if (msg.type() != QXmppMessage::GroupChat) {
+            if (!RosterModel::instance()->hasItem(accountJid, senderJid)) {
+                m_clientWorker->rosterManager()->addContact(senderJid);
+            }
+        } else if (msg.mixUserJid().isEmpty() && !RosterModel::instance()->hasItem(accountJid, message.chatJid)) {
+            // MUC room: add to roster model if not already present (e.g. after app restart).
+            // MIX channels are handled automatically via XMPP roster push.
+            RosterItem mucItem;
+            mucItem.accountJid = accountJid;
+            mucItem.jid = message.chatJid;
+            mucItem.groupChatParticipantId = QStringLiteral("muc");
+            mucItem.lastMessageDateTime = QDateTime::currentDateTimeUtc();
+            mucItem.automaticMediaDownloadsRule = RosterItem::AutomaticMediaDownloadsRule::Default;
+            Q_EMIT RosterModel::instance()->addItemRequested(mucItem);
+        }
 	} else {
 		const auto replaceId = msg.replaceId();
 		message.replaceId = replaceId;
@@ -643,15 +710,16 @@ bool MessageHandler::handleReadMarker(const QXmppMessage &message, const QString
 {
 	if (message.marker() == QXmppMessage::Displayed) {
 		const auto markedId = message.markedId();
-		if (isOwnMessage) {
+        const auto accountJid = AccountManager::instance()->jid();
+        if (isOwnMessage) {
 			const auto lastReadContactMessageId = RosterModel::instance()->lastReadContactMessageId(senderJid, recipientJid);
 
 			// Retrieve the count of messages between "lastReadContactMessageId" and "markedId" to
 			// decrease the corresponding counter by 1 (if IDs could not be found) or by the actual
 			// count of read messages.
 			auto future = MessageDb::instance()->messageCount(recipientJid, senderJid, lastReadContactMessageId, markedId);
-			await(future, this, [recipientJid, markedId](int count) {
-                Q_EMIT RosterModel::instance()->updateItemRequested(senderJid, recipientJid, [=](RosterItem &item) {
+            await(future, this, [accountJid, recipientJid, markedId](int count) {
+                Q_EMIT RosterModel::instance()->updateItemRequested(accountJid, recipientJid, [=](RosterItem &item) {
 					item.unreadMessages = count == 0 ? item.unreadMessages - 1 : item.unreadMessages - count + 1;
 					item.lastReadContactMessageId = markedId;
 					item.readMarkerPending = false;
@@ -660,7 +728,7 @@ bool MessageHandler::handleReadMarker(const QXmppMessage &message, const QString
 
 			Q_EMIT Notifications::instance()->closeMessageNotificationRequested(senderJid, recipientJid);
 		} else {
-            Q_EMIT RosterModel::instance()->updateItemRequested(recipientJid, senderJid, [markedId](RosterItem &item) {
+            Q_EMIT RosterModel::instance()->updateItemRequested(accountJid, senderJid, [markedId](RosterItem &item) {
 				item.lastReadOwnMessageId = markedId;
 			});
 

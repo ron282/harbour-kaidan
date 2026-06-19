@@ -16,6 +16,7 @@
 #include "Kaidan.h"
 
 // Qt
+#include <QtQml>
 #include <QGuiApplication>
 #include <QSettings>
 #include <QStringBuilder>
@@ -36,6 +37,7 @@
 #include "Database.h"
 #include "FileSharingController.h"
 #include "Globals.h"
+#include "GroupChatController.h"
 #include "GroupChatUserDb.h"
 #include "MessageDb.h"
 #include "OmemoManager.h"
@@ -67,11 +69,15 @@ Kaidan::Kaidan(bool enableLogging, QObject *parent)
 	// of the Q_PROPERTY for the avatar storage (so all avatars are updated in QML)
 	connect(m_caches->avatarStorage, &AvatarFileStorage::avatarIdsChanged, this, &Kaidan::avatarStorageChanged);
 
+	// GroupChatController lives in the main thread; created before ClientWorker so it
+	// can be passed to MixController (which lives in the XMPP thread).
+	m_groupChatController = std::make_unique<GroupChatController>(this);
+
 	// create xmpp thread
 	m_cltThrd = new QThread();
 	m_cltThrd->setObjectName("XmppClient");
 
-	m_client = new ClientWorker(m_caches, m_database, enableLogging);
+	m_client = new ClientWorker(m_caches, m_database, enableLogging, m_groupChatController.get());
 	m_client->moveToThread(m_cltThrd);
 
     connect(AccountManager::instance(), &AccountManager::credentialsNeeded, this, &Kaidan::credentialsNeeded);
@@ -199,6 +205,15 @@ void Kaidan::addOpenUri(const QString &uri)
 		Q_EMIT passiveNotificationRequested(tr("The link will be opened after you have connected."));
 		m_openUriCache = uri;
 	}
+}
+
+GroupChatController * Kaidan::groupChatController() const
+{
+    QQmlEngine::setObjectOwnership(
+        static_cast<QObject*>(m_groupChatController.get()),
+        QQmlEngine::CppOwnership);
+
+    return m_groupChatController.get();
 }
 
 quint8 Kaidan::logInByUri(const QString &uri)

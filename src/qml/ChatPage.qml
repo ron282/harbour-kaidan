@@ -414,6 +414,7 @@ ChatPageBase {
             msgId: model.id
             senderId: model.senderId
             senderName: model.isOwn ? "" : chatItemWatcher.item.displayName
+            groupChatSenderId: model.groupChatSenderId ? model.groupChatSenderId : ""
             chatName: chatItemWatcher.item.displayName
             encryption: model.encryption
             isTrusted: model.isTrusted

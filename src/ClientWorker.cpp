@@ -19,6 +19,7 @@
 #include <QXmppHttpUploadManager.h>
 #include <QXmppMamManager.h>
 #include <QXmppMixManager.h>
+#include <QXmppMucManager.h>
 #include <QXmppPubSubBaseItem.h>
 #include <QXmppPubSubManager.h>
 #include <QXmppUploadRequestManager.h>
@@ -33,7 +34,8 @@
 #include "FutureUtils.h"
 #include "Kaidan.h"
 #include "LogHandler.h"
-#include "GroupChatController.h"
+#include "MixController.h"
+#include "MucController.h"
 #include "MessageHandler.h"
 #include "MessageModel.h"
 #include "OmemoCache.h"
@@ -63,7 +65,7 @@ ClientWorker::Caches::Caches(QObject *parent)
 {
 }
 
-ClientWorker::ClientWorker(Caches *caches, Database *database, bool enableLogging, QObject* parent)
+ClientWorker::ClientWorker(Caches *caches, Database *database, bool enableLogging, GroupChatController *groupChatController, QObject* parent)
 	: QObject(parent),
 	  m_caches(caches),
 	  m_client(new QXmppClient(this)),
@@ -89,7 +91,11 @@ ClientWorker::ClientWorker(Caches *caches, Database *database, bool enableLoggin
 
 	// MIX group chat manager
 	m_mixManager = m_client->addNewExtension<QXmppMixManager>();
-	m_groupChatController = new GroupChatController(m_mixManager, this);
+	m_mixController = new MixController(groupChatController, m_client, m_mixManager, this);
+
+	// MUC group chat manager (XEP-0045)
+	m_mucManager = m_client->addNewExtension<QXmppMucManager>();
+	m_mucController = new MucController(groupChatController, m_mucManager, this);
 
 	// file sharing manager
 	m_fileSharingManager = m_client->addNewExtension<QXmppFileSharingManager>();
@@ -443,4 +449,9 @@ bool ClientWorker::startPendingTasks()
 	}
 
 	return !AccountManager::instance()->hasNewCredentials() && isBusy;
+}
+
+bool ClientWorker::isMixSupported() const
+{
+	return m_mixManager->participantSupport() == QXmppMixManager::Support::Supported;
 }

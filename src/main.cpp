@@ -72,6 +72,7 @@ Q_DECLARE_METATYPE(QMetaTypeId<QMimeType>)
 #include "FileProgressCache.h"
 #include "FileProxyModel.h"
 #include "FileSharingController.h"
+#include "GroupChatController.h"
 #include "GuiStyle.h"
 #include "HostCompletionModel.h"
 #include "HostCompletionProxyModel.h"
@@ -531,6 +532,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #if defined(SFOS)
 	qmlRegisterUncreatableType<ChatState>(APPLICATION_ID, 1, 0, "ChatState", QStringLiteral("Can't create object; only enums defined!"));
 	qmlRegisterUncreatableType<Enums>(APPLICATION_ID, 1, 0, "Enums", QStringLiteral("Can't create object; only enums defined!"));
+    qmlRegisterUncreatableType<GroupChatController>(APPLICATION_ID, 1, 0, "GroupChatController", "GroupChatController is not creatable");
 #else
 	qmlRegisterUncreatableMetaObject(ChatState::staticMetaObject, APPLICATION_ID, 1, 0, "ChatState", QStringLiteral("Can't create object; only enums defined!"));
 	qmlRegisterUncreatableMetaObject(Enums::staticMetaObject, APPLICATION_ID, 1, 0, "Enums", QStringLiteral("Can't create object; only enums defined!"));
@@ -540,23 +542,23 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 		QObject *instance = new MediaUtils(qApp);
 		return instance;
 	});
-    qmlRegisterSingletonType<QmlUtils>("im.kaidan.kaidan", 1, 0, "Utils", [](QQmlEngine *, QJSEngine *) {
+    qmlRegisterSingletonType<QmlUtils>(APPLICATION_ID, 1, 0, "Utils", [](QQmlEngine *, QJSEngine *) {
 		return static_cast<QObject*>(QmlUtils::instance());
 	});
-    qmlRegisterSingletonType<Kaidan>("im.kaidan.kaidan", 1, 0, "Kaidan", [](QQmlEngine *engine, QJSEngine *) {
+    qmlRegisterSingletonType<Kaidan>(APPLICATION_ID, 1, 0, "Kaidan", [](QQmlEngine *engine, QJSEngine *) {
 		engine->setObjectOwnership(Kaidan::instance(), QQmlEngine::CppOwnership);
 		return static_cast<QObject *>(Kaidan::instance());
 	});
-    qmlRegisterSingletonType<GuiStyle>("im.kaidan.kaidan", 1, 0, "Style", [](QQmlEngine *, QJSEngine *) {
+    qmlRegisterSingletonType<GuiStyle>(APPLICATION_ID, 1, 0, "Style", [](QQmlEngine *, QJSEngine *) {
 		return static_cast<QObject *>(new GuiStyle(QCoreApplication::instance()));
 	});
-    qmlRegisterSingletonType<AccountManager>("im.kaidan.kaidan", 1, 0, "AccountManager", [](QQmlEngine *, QJSEngine *) {
+    qmlRegisterSingletonType<AccountManager>(APPLICATION_ID, 1, 0, "AccountManager", [](QQmlEngine *, QJSEngine *) {
 		return static_cast<QObject *>(AccountManager::instance());
 	});
-    qmlRegisterSingletonType<RosterModel>("im.kaidan.kaidan", 1, 0, "RosterModel", [](QQmlEngine *, QJSEngine *) {
+    qmlRegisterSingletonType<RosterModel>(APPLICATION_ID, 1, 0, "RosterModel", [](QQmlEngine *, QJSEngine *) {
 		return static_cast<QObject *>(RosterModel::instance());
 	});
-    qmlRegisterSingletonType<MessageModel>("im.kaidan.kaidan", 1, 0, "MessageModel", [](QQmlEngine *, QJSEngine *) {
+    qmlRegisterSingletonType<MessageModel>(APPLICATION_ID, 1, 0, "MessageModel", [](QQmlEngine *, QJSEngine *) {
 		return static_cast<QObject *>(MessageModel::instance());
 	});
 	qmlRegisterSingletonType<ChatHintModel>(APPLICATION_ID, 1, 0, "ChatHintModel", [](QQmlEngine *, QJSEngine *) {

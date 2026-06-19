@@ -86,11 +86,6 @@ void AtmManager::makeTrustDecisionsForConversationsFingerprints(const QString &j
     task.then(this, [this, jid, fingerprints](TrustDb::KeysByOwner &&knownKeys) {
         const auto &jidKeys = knownKeys.value(jid);
 
-        for (const auto &fp : fingerprints) {
-        }
-        for (auto it = jidKeys.cbegin(); it != jidKeys.cend(); ++it) {
-        }
-
         QList<QByteArray> toAuthenticate;
         for (const auto &fp : fingerprints) {
             if (jidKeys.contains(fp)) {

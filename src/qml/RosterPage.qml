@@ -80,10 +80,19 @@ SearchBarPage {
         }
     }
 
+    Component {
+        id: groupChatJoiningPage
+        GroupChatJoiningPage {}
+    }
+
     SilicaListView {
             id: rosterListView
 
             PullDownMenu {
+                MenuItem {
+                    text: qsTr("Join group chat")
+                    onClicked: pageStack.push(groupChatJoiningPage)
+                }
                 MenuItem {
                     text: qsTr("Filter")
                     onClicked: openView(rosterFilteringDialog, rosterFilteringPage)
@@ -150,6 +159,7 @@ SearchBarPage {
             unreadMessages: model ? model.unreadMessages : 0
             pinned: model ? model.pinned : false
             notificationsMuted: model ? model.notificationsMuted : false
+            isGroupChat: model ? model.isGroupChat : false
 
             contentHeight: Theme.itemSizeLarge
 

@@ -29,6 +29,7 @@ DetailsHeader {
 
 	RosterItemWatcher {
 		id: contactWatcher
+		accountJid: root.accountJid
 		jid: root.jid
 	}
 

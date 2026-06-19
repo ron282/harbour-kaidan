@@ -174,6 +174,7 @@ QHash<int, QByteArray> MessageModel::roleNames() const
 	roles[DetailedReactions] = "detailedReactions";
 	roles[OwnDetailedReactions] = "ownDetailedReactions";
 	roles[ErrorText] = "errorText";
+	roles[GroupChatSenderId] = "groupChatSenderId";
 	return roles;
 }
 
@@ -360,6 +361,8 @@ QVariant MessageModel::data(const QModelIndex &index, int role) const
 		return QVariant::fromValue(msg.reactionSenders.value(m_currentAccountJid).reactions);
 	case ErrorText:
 		return msg.errorText;
+	case GroupChatSenderId:
+		return msg.groupChatSenderId;
 	}
 
 	return {};

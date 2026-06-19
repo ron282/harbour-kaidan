@@ -19,9 +19,11 @@ class AvatarFileStorage;
 class ChatHintModel;
 class Database;
 class DiscoveryManager;
+class GroupChatController;
 class LogHandler;
 class MessageHandler;
 class MessageModel;
+class MixController;
 class OmemoCache;
 class OmemoManager;
 class RegistrationManager;
@@ -33,11 +35,12 @@ class VCardManager;
 class VersionManager;
 class Settings;
 class QNetworkAccessManager;
-class GroupChatController;
 class QXmppFileSharingManager;
 class QXmppHttpFileSharingProvider;
 class QXmppEncryptedFileSharingProvider;
 class QXmppMixManager;
+class QXmppMucManager;
+class MucController;
 class PresenceCache;
 
 /**
@@ -92,9 +95,10 @@ public:
 	/**
 	 * @param caches All caches running in the main thread for communication with the UI.
 	 * @param enableLogging If logging of the XMPP stream should be done.
+	 * @param groupChatController GroupChatController living in the main thread.
 	 * @param parent Optional QObject-based parent.
 	 */
-	ClientWorker(Caches *caches, Database *database, bool enableLogging, QObject *parent = nullptr);
+	ClientWorker(Caches *caches, Database *database, bool enableLogging, GroupChatController *groupChatController, QObject *parent = nullptr);
 
 	RegistrationManager *registrationManager() const
 	{
@@ -135,6 +139,18 @@ public:
 	{
 		return m_omemoManager;
 	}
+
+	MixController *mixController() const
+	{
+		return m_mixController;
+	}
+
+	MucController *mucController() const
+	{
+		return m_mucController;
+	}
+
+	bool isMixSupported() const;
 
 	Caches *caches() const
 	{
@@ -314,7 +330,9 @@ private:
 	std::shared_ptr<QXmppHttpFileSharingProvider> m_httpProvider;
 	std::shared_ptr<QXmppEncryptedFileSharingProvider> m_encryptedProvider;
 	QXmppMixManager *m_mixManager;
-	GroupChatController *m_groupChatController;
+	MixController *m_mixController;
+	QXmppMucManager *m_mucManager;
+	MucController *m_mucController;
 	QList<std::function<void ()>> m_pendingTasks;
 	uint m_activeTasks = 0;
 

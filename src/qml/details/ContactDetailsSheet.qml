@@ -21,6 +21,7 @@ DetailsSheet {
 
     ContactDetailsHeader {
         id: header
+        accountJid: root.accountJid
         jid: root.jid
     }
 

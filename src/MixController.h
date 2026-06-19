@@ -5,6 +5,7 @@
 #pragma once
 
 #include <QObject>
+#include <QXmppClient.h>
 #include <QXmppMixManager.h>
 #include <QXmppMixParticipantItem.h>
 #include <QXmppStanza.h>
@@ -18,11 +19,13 @@ class MixController : public QObject
 
 public:
     explicit MixController(GroupChatController *groupChatController,
+                           QXmppClient *client,
                            QXmppMixManager *mixManager,
                            QObject *parent = nullptr);
 
     void joinChannel(const QString &channelJid, const QString &nickname);
     void leaveChannel(const QString &channelJid);
+    void sendMessage(const QString &channelJid, const QString &text);
     void requestChannelUsers(const QString &channelJid);
     void requestChannelInformation(const QString &channelJid);
 
@@ -37,5 +40,6 @@ private:
     void handleJidUnbanned(const QString &channelJid, const QString &jid);
 
     GroupChatController *const m_groupChatController;
+    QXmppClient *const m_client;
     QXmppMixManager *const m_manager;
 };

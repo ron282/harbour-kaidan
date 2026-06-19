@@ -17,6 +17,7 @@ Column {
     height: Theme.itemSizeMedium + Theme.iconSizeExtraLarge*2 + Theme.itemSizeMedium + Theme.itemSizeSmall
     spacing: 0
 
+    property string accountJid
     property string jid
     property string displayName
     property Button avatarAction

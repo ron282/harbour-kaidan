@@ -5,15 +5,18 @@
 #include "GroupChatController.h"
 
 #include "AccountManager.h"
+#include "ClientWorker.h"
+#include "FutureUtils.h"
 #include "GroupChatUser.h"
 #include "GroupChatUserDb.h"
+#include "Kaidan.h"
 #include "MixController.h"
+#include "MucController.h"
 #include "RosterDb.h"
 #include "RosterItem.h"
 
-GroupChatController::GroupChatController(QXmppMixManager *mixManager, QObject *parent)
+GroupChatController::GroupChatController(QObject *parent)
     : QObject(parent)
-    , m_mixController(new MixController(this, mixManager, this))
 {
     connect(this, &GroupChatController::userAllowedOrBanned,
             GroupChatUserDb::instance(), &GroupChatUserDb::handleUserAllowedOrBanned);
@@ -44,18 +47,52 @@ bool GroupChatController::busy() const
 void GroupChatController::joinGroupChat(const QString &groupChatJid, const QString &nickname)
 {
     setBusy(true);
-    m_mixController->joinChannel(groupChatJid, nickname);
+    runOnThread(Kaidan::instance()->client(), [groupChatJid, nickname]() {
+        auto *worker = Kaidan::instance()->client();
+        if (worker->isMixSupported()) {
+            worker->mixController()->joinChannel(groupChatJid, nickname);
+        } else {
+            worker->mucController()->joinRoom(groupChatJid, nickname);
+        }
+    });
 }
 
 void GroupChatController::leaveGroupChat(const QString &groupChatJid)
 {
     setBusy(true);
-    m_mixController->leaveChannel(groupChatJid);
+    runOnThread(Kaidan::instance()->client(), [groupChatJid]() {
+        auto *worker = Kaidan::instance()->client();
+        if (worker->mucController()->isJoined(groupChatJid)) {
+            worker->mucController()->leaveRoom(groupChatJid);
+        } else {
+            worker->mixController()->leaveChannel(groupChatJid);
+        }
+    });
 }
 
 void GroupChatController::requestGroupChatUsers(const QString &groupChatJid)
 {
-    m_mixController->requestChannelUsers(groupChatJid);
+    runOnThread(Kaidan::instance()->client(), [groupChatJid]() {
+        auto *worker = Kaidan::instance()->client();
+        if (worker->mucController()->isJoined(groupChatJid)) {
+            // MUC participant list not yet implemented
+        } else {
+            worker->mixController()->requestChannelUsers(groupChatJid);
+        }
+    });
+}
+
+void GroupChatController::sendGroupChatMessage(const QString &groupChatJid, const QString &text)
+{
+    runOnThread(Kaidan::instance()->client(), [groupChatJid, text]() {
+        auto *worker = Kaidan::instance()->client();
+        if (worker->mucController()->isJoined(groupChatJid)) {
+            worker->mucController()->sendMessage(groupChatJid, text);
+        } else {
+            // MIX channel: send as a regular groupchat message
+            worker->mixController()->sendMessage(groupChatJid, text);
+        }
+    });
 }
 
 void GroupChatController::setBusy(bool busy)

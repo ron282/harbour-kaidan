@@ -7,8 +7,6 @@
 #include <QObject>
 
 struct GroupChatUser;
-class MixController;
-class QXmppMixManager;
 
 class GroupChatController : public QObject
 {
@@ -17,7 +15,7 @@ class GroupChatController : public QObject
     Q_PROPERTY(bool busy READ busy NOTIFY busyChanged)
 
 public:
-    explicit GroupChatController(QXmppMixManager *mixManager, QObject *parent = nullptr);
+    explicit GroupChatController(QObject *parent = nullptr);
 
     bool busy() const;
     Q_SIGNAL void busyChanged();
@@ -32,6 +30,8 @@ public:
 
     Q_INVOKABLE void requestGroupChatUsers(const QString &groupChatJid);
 
+    Q_INVOKABLE void sendGroupChatMessage(const QString &groupChatJid, const QString &text);
+
     Q_SIGNAL void groupChatMadePrivate(const QString &groupChatJid);
     Q_SIGNAL void groupChatMadePublic(const QString &groupChatJid);
     Q_SIGNAL void groupChatDeleted(const QString &groupChatJid);
@@ -44,6 +44,5 @@ public:
 private:
     void setBusy(bool busy);
 
-    MixController *const m_mixController;
     bool m_busy = false;
 };

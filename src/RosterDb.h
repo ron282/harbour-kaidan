@@ -31,7 +31,7 @@ public:
 
 	QFuture<void> addItem(const RosterItem &item);
 	QFuture<void> addItems(const QVector<RosterItem> &items);
-    QFuture<void> updateItem(const QString &jid, const std::function<void(RosterItem &)> &updateItem);
+//  QFuture<void> updateItem(const QString &jid, const std::function<void(RosterItem &)> &updateItem);
     QFuture<void> updateItem(const QString &accountJid, const QString &jid, const std::function<void(RosterItem &)> &updateItem);
 	QFuture<void> replaceItems(const QHash<QString, RosterItem> &items);
 

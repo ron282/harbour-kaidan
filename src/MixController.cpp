@@ -4,6 +4,8 @@
 
 #include "MixController.h"
 
+#include <QXmppClient.h>
+#include <QXmppMessage.h>
 #include <QXmppMixInfoItem.h>
 #include <QXmppTask.h>
 #include <QXmppUtils.h>
@@ -16,10 +18,12 @@
 #include "RosterItem.h"
 
 MixController::MixController(GroupChatController *groupChatController,
+                             QXmppClient *client,
                              QXmppMixManager *mixManager,
                              QObject *parent)
     : QObject(parent)
     , m_groupChatController(groupChatController)
+    , m_client(client)
     , m_manager(mixManager)
 {
     connect(m_manager, &QXmppMixManager::channelInformationUpdated,
@@ -85,6 +89,15 @@ void MixController::leaveChannel(const QString &channelJid)
             Q_EMIT m_groupChatController->groupChatLeft(channelJid);
         }
     });
+}
+
+void MixController::sendMessage(const QString &channelJid, const QString &text)
+{
+    QXmppMessage msg;
+    msg.setTo(channelJid);
+    msg.setType(QXmppMessage::GroupChat);
+    msg.setBody(text);
+    m_client->send(std::move(msg));
 }
 
 void MixController::requestChannelUsers(const QString &channelJid)

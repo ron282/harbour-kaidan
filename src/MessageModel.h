@@ -115,6 +115,7 @@ public:
 		DetailedReactions,
 		OwnDetailedReactions,
 		ErrorText,
+		GroupChatSenderId,
 	};
 	Q_ENUM(MessageRoles)
 

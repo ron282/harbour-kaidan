@@ -55,7 +55,7 @@ RosterManager::RosterManager(ClientWorker *clientWorker,
 
 	connect(m_manager, &QXmppRosterManager::itemChanged,
 		this, [this] (const QString &jid) {
-		Q_EMIT RosterModel::instance()->updateItemRequested(jid, [this, jid](RosterItem &item) {
+        Q_EMIT RosterModel::instance()->updateItemRequested(m_client->configuration().jidBare(), jid, [this, jid](RosterItem &item) {
 			const auto updatedItem = m_manager->getRosterEntry(jid);
 			item.name = updatedItem.name();
 			item.subscription = updatedItem.subscriptionType();
@@ -188,6 +188,8 @@ void RosterManager::removeContact(const QString &jid)
 
 void RosterManager::renameContact(const QString &jid, const QString &newContactName)
 {
+    qDebug() << "renameContact" << jid << " to " << newContactName;
+
 	if (m_client->state() == QXmppClient::ConnectedState) {
 		m_manager->renameItem(jid, newContactName);
 	} else {

@@ -63,10 +63,8 @@ DEFINES += Q_COMPILER_UNICODE_STRINGS
 SOURCES += \
     3rdparty/QImagePainter/qimagepainter.cpp \
     src/Account.cpp \
-    src/AccountController.cpp \
     src/AccountDb.cpp \
     src/AccountManager.cpp \
-    src/AccountMigrationController.cpp \
     src/AtmManager.cpp \
     src/AudioDeviceModel.cpp \
     src/AvatarFileStorage.cpp \
@@ -104,6 +102,7 @@ SOURCES += \
     src/MessageHandler.cpp \
     src/MessageModel.cpp \
     src/MixController.cpp \
+    src/MucController.cpp \
     src/Notifications.cpp \
     src/OmemoCache.cpp \
     src/OmemoDb.cpp \
@@ -150,11 +149,9 @@ SOURCES += \
 HEADERS += \
     3rdparty/QImagePainter/qimagepainter.h \
     src/Account.h \
-    src/AccountController.h \
     src/AccountDb.h \
     src/AbstractNotifier.h \
     src/AccountManager.h \
-    src/AccountMigrationController.h \
     src/Algorithms.h \
     src/AtmManager.h \
     src/AudioDeviceModel.h \
@@ -199,6 +196,7 @@ HEADERS += \
     src/MessageHandler.h \
     src/MessageModel.h \
     src/MixController.h \
+    src/MucController.h \
     src/Notifications.h \
     src/OmemoCache.h \
     src/OmemoDb.h \

@@ -52,6 +52,8 @@ ListItem {
 	property var detailedReactions
 	property var ownDetailedReactions
 
+	property string groupChatSenderId: ""
+
 	property bool isGroupBegin: {
 		return modelIndex < 1 ||
 			MessageModel.data(MessageModel.index(modelIndex - 1, 0), MessageModel.SenderId) !== senderId
@@ -152,6 +154,28 @@ ListItem {
                     Column {
 					id: content
                     width: parent.width
+
+                    Item {
+                        visible: !isOwn && groupChatSenderId.length > 0 && isGroupBegin
+                        width: parent.width
+                        height: senderNameLabel.height + Theme.paddingSmall
+
+                        Label {
+                            id: senderNameLabel
+                            text: groupChatSenderId
+                            color: Theme.highlightColor
+                            font.pixelSize: Theme.fontSizeExtraSmall
+                            font.bold: true
+                            elide: Text.ElideRight
+                            anchors {
+                                left: parent.left
+                                right: parent.right
+                                top: parent.top
+                                leftMargin: Theme.paddingSmall
+                                topMargin: Theme.paddingSmall
+                            }
+                        }
+                    }
 
                     Row {
 						id: spoilerHintRow

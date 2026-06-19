@@ -186,46 +186,46 @@ QFuture<void> RosterDb::addItems(const QVector<RosterItem> &items)
 	});
 }
 
-QFuture<void> RosterDb::updateItem(const QString &jid, const std::function<void (RosterItem &)> &updateItem)
-{
-	return run([this, jid, updateItem]() {
-		// load current roster item from db
-		auto query = createQuery();
-		execQuery(
-			query,
-			QStringLiteral(R"(
-				SELECT *
-				FROM roster
-				WHERE jid = :jid
-				LIMIT 1
-			)"),
-			{
-				{ u":jid", jid },
-			}
-		);
+//QFuture<void> RosterDb::updateItem(const QString &jid, const std::function<void (RosterItem &)> &updateItem)
+//{
+//	return run([this, jid, updateItem]() {
+//		// load current roster item from db
+//		auto query = createQuery();
+//		execQuery(
+//			query,
+//			QStringLiteral(R"(
+//				SELECT *
+//				FROM roster
+//				WHERE jid = :jid
+//				LIMIT 1
+//			)"),
+//			{
+//				{ u":jid", jid },
+//			}
+//		);
 
-		QVector<RosterItem> items;
-		parseItemsFromQuery(query, items);
-		fetchGroups(items);
+//		QVector<RosterItem> items;
+//		parseItemsFromQuery(query, items);
+//		fetchGroups(items);
 
-		// update loaded item
-		if (!items.isEmpty()) {
-			const auto &oldItem = items.first();
-			RosterItem newItem = oldItem;
-			updateItem(newItem);
+//		// update loaded item
+//		if (!items.isEmpty()) {
+//			const auto &oldItem = items.first();
+//			RosterItem newItem = oldItem;
+//			updateItem(newItem);
 
-			// Replace the old item's values with the updated ones if the item has changed.
-			if (oldItem != newItem) {
-				updateGroups(oldItem, newItem);
+//			// Replace the old item's values with the updated ones if the item has changed.
+//			if (oldItem != newItem) {
+//				updateGroups(oldItem, newItem);
 
-				if (auto record = createUpdateRecord(oldItem, newItem); !record.isEmpty()) {
-					// Create an SQL record containing only the differences.
-					updateItemByRecord(jid, record);
-				}
-			}
-		}
-	});
-}
+//				if (auto record = createUpdateRecord(oldItem, newItem); !record.isEmpty()) {
+//					// Create an SQL record containing only the differences.
+//					updateItemByRecord(jid, record);
+//				}
+//			}
+//		}
+//	});
+//}
 
 QFuture<void> RosterDb::updateItem(const QString &accountJid, const QString &jid,
               const std::function<void (RosterItem &)> &updateItem)
@@ -302,6 +302,8 @@ QFuture<void> RosterDb::replaceItems(const QHash<QString, RosterItem> &items)
 			if (newJids.remove(oldItem.jid)) {
 				// item is also included in newJids -> update
 				replaceItem(oldItem, items[oldItem.jid]);
+			} else if (oldItem.groupChatParticipantId == QStringLiteral("muc")) {
+				// MUC rooms are not in the XMPP roster; preserve them across roster re-population.
 			} else {
 				// item is not included in newJids -> delete
 				removeItems({}, oldItem.jid);

@@ -26,6 +26,7 @@ class RosterDb;
 class MessageDb;
 class BlockingController;
 class FileSharingController;
+class GroupChatController;
 
 /**
  * @class Kaidan Kaidan's Back-End Class
@@ -43,6 +44,7 @@ class Kaidan : public QObject
 	Q_PROPERTY(ClientWorker* client READ client CONSTANT)
 	Q_PROPERTY(BlockingController *blockingController READ blockingController CONSTANT)
 	Q_PROPERTY(FileSharingController *fileSharingController READ fileSharingController CONSTANT)
+	Q_PROPERTY(GroupChatController *groupChatController READ groupChatController CONSTANT)
 	Q_PROPERTY(AvatarFileStorage* avatarStorage READ avatarStorage NOTIFY avatarStorageChanged)
 	Q_PROPERTY(ServerFeaturesCache* serverFeaturesCache READ serverFeaturesCache CONSTANT)
 	Q_PROPERTY(Settings* settings READ settings CONSTANT)
@@ -128,7 +130,8 @@ public:
 	ClientWorker *client() const { return m_client; }
 	BlockingController *blockingController() const { return m_blockingController.get(); }
 	FileSharingController *fileSharingController() const { return m_fileSharingController.get(); }
-	AvatarFileStorage *avatarStorage() const { return m_caches->avatarStorage; }
+    GroupChatController *groupChatController() const;
+    AvatarFileStorage *avatarStorage() const { return m_caches->avatarStorage; }
 	ServerFeaturesCache *serverFeaturesCache() const { return m_caches->serverFeaturesCache; }
 	VCardCache *vCardCache() const { return m_caches->vCardCache; }
 	Settings *settings() const { return m_caches->settings; }
@@ -349,6 +352,7 @@ private:
 	ClientWorker *m_client;
 	std::unique_ptr<BlockingController> m_blockingController;
 	std::unique_ptr<FileSharingController> m_fileSharingController;
+	std::unique_ptr<GroupChatController> m_groupChatController;
 
 	QString m_openUriCache;
 	Enums::ConnectionState m_connectionState = Enums::ConnectionState::StateDisconnected;

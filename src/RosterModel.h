@@ -54,6 +54,7 @@ public:
 		LastMessageSenderIdRole,
 		PinnedRole,
 		NotificationsMutedRole,
+		IsGroupChatRole,
 	};
 
 	/**
@@ -170,17 +171,20 @@ Q_SIGNALS:
 	/**
 	 * Emitted to remove all roster items of an account or a specific roster item.
 	 *
-	 * @param accountJid JID of the account whose roster items are being removed
+     * @param accountJid JID of the account whose roster items are being removed
 	 * @param jid JID of the roster item being removed (optional)
 	 */
 	void removeItemsRequested(const QString &accountJid, const QString &jid = {});
 
+public:
+    void updateItem(const QString &accountJid, const QString &jid, const std::function<void (RosterItem &)> &updateItem);
+
 private:
     void handleItemsFetched(const QVector<RosterItem> &items);
 
-	void addItem(const RosterItem &item);
-    void updateItem(const RosterItem &item);
-    void updateItem(const QString &accountJid, const QString &jid, const std::function<void (RosterItem &)> &updateItem);
+    void addItem(const RosterItem &item);
+//    void updateItem(const RosterItem &item);
+//    void updateItem(const QString &accountJid, const QString &jid, const std::function<void (RosterItem &)> &updateItem);
     void replaceItems(const QHash<QString, RosterItem> &items);
 
 	void updateLastMessage(QVector<RosterItem>::Iterator &itr,

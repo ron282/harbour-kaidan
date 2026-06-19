@@ -63,6 +63,10 @@ RosterItem::RosterItem(const QString &accountJid, const QXmppRosterIq::Item &ite
 
 QString RosterItem::displayName() const
 {
+	if (!groupChatName.isEmpty()) {
+		return groupChatName;
+	}
+
 	if (name.isEmpty()) {
 		if (jid == accountJid) {
 			return QObject::tr("Notes");

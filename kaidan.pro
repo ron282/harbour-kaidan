@@ -103,6 +103,7 @@ SOURCES += \
     src/MessageModel.cpp \
     src/MixController.cpp \
     src/MucController.cpp \
+    src/MucOmemoPreprocessor.cpp \
     src/Notifications.cpp \
     src/OmemoCache.cpp \
     src/OmemoDb.cpp \
@@ -197,6 +198,7 @@ HEADERS += \
     src/MessageModel.h \
     src/MixController.h \
     src/MucController.h \
+    src/MucOmemoPreprocessor.h \
     src/Notifications.h \
     src/OmemoCache.h \
     src/OmemoDb.h \

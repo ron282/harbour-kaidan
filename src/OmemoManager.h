@@ -51,6 +51,8 @@ public:
 
 	QFuture<void> requestDeviceLists(const QList<QString> &jids);
 	QFuture<void> subscribeToDeviceLists(const QList<QString> &jids);
+
+	QXmppOmemoManager *qxmppManager() const { return m_manager; }
 	QFuture<void> unsubscribeFromDeviceLists();
 	QXmppTask<bool> resetOwnDevice();
 

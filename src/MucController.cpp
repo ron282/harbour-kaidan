@@ -35,6 +35,12 @@ void MucController::joinRoom(const QString &roomJid, const QString &nickname)
 
     // Only connect signals once per room object to avoid duplicate emissions
     if (isNewRoom) {
+        connect(room, &QXmppMucRoom::participantsChanged, this, [this, room]() {
+            const auto jids = memberJids(room->jid());
+            if (!jids.isEmpty())
+                Q_EMIT memberJidsAvailable(jids);
+        });
+
         connect(room, &QXmppMucRoom::joined, this, [this, room, roomJid]() {
             // MUC rooms are not part of the XMPP roster, so we add them to the roster
             // model manually to make them appear in the conversation list.
@@ -98,6 +104,29 @@ bool MucController::isJoined(const QString &roomJid) const
 {
     auto *room = m_rooms.value(roomJid);
     return room && room->isJoined();
+}
+
+QString MucController::participantFullJid(const QString &roomJid, const QString &occupantJid) const
+{
+    auto *room = m_rooms.value(roomJid);
+    if (!room)
+        return {};
+    return room->participantFullJid(occupantJid);
+}
+
+QList<QString> MucController::memberJids(const QString &roomJid) const
+{
+    auto *room = m_rooms.value(roomJid);
+    if (!room)
+        return {};
+
+    QList<QString> jids;
+    for (const auto &occupant : room->participants()) {
+        const auto bareJid = QXmppUtils::jidToBareJid(room->participantFullJid(occupant));
+        if (!bareJid.isEmpty())
+            jids.append(bareJid);
+    }
+    return jids;
 }
 
 QXmppMucRoom *MucController::getOrAddRoom(const QString &roomJid)

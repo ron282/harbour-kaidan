@@ -51,6 +51,7 @@ public:
 #include <QXmppHash.h>
 #include <QXmppHttpFileSource.h>
 #include <QXmppMamManager.h>
+#include <QXmppSendStanzaParams.h>
 #include <QXmppMessageReaction.h>
 #include <QXmppOutOfBandUrl.h>
 #include <QXmppRosterManager.h>
@@ -114,8 +115,18 @@ QFuture<QXmpp::SendResult> MessageHandler::send(QXmppMessage &&message)
 
 	const auto recipientJid = message.to();
 
+	// For MUC rooms, collect real member JIDs so OMEMO encrypts for each participant.
+	const auto mucMemberJids = QVector<QString>::fromList(
+		m_clientWorker->mucController()->memberJids(recipientJid));
+
 	auto sendEncrypted = [=]() mutable {
-		m_client->sendSensitive(std::move(message)).then(this, [=](QXmpp::SendResult result) mutable {
+		std::optional<QXmppSendStanzaParams> params;
+		if (!mucMemberJids.isEmpty()) {
+			QXmppSendStanzaParams p;
+			p.setEncryptionJids(mucMemberJids);
+			params = p;
+		}
+		m_client->sendSensitive(std::move(message), params).then(this, [=](QXmpp::SendResult result) mutable {
 			reportFinishedResult(interface, result);
 		});
 	};
@@ -133,6 +144,33 @@ QFuture<QXmpp::SendResult> MessageHandler::send(QXmppMessage &&message)
 			reportFinishedResult(interface, result);
 		});
 	};
+
+	// MUC rooms: isOmemoEncryptionEnabled() watches the room JID (no devices there),
+	// so we bypass the isChatCurrentChat path and check member devices directly.
+	if (!mucMemberJids.isEmpty()) {
+		runOnThread(RosterModel::instance(), [accountJid = AccountManager::instance()->jid(), recipientJid]() {
+			return RosterModel::instance()->itemEncryption(accountJid, recipientJid).value_or(Encryption::NoEncryption);
+		}, this, [=](Encryption::Enum activeEncryption) mutable {
+#if defined(WITH_OMEMO_V03)
+			const bool omemoActive = (activeEncryption == Encryption::Omemo0);
+#else
+			const bool omemoActive = (activeEncryption == Encryption::Omemo2);
+#endif
+			if (!omemoActive) {
+				sendUnencrypted();
+				return;
+			}
+			auto future = m_clientWorker->omemoManager()->hasUsableDevices(mucMemberJids.toList());
+			await(future, this, [=](bool hasUsableDevices) mutable {
+				if (hasUsableDevices) {
+					sendEncrypted();
+				} else {
+					sendUnencrypted();
+				}
+			});
+		});
+		return interface.future();
+	}
 
 	// If the message is sent for the current chat, its information is used to determine whether to
 	// send encrypted.
@@ -159,19 +197,9 @@ QFuture<QXmpp::SendResult> MessageHandler::send(QXmppMessage &&message)
 #else
                 if (const auto omemoEncryptionActive = activeEncryption == Encryption::Omemo2) {
 #endif
-                    auto future = m_clientWorker->omemoManager()->hasUsableDevices({ recipientJid });
+					auto future = m_clientWorker->omemoManager()->hasUsableDevices({ recipientJid });
 					await(future, this, [=](bool hasUsableDevices) mutable {
 						const auto omemoEncryptionEnabled = omemoEncryptionActive && hasUsableDevices;
-
-//#if defined(WITH_OMEMO_V03)
-//        if (msg.body() != msg.outOfBandUrl() && message.files.count() == 0) {
-//            message.body = msg.body();
-//        }
-//#else
-//		if (msg.body() != msg.outOfBandUrl()) {
-//			message.body = msg.body();
-//		}
-//#endif
 
 						if (omemoEncryptionEnabled) {
 							sendEncrypted();
@@ -557,13 +585,21 @@ void MessageHandler::handleMessage(const QXmppMessage &msg, MessageOrigin origin
 	if (msg.type() == QXmppMessage::GroupChat) {
 		const auto mixUserJid = msg.mixUserJid();
 		if (!mixUserJid.isEmpty()) {
-			// MIX: override senderId with the real JID from MIX metadata
+			// MIX, or OMEMO-decrypted MUC: real sender JID from mixUserJid metadata.
 			message.senderId = mixUserJid;
-			message.groupChatSenderId = msg.mixParticipantId();
+			// Prefer nick preserved in mixUserNick (set by MucOmemoPreprocessor);
+			// fall back to MIX participant ID for proper MIX messages.
+			const auto nick = msg.mixUserNick();
+			message.groupChatSenderId = nick.isEmpty() ? msg.mixParticipantId() : nick;
 		} else {
 			// MUC: from="room@conf/nickname" — use occupant JID as sender
 			message.senderId = msg.from();
 			message.groupChatSenderId = QXmppUtils::jidToResource(msg.from());
+		}
+		// For OMEMO-decrypted MUC messages, MucOmemoPreprocessor clears `from` and
+		// puts the room JID in `to` to bypass a GroupChat <to/> check in the OMEMO library.
+		if (msg.from().isEmpty() && !recipientJid.isEmpty()) {
+			message.chatJid = recipientJid;
 		}
 	}
 
@@ -618,7 +654,19 @@ void MessageHandler::handleMessage(const QXmppMessage &msg, MessageOrigin origin
     }
 
 
-	if (msg.body().isEmpty() && msg.outOfBandUrl().isEmpty() && msg.sharedFiles().isEmpty()) {
+	// Resolve encryption state before the empty-body filter so that failed OMEMO
+	// decryption (body stays empty at QXmpp level) is still stored as an error message.
+	message.id = msg.id();
+
+	if (auto e2eeMetadata = msg.e2eeMetadata()) {
+		message.encryption = Encryption::Enum(e2eeMetadata->encryption());
+		message.senderKey = e2eeMetadata->senderKey();
+	}
+
+	const auto encryptionName = msg.encryptionName();
+	const bool decryptionFailed = !encryptionName.isEmpty() && message.encryption == Encryption::NoEncryption;
+
+	if (msg.body().isEmpty() && msg.outOfBandUrl().isEmpty() && msg.sharedFiles().isEmpty() && !decryptionFailed) {
 		return;
 	}
 
@@ -627,17 +675,9 @@ void MessageHandler::handleMessage(const QXmppMessage &msg, MessageOrigin origin
 		Q_EMIT Notifications::instance()->closeMessageNotificationRequested(senderJid, recipientJid);
 	}
 
-	message.id = msg.id();
-
-	if (auto e2eeMetadata = msg.e2eeMetadata()) {
-		message.encryption = Encryption::Enum(e2eeMetadata->encryption());
-		message.senderKey = e2eeMetadata->senderKey();
-	}
-
 	parseSharedFiles(msg, message);
 
-	if (auto encryptionName = msg.encryptionName();
-			!encryptionName.isEmpty() && message.encryption == Encryption::NoEncryption) {
+	if (decryptionFailed) {
 		message.body = tr("This message is encrypted with %1 but could not be decrypted").arg(encryptionName);
 	} else {
 #if defined(WITH_OMEMO_V03)

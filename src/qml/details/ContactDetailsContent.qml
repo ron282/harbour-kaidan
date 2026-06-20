@@ -77,6 +77,12 @@ DetailsContent {
             jid: root.jid
         }
 
+        RosterItemWatcher {
+            id: encryptionRosterWatcher
+            accountJid: root.accountJid
+            jid: root.jid
+        }
+
         SectionHeader {
             text: qsTr("Encryption")
         }
@@ -84,8 +90,8 @@ DetailsContent {
         TextSwitch {
             text: qsTr("OMEMO 0")
             description: qsTr("End-to-end encryption with OMEMO ensures that nobody else than you and your chat partners can read or modify the data you exchange.")
-            enabled: MessageModel.usableOmemoDevices.length
-            checked: MessageModel.isOmemoEncryptionEnabled
+            enabled: encryptionRosterWatcher.item.isGroupChat || MessageModel.usableOmemoDevices.length
+            checked: encryptionRosterWatcher.item.isGroupChat ? MessageModel.encryption === Encryption.Omemo0 : MessageModel.isOmemoEncryptionEnabled
             // The switch is toggled by setting the user's preference on using encryption.
             // Note that 'checked' has already the value after the button is clicked.
             onClicked: MessageModel.encryption = checked ? Encryption.Omemo0 : Encryption.NoEncryption

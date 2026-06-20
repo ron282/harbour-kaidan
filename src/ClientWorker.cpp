@@ -36,6 +36,7 @@
 #include "LogHandler.h"
 #include "MixController.h"
 #include "MucController.h"
+#include "MucOmemoPreprocessor.h"
 #include "MessageHandler.h"
 #include "MessageModel.h"
 #include "OmemoCache.h"
@@ -85,17 +86,27 @@ ClientWorker::ClientWorker(Caches *caches, Database *database, bool enableLoggin
 	m_rosterManager = new RosterManager(this, m_client, this);
 	m_messageHandler = new MessageHandler(this, m_client, this);
 	m_atmManager = new AtmManager(m_client, database, this);
-	m_omemoManager = new OmemoManager(m_client, database, this);
-	m_discoveryManager = new DiscoveryManager(m_client, this);
-	m_versionManager = new VersionManager(m_client, this);
 
 	// MIX group chat manager
 	m_mixManager = m_client->addNewExtension<QXmppMixManager>();
 	m_mixController = new MixController(groupChatController, m_client, m_mixManager, this);
 
-	// MUC group chat manager (XEP-0045)
+	// MUC group chat manager (XEP-0045) — must be created before OmemoManager so the
+	// MucOmemoPreprocessor extension is registered before QXmppOmemoManager.
 	m_mucManager = m_client->addNewExtension<QXmppMucManager>();
 	m_mucController = new MucController(groupChatController, m_mucManager, this);
+	auto *mucPreprocessor = new MucOmemoPreprocessor(m_mucController, this);
+	m_client->addExtension(mucPreprocessor);
+
+	m_omemoManager = new OmemoManager(m_client, database, this);
+	mucPreprocessor->setOmemoManager(m_omemoManager->qxmppManager());
+	m_discoveryManager = new DiscoveryManager(m_client, this);
+	m_versionManager = new VersionManager(m_client, this);
+
+	connect(m_mucController, &MucController::memberJidsAvailable,
+	        m_omemoManager, [this](const QList<QString> &jids) {
+		m_omemoManager->requestDeviceLists(jids);
+	});
 
 	// file sharing manager
 	m_fileSharingManager = m_client->addNewExtension<QXmppFileSharingManager>();

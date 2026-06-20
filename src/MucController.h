@@ -26,6 +26,16 @@ public:
 
     bool isJoined(const QString &roomJid) const;
 
+    // Returns the real bare JIDs of all members (empty strings filtered out — anonymous rooms).
+    QList<QString> memberJids(const QString &roomJid) const;
+
+    // Returns the real full JID of an occupant (occupantJid = room@conf/nick). Empty if unknown.
+    QString participantFullJid(const QString &roomJid, const QString &occupantJid) const;
+
+Q_SIGNALS:
+    // Emitted when member JIDs become known (e.g. after joining) so OMEMO device lists can be fetched.
+    void memberJidsAvailable(const QList<QString> &jids);
+
 private:
     QXmppMucRoom *getOrAddRoom(const QString &roomJid);
 

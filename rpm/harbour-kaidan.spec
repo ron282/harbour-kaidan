@@ -1,6 +1,6 @@
 Name:	    harbour-kaidan
 Summary:    QXmpp Client Application
-Version:    0.11.1
+Version:    0.12.0
 Release:    1
 Group:      Qt/Qt
 Source:     master.zip
@@ -88,4 +88,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Sat Jun 20 2026 Ronan <ronan35@gmx.fr> - 0.12.0-1
+- Add private group chat (MUC) support: receive invitations, auto-join, group icon
+- Add encryption support for private groups
+- Fix contact name display in chat page
+- Fix group icon display and group removal
 

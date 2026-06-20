@@ -462,11 +462,16 @@ DetailsContent {
             onClicked: {
                 visible = false
                 removalButton.enabled = false
-                Kaidan.client.rosterManager.removeContactRequested(jid)
+                if (contactWatcher.item.isGroupChat) {
+                    Kaidan.groupChatController.removeGroupChat(root.jid)
+                } else {
+                    Kaidan.client.rosterManager.removeContactRequested(root.jid)
+                }
             }
         }
         RosterItemWatcher {
             id: contactWatcher
+            accountJid: root.accountJid
             jid: root.jid
         }
     }

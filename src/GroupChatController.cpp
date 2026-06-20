@@ -10,10 +10,12 @@
 #include "GroupChatUser.h"
 #include "GroupChatUserDb.h"
 #include "Kaidan.h"
+#include "MessageDb.h"
 #include "MixController.h"
 #include "MucController.h"
 #include "RosterDb.h"
 #include "RosterItem.h"
+#include "RosterModel.h"
 
 GroupChatController::GroupChatController(QObject *parent)
     : QObject(parent)
@@ -30,6 +32,14 @@ GroupChatController::GroupChatController(QObject *parent)
 
     connect(this, &GroupChatController::groupChatLeft, this, [](const QString &chatJid) {
         GroupChatUserDb::instance()->removeUsers(AccountManager::instance()->jid(), chatJid);
+    });
+
+    connect(this, &GroupChatController::groupChatLeft, this, [this](const QString &chatJid) {
+        if (m_pendingRemovals.remove(chatJid)) {
+            const auto accountJid = AccountManager::instance()->jid();
+            MessageDb::instance()->removeAllMessagesFromChat(accountJid, chatJid);
+            Q_EMIT RosterModel::instance()->removeItemsRequested(accountJid, chatJid);
+        }
     });
 
     auto setIdle = [this]() { setBusy(false); };
@@ -66,6 +76,21 @@ void GroupChatController::leaveGroupChat(const QString &groupChatJid)
             worker->mucController()->leaveRoom(groupChatJid);
         } else {
             worker->mixController()->leaveChannel(groupChatJid);
+        }
+    });
+}
+
+void GroupChatController::removeGroupChat(const QString &groupChatJid)
+{
+    m_pendingRemovals.insert(groupChatJid);
+    setBusy(true);
+    runOnThread(Kaidan::instance()->client(), [this, groupChatJid]() {
+        auto *worker = Kaidan::instance()->client();
+        if (worker->mucController()->isJoined(groupChatJid)) {
+            worker->mucController()->leaveRoom(groupChatJid);
+        } else {
+            // Not currently joined: emit groupChatLeft directly to trigger cleanup.
+            Q_EMIT groupChatLeft(groupChatJid);
         }
     });
 }

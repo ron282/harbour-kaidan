@@ -5,6 +5,7 @@
 #pragma once
 
 #include <QObject>
+#include <QSet>
 
 struct GroupChatUser;
 
@@ -25,6 +26,7 @@ public:
     Q_SIGNAL void groupChatJoiningFailed(const QString &groupChatJid, const QString &errorMessage);
 
     Q_INVOKABLE void leaveGroupChat(const QString &groupChatJid);
+    Q_INVOKABLE void removeGroupChat(const QString &groupChatJid);
     Q_SIGNAL void groupChatLeft(const QString &groupChatJid);
     Q_SIGNAL void groupChatLeavingFailed(const QString &groupChatJid, const QString &errorMessage);
 
@@ -45,4 +47,5 @@ private:
     void setBusy(bool busy);
 
     bool m_busy = false;
+    QSet<QString> m_pendingRemovals;
 };

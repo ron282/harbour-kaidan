@@ -28,17 +28,7 @@ UserListItem {
 
     menu: contextMenu
 
-    Icon {
-        source: "image://theme/icon-m-people"
-        visible: isGroupChat
-        anchors {
-            left: avatar.left
-            top: avatar.top
-        }
-        width: avatar.width
-        height: avatar.height
-        color: Theme.primaryColor
-    }
+    Binding { target: avatar; property: "isGroupChat"; value: isGroupChat }
 
 	isSelected: {
         return false &&

@@ -17,6 +17,7 @@ Image {
     signal clicked
     property string jid
     property string name
+    property bool isGroupChat: false
     width: parent.height
     height: width
 
@@ -25,7 +26,7 @@ Image {
     antialiasing: true
 
     Icon {
-        source: "image://theme/icon-m-contact"
+        source: root.isGroupChat ? "image://theme/icon-m-people" : "image://theme/icon-m-contact"
         visible: root.status != Image.Ready
         anchors.fill: parent
     }

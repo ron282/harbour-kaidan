@@ -213,6 +213,7 @@ ChatPageBase {
 
         RosterItemWatcher {
             id: chatItemWatcher
+            accountJid: MessageModel.currentAccountJid
             jid: MessageModel.currentChatJid
         }
 

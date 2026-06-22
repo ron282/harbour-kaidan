@@ -146,12 +146,14 @@ QFuture<void> RosterDb::addItems(const QVector<RosterItem> &items)
 		auto query = createQuery();
 		transaction();
 
-		prepareQuery(query, sqlDriver().sqlStatement(
+		auto insertSql = sqlDriver().sqlStatement(
 			QSqlDriver::InsertStatement,
 			QStringLiteral(DB_TABLE_ROSTER),
 			sqlRecord(QStringLiteral(DB_TABLE_ROSTER)),
 			true
-		));
+		);
+		insertSql.replace(QStringLiteral("INSERT INTO"), QStringLiteral("INSERT OR IGNORE INTO"));
+		prepareQuery(query, insertSql);
 
 		for (const auto &item : items) {
 			query.addBindValue(item.accountJid);

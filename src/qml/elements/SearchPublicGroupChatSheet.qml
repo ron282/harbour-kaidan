@@ -158,7 +158,7 @@ Page {
                 }
 
 
-            onClicked: Qt.openUrlExternally(Utils.groupChatUri(model.groupChat))
+            onClicked: pageStack.push(Qt.resolvedUrl("../GroupChatJoiningPage.qml"), { groupChatJid: model.address })
         }
 
         PublicGroupChats.SearchManager {

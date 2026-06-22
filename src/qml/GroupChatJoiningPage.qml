@@ -10,6 +10,13 @@ import im.kaidan.kaidan 1.0
 Page {
     id: root
 
+    property string groupChatJid: ""
+
+    Component.onCompleted: {
+        if (groupChatJid.length > 0)
+            jidField.text = groupChatJid
+    }
+
     SilicaFlickable {
         anchors.fill: parent
         contentHeight: column.height

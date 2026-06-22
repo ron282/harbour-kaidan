@@ -1445,6 +1445,11 @@ void MessageModel::showMessageNotification(const Message &message, MessageOrigin
 		// no notifications
 		return;
 	case MessageOrigin::Stream:
+		// MUC history replayed on join has a delayed timestamp; skip notification.
+		if (message.timestamp < QDateTime::currentDateTimeUtc().addSecs(-30)) {
+			return;
+		}
+		break;
 	case MessageOrigin::MamCatchUp:
 		break;
 	}

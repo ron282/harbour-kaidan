@@ -55,13 +55,12 @@ install -d %{buildroot}%{_datadir}/%{name}/images
 install -d %{buildroot}%{_datadir}/%{name}/images/onboarding
 install -d %{buildroot}%{_datadir}/%{name}/translations
 install -d %{buildroot}%{_datadir}/icons/hicolor/86x86/apps
-cp -Ra %{_sourcedir}/../src/qml/* %{buildroot}%{_datadir}/%{name}/qml
-cp -Ra %{_sourcedir}/../data/images/*.svg %{buildroot}%{_datadir}/%{name}/images
-cp -Ra %{_sourcedir}/../data/images/onboarding/*.svg %{buildroot}%{_datadir}/%{name}/images/onboarding
-install -p %{_sourcedir}/../src/qml/%{name}.desktop %{buildroot}%{_datadir}/applications/%{name}.desktop
-install -m 0444 -t %{buildroot}%{_datadir}/icons/hicolor/86x86/apps/ %{_sourcedir}/../resources/icons/86x86/%{name}.png
-install -p %{_sourcedir}/../resources/%{name}-message.conf %{buildroot}%{_datadir}/lipstick/notificationcategories/%{name}-message.conf
-
+cp -Ra %{_builddir}/%{name}-%{version}/src/qml/* %{buildroot}%{_datadir}/%{name}/qml
+cp -Ra %{_builddir}/%{name}-%{version}/data/images/*.svg %{buildroot}%{_datadir}/%{name}/images
+cp -Ra %{_builddir}/%{name}-%{version}/data/images/onboarding/*.svg %{buildroot}%{_datadir}/%{name}/images/onboarding
+install -p %{_builddir}/%{name}-%{version}/src/qml/%{name}.desktop %{buildroot}%{_datadir}/applications/%{name}.desktop
+install -m 0444 -t %{buildroot}%{_datadir}/icons/hicolor/86x86/apps/ %{_builddir}/%{name}-%{version}/resources/icons/86x86/%{name}.png
+install -p %{_builddir}/%{name}-%{version}/resources/%{name}-message.conf %{buildroot}%{_datadir}/lipstick/notificationcategories/%{name}-message.conf
 
 strip %{buildroot}%{_bindir}/%{name}
 

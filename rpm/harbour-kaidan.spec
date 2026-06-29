@@ -12,6 +12,9 @@ BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Location)
 BuildRequires:  pkgconfig(Qt5Positioning)
+BuildRequires:  pkgconfig(Qt5Xml)
+BuildRequires:  pkgconfig(Qt5Concurrent)
+BuildRequires:  pkgconfig(Qt5Multimedia)
 BuildRequires:  libiphb-devel
 BuildRequires:  libxml2-devel
 BuildRequires:  openssl-devel

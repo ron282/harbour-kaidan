@@ -18,9 +18,9 @@ BuildRequires:  openssl-devel
 BuildRequires:  libgpg-error-devel
 BuildRequires:  libgcrypt-devel
 BuildRequires:  sqlite-devel
-BuildRequires:  QXmpp-devel >= 1.7.0
+BuildRequires:  qxmpp-devel >= 1.7.0
 BuildRequires:  pkgconfig(zxing)
-Requires:       QXmpp >= 1.7.0
+Requires:       qxmpp >= 1.7.0
 Requires:       qt5-qtdeclarative-import-positioning
 Requires:       qt5-qtdeclarative-import-location
 

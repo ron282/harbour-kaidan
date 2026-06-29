@@ -3,7 +3,7 @@ Summary:    QXmpp Client Application
 Version:    0.12.0
 Release:    1
 Group:      Qt/Qt
-Source:     master.zip
+Source:     Source: %{name}-%{version}.tar.gz
 URL:        https://github.com/ron282/kaidan.git
 License:    MIT
 BuildRequires:	pkgconfig(sailfishapp) >= 1.0.2

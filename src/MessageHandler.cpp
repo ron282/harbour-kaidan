@@ -511,7 +511,14 @@ void MessageHandler::retrieveCatchUpMessages(const QString &latestMessageStanzaI
     m_mamManager->retrieveMessages({}, {}, {}, {}, {}, queryLimit).then(this, [this](auto result) {
         m_isCatchUpRunning = false;  // AJOUT
         if (std::holds_alternative<typename Mam::RetrievedMessages>(result)) {
-            // ... code existant inchangé
+            auto messages = std::get<typename Mam::RetrievedMessages>(std::move(result));
+
+            Kaidan::instance()->database()->startTransaction();
+            for (const auto &message : std::as_const(messages.messages)) {
+                handleMessage(message, MessageOrigin::MamCatchUp);
+                m_receiptManager.handleMessage(message);
+            }
+            Kaidan::instance()->database()->commitTransaction();
         }
         if (auto *err = std::get_if<QXmppError>(&result)) {
             qDebug() << "[MAM] Error while fetching catch-up messages:" << err->description;

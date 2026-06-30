@@ -4,6 +4,7 @@
 
 ################### Kaidan ####################
 kaidan
+harbour-kaidan
 kaidan_automoc.cpp
 misc/ubuntu-touch/manifest.json
 misc/macos/kaidan.iconset

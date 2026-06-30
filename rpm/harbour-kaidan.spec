@@ -1,6 +1,6 @@
 Name:	    harbour-kaidan
 Summary:    QXmpp Client Application
-Version:    0.12.0
+Version:    0.12.1
 Release:    1
 Group:      Qt/Qt
 Source:     %{name}-%{version}.tar.gz
@@ -90,6 +90,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Jun 30 2026 Ronan <ronan35@gmx.fr> - 0.12.1-1
+- Fix decryption of own messages from other devices
+- Fix %install paths for sfdk local build mode
+- Untrack harbour-kaidan binary from git
+
 * Sat Jun 20 2026 Ronan <ronan35@gmx.fr> - 0.12.0-1
 - Add private group chat (MUC) support: receive invitations, auto-join, group icon
 - Add encryption support for private groups
